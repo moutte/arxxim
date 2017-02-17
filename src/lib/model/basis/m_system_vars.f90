@@ -1,63 +1,63 @@
-MODULE M_System_Vars
+module M_System_Vars
 !--
 !-- variables for system definition
 !--
-  USE M_Kinds
+  use M_Kinds
   !
-  USE M_T_System
-  USE M_T_Component,ONLY: T_Component
+  use M_T_System
+  use M_T_Component,only: T_Component
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: System_Zero
-  PUBLIC:: System_Clean
+  public:: System_Zero
+  public:: System_Clean
   !
-  REAL(dp),PUBLIC:: TdgK, Pbar
+  real(dp),public:: TdgK, Pbar
   !
-  CHARACTER(LEN=7),PUBLIC:: System_Type="AQUEOUS" !AQUEOUS, SIMPLEX, MOMAS, GLOBAL
+  character(len=7),public:: System_Type="AQUEOUS" !AQUEOUS, SIMPLEX, MOMAS, GLOBAL
   !
-  LOGICAL,PUBLIC:: BufferIsExtern= .FALSE.  !.TRUE.  !
-  LOGICAL,PUBLIC:: CpnIsSpc= .TRUE.
+  logical,public:: BufferIsExtern= .false.  !.true.  !
+  logical,public:: CpnIsSpc= .true.
   !
-  TYPE(T_Component),ALLOCATABLE,PUBLIC:: vCpn   (:) !-> default system
-  TYPE(T_Component),ALLOCATABLE,PUBLIC:: vCpnTot(:) !-> "global" system
+  type(T_Component),allocatable,public:: vCpn   (:) !-> default system
+  type(T_Component),allocatable,public:: vCpnTot(:) !-> "global" system
   !
   ! stoikiometry table of the species in terms of the components
-  REAL(dp),ALLOCATABLE,PUBLIC:: tStoikioCpn(:,:)
+  real(dp),allocatable,public:: tStoikioCpn(:,:)
   !
-  TYPE(T_System):: SysDefault,SysTotal,SysInject,SysBox
+  type(T_System):: SysDefault,SysTotal,SysInject,SysBox
   !
   !-- vars for GEM computations
   !-- ? should be in a specific M_GEM_Vars module ?
-  !~ TYPE(T_Component),ALLOCATABLE,PUBLIC:: vCpnGEM(:)
-  !~ REAL(dp),         ALLOCATABLE,PUBLIC:: tStoikioGEM(:,:)
+  !! type(T_Component),allocatable,public:: vCpnGEM(:)
+  !! real(dp),         allocatable,public:: tStoikioGEM(:,:)
   
-CONTAINS
+contains
 
-SUBROUTINE System_Zero
-  USE M_Dtb_Const,ONLY: Tref,Pref
+subroutine System_Zero
+  use M_Dtb_Const,only: Tref,Pref
   
-  CALL System_Clean
+  call System_Clean
   
-  ALLOCATE(vCpn(0))
-  ALLOCATE(vCpnTot(0))
-  !ALLOCATE(vCpnInj(0))
-  !ALLOCATE(vCpnBox(0))
+  allocate(vCpn(0))
+  allocate(vCpnTot(0))
+  !allocate(vCpnInj(0))
+  !allocate(vCpnBox(0))
   
   TdgK= Tref
   Pbar= Pref
   
-ENDSUBROUTINE System_Zero
+end subroutine System_Zero
 
-SUBROUTINE System_Clean
-  IF(ALLOCATED(vCpn))     DEALLOCATE(vCpn)
-  IF(ALLOCATED(vCpnTot))  DEALLOCATE(vCpnTot)
-  IF(ALLOCATED(tStoikioCpn)) DEALLOCATE(tStoikioCpn)
-ENDSUBROUTINE System_Clean
+subroutine System_Clean
+  if(allocated(vCpn))     deallocate(vCpn)
+  if(allocated(vCpnTot))  deallocate(vCpnTot)
+  if(allocated(tStoikioCpn)) deallocate(tStoikioCpn)
+end subroutine System_Clean
 
-ENDMODULE M_System_Vars
+end module M_System_Vars
 
 
 

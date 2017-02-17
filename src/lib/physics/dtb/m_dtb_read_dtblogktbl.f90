@@ -1,336 +1,338 @@
-MODULE M_Dtb_Read_DtbLogKTbl
-  USE M_Kinds
-  USE M_Trace
-  USE M_Dtb_Read_Vars,ONLY: T_LisLogKTbl,LisLogKTbl,nLogKTbl
+module M_Dtb_Read_DtbLogKTbl
+  use M_Kinds
+  use M_Trace
+  use M_Dtb_Read_Vars,only: T_LisLogKTbl,LisLogKTbl,nLogKTbl
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: DtbLogKTbl_Read
-  PUBLIC:: DtbLogKTbl_Build
-  PUBLIC:: DtbLogK_TPCond_Read
+  public:: DtbLogKTbl_Read
+  public:: DtbLogKTbl_Build
+  public:: DtbLogK_TPCond_Read
   !
-CONTAINS
+contains
 
-SUBROUTINE DtbLogKTbl_Build
+subroutine DtbLogKTbl_Build
 !--
 !-- transfer linked list to array of T_DtbLogKTbl
 !--
-  USE M_Dtb_Vars,ONLY: vDtbLogKTbl
+  use M_Dtb_Vars,only: vDtbLogKTbl
   !
-  TYPE(T_LisLogKTbl),POINTER:: LisCur, LisPrev
-  INTEGER:: I
+  type(T_LisLogKTbl),pointer:: LisCur, LisPrev
+  integer:: I
   !
-  IF(iDebug==5) PRINT '(A)',"< DtbLogKTbl_Build"
+  if(iDebug==5) print '(A)',"< DtbLogKTbl_Build"
   !
-  IF(ALLOCATED(vDtbLogKTbl)) DEALLOCATE(vDtbLogKTbl)
-  ALLOCATE(vDtbLogKTbl(nLogKTbl))
+  if(allocated(vDtbLogKTbl)) deallocate(vDtbLogKTbl)
+  allocate(vDtbLogKTbl(nLogKTbl))
   !
   I=0
   LisCur=> LisLogKTbl
-  DO WHILE (ASSOCIATED(LisCur))
+  do while (associateD(LisCur))
     I=I+1
     vDtbLogKTbl(I)=LisCur%Value
     !
-    IF(iDebug==5) PRINT '(2A)', vDtbLogKTbl(I)%Name,TRIM(vDtbLogKTbl(I)%Num)
+    if(iDebug==5) print '(2A)', vDtbLogKTbl(I)%Name,trim(vDtbLogKTbl(I)%Num)
     !
     LisPrev=>LisCur
     LisCur=> LisCur%next
-    DEALLOCATE(LisPrev)
-  ENDDO
+    deallocate(LisPrev)
+  end do
   !
-  IF(iDebug==5) PRINT '(A)',"< DtbLogKTbl_Build"
-  IF(iDebug==5) CALL Pause_
-  RETURN
-ENDSUBROUTINE DtbLogKTbl_Build
+  if(iDebug==5) print '(A)',"< DtbLogKTbl_Build"
+  if(iDebug==5) call Pause_
+  return
+end subroutine DtbLogKTbl_Build
 
-LOGICAL FUNCTION LnkSpc_Found(L,W,M)
+logical function LnkSpc_Found(L,W,M)
 !--
 !-- find index of string W in linked list
 !-- return corresponding species Spc
 !--
-  USE M_T_DtbLogKTbl, ONLY: T_DtbLogKTbl
+  use M_T_DtbLogKTbl, only: T_DtbLogKTbl
   !
-  TYPE(T_LisLogKTbl),POINTER    :: L
-  CHARACTER(LEN=*),  INTENT(IN) :: W
-  TYPE(T_DtbLogKTbl),INTENT(OUT):: M
+  type(T_LisLogKTbl),pointer    :: L
+  character(len=*),  intent(in) :: W
+  type(T_DtbLogKTbl),intent(out):: M
   !
-  TYPE(T_LisLogKTbl),POINTER:: P,pPrev
-  INTEGER::I
+  type(T_LisLogKTbl),pointer:: P,pPrev
+  integer::I
   !
   P=> L
   I=  0
-  LnkSpc_Found=.FALSE.
-  DO WHILE (ASSOCIATED(P))
+  LnkSpc_Found=.false.
+  do while (associateD(P))
     I=I+1
-    IF(TRIM(w)==TRIM(P%Value%Name)) THEN
-      LnkSpc_Found=.TRUE.
+    if(trim(w)==trim(P%Value%Name)) then
+      LnkSpc_Found=.true.
       M= P%Value
-      EXIT;
-    ENDIF
+      exit;
+    end if
     pPrev=> P
     P=>     P%next
-  ENDDO
-ENDFUNCTION LnkSpc_Found
+  end do
+end function LnkSpc_Found
 
-SUBROUTINE DtbLogKTbl_Read(F,vEle,N)
+subroutine DtbLogKTbl_Read(F,vEle,N)
 !--
 !-- build linked list from database in logK format
 !--
-  USE M_Dtb_Const,ONLY: T_CK
-  USE M_T_Element,ONLY: T_Element,Formula_Read,Formula_Build,Element_Index
-  USE M_Files,    ONLY: DirDtbLog,Files_Index_Write
-  USE M_IoTools
-  USE M_Dtb_Read_Tools
+  use M_Dtb_Const,only: T_CK
+  use M_T_Element,only: T_Element,Formula_Read,Formula_Build,Element_Index
+  use M_Files,    only: DirDtbLog,Files_Index_Write
+  use M_IoTools,  only: DimV,getunit,lintowrd,appendtoend,str_upper
+  use M_IoTools,  only: wrdtoreal,readrvalsv
+  use M_Dtb_Read_Tools
   !
-  USE M_T_DtbLogKTbl, ONLY: T_DtbLogKTbl,DimLogK_Max,DtbLogKTbl_Calc_Init
-  USE M_Dtb_Vars,     ONLY: DtbLogK_Dim,DtbLogK_vTPCond
+  use M_T_DtbLogKTbl, only: T_DtbLogKTbl,DimLogK_Max,DtbLogKTbl_Calc_Init
+  use M_Dtb_Vars,     only: DtbLogK_Dim,DtbLogK_vTPCond
   !
-  INTEGER,        INTENT(IN)   :: F !input file
-  TYPE(T_Element),INTENT(IN)   :: vEle(:)
-  INTEGER,        INTENT(INOUT):: N
+  integer,        intent(in)   :: F !input file
+  type(T_Element),intent(in)   :: vEle(:)
+  integer,        intent(inout):: N
   !
-  TYPE(T_LisLogKTbl),POINTER,SAVE:: LisCur
+  type(T_LisLogKTbl),pointer,save:: LisCur
   !
-  CHARACTER(LEN=512):: L,W
-  TYPE(T_DtbLogKTbl) :: M
-  REAL(dp),DIMENSION(dimV):: vX
-  REAL(dp):: X,Rho
-  LOGICAL :: EoL, fOk, EcformIsOk
-  INTEGER :: I,ff
-  INTEGER :: ios,ZSp,Div,mDum
+  character(len=512):: L,W
+  type(T_DtbLogKTbl) :: M
+  real(dp),dimension(dimV):: vX
+  real(dp):: X,Rho
+  logical :: EoL, fOk, EcformIsOk
+  integer :: I,ff
+  integer :: ios,ZSp,Div,mDum
   !
-  INTEGER,DIMENSION(:),ALLOCATABLE::vStoik !for Formula_Read
+  integer,dimension(:),allocatable::vStoik !for Formula_Read
   !
   !--for formula translation
-  CHARACTER(LEN=6):: CodFormula
+  character(len=6):: CodFormula
   ! CodFormula is either "SCFORM" or "ECFORM" (names inherited from SUPCRT files):
   !   SCFORM = compact formula,  e.g. SiO2
   !   ECFORM = extended formula, e.g. SI(1)O(2)
-  CHARACTER(LEN=2),DIMENSION(:),ALLOCATABLE:: vElement  !
-  INTEGER:: fFormula
+  character(len=2),dimension(:),allocatable:: vElement  !
+  integer:: fFormula
   !--/
   !
   !--------------------------------------------var for header processing
-  LOGICAL :: IsHeader
-  INTEGER,PARAMETER:: nField= 13
-  CHARACTER(LEN=12):: vStrField(1:nField)
+  logical :: IsHeader
+  integer,parameter:: nField= 13
+  character(len=12):: vStrField(1:nField)
   ! vStrField contains names of all possible fields in a database
-  INTEGER :: vIField(1:nField)
+  integer :: vifield(1:nField)
   !
-  ! CHARACTER(LEN=12):: vStrUnit(1:nField)
+  ! character(len=12):: vStrUnit(1:nField)
   !-------------------------------------------/var for header processing
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DtbLogKTbl_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DtbLogKTbl_Read"
   !
   !----------------------------------------------------------------trace
-  IF(iDebug>2) THEN
-    CALL GetUnit(ff)
-    OPEN(ff,FILE="dtb_logktbl_check.tab")
-  ENDIF
+  if(iDebug>2) then
+    call GetUnit(ff)
+    open(ff,file="dtb_logktbl_check.tab")
+  end if
   !---------------------------------------------------------------/trace
   !
   fFormula= 0
   CodFormula= "ECFORM"
-  ALLOCATE(vElement(SIZE(vEle)+3))
-  CALL DtbRead_Build_vElement(vEle,vElement)
+  allocate(vElement(size(vEle)+3))
+  call DtbRead_Build_vElement(vEle,vElement)
   !
-  ALLOCATE(vStoik(1:SIZE(vEle)))
+  allocate(vStoik(1:size(vEle)))
   !
-  !--initialize vStrField(:), vIField(:)
+  !--initialize vStrField(:), vifield(:)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
   &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
   &   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
-  L= "TYPE INDEX NAME ECFORM SIZE PARAMETERS" != default field list
-  IF(iDebug==4) PRINT *,"< Default values"
-  CALL FieldList_Read(L,vStrField,vIField)
-  IF(iDebug==4) PRINT *,"</ Default values"
+  L= "TYPE INDEX NAME ECFORM size parameterS" != default field list
+  if(iDebug==4) print *,"< Default values"
+  call FieldList_Read(L,vStrField,vifield)
+  if(iDebug==4) print *,"</ Default values"
   !
-  IF(vIField(4)/=0 .AND. fFormula==0 .AND. iDebug>2) THEN
+  if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
   ! -> files contains compact formulas
-    CALL GetUnit(fFormula)
-    OPEN(fFormula,file="debug_formula.log")
-    WRITE(fFormula,'(A,/)') "resuts of formula conversion"
-  ENDIF
-  !---------------------------------/initialize vStrField(:), vIField(:)
+    call GetUnit(fFormula)
+    open(fFormula,file="debug_formula.log")
+    write(fFormula,'(A,/)') "resuts of formula conversion"
+  end if
+  !---------------------------------/initialize vStrField(:), vifield(:)
   !
   !-----------------------------------build a linked list of all species
   !---------------------------------consistent with current element list
-  DoFile: DO
+  DoFile: do
     !
-    READ(f,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile
-    CALL AppendToEnd(L,W,EoL) ! if W=="END" append next word
+    read(f,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile
+    call AppendToEnd(L,W,EoL) ! if W=="END" append next word
     !
     !--------------------------------------------read header, if present
     !----------if the line begins with any member of array vStrField(:),
     !----------------------------------then it contains the line headers
-    IsHeader= .FALSE.
-    DO I=1,nField
-      IF(TRIM(W)==TRIM(vStrField(I))) THEN
-        IsHeader= .TRUE.
-        EXIT
-      ENDIF
-    END DO
+    IsHeader= .false.
+    do I=1,nField
+      if(trim(W)==trim(vStrField(I))) then
+        IsHeader= .true.
+        exit
+      end if
+    end do
     !
-    IF(IsHeader) THEN
-      L= TRIM(W)//" "//TRIM(L)
-      IF(iDebug>2) PRINT *,"< values from file"
-      CALL FieldList_Read(L,vStrField,vIField)
-      IF(iDebug>2) PRINT *,"</ values from file"
+    if(IsHeader) then
+      L= trim(W)//" "//trim(L)
+      if(iDebug>2) print *,"< values from file"
+      call FieldList_Read(L,vStrField,vifield)
+      if(iDebug>2) print *,"</ values from file"
 
-      IF(vIField(4)/=0 .AND. fFormula==0 .AND. iDebug>2) THEN
-        CALL GetUnit(fFormula)
-        OPEN(fFormula,file="debug_formula.log")
-        WRITE(fFormula,'(A,/)') "results of formula conversion"
-      ENDIF
+      if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
+        call GetUnit(fFormula)
+        open(fFormula,file="debug_formula.log")
+        write(fFormula,'(A,/)') "results of formula conversion"
+      end if
 
-      CYCLE DoFile
-    ENDIF
+      cycle DoFile
+    end if
     !-------------------------------------------/read header, if present
     !
     !-----------------------------------------process first word of line
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT")
-      EXIT DoFile
+    case("ENDINPUT")
+      exit DoFile
     !
-    CASE("END","ENDSPECIES")
-      EXIT DoFile
+    case("END","ENDSPECIES")
+      exit DoFile
     !
     !----------------------------------------------------for old formats
-    CASE("FORMULA")
-      CALL LinToWrd(L,W,EoL)
-      CodFormula= TRIM(W)
+    case("FORMULA")
+      call LinToWrd(L,W,EoL)
+      CodFormula= trim(W)
 
-      IF(CodFormula=="SCFORM") THEN
-        IF(vIField(4)==0) THEN
-          vIField(4)= vIField(5)
-          vIField(5)= 0
-        ENDIF
-        IF(iDebug>2) THEN
-          CALL GetUnit(fFormula)
-          OPEN(fFormula,FILE="debug_formula.log")
-          WRITE(fFormula,'(A,/)') "resuts of formula conversion"
-        ENDIF
-      ENDIF
+      if(CodFormula=="SCFORM") then
+        if(vifield(4)==0) then
+          vifield(4)= vifield(5)
+          vifield(5)= 0
+        end if
+        if(iDebug>2) then
+          call GetUnit(fFormula)
+          open(fFormula,file="debug_formula.log")
+          write(fFormula,'(A,/)') "resuts of formula conversion"
+        end if
+      end if
 
-      CYCLE DoFile !-----------------------------------------------CYCLE
+      cycle DoFile !-----------------------------------------------cycle
     !
     !---------------------------------------------/ for old formats --
-    !old! CASE DEFAULT
+    !old! case default
     !old!   !--- ignore line beginning with unknown keyword !!! ??? --
-    !old!   CYCLE DoFile !-----------------------------------------CYCLE
+    !old!   cycle DoFile !-----------------------------------------cycle
     !old! !
-    CASE DEFAULT
+    case default
       ! in other cases, the line (may) contain data
       ! -> re-assemble W at beginning of L for further processing
-      L= TRIM(W)//" "//TRIM(L)
+      L= trim(W)//" "//trim(L)
     !
-    ENDSELECT
+    end select
     !----------------------------------------/process first word of line
     !
     M%Num= "0"
     !---------------------------------------------------scan a data line
-    DO I= 1,vIField(10)-1
+    do I= 1,vifield(10)-1
     ! read words up to position before the parameters
       !
-      CALL LinToWrd(L,W,EoL,"NO")
+      call LinToWrd(L,W,EoL,"NO")
       !
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
       !&   "SIZE        ","VOLUME      ","DENSITY     ","FITTING     ","PARAMETERS  ", &
       !&   "SKIP        ","SOURCE      "/)
       !
-      IF(I==vIField(1)) THEN  ! TYPE
+      if(I==vifield(1)) then  ! type
         !
-        ! CALL Str_Upper(W)  ;  M%Typ= TRIM(W)
-        CALL Str_Upper(W)
-        SELECT CASE(TRIM(W))
-        CASE("AQU")  ;  M%Typ="AQU"
-        CASE("MIN")  ;  M%Typ="MIN"
-        CASE("GAS")  ;  M%Typ="GAS"
-        CASE("LIQ")  ;  M%Typ="LIQ"
-        CASE("XCH")  ;  M%Typ="XCH"
-        CASE DEFAULT ;  CALL Stop_(TRIM(W)//"<< unknown TYPE in database !!...")          
-        END SELECT
+        ! call Str_Upper(W)  ;  M%Typ= trim(W)
+        call Str_Upper(W)
+        select case(trim(W))
+        case("AQU")  ;  M%Typ="AQU"
+        case("MIN")  ;  M%Typ="MIN"
+        case("GAS")  ;  M%Typ="GAS"
+        case("LIQ")  ;  M%Typ="LIQ"
+        case("XCH")  ;  M%Typ="XCH"
+        case default ;  call Stop_(trim(W)//"<< unknown type in database !!...")          
+        end select
         !
-      END IF
+      end if
 
-      IF(I==vIField(2)) THEN  ! INDEX
-        CALL Str_Upper(W)  ;  M%Num= TRIM(W)
-      END IF
+      if(I==vifield(2)) then  ! INDEX
+        call Str_Upper(W)  ;  M%Num= trim(W)
+      end if
 
-      IF(I==vIField(3)) THEN  ! NAME
-        CALL Str_Upper(W)  ;  M%Name= TRIM(W)
-      ENDIF
+      if(I==vifield(3)) then  ! NAME
+        call Str_Upper(W)  ;  M%Name= trim(W)
+      end if
 
-      IF(I==vIField(4)) THEN  ! SCFORM
+      if(I==vifield(4)) then  ! SCFORM
         !
-        CALL DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-        IF(.NOT.EcformIsOk) CYCLE DoFile !-------------------------CYCLE
+        call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
+        if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
         !
-        CALL Str_Upper(W)  ;  M%Formula=TRIM(W)
-      ENDIF
+        call Str_Upper(W)  ;  M%Formula=trim(W)
+      end if
 
-      IF(I==vIField(5)) THEN  ! ECFORM
-        CALL Str_Upper(W)  ;  M%Formula=  TRIM(W)
-      END IF
+      if(I==vifield(5)) then  ! ECFORM
+        call Str_Upper(W)  ;  M%Formula=  trim(W)
+      end if
 
-      !IF(I==vIField(9)) THEN
-      !  CALL Str_Upper(W)  ;  CodFitting= TRIM(W)
-      !END IF
+      !if(I==vifield(9)) then
+      !  call Str_Upper(W)  ;  CodFitting= trim(W)
+      !end if
 
-      IF(I==vIField(11)) CALL WrdToReal(W,X) ! SIZE
-      IF(I==vIField(12)) CALL WrdToReal(W,X) ! VOLUME
-      IF(I==vIField(13)) CALL WrdToReal(W,X) ! DENSITY
+      if(I==vifield(11)) call WrdToReal(W,X) ! size
+      if(I==vifield(12)) call WrdToReal(W,X) ! VOLUME
+      if(I==vifield(13)) call WrdToReal(W,X) ! DENSITY
 
-    END DO
+    end do
     !
-    CALL ReadRValsV(L,mDum,vX)
+    call ReadRValsV(L,mDum,vX)
     !--------------------------------------------------/scan a data line
     !
-    IF(mDum<DtbLogK_Dim) &
-    & CALL Stop_("Dimension of LogK array < Dimension of TP table !!")
+    if(mDum<DtbLogK_Dim) &
+    & call Stop_("Dimension of LogK array < Dimension of TP table !!")
     !
     !-------------------------------------------------------read formula
-    CALL Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
-    IF(.NOT. fOk) CYCLE DoFile !-----------------------------------CYCLE
+    call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+    if(.not. fOk) cycle DoFile !-----------------------------------cycle
     !------------------------------------------------------/read formula
     !
     !-- compute Molecular Weit
-    M%WeitKg= DOT_PRODUCT(vStoik(:),vEle(:)%WeitKg) /REAL(Div)
+    M%WeitKg= dot_product(vStoik(:),vEle(:)%WeitKg) /real(Div)
     M%Div= Div
     M%Chg= Zsp
     !
     !---------size parameter for aqu'species, or density for min'species
-    IF(    vIField(11)/=0 & ! SIZE
-    & .OR. vIField(12)/=0 & ! VOLUME, m^3 /mole ?
-    & .OR. vIField(13)/=0 & ! DENSITY, Kg /m^3
-    & ) THEN
-      SELECT CASE(M%Typ)
-        CASE("AQU")
+    if(    vifield(11)/=0 & ! size
+    & .or. vifield(12)/=0 & ! VOLUME, m^3 /mole ?
+    & .or. vifield(13)/=0 & ! DENSITY, Kg /m^3
+    & ) then
+      !! print *,"M%Name=",M%Name
+      select case(M%Typ)
+        case("AQU")
           M%AquSize=X
-        CASE("MIN","GAS")
-          IF(vIField(12)/=0) THEN
+        case("MIN","GAS")
+          if(vifield(12)/=0) then
             M%V0R= X *1.0D-6 ! for THERMODDEM database, CM^3 to M^3
             Rho= M%WeitKg /M%V0R
-          ELSE
+          else
             Rho=X
             M%V0R= M%WeitKg /Rho
-          ENDIF
-      ENDSELECT
-    ENDIF
+          end if
+      end select
+    end if
     !--default value of size parameter for charged aqu'species
-    IF(M%Typ=="AQU" .and. M%Chg/=0 .and. M%AquSize<=Zero) M%AquSize= 3.72D0
+    if(M%Typ=="AQU" .and. M%Chg/=0 .and. M%AquSize<=Zero) M%AquSize= 3.72D0
     !----/read size parameter for aqu'species, or volume for min'species
     !
-    !WRITE(fff,'(A,A1)') TRIM(L) !-> WRITE the logK's
+    !write(fff,'(A,A1)') trim(L) !-> write the logK's
     !
     !--- read list of logK's --
     M%DimLogK=  DtbLogK_Dim
@@ -339,289 +341,291 @@ SUBROUTINE DtbLogKTbl_Read(F,vEle,N)
     !
     M%vTdgK(1:DtbLogK_Dim)= DtbLogK_vTPCond(1:DtbLogK_Dim)%TdgC + T_CK
     !
-    CALL DtbLogKTbl_Calc_Init(M)
+    call DtbLogKTbl_Calc_Init(M)
     !
-    !! IF(iDebug==5) WRITE(ff,'(A3,A1,A15,A1,A39,A1,I3)') &
+    !! if(iDebug==5) write(ff,'(A3,A1,A15,A1,A39,A1,I3)') &
     !! & M%Typ,T_,M%Name,T_,M%Formula,T_,N
     !
-    IF(iDebug>2) CALL Test(ff,M) !--trace
+    if(iDebug>2) call Test(ff,M) !--trace
     !
     !---------------------------------------------"fill" the linked list
     N=N+1
-    IF(N==1) THEN
-      ALLOCATE(LisLogKTbl)
-      NULLIFY(LisLogKTbl%next)
+    if(N==1) then
+      allocate(LisLogKTbl)
+      nullify(LisLogKTbl%next)
       LisLogKTbl%Value= M
       LisCur=> LisLogKTbl
-    ELSE
-      ALLOCATE(LisCur%next)
-      NULLIFY(LisCur%next%next)
+    else
+      allocate(LisCur%next)
+      nullify(LisCur%next%next)
       LisCur%next%Value=M
       LisCur=>LisCur%next
-    ENDIF
+    end if
     !--------------------------------------------/"fill" the linked list
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  DEALLOCATE(vStoik)
+  deallocate(vStoik)
   !
-  DEALLOCATE(vElement)
-  IF(fFormula>0) CLOSE(fFormula)
+  deallocate(vElement)
+  if(fFormula>0) close(fFormula)
   !
-  IF(iDebug>2) CLOSE(ff)!--trace
+  if(iDebug>2) close(ff)!--trace
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "< DtbLogKTbl_Read"
-  IF(N==0) CALL Stop_("NO SPECIES FOUND ....")
+  if(iDebug>0) write(fTrc,'(A,/)') "< DtbLogKTbl_Read"
+  if(N==0) call Stop_("NO SPECIES FOUND ....")
   !
-ENDSUBROUTINE DtbLogKTbl_Read
+end subroutine DtbLogKTbl_Read
 
-SUBROUTINE FieldList_Read( &
+subroutine FieldList_Read( &
 & L,          &
 & vStrField, &
-& vIField)
-  USE M_IoTools
+& vifield)
+  use M_IoTools
   !
-  CHARACTER(LEN=*),INTENT(INOUT):: L
-  CHARACTER(LEN=*),INTENT(IN):: vStrField(:)
-  INTEGER,INTENT(OUT):: vIField(:)
+  character(len=*),intent(inout):: L
+  character(len=*),intent(in):: vStrField(:)
+  integer,intent(out):: vifield(:)
   !
-  CHARACTER(LEN=80):: W
-  LOGICAL:: EoL
-  INTEGER:: I,J
+  character(len=80):: W
+  logical:: EoL
+  integer:: I,J
   !
-  vIField(:)= 0
+  vifield(:)= 0
   I=0
-  DO
-    CALL LinToWrd(L,W,EoL)
+  do
+    call LinToWrd(L,W,EoL)
     I=I+1
-    DO J=1,SIZE(vStrField)
-      IF( TRIM(W)==TRIM(vStrField(J)) ) THEN
-        vIField(J)= I
-        EXIT
-      ENDIF
-    END DO
-    IF(EoL) EXIT
-  END DO
+    do J=1,size(vStrField)
+      if( trim(W)==trim(vStrField(J)) ) then
+        vifield(J)= I
+        exit
+      end if
+    end do
+    if(EoL) exit
+  end do
 
-  IF(iDebug==4) THEN
-    DO I=1,SIZE(vStrField)
-      PRINT *,vIField(I),TRIM(vStrField(I))
-    ENDDO
-  ENDIF
-  !CALL PAUSE_
+  if(iDebug==4) then
+    do I=1,size(vStrField)
+      print *,vifield(I),trim(vStrField(I))
+    end do
+  end if
+  !call pause_
   !
   !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
   !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
   !&   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
-  IF(vIField(10)==0) & ! for "PARAMETERS"
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(10)))
+  if(vifield(10)==0) & ! for "PARAMETERS"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
 
-  IF(vIField(3)==0) & ! for "NAME"
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(3)))
+  if(vifield(3)==0) & ! for "NAME"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
 
-  IF(vIField(4)==0 .AND. vIField(5)==0) & ! for ECFORM/SCFORM
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(4))//"_"//TRIM(vStrField(5)))
+  if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
   !
-  !PRINT *,vIField(1),vIField(2),vIField(3),vIField(4),vIField(5),vIField(9),vIField(10)
-  !CALL PAUSE_
-END SUBROUTINE FieldList_Read
+  !print *,vifield(1),vifield(2),vifield(3),vifield(4),vifield(5),vifield(9),vifield(10)
+  !call pause_
+end subroutine FieldList_Read
 
-SUBROUTINE Test(ff,M)
-  USE M_T_Species
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_T_DtbLogKTbl
+subroutine Test(ff,M)
+  use M_T_Species
+  use M_Numeric_Const,only: Ln10
+  use M_T_DtbLogKTbl
   
-  INTEGER,INTENT(IN):: ff
-  TYPE(T_DtbLogKtbl),INTENT(IN) :: M
+  integer,intent(in):: ff
+  type(T_DtbLogKtbl),intent(in) :: M
   
-  TYPE(T_Species):: S
-  REAL(dp):: vT(1:5),vLogK(1:5),Pbar
-  INTEGER :: I
+  type(T_Species):: S
+  real(dp):: vT(1:5),vLogK(1:5),Pbar
+  integer :: I
   
   vT(1:5)= (/0.01,25.,50.,75.,100./)
   Pbar= 1.0D0
-  DO I=1,5
-    CALL DtbLogKtbl_Calc(M,vT(I)+273.15D0,Pbar,S)
+  do I=1,5
+    call DtbLogKtbl_Calc(M,vT(I)+273.15D0,Pbar,S)
     vLogK(I)= - S%G0RT /Ln10
-  ENDDO
+  end do
   
-  WRITE(ff,'(2(A,1X))',ADVANCE="NO") M%Typ,M%Name
-  WRITE(ff,'(5(G15.6,1X))',ADVANCE="NO") (vLogK(I),I=1,5)
-  IF(M%V0R>Zero) THEN
-    WRITE(ff,'(G15.6,1X)',   ADVANCE="NO") M%WeitKg /M%V0R
-  ELSE
-    WRITE(ff,'(A,1X)',   ADVANCE="NO") "_"
-  ENDIF
-  WRITE(ff,'(A,1X)') M%Formula
+  write(ff,'(2(A,1X))',advance="NO") M%Typ,M%Name
+  write(ff,'(5(G15.6,1X))',advance="NO") (vLogK(I),I=1,5)
+  if(M%V0R>Zero) then
+    write(ff,'(G15.6,1X)',   advance="NO") M%WeitKg /M%V0R
+  else
+    write(ff,'(A,1X)',   advance="NO") "_"
+  end if
+  write(ff,'(A,1X)') M%Formula
   
-END SUBROUTINE Test
+end subroutine Test
 
-SUBROUTINE DtbLogK_TPCond_Read(N)
+subroutine DtbLogK_TPCond_Read(N)
 !--
 !-- reads block TP.TABLE, build DtbLogK_vTPCond
 !--
-  USE M_IoTools !,ONLY:GetUnit,dimV
-  USE M_Files,     ONLY: NamFInn
-  USE M_Dtb_Const, ONLY: T_CK
-  USE M_T_Tpcond,  ONLY: T_TPCond
-  USE M_Fluid_Calc,ONLY: Eos_H2O_psat
+  use M_IoTools !,only:GetUnit,dimV
+  use M_Files,     only: NamFInn
+  use M_Dtb_Const, only: T_CK
+  use M_T_Tpcond,  only: T_TPCond
+  use M_Fluid_Calc,only: Eos_H2O_psat
   !
-  USE M_Dtb_Vars,    ONLY: DtbLogK_vTPCond,DtbLogK_Dim
-  USE M_T_DtbLogKTbl,ONLY: DimLogK_Max
+  use M_Dtb_Vars,    only: DtbLogK_vTPCond,DtbLogK_Dim
+  use M_T_DtbLogKTbl,only: DimLogK_Max
   !
-  INTEGER,INTENT(OUT):: N
+  integer,intent(out):: N
   !
-  LOGICAL :: EoL,Ok
-  INTEGER :: i,mDum,ios,f
-  CHARACTER(LEN=512):: L,W,W1
+  logical :: EoL,Ok
+  integer :: i,mDum,ios,f
+  character(len=512):: L,W,W1
   !
-  REAL(dp):: TdgK,Pbar,PSatBar
-  REAL(dp):: vX(dimV)
-  TYPE(T_TPCond):: vCond(dimV)
+  real(dp):: TdgK,Pbar,PSatBar
+  real(dp):: vX(dimV)
+  type(T_TPCond):: vCond(dimV)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DtbLogK_TPCond_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DtbLogK_TPCond_Read"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
   N= 0
-  Ok=.FALSE.
+  Ok=.false.
   !
   vCond(:)%TdgC= Zero
   vCond(:)%Pbar= Zero
+  vCond(:)%Name= "none"
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!')   CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!')   cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT  DoFile
+    case("ENDINPUT"); exit  DoFile
     !
-    CASE("TP.TABLE","TPTABLE")
-      Ok=  .TRUE.
+    case("TP.TABLE","TPTABLE")
+      Ok=  .true.
       N= dimV
       !
       !---------------------------------------------- read table loop --
-      DoTPtable: DO
+      DoTPtable: do
         !
-        READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,Eol)
-        IF(W(1:1)=='!') CYCLE DoTPtable
-        CALL AppendToEnd(L,W,EoL)
+        read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,Eol)
+        if(W(1:1)=='!') cycle DoTPtable
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(trim(W))
         !
-        CASE("ENDINPUT"); EXIT DoFile
-        CASE("END","ENDTPTABLE","ENDTP.TABLE"); EXIT DoTPtable
+        case("ENDINPUT"); exit DoFile
+        case("END","ENDTPTABLE","ENDTP.TABLE"); exit DoTPtable
         !
-        CASE("TDGC","TDGK", "PBAR","PMPA","TDEGC","TDEGK")
+        case("TDGC","TDGK", "PBAR","PMPA","TDEGC","TDEGK")
           !
-          !!CALL ReadRValsV(L,mDum,vX)
+          !!call ReadRValsV(L,mDum,vX)
           !
           i=0
-          DO
-            CALL LinToWrd(L,W1,EoL)
+          do
+            call LinToWrd(L,W1,EoL)
+            !print *,W1
             i=i+1
-            IF(i>DimV) EXIT
-            IF(TRIM(W1)=="PSAT") THEN
-              IF(vCond(i)%TdgC>Zero) THEN
-                CALL Eos_H2O_psat(vCond(i)%TdgC+T_CK,vX(i))
-                !PRINT *,"TdgC= ", vCond(i)%TdgC
-                !PRINT *,"psat= ", vX(i)  ;  CALL Pause_
-              ELSE
-                CALL Stop_("error in TP.TABLE: invalid TdgC for Psat computation")
-              ENDIF
-            ELSE
-              CALL WrdToReal(W1,vX(i))
-            ENDIF
-            IF(EoL) EXIT
-          ENDDO
+            if(i>DimV) exit
+            if(trim(W1)=="PSAT") then
+              if(vCond(i)%TdgC>Zero) then
+                call Eos_H2O_psat(vCond(i)%TdgC+T_CK,vX(i))
+                !print *,"TdgC= ", vCond(i)%TdgC
+                !print *,"psat= ", vX(i)  ;  call Pause_
+              else
+                call Stop_("error in TP.TABLE: invalid TdgC for Psat computation")
+              end if
+            else
+              call WrdToReal(W1,vX(i))
+            end if
+            if(EoL) exit
+          end do
           !
           mDum= i
           N=min(N,mDum)
           !
-          IF(iDebug>0) WRITE(fTrc,'(A,A1,A,2I3)') TRIM(W),T_," DIM= ", mDum, N
+          if(iDebug>0) write(fTrc,'(A,A1,A,2I3)') trim(W),T_," DIM= ", mDum, N
           !
-          SELECT CASE(TRIM(W))
-          CASE("TDGC");  vCond(:)%TdgC=vX(:)
-          CASE("TDGK");  vCond(:)%TdgC=vX(:)-T_CK
+          select case(trim(W))
+          case("TDGC");  vCond(:)%TdgC=vX(:)
+          case("TDGK");  vCond(:)%TdgC=vX(:)-T_CK
           !
-          CASE("PBAR");  vCond(:)%Pbar=vX(:)       !pressure in Bar
-          CASE("PMPA");  vCond(:)%Pbar=vX(:)*1.D-1 !MegaPascal to Bar
+          case("PBAR");  vCond(:)%Pbar=vX(:)       !pressure in Bar
+          case("PMPA");  vCond(:)%Pbar=vX(:)*1.D-1 !MegaPascal to Bar
           !
-          CASE("TDEGC"); vCond(:)%TdgC=vX(:)       ; CALL Warning_("Depreciated Keyword TDEGC")
-          CASE("TDEGK"); vCond(:)%TdgC=vX(:)-T_CK  ; CALL Warning_("Depreciated Keyword TDEGK")
+          case("TDEGC"); vCond(:)%TdgC=vX(:)       ; call Warning_("Depreciated Keyword TDEGC")
+          case("TDEGK"); vCond(:)%TdgC=vX(:)-T_CK  ; call Warning_("Depreciated Keyword TDEGK")
           !
-          END SELECT
-        !ENDCASE("TDGC",..
+          end select
+        !endcase("TDGC",..
         !
-        CASE("NAME")
+        case("NAME")
           i=0
-          DO
-            CALL LinToWrd(L,W,EoL)
+          do
+            call LinToWrd(L,W,EoL)
             i=i+1
-            IF(I>DimV) EXIT
-            vCond(i)%Name=TRIM(W)
-            IF(iDebug>0) WRITE(fTrc,'(I3,1X,A15)') i,vCond(i)%Name
-            IF(EoL) EXIT
-          ENDDO
-        !ENDCASE("NAME")
+            if(I>DimV) exit
+            vCond(i)%Name=trim(W)
+            if(iDebug>0) write(fTrc,'(I3,1X,A15)') i,vCond(i)%Name
+            if(EoL) exit
+          end do
+        !endcase("NAME")
         !
-        CASE DEFAULT; CALL Stop_(TRIM(W)//"<<unknown Keyword...")
+        case default; call Stop_(trim(W)//"<<unknown Keyword...")
         !
-        END SELECT !ENDIF
-        !ENDIF
-      ENDDO DoTPtable
+        end select !end if
+        !end if
+      end do DoTPtable
       !---------------------------------------------/ read table loop --
-    !END CASE("ENDTP.TABLE")
-    END SELECT
+    !end case("ENDTP.TABLE")
+    end select
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(Ok) THEN
-    !! IF(any(vCond(1:N)%TdgC<Zero)) CALL Stop_("all temperatures should be >0 !!!")
-    IF(ANY(vCond(1:N)%Pbar<1.D-9)) CALL Stop_("all pressures should be >0 !!!")
+  if(Ok) then
+    !! if(any(vCond(1:N)%TdgC<Zero)) call Stop_("all temperatures should be >0 !!!")
+    if(ANY(vCond(1:N)%Pbar<1.D-9)) call Stop_("all pressures should be >0 !!!")
     !
-    DO I=1,N
+    do I=1,N
       TdgK= vCond(I)%TdgC +T_CK
       Pbar= vCond(I)%Pbar
-      IF(TdgK <Zero) TdgK= 200.0D0 ! Zero
+      if(TdgK <Zero) TdgK= 200.0D0 ! Zero
       !
       !-- check that pressure is not below
       !-- the vapor saturation curve for pure water
       !-- critical point H2O- 647.25D0 TdgK / 220.55D0 Pbar
-      IF (TdgK<=647.25D0) THEN; CALL Eos_H2O_psat(TdgK,PSatBar)
-      ELSE                    ; PSatBar= 220.55D0
-      ENDIF
-      !-- IF pressure is too low, adjust to saturation pressure at TdgK
-      IF(Pbar<PSatBar) Pbar=PSatBar
+      if (TdgK<=647.25D0) then; call Eos_H2O_psat(TdgK,PSatBar)
+      else                    ; PSatBar= 220.55D0
+      end if
+      !-- if pressure is too low, adjust to saturation pressure at TdgK
+      if(Pbar<PSatBar) Pbar=PSatBar
       !
       vCond(I)%TdgC= TdgK -T_CK
       vCond(I)%Pbar= Pbar
-    ENDDO
+    end do
     !
-    IF(N>DimLogK_Max) N= DimLogK_Max
+    if(N>DimLogK_Max) N= DimLogK_Max
     !
     DtbLogK_Dim= N
     !
-    IF(ALLOCATED(DtbLogK_vTPCond)) DEALLOCATE(DtbLogK_vTPCond)
-    ALLOCATE(DtbLogK_vTPCond(N))
+    if(allocated(DtbLogK_vTPCond)) deallocate(DtbLogK_vTPCond)
+    allocate(DtbLogK_vTPCond(N))
     DtbLogK_vTPCond(1:N)= vCond(1:N)
     !
-  ENDIF
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ DtbLogK_TPCond_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbLogK_TPCond_Read"
   !
-ENDSUBROUTINE DtbLogK_TPCond_Read
+end subroutine DtbLogK_TPCond_Read
 
-ENDMODULE M_Dtb_Read_DtbLogKTbl
+end module M_Dtb_Read_DtbLogKTbl

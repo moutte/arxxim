@@ -1,344 +1,347 @@
-MODULE M_Dtb_Read_DtbMinThr
-  USE M_Kinds
-  USE M_IoTools
-  USE M_Trace
-  USE M_Dtb_Read_Vars
+module M_Dtb_Read_DtbMinThr
+  use M_Kinds
+  use M_IoTools
+  use M_Trace
+  use M_Dtb_Read_Vars
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: DtbMinThr_Build
-  PUBLIC:: DtbMinThr_Read
-  PUBLIC:: DtbMinThr_Read_Line
-  PUBLIC:: DtbMinThr_ToLine
+  public:: DtbMinThr_Build
+  public:: DtbMinThr_Read
+  public:: DtbMinThr_Read_Line
+  public:: DtbMinThr_ToLine
   !
-  TYPE(T_LisMinThr),POINTER,SAVE:: LisCur, LisPrev
+  type(T_LisMinThr),pointer,save:: LisCur, LisPrev
 
-CONTAINS
+contains
 
-SUBROUTINE DtbMinTHR_Build
+subroutine DtbMinTHR_Build
 !--
 !-- -> build vDtbMinThr
 !-- transform LinkedList LisMinThr to mineral table vDtbMinThr
 !--
-  USE M_T_Element,  ONLY: T_Element,Formula_Read
-  USE M_Dtb_Vars,   ONLY: vDtbMinThr
+  use M_T_Element,  only: T_Element,Formula_Read
+  use M_Dtb_Vars,   only: vDtbMinThr
   !
-  INTEGER:: I
+  integer:: I
   !
-  IF(iDebug==5) PRINT '(A)',"< DtbMinTHR_Build"
+  if(iDebug==5) print '(A)',"< DtbMinTHR_Build"
   !
-  IF(ALLOCATED(vDtbMinThr)) DEALLOCATE(vDtbMinThr); ALLOCATE(vDtbMinThr(nMinThr))
+  if(allocated(vDtbMinThr)) deallocate(vDtbMinThr); allocate(vDtbMinThr(nMinThr))
   LisCur=>LisMinThr
   I=0
-  DO WHILE (ASSOCIATED(LisCur))
+  do while (associateD(LisCur))
     I=I+1
     vDtbMinThr(I)=LisCur%Value
-    IF(iDebug==5) PRINT '(2A)', vDtbMinThr(I)%Name,TRIM(vDtbMinThr(I)%Num) !; PAUSE
+    if(iDebug==5) print '(2A)', vDtbMinThr(I)%Name,trim(vDtbMinThr(I)%Num) !; pause
     LisPrev=>LisCur
     LisCur=> LisCur%next
-    DEALLOCATE(LisPrev)
-  ENDDO
+    deallocate(LisPrev)
+  end do
   !
-  IF(iDebug==5) PRINT '(A)',"</ DtbMinTHR_Build"
-  IF(iDebug==5) CALL Pause_
+  if(iDebug==5) print '(A)',"</ DtbMinTHR_Build"
+  if(iDebug==5) call Pause_
   !
-  RETURN
-ENDSUBROUTINE DtbMinTHR_Build
+  return
+end subroutine DtbMinTHR_Build
 
-SUBROUTINE DtbMinThr_Read(F,vEle,N)
+subroutine DtbMinThr_Read(F,vEle,N)
 !--
 !-- -> build or Append LisMinThr
-!-- reads thermodyn. data from (modified) theriak-compatible datafile
+!-- reads thermodyn. data from (MODIFIED) theriak-compatible datafile
 !--
-  USE M_T_Element,  ONLY: T_Element,Element_Index
-  USE M_T_DtbMinThr,ONLY: DtbMinThr_Zero
-  USE M_Files,      ONLY: DirDtbLog,Files_Index_Write
-  USE M_Dtb_Read_Tools
-  USE M_Dtb_Vars,   ONLY: DtbFormat
+  use M_T_Element,  only: T_Element,Element_Index
+  use M_T_DtbMinThr,only: DtbMinThr_Zero
+  use M_Files,      only: DirDtbLog,Files_Index_Write
+  use M_Dtb_Read_Tools
+  use M_Dtb_Vars,   only: DtbFormat
   !
-  INTEGER,INTENT(IN):: F !input file
-  TYPE(T_Element),INTENT(IN):: vEle(:)
-  INTEGER,INTENT(INOUT):: N
+  integer,intent(in):: F !input file
+  type(T_Element),intent(in):: vEle(:)
+  integer,intent(inout):: N
   !
-  CHARACTER(LEN=512):: L,W,Wb
-  LOGICAL :: EoL
-  LOGICAL :: bMin, bGas
-  REAL(dp):: X
-  INTEGER :: ios,I,iEl,FF,ieO_
-  TYPE(T_DtbMinThr) :: M
+  character(len=512):: L,W,Wb
+  logical :: EoL
+  logical :: bMin, bGas
+  real(dp):: X
+  integer :: ios,I,iEl,FF,ieO_
+  type(T_DtbMinThr) :: M
   !
-  CHARACTER(LEN=6):: CodFormula ! SCFORM | ECFORM
+  character(len=6):: CodFormula ! SCFORM | ECFORM
   ! SCFORM = compact formula,  e.g. SiO2
   ! ECFORM = extended formula, e.g. SI(1)O(2)
-  CHARACTER(LEN=2),DIMENSION(:),ALLOCATABLE:: vElement
-  INTEGER:: fFormula
-  LOGICAL:: EcformIsOk
+  character(len=2),dimension(:),allocatable:: vElement
+  integer:: fFormula
+  logical:: EcformIsOk
   !
-  IF(iDebug>0) WRITE(fTrc,"(/,A)") "< DtbMinThr_Read"
+  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_Read"
   !
   CodFormula= "ECFORM" ! is default value
-  ALLOCATE(vElement(SIZE(vEle)+3))
-  CALL DtbRead_Build_vElement(vEle,vElement)
+  allocate(vElement(size(vEle)+3))
+  call DtbRead_Build_vElement(vEle,vElement)
   !
   fFormula= 0
   !
-  !------------------------------------------------------------ trace --
-  IF(iDebug>2) THEN
-    WRITE(fTrc,'(A)') &
-    & "stoikio in "//TRIM(DirDtbLog)//"min_thr_stoik.log"
-    CALL GetUnit(FF)
-    OPEN(FF,FILE=TRIM(DirDtbLog)//"min_thr_stoik.log")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirDtbLog)//"min_thr_stoik.log",&
+  !--------------------------------------------------------------- trace
+  if(iDebug>2) then
+    write(fTrc,'(A)') &
+    & "stoikio in "//trim(DirDtbLog)//"min_thr_stoik.log"
+    call GetUnit(FF)
+    open(FF,file=trim(DirDtbLog)//"min_thr_stoik.log")
+    call Files_Index_Write(fHtm,&
+    & trim(DirDtbLog)//"min_thr_stoik.log",&
     & "check species stoikio of min.species from theriak-type database")
-    WRITE(FF,"(A15,A1)",ADVANCE="NO") "NAME",T_
-    DO iEl=1,SIZE(vEle)
-      WRITE(FF,"(A3,A1)",ADVANCE="NO") vEle(iEl)%NamEl,T_
-    ENDDO
-    WRITE(FF,"(A7,A1,A7)") "Div",T_,"FORMULA"
-  ENDIF
-  !-----------------------------------------------------------/ trace --
+    write(FF,"(A15,A1)",advance="NO") "NAME",T_
+    do iEl=1,size(vEle)
+      write(FF,"(A3,A1)",advance="NO") vEle(iEl)%NamEl,T_
+    end do
+    write(FF,"(A7,A1,A7)") "Div",T_,"FORMULA"
+  end if
+  !--------------------------------------------------------------/ trace
   !
-  FilCode=TRIM(DtbFormat) !-> default value
+  FilCode=trim(DtbFormat) !-> default value
   ieO_= Element_Index("O__",vEle)
   !
   M%Name= "ZZZ"
   M%Num=  "0"
   !
-  DoFile: DO
+  DoFile: do
     
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=="!") CYCLE DoFile
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=="!") cycle DoFile
+    call AppendToEnd(L,W,EoL)
     
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("FORMULA")
-      CALL LinToWrd(L,W,EoL)
-      CodFormula= TRIM(W)
-      IF(iDebug>2 .and. CodFormula=="SCFORM") THEN
-        CALL GetUnit(fFormula)
-        OPEN(fFormula,file="debug_formula.log")
-        WRITE(fFormula,'(A,/)') "resuts of formula conversion"
-      ENDIF
-      CYCLE DoFile
+    case("FORMULA")
+      call LinToWrd(L,W,EoL)
+      CodFormula= trim(W)
+      if(iDebug>2 .and. CodFormula=="SCFORM") then
+        call GetUnit(fFormula)
+        open(fFormula,file="debug_formula.log")
+        write(fFormula,'(A,/)') "resuts of formula conversion"
+      end if
+      cycle DoFile
       !
-    CASE("CODE")
-      CALL LinToWrd(L,W,EoL)
-      FilCode=TRIM(W)
-      CYCLE DoFile
+    case("CODE")
+      call LinToWrd(L,W,EoL)
+      FilCode=trim(W)
+      cycle DoFile
     !_
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
     !
-    CASE("END","ENDSPECIES"); EXIT DoFile
+    case("END","ENDSPECIES"); exit DoFile
     !
-    CASE("MINERAL","GAS")
+    case("MINERAL","GAS")
     
-      SELECT CASE(W)
-      CASE("MINERAL") ; bGas=.FALSE.; bMin=.TRUE.
-      CASE("GAS")     ; bGas=.TRUE.;  bMin=.FALSE.
-      END SELECT
+      select case(W)
+      case("MINERAL") ; bGas=.false.; bMin=.true.
+      case("GAS")     ; bGas=.true.;  bMin=.false.
+      end select
+
+      call DtbMinThr_Zero(M)
       
-      DoReadMin: DO
+      DoReadMin: do
         
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
         
-        IF(W(1:1)=="!") CYCLE DoReadMin !skip comment lines
+        if(W(1:1)=="!") cycle DoReadMin !skip comment lines
         
-        CALL AppendToEnd(L,W,EoL)
+        call AppendToEnd(L,W,EoL)
         
-        SELECT CASE(W)
-        CASE("ENDINPUT"); EXIT DoFile
-        CASE("ENDSPECIES"); EXIT DoFile
-        CASE("END","ENDMINERAL","ENDGAS"); CYCLE DoFile
-        END SELECT
+        select case(W)
+        case("ENDINPUT"); exit DoFile
+        case("ENDSPECIES"); exit DoFile
+        case("END","ENDMINERAL","ENDGAS"); cycle DoFile
+        end select
         
-        IF(W(1:1)/="&") THEN
-        !IF first char is not "&", the line may contain name, formula, etc
+        if(W(1:1)/="&") then
+        !if first char is not "&", the line may contain name, formula, etc
         
-          IF(M%Name/="ZZZ") THEN !before proceeding,  SAVE current M in list
-            CALL Save_Record
-            CALL DtbMinThr_Zero(M)
-          ENDIF
-          IF(bGas) M%Typ="GAS"
-          IF(bMin) M%Typ="MIN"
-          M%Name=TRIM(W)
+          if(M%Name/="ZZZ") then !before proceeding,  save current M in list
+            call Save_Record
+            call DtbMinThr_Zero(M)
+          end if
+          if(bGas) M%Typ="GAS"
+          if(bMin) M%Typ="MIN"
+          M%Name=trim(W)
           
-          !--------------------------------processing compact formulas--
-          IF(CodFormula=="SCFORM") THEN
-            CALL LinToWrd(L,W,EoL,"NO")
-            !-> compact formula, CHARACTER CASE is conserved :!!
-            CALL DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-            IF(.not.EcformIsOk) THEN !CYCLE DoReadMin
-              CALL Stop_("!!! Cannot translate "//TRIM(W))
-            ENDIF
-            CALL Str_Upper(W)
-            M%Formula=TRIM(W)
-          ELSE
-            CALL LinToWrd(L,W,EoL)
-            M%Formula= TRIM(W)
-          ENDIF
-          !--------------------------------------------------------end--
+          !----------------------------------processing compact formulas
+          if(CodFormula=="SCFORM") then
+            call LinToWrd(L,W,EoL,"NO")
+            !-> compact formula, character case is conserved :!!
+            call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
+            if(.not.EcformIsOk) then !cycle DoReadMin
+              call Stop_("!!! Cannot translate "//trim(W))
+            end if
+            call Str_Upper(W)
+            M%Formula=trim(W)
+          else
+            call LinToWrd(L,W,EoL)
+            M%Formula= trim(W)
+          end if
+          !----------------------------------------------------------end
           
-          CALL LinToWrd(L,W,EoL) !; M%Abbr=TRIM(W)
+          call LinToWrd(L,W,EoL) !; M%Abbr=trim(W)
           !
-          CYCLE DoReadMin
+          cycle DoReadMin
           
-        ENDIF
+        end if
         
-        IF(W(1:1)=="&") THEN
+        if(W(1:1)=="&") then
         ! if first char is "&",
         ! then the line is the continuation of preceding, i.e. contains data
           
-          CALL LinToWrd(L,W,EoL)
+          call LinToWrd(L,W,EoL)
           
-          SELECT CASE(TRIM(W))
+          select case(trim(W))
           
-          CASE("ST")
-            CALL ReadRVals5(L,M%G0R,M%H0R,M%S0_,M%V0R,X)
+          case("ST")
+            call ReadRVals5(L,M%G0R,M%H0R,M%S0_,M%V0R,X)
           
-          CASE("C1","CP1")
-            CALL ReadRVals5(L,M%K1,M%K4,M%K3,M%K8,X)
+          case("C1","CP1")
+            call ReadRVals5(L,M%K1,M%K4,M%K3,M%K8,X)
+            !print *,"M%K8,M%K9",M%K8,M%K9
             !K1,K4,K3,K8
-          CASE("C2","CP2")
-            CALL ReadRVals5(L,M%K6,M%K2,M%K5,M%K7,M%K9)
+          case("C2","CP2")
+            call ReadRVals5(L,M%K6,M%K2,M%K5,M%K7,M%K9)
             !Cp= K6/T + K2*T + K5*TT + K7*SQT + K9*TT*T
-          CASE("C3","CP3")
-              CALL ReadRVals5(L,M%K1,M%K2,M%K3,M%K4,X)
+          case("C3","CP3")
+              call ReadRVals5(L,M%K1,M%K2,M%K3,M%K4,X)
           
-          CASE("V1")
+          case("V1")
             M%codVol=1
-            CALL ReadRVals5(L,M%VTA,M%VTB,M%VPA,M%VPB,X)
+            call ReadRVals5(L,M%VTA,M%VTB,M%VPA,M%VPB,X)
             M%VTA=M%VTA*M%V0R/1.0D5 ; M%VTB=M%VTB*M%V0R/1.0D5
             M%VPA=M%VPA*M%V0R/1.0D5 ; M%VPB=M%VPB*M%V0R/1.0D8
-          CASE("VHP")
+          case("VHP")
             M%codVol=4
-            CALL ReadRVals5(L,M%VTA,M%VTB,M%TKRI,M%SMA,M%VPA)
-          CASE("VH2")
+            call ReadRVals5(L,M%VTA,M%VTB,M%TKRI,M%SMA,M%VPA)
+          case("VH2")
             M%codVol=4
-            CALL ReadRVals5(L,M%D1, M%D2, M%D3,X,X)
+            call ReadRVals5(L,M%D1, M%D2, M%D3,X,X)
           
-          CASE("D1")
-            M%DIS=.TRUE.
-            CALL ReadRVals5(L,M%D1, M%D4, M%D3, M%D8, M%D6)
-          CASE("D2")
-            CALL ReadRVals5(L,M%D2, M%D5, M%TD0,M%TDMAX,M%VADJ)
+          case("D1")
+            M%DIS=.true.
+            call ReadRVals5(L,M%D1, M%D4, M%D3, M%D8, M%D6)
+          case("D2")
+            call ReadRVals5(L,M%D2, M%D5, M%TD0,M%TDMAX,M%VADJ)
           
-          CASE("TR1","T1","TR3","T3") !for Berman dtbase"s
+          case("TR1","T1","TR3","T3") !for Berman dtbase"s
             M%nLanda=M%nLanda+1; I=M%nLanda
-            CALL ReadRVals5(L,M%TQ1B(I),M%TRE(I),M%ASPK(I),M%BSPK(I),M%DHTR(I))
-          CASE("TR2","T2")
-            IF (M%nLanda>0) THEN
+            call ReadRVals5(L,M%TQ1B(I),M%TRE(I),M%ASPK(I),M%BSPK(I),M%DHTR(I))
+          case("TR2","T2")
+            if (M%nLanda>0) then
               I=M%nLanda
-              CALL ReadRVals5(L,M%TEQ(I),M%DVTR(I),M%DVDT(I),M%DVDP(I),X)
-            ENDIF
+              call ReadRVals5(L,M%TEQ(I),M%DVTR(I),M%DVDT(I),M%DVDP(I),X)
+            end if
           
-          CASE("REDKWON","VDWAALS")
+          case("REDKWON","VDWAALS")
           ! Redlich-Kwong, VanDerWaals
-            M%CodGas=TRIM(W)
-            CALL ReadRVals5(L,M%AA0,M%AAT,M%BB0,M%BBT,X)
-          CASE("SOAVE","PENGROB")
+            M%CodGas=trim(W)
+            call ReadRVals5(L,M%AA0,M%AAT,M%BB0,M%BBT,X)
+          case("SOAVE","PENGROB")
           ! Soave Cubic, Peng Robinson cubic
-            M%CodGas=TRIM(W)
-            CALL ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
-            !!WRITE(fTrc,'(A,3G15.6)') M%CodGas,M%TCrit,M%PCrit,M%ACentric
-          CASE("PRSV")
+            M%CodGas=trim(W)
+            call ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
+            !!write(fTrc,'(A,3G15.6)') M%CodGas,M%TCrit,M%PCrit,M%ACentric
+          case("PRSV")
           ! 
             M%CodGas="PRSV"
-            CALL ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
+            call ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
           
-          CASE("SPECIAL")
-            CALL LinToWrd(L,Wb,EoL); M%Special= TRIM(Wb)
+          case("SPECIAL")
+            call LinToWrd(L,Wb,EoL); M%Special= trim(Wb)
           
-          !CASE("V2"); M%codVol=2; CALL ReadRVals6(L,M%VAA,M%VAB,M%VB,            X,X,X)  !VO2=.TRUE.
-          !CASE("V3"); M%codVol=3; CALL ReadRVals6(L,M%VL0,M%VLA,M%VLN, M%VL2,     X,X)   !VO3=.TRUE.
-          !CASE("AQ1") K1,K2,K8,K9,K7  AQU=.TRUE. PROVID="AQU"
-          !CASE("AQ2") D1,D2,D3,D4
-          !CASE("AQP") D1,D2           AQU=.TRUE. PROVID="AQP"
-          !CASE("SPC") CASE            SPC=.TRUE.
-          !CASE("TL1") THEN; M%TL1=.TRUE.; CALL ReadRVals6(L,M%TKRI,M%SMA,X,X,X,X); ENDIF !!!obsolete ???
+          !case("V2"); M%codVol=2; call ReadRVals6(L,M%VAA,M%VAB,M%VB,            X,X,X)  !VO2=.true.
+          !case("V3"); M%codVol=3; call ReadRVals6(L,M%VL0,M%VLA,M%VLN, M%VL2,     X,X)   !VO3=.true.
+          !case("AQ1") K1,K2,K8,K9,K7  AQU=.true. PROVID="AQU"
+          !case("AQ2") D1,D2,D3,D4
+          !case("AQP") D1,D2           AQU=.true. PROVID="AQP"
+          !case("SPC") case            SPC=.true.
+          !case("TL1") then; M%TL1=.true.; call ReadRVals6(L,M%TKRI,M%SMA,X,X,X,X); end if !!!obsolete ???
           
-          END SELECT
+          end select
           
-        ENDIF !(W(1:1)=="&")
+        end if !(W(1:1)=="&")
       
-      ENDDO DoReadMin
+      end do DoReadMin
       
-    !ENDCASE("MINERAL","GAS")
+    !endcase("MINERAL","GAS")
       
-    END SELECT
+    end select
     
-  ENDDO DoFile
+  end do DoFile
   !
-  IF(M%Name/="ZZZ") CALL Save_Record !Save last record
+  if(M%Name/="ZZZ") call Save_Record !Save last record
   !
-  DEALLOCATE(vElement)
-  IF(fFormula>0) CLOSE(fFormula)
+  deallocate(vElement)
+  if(fFormula>0) close(fFormula)
   !
-  IF(iDebug>2) CLOSE(FF)
-  IF(iDebug>0) WRITE(fTrc,"(A,/)") "</ DtbMinThr_Read"
+  if(iDebug>2) close(FF)
+  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
   
-  RETURN
+  return
   !
-CONTAINS
+contains
 
-SUBROUTINE Save_Record
-  USE M_T_Element,ONLY: Formula_Read,Formula_Build
+subroutine Save_Record
+  use M_T_Element,only: Formula_Read,Formula_Build
   !
-  CHARACTER(LEN=4)  :: ICode
-  CHARACTER(LEN=512):: sFormul
-  INTEGER,DIMENSION(1:SIZE(vEle))::vStoik !for Formula_Read
-  LOGICAL :: fOk
-  INTEGER :: ZSp,Div
+  character(len=4)  :: ICode
+  character(len=512):: sFormul
+  integer,dimension(1:size(vEle))::vStoik !for Formula_Read
+  logical :: fOk
+  integer :: ZSp,Div
   !
-  CALL Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
-  IF(fOk) THEN
+  call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+  if(fOk) then
     !
     N=N+1
-    CALL IntToStr4(N,ICode)
-    M%Num=TRIM(FilCode)//"_"//TRIM(ICode)
+    call IntToStr4(N,ICode)
+    M%Num=trim(FilCode)//"_"//trim(ICode)
     !
-    M%S0Ele= DOT_PRODUCT(vStoik(:), vEle(:)%S0) /REAL(Div) !in Joule
-    M%WeitKg=DOT_PRODUCT(vStoik(:), vEle(:)%WeitKg) /REAL(Div)
+    M%S0Ele= dot_product(vStoik(:), vEle(:)%S0) /real(Div) !in Joule
+    M%WeitKg=dot_product(vStoik(:), vEle(:)%WeitKg) /real(Div)
     M%Div= Div
     !
-    IF(N==1) THEN
-      ALLOCATE(LisMinThr)
-      NULLIFY(LisMinThr%next)
+    if(N==1) then
+      allocate(LisMinThr)
+      nullify(LisMinThr%next)
       LisMinThr%Value=M
       LisCur=> LisMinThr
-    ELSE
-      ALLOCATE(LisCur%next)
-      NULLIFY(LisCur%next%next)
+    else
+      allocate(LisCur%next)
+      nullify(LisCur%next%next)
       LisCur%next%Value=M
       LisCur=> LisCur%next
-    ENDIF
+    end if
     !
-    IF(iDebug>2) THEN
-      WRITE(FF,"(A15,A1)",ADVANCE="NO") M%Name,T_
-      DO iEl=1,SIZE(vEle)
-        WRITE(FF,"(I5,A1)",ADVANCE="NO") vStoik(iEl),T_
-      ENDDO
+    if(iDebug>2) then
+      write(FF,"(A15,A1)",advance="NO") M%Name,T_
+      do iEl=1,size(vEle)
+        write(FF,"(I5,A1)",advance="NO") vStoik(iEl),T_
+      end do
       !build new formula, with fixed element order
-      CALL Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
+      call Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
       !!sFormul=""
-      !!DO iEl=1,SIZE(vEle)
-      !!  IF(vStoik(iEl)>0) sFormul=TRIM(sFormul)//TRIM(vEle(iEl)%NamEl)//""
-      !!ENDDO
-      WRITE(FF,"(I5,A1,A39,A1,A15,A1,A)") &
-      & M%Div,T_,M%Formula,T_,M%Name,T_,TRIM(sFormul)
-    ENDIF
+      !!do iEl=1,size(vEle)
+      !!  if(vStoik(iEl)>0) sFormul=trim(sFormul)//trim(vEle(iEl)%NamEl)//""
+      !!end do
+      write(FF,"(I5,A1,A39,A1,A15,A1,A)") &
+      & M%Div,T_,M%Formula,T_,M%Name,T_,trim(sFormul)
+    end if
     !
-  ENDIF
-ENDSUBROUTINE Save_Record
+  end if
+end subroutine Save_Record
 
-ENDSUBROUTINE DtbMinThr_Read
+end subroutine DtbMinThr_Read
 
-SUBROUTINE DtbMinThr_Read_Line(F,vEle,N)
+subroutine DtbMinThr_Read_Line(F,vEle,N)
 !--
 !---> build or Append LisMinThr
 !--
@@ -356,442 +359,442 @@ SUBROUTINE DtbMinThr_Read_Line(F,vEle,N)
 !-- each with a code (ST,C1,...) on column 1 and data on columns 2..6
 !-----------------------------------------------------------------------
 
-  USE M_T_Element,  ONLY: T_Element,Element_Index
-  USE M_T_Element,  ONLY: Formula_Read
-  USE M_T_DtbMinThr,ONLY: DtbMinThr_Zero
-  USE M_Files,      ONLY: DirDtbLog,Files_Index_Write
-  USE M_Dtb_Read_Tools
-  USE M_Dtb_Vars,   ONLY: DtbFormat
+  use M_T_Element,  only: T_Element,Element_Index
+  use M_T_Element,  only: Formula_Read
+  use M_T_DtbMinThr,only: DtbMinThr_Zero
+  use M_Files,      only: DirDtbLog,Files_Index_Write
+  use M_Dtb_Read_Tools
+  use M_Dtb_Vars,   only: DtbFormat
   !
-  INTEGER,        INTENT(IN):: F !input file
-  TYPE(T_Element),INTENT(IN):: vEle(:)
+  integer,        intent(in):: F !input file
+  type(T_Element),intent(in):: vEle(:)
   !
-  INTEGER,        INTENT(INOUT):: N
+  integer,        intent(inout):: N
   !
-  CHARACTER(LEN=512):: L,W,Wb
-  LOGICAL :: EoL
-  REAL(dp):: X
-  INTEGER :: ios,I,iEl,FF,ieO_,iLine
-  TYPE(T_DtbMinThr) :: M
-  !TYPE(T_LisMinThr),POINTER,SAVE:: LisCur
+  character(len=512):: L,W,Wb
+  logical :: EoL
+  real(dp):: X
+  integer :: ios,I,iEl,FF,ieO_,iLine
+  type(T_DtbMinThr) :: M
+  !type(T_LisMinThr),pointer,save:: LisCur
   !
   !--- for header processing --
-  LOGICAL :: IsHeader
-  INTEGER,PARAMETER:: nField= 10
-  CHARACTER(LEN=12):: vStrField(1:nField)
+  logical :: IsHeader
+  integer,parameter:: nField= 10
+  character(len=12):: vStrField(1:nField)
   ! vStrField contains names of all possible fields in a database
-  INTEGER :: vIField(1:nField)
-  ! CHARACTER(LEN=12):: vStrUnit(1:nField)
+  integer :: vifield(1:nField)
+  ! character(len=12):: vStrUnit(1:nField)
   !---/ for header processing --
   !
   !--- for Formula_Read
-  INTEGER :: vStoik(1:SIZE(vEle))
-  LOGICAL :: fOk
-  INTEGER :: ZSp,Div
+  integer :: vStoik(1:size(vEle))
+  logical :: fOk
+  integer :: ZSp,Div
   !---/
   !
   !--- for formula translation --
-  CHARACTER(LEN=6):: CodFormula
+  character(len=6):: CodFormula
   ! CodFormula is either "SCFORM" or "ECFORM" (names inherited from SUPCRT files):
   !   SCFORM = compact formula,  e.g. SiO2
   !   ECFORM = extended formula, e.g. SI(1)O(2)
-  CHARACTER(LEN=2),ALLOCATABLE:: vElement(:)  !
-  INTEGER:: fFormula
-  LOGICAL:: EcformIsOk
+  character(len=2),allocatable:: vElement(:)  !
+  integer:: fFormula
+  logical:: EcformIsOk
   !---/
   !
-  IF(iDebug>0) WRITE(fTrc,"(/,A)") "< DtbMinThr_Read_line"
+  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_Read_line"
   !
   !--- for formula translation --
   CodFormula= "ECFORM" ! is default value
-  ALLOCATE(vElement(SIZE(vEle)+3))
-  CALL DtbRead_Build_vElement(vEle,vElement)
+  allocate(vElement(size(vEle)+3))
+  call DtbRead_Build_vElement(vEle,vElement)
   fFormula= 0
   !---/
   !
-  ! IF(N>0) LisCur=> LisMinThr
+  ! if(N>0) LisCur=> LisMinThr
   !
   !------------------------------------------------------------ trace --
-  IF(iDebug<3) THEN
+  if(iDebug<3) then
     FF= 0
-  ELSE
+  else
     !
-    WRITE(fTrc,'(A)') &
-    & "stoikio in "//TRIM(DirDtbLog)//"min_thr_stoik.log"
+    write(fTrc,'(A)') &
+    & "stoikio in "//trim(DirDtbLog)//"min_thr_stoik.log"
     !
-    CALL GetUnit(FF)
-    OPEN(FF,FILE=TRIM(DirDtbLog)//"min_thr_stoik.log")
+    call GetUnit(FF)
+    open(FF,file=trim(DirDtbLog)//"min_thr_stoik.log")
     !
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirDtbLog)//"min_thr_stoik.log",&
+    call Files_Index_Write(fHtm,&
+    & trim(DirDtbLog)//"min_thr_stoik.log",&
     & "check species stoikio of min.species from theriak-type database")
     !
-    WRITE(FF,"(A15,A1)",ADVANCE="NO") "NAME",T_
-    DO iEl=1,SIZE(vEle)
-      WRITE(FF,"(A3,A1)",ADVANCE="NO") vEle(iEl)%NamEl,T_
-    ENDDO
-    WRITE(FF,"(A7,A1,A7)") "Div",T_,"FORMULA"
+    write(FF,"(A15,A1)",advance="NO") "NAME",T_
+    do iEl=1,size(vEle)
+      write(FF,"(A3,A1)",advance="NO") vEle(iEl)%NamEl,T_
+    end do
+    write(FF,"(A7,A1,A7)") "Div",T_,"FORMULA"
     !
-  ENDIF
+  end if
   !-----------------------------------------------------------/ trace --
   !
-  FilCode= TRIM(DtbFormat) !-> default value
+  FilCode= trim(DtbFormat) !-> default value
   iLine= 0
   ieO_= Element_Index("O__",vEle)
   !
-  !------------------------------ initialize vStrField(:), vIField(:) --
+  !------------------------------ initialize vStrField(:), vifield(:) --
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
   &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
-  L= "TYPE NAME ECFORM SKIP SOURCE SKIP PARAMETERS"
+  L= "TYPE NAME ECFORM SKIP SOURCE SKIP parameterS"
   !
-  !IF(iDebug==4) PRINT *,"< Default values"
-  CALL FieldList_Read(L,vStrField,vIField)
-  !IF(iDebug==4) PRINT *,"</ Default values"
+  !if(iDebug==4) print *,"< Default values"
+  call FieldList_Read(L,vStrField,vifield)
+  !if(iDebug==4) print *,"</ Default values"
   !---/ scan default field list
   !
-  IF(vIField(4)/=0 .AND. fFormula==0 .AND. iDebug>2) THEN
+  if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
   ! -> files contains compact formulas
-    CALL GetUnit(fFormula)
-    OPEN(fFormula,file="debug_formula.log")
-    WRITE(fFormula,'(A,/)') "resuts of formula conversion"
-  ENDIF
-  !-----------------------------/ initialize vStrField(:), vIField(:) --
+    call GetUnit(fFormula)
+    open(fFormula,file="debug_formula.log")
+    write(fFormula,'(A,/)') "resuts of formula conversion"
+  end if
+  !-----------------------------/ initialize vStrField(:), vifield(:) --
   !
   !------------------------------- build a linked list of all species --
   !----------------------------- consistent with current element list --
-  DoFile: DO
+  DoFile: do
 
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=="!") CYCLE DoFile
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=="!") cycle DoFile
+    call AppendToEnd(L,W,EoL)
     !
     !---------------------------------------- read header, if present --
     !------ if the line begins with any member of array vStrField(:), --
     !------------------------------ then it contains the line headers --
-    IsHeader= .FALSE.
-    DO I=1,nField
-      IF(TRIM(W)==TRIM(vStrField(I))) THEN
-        IsHeader= .TRUE.
-        EXIT
-      ENDIF
-    END DO
+    IsHeader= .false.
+    do I=1,nField
+      if(trim(W)==trim(vStrField(I))) then
+        IsHeader= .true.
+        exit
+      end if
+    end do
     !
-    IF(IsHeader) THEN
-      L= TRIM(W)//" "//TRIM(L)
-      !IF(iDebug==4) PRINT *,"< values from file"
-      CALL FieldList_Read(L,vStrField,vIField)
-      !IF(iDebug==4) PRINT *,"</ values from file"
+    if(IsHeader) then
+      L= trim(W)//" "//trim(L)
+      !if(iDebug==4) print *,"< values from file"
+      call FieldList_Read(L,vStrField,vifield)
+      !if(iDebug==4) print *,"</ values from file"
 
-      IF(vIField(4)/=0 .AND. fFormula==0 .AND. iDebug>2) THEN
-        CALL GetUnit(fFormula)
-        OPEN(fFormula,file="debug_formula.log")
-        WRITE(fFormula,'(A,/)') "results of formula conversion"
-      ENDIF
+      if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
+        call GetUnit(fFormula)
+        open(fFormula,file="debug_formula.log")
+        write(fFormula,'(A,/)') "results of formula conversion"
+      end if
 
-      CYCLE DoFile
-    ENDIF
+      cycle DoFile
+    end if
     !---------------------------------------/ read header, if present --
     !
     !------------------------------------- process first word of line --
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT")
-      EXIT DoFile
+    case("ENDINPUT")
+      exit DoFile
     !
-    CASE("END","ENDSPECIES")
-      EXIT DoFile
+    case("END","ENDSPECIES")
+      exit DoFile
     !
-    CASE DEFAULT
+    case default
       ! in other cases, the line (may) contain data
       ! -> re-assemble W at beginning of L for further processing
-      L= TRIM(W)//" "//TRIM(L)
+      L= trim(W)//" "//trim(L)
     !
-    ENDSELECT
+    end select
     !------------------------------------/ process first word of line --
     !
-    CALL DtbMinThr_Zero(M)
+    call DtbMinThr_Zero(M)
     !
-    M%Num=TRIM(FilCode)
+    M%Num=trim(FilCode)
     !
     !--------------------------------------------- scan the data line --
-    !--------------------------------- up to column before PARAMETERS --
-    DO I= 1,vIField(10)-1
+    !--------------------------------- up to column before parameters --
+    do I= 1,vifield(10)-1
       !
       !vStrField(1:nField)= &
       !!!!!"____________","____________","____________","____________","____________",
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
       !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
       !
-      CALL LinToWrd(L,W,EoL,"NO")
+      call LinToWrd(L,W,EoL,"NO")
       !
-      IF(EoL) CYCLE DoFile ! data line, contains no sufficient data -> skip !!
+      if(EoL) cycle DoFile ! data line, contains no sufficient data -> skip !!
       !
-      IF(I==vIField(1)) THEN  !TYPE
-        !old! CALL Str_Upper(W)  ;  M%Typ= TRIM(W)
-        CALL Str_Upper(W)
-        SELECT CASE(TRIM(W))
-        ! CASE("AQU")  ;  M%Typ="AQU"
-        CASE("MIN")  ;  M%Typ="MIN"
-        CASE("GAS")  ;  M%Typ="GAS"
-        CASE("LIQ")  ;  M%Typ="LIQ"
-        CASE DEFAULT ;  CALL Stop_(TRIM(W)//"<< unknown TYPE in database !!...")
-        END SELECT
-      END IF
+      if(I==vifield(1)) then  !type
+        !old! call Str_Upper(W)  ;  M%Typ= trim(W)
+        call Str_Upper(W)
+        select case(trim(W))
+        ! case("AQU")  ;  M%Typ="AQU"
+        case("MIN")  ;  M%Typ="MIN"
+        case("GAS")  ;  M%Typ="GAS"
+        case("LIQ")  ;  M%Typ="LIQ"
+        case default ;  call Stop_(trim(W)//"<< unknown type in database !!...")
+        end select
+      end if
 
-      IF(I==vIField(2)) THEN  !INDEX
-        CALL Str_Upper(W)  ;  M%Num= TRIM(W)
-      END IF
+      if(I==vifield(2)) then  !INDEX
+        call Str_Upper(W)  ;  M%Num= trim(W)
+      end if
 
-      IF(I==vIField(3)) THEN  !NAME
-        CALL Str_Upper(W)  ;  M%Name= TRIM(W)
-      ENDIF
+      if(I==vifield(3)) then  !NAME
+        call Str_Upper(W)  ;  M%Name= trim(W)
+      end if
 
-      IF(I==vIField(4)) THEN  !SCFORM
+      if(I==vifield(4)) then  !SCFORM
         !
-        CALL DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-        IF(.NOT.EcformIsOk) CYCLE DoFile !====================< CYCLE ==
+        call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
+        if(.not.EcformIsOk) cycle DoFile !--==================< cycle ==
         !
-        CALL Str_Upper(W)  ;  M%Formula=TRIM(W)
-      ENDIF
+        call Str_Upper(W)  ;  M%Formula=trim(W)
+      end if
 
-      IF(I==vIField(5)) THEN  !ECFORM
-        CALL Str_Upper(W)  ;  M%Formula=  TRIM(W)
-      END IF
+      if(I==vifield(5)) then  !ECFORM
+        call Str_Upper(W)  ;  M%Formula=  trim(W)
+      end if
 
-    END DO
-    !------------------------ scan the data line (left to PARAMETERS) --
+    end do
+    !------------------------ scan the data line (left to parameterS) --
     !
     !--------------------------------------------------- read formula --
-    CALL Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
-    IF(.NOT. fOk) CYCLE DoFile !==============================< CYCLE ==
+    call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+    if(.not. fOk) cycle DoFile !--============================< cycle ==
     !--------------------------------------------------/ read formula --
     !
-    M%S0Ele=  DOT_PRODUCT(vStoik(:), vEle(:)%S0) /REAL(Div) !in Joule
-    M%WeitKg= DOT_PRODUCT(vStoik(:), vEle(:)%WeitKg) /REAL(Div)
+    M%S0Ele=  dot_product(vStoik(:), vEle(:)%S0) /real(Div) !in Joule
+    M%WeitKg= dot_product(vStoik(:), vEle(:)%WeitKg) /real(Div)
     M%Div= Div
     !
     !----------------------------------------- loop on 6-cells groups --
-    DO
+    do
     ! read species data
     ! (= organized as groups of 6 cells:
     !  1 group= 1 code (ST,C1,V1,...) followed by 5 numeric data cells)
     !
-      CALL LinToWrd(L,W,EoL)
-      IF(EoL) EXIT
+      call LinToWrd(L,W,EoL)
+      if(EoL) exit
 
-      SELECT CASE(TRIM(W))
+      select case(trim(W))
 
-      CASE("SPECIAL")
-        CALL LinToWrd(L,Wb,EoL)
-        M%Special= TRIM(Wb)
+      case("SPECIAL")
+        call LinToWrd(L,Wb,EoL)
+        M%Special= trim(Wb)
         
-      CASE("ST")
-        CALL ReadRVals5(L,M%G0R,M%H0R,M%S0_,M%V0R,X)
+      case("ST")
+        call ReadRVals5(L,M%G0R,M%H0R,M%S0_,M%V0R,X)
 
-      CASE("C1","CP1")
-        CALL ReadRVals5(L,M%K1,M%K4,M%K3,M%K8,X)
+      case("C1","CP1")
+        call ReadRVals5(L,M%K1,M%K4,M%K3,M%K8,X)
         ! K1,K4,K3,K8
 
-      CASE("C2","CP2")
-        CALL ReadRVals5(L,M%K6,M%K2,M%K5,M%K7,M%K9)
+      case("C2","CP2")
+        call ReadRVals5(L,M%K6,M%K2,M%K5,M%K7,M%K9)
         ! Cp= K6/T + K2*T + K5*TT + K7*SQT + K9*TT*T
 
-      CASE("C3","CP3")
-        CALL ReadRVals5(L,M%K1,M%K2,M%K3,M%K4,X)
+      case("C3","CP3")
+        call ReadRVals5(L,M%K1,M%K2,M%K3,M%K4,X)
         ! Cp= K1 + K2*T + K3/TT + K4/SQT -> Maier-Kelley
 
-      CASE("V1")
+      case("V1")
         M%codVol=1
-        CALL ReadRVals5(L,M%VTA,M%VTB,M%VPA,M%VPB,X)
+        call ReadRVals5(L,M%VTA,M%VTB,M%VPA,M%VPB,X)
         !
         M%VTA=M%VTA*M%V0R/1.0D5  ;  M%VTB=M%VTB*M%V0R/1.0D5
         M%VPA=M%VPA*M%V0R/1.0D5  ;  M%VPB=M%VPB*M%V0R/1.0D8
 
-      CASE("VHP")
+      case("VHP")
         M%codVol=4
-        CALL ReadRVals5(L,M%VTA,M%VTB,M%TKRI,M%SMA,M%VPA)
+        call ReadRVals5(L,M%VTA,M%VTB,M%TKRI,M%SMA,M%VPA)
 
-      CASE("VH2")
+      case("VH2")
         M%codVol=4
-        CALL ReadRVals5(L,M%D1, M%D2, M%D3,X,X)
+        call ReadRVals5(L,M%D1, M%D2, M%D3,X,X)
 
-      CASE("D1")
-        M%DIS=.TRUE.
-        CALL ReadRVals5(L,M%D1, M%D4, M%D3, M%D8,   M%D6)
+      case("D1")
+        M%DIS=.true.
+        call ReadRVals5(L,M%D1, M%D4, M%D3, M%D8,   M%D6)
 
-      CASE("D2")
-        CALL ReadRVals5(L,M%D2, M%D5, M%TD0,M%TDMAX,M%VADJ)
+      case("D2")
+        call ReadRVals5(L,M%D2, M%D5, M%TD0,M%TDMAX,M%VADJ)
 
-      CASE("TR1","T1","TR3","T3") !for Berman database"s
+      case("TR1","T1","TR3","T3") !for Berman database"s
         M%nLanda= M%nLanda +1
         I= M%nLanda
-        CALL ReadRVals5(L,M%TQ1B(I),M%TRE(I),M%ASPK(I),M%BSPK(I),M%DHTR(I))
+        call ReadRVals5(L,M%TQ1B(I),M%TRE(I),M%ASPK(I),M%BSPK(I),M%DHTR(I))
 
-      CASE("TR2","T2")
-        IF (M%nLanda>0) THEN
+      case("TR2","T2")
+        if (M%nLanda>0) then
           I=M%nLanda
-          CALL ReadRVals5(L,M%TEQ(I),M%DVTR(I),M%DVDT(I),M%DVDP(I),X)
-        ENDIF
+          call ReadRVals5(L,M%TEQ(I),M%DVTR(I),M%DVDT(I),M%DVDP(I),X)
+        end if
 
-      CASE("REDKWON","VDWAALS")
-        M%CodGas=TRIM(W)
-        CALL ReadRVals5(L,M%AA0,M%AAT,M%BB0,M%BBT,X)
+      case("REDKWON","VDWAALS")
+        M%CodGas=trim(W)
+        call ReadRVals5(L,M%AA0,M%AAT,M%BB0,M%BBT,X)
 
-      CASE("SOAVE","PENGROB")
-        M%CodGas= TRIM(W)
-        CALL ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
+      case("SOAVE","PENGROB")
+        M%CodGas= trim(W)
+        call ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
 
-      CASE("PRSV")
+      case("PRSV")
         M%CodGas= "PRSV"
-        CALL ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
+        call ReadRVals5(L,M%TCrit,M%PCrit,M%ACentric,X,X)
 
-      CASE DEFAULT
-        CALL Stop_(TRIM(W)//"= unknown code in HSV/Theriak format")
+      case default
+        call Stop_(trim(W)//"= unknown code in HSV/Theriak format")
 
-      END SELECT
+      end select
 
-    ENDDO
+    end do
     !--------------------------------------/ loop on 6-cells groups --
     !
-    CALL Save_Record
+    call Save_Record
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  !! PRINT *, "nMinThr=", N  ;  PAUSE
+  !! print *, "nMinThr=", N  ;  pause
   !
-  DEALLOCATE(vElement)
-  IF(fFormula>0) CLOSE(fFormula)
+  deallocate(vElement)
+  if(fFormula>0) close(fFormula)
   !
-  IF(FF>0) CLOSE(FF)
-  IF(iDebug>0) WRITE(fTrc,"(A,/)") "</ DtbMinThr_Read"
+  if(FF>0) close(FF)
+  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
   !
-  RETURN
+  return
   !
-CONTAINS
+contains
 
-  SUBROUTINE Save_Record
+  subroutine Save_Record
   !--
   !-- save record in the linked list LisMinThr
   !--
-    USE M_T_Element,ONLY: Formula_Build
+    use M_T_Element,only: Formula_Build
     !
-    CHARACTER(LEN=4)  :: ICode
-    CHARACTER(LEN=512):: sFormul
+    character(len=4)  :: ICode
+    character(len=512):: sFormul
     !
     N=N+1
     !
     iLine= iLine +1
-    CALL IntToStr4(iLine,ICode)
-    M%Num= TRIM(M%Num)//"_"//TRIM(ICode)
+    call IntToStr4(iLine,ICode)
+    M%Num= trim(M%Num)//"_"//trim(ICode)
     !
-    IF(N==1) THEN
-      ALLOCATE(LisMinThr)
-      NULLIFY(LisMinThr%next)
+    if(N==1) then
+      allocate(LisMinThr)
+      nullify(LisMinThr%next)
       LisMinThr%Value=M
       LisCur=> LisMinThr
-    ELSE
-      ALLOCATE(LisCur%next)
-      NULLIFY(LisCur%next%next)
+    else
+      allocate(LisCur%next)
+      nullify(LisCur%next%next)
       LisCur%next%Value=M
       LisCur=> LisCur%next
-    ENDIF
+    end if
     !
-    IF(FF>0) THEN !===========================================< trace ==
-      WRITE(FF,"(A15,A1)",ADVANCE="NO") M%Name,T_
-      DO iEl=1,SIZE(vEle)
-        WRITE(FF,"(I5,A1)",ADVANCE="NO") vStoik(iEl),T_
-      ENDDO
+    if(FF>0) then !--=========================================< trace ==
+      write(FF,"(A15,A1)",advance="NO") M%Name,T_
+      do iEl=1,size(vEle)
+        write(FF,"(I5,A1)",advance="NO") vStoik(iEl),T_
+      end do
       ! build new formula, with fixed element order
-      CALL Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
+      call Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
       !!sFormul=""
-      !!DO iEl=1,SIZE(vEle)
-      !!  IF(vStoik(iEl)>0) sFormul=TRIM(sFormul)//TRIM(vEle(iEl)%NamEl)//""
-      !!ENDDO
-      WRITE(FF,"(I5,A1,A39,A1,A15,A1,A)") &
-      & M%Div,T_,M%Formula,T_,M%Name,T_,TRIM(sFormul)
-    ENDIF !==================================================</ trace ==
+      !!do iEl=1,size(vEle)
+      !!  if(vStoik(iEl)>0) sFormul=trim(sFormul)//trim(vEle(iEl)%NamEl)//""
+      !!end do
+      write(FF,"(I5,A1,A39,A1,A15,A1,A)") &
+      & M%Div,T_,M%Formula,T_,M%Name,T_,trim(sFormul)
+    end if !==================================================</ trace ==
     !
-  ENDSUBROUTINE Save_Record
+  end subroutine Save_Record
 
-ENDSUBROUTINE DtbMinThr_Read_Line
+end subroutine DtbMinThr_Read_Line
 
-SUBROUTINE FieldList_Read( &
+subroutine FieldList_Read( &
 & L,          &
 & vStrField, &
-& vIField)
-  USE M_IoTools
+& vifield)
+  use M_IoTools
   !
-  CHARACTER(LEN=*),INTENT(INOUT):: L
-  CHARACTER(LEN=12),INTENT(IN):: vStrField(:)
-  INTEGER,INTENT(OUT):: vIField(:)
+  character(len=*),intent(inout):: L
+  character(len=12),intent(in):: vStrField(:)
+  integer,intent(out):: vifield(:)
   !
-  CHARACTER(LEN=80):: W
-  LOGICAL:: EoL
-  INTEGER:: I,J
+  character(len=80):: W
+  logical:: EoL
+  integer:: I,J
   !
-  vIField(:)= 0
+  vifield(:)= 0
   I=0
-  DO
-    CALL LinToWrd(L,W,EoL)
+  do
+    call LinToWrd(L,W,EoL)
     I=I+1
-    DO J=1,SIZE(vStrField)
-      IF( TRIM(W)==TRIM(vStrField(J)) ) THEN
-        vIField(J)= I
-        EXIT
-      ENDIF
-    END DO
-    IF(EoL) EXIT
-  END DO
+    do J=1,size(vStrField)
+      if( trim(W)==trim(vStrField(J)) ) then
+        vifield(J)= I
+        exit
+      end if
+    end do
+    if(EoL) exit
+  end do
 
-  !old! IF(iDebug==4) THEN
-  !old!   DO I=1,SIZE(vStrField)
-  !old!     PRINT *,vIField(I),TRIM(vStrField(I))
-  !old!   ENDDO
-  !old! ENDIF
-  !PAUSE
+  !old! if(iDebug==4) then
+  !old!   do I=1,size(vStrField)
+  !old!     print *,vifield(I),trim(vStrField(I))
+  !old!   end do
+  !old! end if
+  !pause
   !
-  IF(vIField(10)==0) & ! for "PARAMETERS"
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(10)))
+  if(vifield(10)==0) & ! for "PARAMETERS"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
 
-  IF(vIField(1)==0) & ! for "TYPE"  !!MIN/GAS/AQU
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(1)))
+  if(vifield(1)==0) & ! for "TYPE"  !!MIN/GAS/AQU
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(1)))
 
-  IF(vIField(3)==0) & ! for "NAME"
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(3)))
+  if(vifield(3)==0) & ! for "NAME"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
 
-  IF(vIField(4)==0 .AND. vIField(5)==0) & ! for ECFORM/SCFORM
-  CALL Stop_( &
-  & "in FieldList_Read: keyword not found for "//TRIM(vStrField(4))//"_"//TRIM(vStrField(5)))
+  if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
   !
-END SUBROUTINE FieldList_Read
+end subroutine FieldList_Read
 
-SUBROUTINE ReadRVals5(Line,x1,x2,x3,x4,x5)
-  USE M_IOTools,ONLY: LinToWrd,WrdToReal
+subroutine ReadRVals5(Line,x1,x2,x3,x4,x5)
+  use M_IOTools,only: LinToWrd,WrdToReal
   !
-  CHARACTER(LEN=*),INTENT(INOUT):: Line
-  REAL(dp),        INTENT(OUT)  ::x1,x2,x3,x4,x5
+  character(len=*),intent(inout):: Line
+  real(dp),        intent(out)  ::x1,x2,x3,x4,x5
   !
-  CHARACTER(255)   Word
-  INTEGER  ::i
-  LOGICAL  ::EoL
-  REAL(dp),DIMENSION(1:5)::vX
+  character(255)   Word
+  integer  ::i
+  logical  ::EoL
+  real(dp),dimension(1:5)::vX
   !
   vX(:)= Zero
-  EoL=  .TRUE.
-  DO i=1,5
-    CALL LinToWrd(Line,Word,EoL)
-    CALL WrdToReal(Word,vX(i))
-    IF(EoL) EXIT
-  ENDDO
+  EoL=  .true.
+  do i=1,5
+    call LinToWrd(Line,Word,EoL)
+    call WrdToReal(Word,vX(i))
+    if(EoL) exit
+  end do
   !
   x1=vX(1)
   x2=vX(2)
@@ -799,115 +802,115 @@ SUBROUTINE ReadRVals5(Line,x1,x2,x3,x4,x5)
   x4=vX(4)
   x5=vX(5)
   !
-ENDSUBROUTINE ReadRVals5
+end subroutine ReadRVals5
 
-SUBROUTINE DtbMinThr_ToLine(f)
+subroutine DtbMinThr_ToLine(f)
 !--
 !-- write a multiline theriak-compatible datafile to a monoline equivalent
 !--
-  USE M_Files,      ONLY: DirDtbLog,Files_Index_Write
-  USE M_Dtb_Vars,   ONLY: DtbFormat
+  use M_Files,      only: DirDtbLog,Files_Index_Write
+  use M_Dtb_Vars,   only: DtbFormat
   !
-  INTEGER,INTENT(IN):: f
+  integer,intent(in):: f
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL :: EoL,bGas,bMin
-  INTEGER :: ios,I
-  TYPE(T_DtbMinThr) :: M
+  character(len=512):: L,W
+  logical :: EoL,bGas,bMin
+  integer :: ios,I
+  type(T_DtbMinThr) :: M
   !
-  IF(iDebug>0) WRITE(fTrc,"(/,A)") "< DtbMinThr_ToLine"
+  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_ToLine"
   !
-  WRITE(fTrc,'(A)') &
-  & "stoikio in "//TRIM(DirDtbLog)//"min_thr_line.log"
-  IF(fLin==0) THEN
-    CALL GetUnit(fLin)
-    OPEN(fLin,FILE=TRIM(DirDtbLog)//"min_thr_line.log")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirDtbLog)//"min_thr_line.log",&
-    & "multiline DATAfile from therak converted to monoline")
-  ENDIF
+  write(fTrc,'(A)') &
+  & "stoikio in "//trim(DirDtbLog)//"min_thr_line.log"
+  if(fLin==0) then
+    call GetUnit(fLin)
+    open(fLin,file=trim(DirDtbLog)//"min_thr_line.log")
+    call Files_Index_Write(fHtm,&
+    & trim(DirDtbLog)//"min_thr_line.log",&
+    & "multiline datafile from therak converted to monoline")
+  end if
   !
-  FilCode=TRIM(DtbFormat) !-> default value
+  FilCode=trim(DtbFormat) !-> default value
   M%Name="Z"
   !
-  DoFile: DO
+  DoFile: do
 
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=="!")   CYCLE DoFile
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=="!")   cycle DoFile
+    call AppendToEnd(L,W,EoL)
 
-    SELECT CASE(W)
+    select case(W)
       !
-      CASE("CODE")
-        CALL LinToWrd(L,W,EoL)
-        FilCode=TRIM(W)
-        CYCLE DoFile
+      case("CODE")
+        call LinToWrd(L,W,EoL)
+        FilCode=trim(W)
+        cycle DoFile
 
-      CASE("ENDINPUT")
-        EXIT DoFile
+      case("ENDINPUT")
+        exit DoFile
 
-      CASE("ENDSPECIES")
-        EXIT DoFile
+      case("ENDSPECIES")
+        exit DoFile
 
-      CASE("MINERAL","GAS")
+      case("MINERAL","GAS")
 
-        SELECT CASE(W)
-          CASE("MINERAL"); bGas=.FALSE.; bMin=.TRUE.
-          CASE("GAS");     bGas=.TRUE.;  bMin=.FALSE.
-        END SELECT
+        select case(W)
+          case("MINERAL"); bGas=.false.; bMin=.true.
+          case("GAS");     bGas=.true.;  bMin=.false.
+        end select
 
-        DoReadMin: DO
+        DoReadMin: do
           !
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=="!") CYCLE DoReadMin !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=="!") cycle DoReadMin !skip comment lines
+          call AppendToEnd(L,W,EoL)
           !
-          SELECT CASE(W)
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("ENDSPECIES"); EXIT DoFile
-            CASE("END","ENDMINERAL","ENDGAS"); CYCLE DoFile !EXIT DoReadMin
-          END SELECT
+          select case(W)
+            case("ENDINPUT"); exit DoFile
+            case("ENDSPECIES"); exit DoFile
+            case("END","ENDMINERAL","ENDGAS"); cycle DoFile !exit DoReadMin
+          end select
 
-          IF(W(1:1)/="&") THEN
-          !IF first char is not "&", the line may contain name, formula, etc
-            WRITE(fLin,*)
-            M%Name=TRIM(W)
-            IF(bGas) WRITE(fLin,'(A,A1)',ADVANCE="NO") "GAS",T_
-            IF(bMin) WRITE(fLin,'(A,A1)',ADVANCE="NO") "MIN",T_
-            CALL LinToWrd(L,W,EoL); M%Formula=TRIM(W)
-            CALL LinToWrd(L,W,EoL) !; M%Abbr=TRIM(W)
-            WRITE(fLin,'(3(A,A1))',ADVANCE="NO") &
-            & TRIM(FilCode),T_,M%Name,T_,M%Formula,T_
+          if(W(1:1)/="&") then
+          !if first char is not "&", the line may contain name, formula, etc
+            write(fLin,*)
+            M%Name=trim(W)
+            if(bGas) write(fLin,'(A,A1)',advance="NO") "GAS",T_
+            if(bMin) write(fLin,'(A,A1)',advance="NO") "MIN",T_
+            call LinToWrd(L,W,EoL); M%Formula=trim(W)
+            call LinToWrd(L,W,EoL) !; M%Abbr=trim(W)
+            write(fLin,'(3(A,A1))',advance="NO") &
+            & trim(FilCode),T_,M%Name,T_,M%Formula,T_
             !
-            CYCLE DoReadMin
-          ENDIF
+            cycle DoReadMin
+          end if
 
-          IF(W(1:1)=="&") THEN
+          if(W(1:1)=="&") then
             ! if first char is "&", 
             ! then the line is the continuation of preceding, i.e. contains data
-            DO I=1,7
-              CALL LinToWrd(L,W,EoL)
-              IF(.NOT. EoL) THEN
-                WRITE(fLin,'(A,A1)',ADVANCE="NO") TRIM(W),T_
-              ELSE
-                WRITE(fLin,'(A,A1)',ADVANCE="NO") "_",T_
-              ENDIF
-            ENDDO
-          ENDIF !(W(1:1)=="&")
+            do I=1,7
+              call LinToWrd(L,W,EoL)
+              if(.not. EoL) then
+                write(fLin,'(A,A1)',advance="NO") trim(W),T_
+              else
+                write(fLin,'(A,A1)',advance="NO") "_",T_
+              end if
+            end do
+          end if !(W(1:1)=="&")
 
-        ENDDO DoReadMin
-      !ENDCASE("MINERAL")
-    END SELECT
-  ENDDO DoFile
+        end do DoReadMin
+      !endcase("MINERAL")
+    end select
+  end do DoFile
   !
-  WRITE(fLin,*)
+  write(fLin,*)
   !
-  IF(iDebug>0) WRITE(fTrc,"(A,/)") "</ DtbMinThr_ToLine"
+  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_ToLine"
   !
-  RETURN
-ENDSUBROUTINE DtbMinThr_ToLine
+  return
+end subroutine DtbMinThr_ToLine
 
-ENDMODULE M_Dtb_Read_DtbMinThr
+end module M_Dtb_Read_DtbMinThr

@@ -1,16 +1,16 @@
-MODULE M_Dynam_Files
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc,fHtm,T_,iDebug
-  IMPLICIT NONE
+module M_Dynam_Files
+  use M_Kinds
+  use M_Trace,only: fTrc,fHtm,T_,iDebug
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Dynam_Files_Init
-  PUBLIC:: Dynam_Files_Close
-  PUBLIC:: Dynam_Files_OpenLogs
-  PUBLIC:: Dynam_Files_WriteFasAff
+  public:: Dynam_Files_Init
+  public:: Dynam_Files_Close
+  public:: Dynam_Files_OpenLogs
+  public:: Dynam_Files_WriteFasAff
   !
-  INTEGER,PUBLIC:: &
+  integer,public:: &
   & fDynAct= 0, & !results: log10(activities) 
   & fDynMol= 0, & !mole numbers
   & fDynEle= 0, & !component mole numbers (different from element, in orthogonal option)
@@ -19,75 +19,75 @@ MODULE M_Dynam_Files
   & fDynMnK= 0, & !minerals
   & fDynGam= 0    !gammas
 
-CONTAINS
+contains
 
-SUBROUTINE Dynam_Files_Init
-  USE M_Files,      ONLY: DirOut,cTitle,Files_Index_Write
-  USE M_Numeric_Tools,ONLY: fNewtF,fNewtR,fNewt_I
-  USE M_IoTools,    ONLY: GetUnit
-  USE M_Equil_Write,ONLY: Equil_Write_EnTete
+subroutine Dynam_Files_Init
+  use M_Files,      only: DirOut,Files_Index_Write
+  use M_Numeric_Tools,only: fNewtF,fNewtR,fNewt_I
+  use M_IoTools,    only: GetUnit
+  use M_Equil_Write,only: Equil_Write_EnTete
   !
-  USE M_Global_Vars,ONLY: vEle,vSpc
-  USE M_System_Vars,ONLY: vCpn
-  USE M_Basis_Vars, ONLY: vOrdAq,vPrmFw
+  use M_Global_Vars,only: vEle,vSpc
+  use M_System_Vars,only: vCpn
+  use M_Basis_Vars, only: vOrdAq,vPrmFw
   !
-  USE M_Dynam_Vars, ONLY: TUnit,dTSav,fSavTime,fSavRate,DebNewt,DebJacob
+  use M_Dynam_Vars, only: TUnit,dTSav,fSavTime,fSavRate,DebNewt,DebJacob
   !
-  INTEGER:: I,nAq
+  integer:: I,nAq
   !
-  nAq= COUNT(vSpc%Typ(1:3)=="AQU")
+  nAq= count(vSpc%Typ(1:3)=="AQU")
   !
-  IF(fDynGam==0) THEN
+  if(fDynGam==0) then
     !
-    CALL GetUnit(fDynGam)
-    OPEN(fDynGam,FILE=TRIM(DirOut)//"_gamma.restab")
+    call GetUnit(fDynGam)
+    open(fDynGam,file=trim(DirOut)//"_gamma.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_gamma.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_gamma.restab", &
     & "DYNAMIC: activity coeff's of aqueous species")
     !
-    WRITE(fDynGam,'(2(A,A1))',ADVANCE='NO') "step",T_,"time",T_
-    CALL Equil_Write_EnTete(fDynGam,vSpc,vPrmFw,vSpc%Typ=="AQU") 
+    write(fDynGam,'(2(A,A1))',advance="no") "step",T_,"time",T_
+    call Equil_Write_EnTete(fDynGam,vSpc,vPrmFw,vSpc%Typ=="AQU") 
     !
-  ENDIF
+  end if
   !
-  IF(fDynAct==0) THEN
+  if(fDynAct==0) then
     !
-    CALL GetUnit(fDynAct)
-    OPEN(fDynAct,FILE=TRIM(DirOut)//"_activ.restab")
+    call GetUnit(fDynAct)
+    open(fDynAct,file=trim(DirOut)//"_activ.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_activ.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_activ.restab", &
     & "DYNAMIC: at each time step, species activities")
     !
-    WRITE(fDynAct,'(2(A,A1))',ADVANCE='NO') "STEP",T_,"TIME/"//TUnit,T_
-    DO I=1,nAq; WRITE(fDynAct,'(A12,A1)',ADVANCE='NO') vSpc(vOrdAq(I))%NamSp,T_; ENDDO
-    WRITE(fDynAct,*)
+    write(fDynAct,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    do I=1,nAq; write(fDynAct,'(A12,A1)',advance="no") vSpc(vOrdAq(I))%NamSp,T_; end do
+    write(fDynAct,*)
     !
-  ENDIF
+  end if
   !
-  IF(fDynMol==0) THEN
+  if(fDynMol==0) then
     !
-    CALL GetUnit(fDynMol)
-    OPEN(fDynMol,FILE=TRIM(DirOut)//"_moleinbox.restab")
+    call GetUnit(fDynMol)
+    open(fDynMol,file=trim(DirOut)//"_moleinbox.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_moleinbox.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_moleinbox.restab", &
     & "DYNAMIC: mole numbers of aqu.species in box")
     !
-    WRITE(fDynMol,'(2(A,A1))',ADVANCE='NO') "STEP",T_,"TIME/"//TUnit,T_
-    DO I=1,nAq; WRITE(fDynMol,'(A,A1)',ADVANCE='NO') TRIM(vSpc(vOrdAq(I))%NamSp),T_; ENDDO
-    WRITE(fDynMol,*)
+    write(fDynMol,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    do I=1,nAq; write(fDynMol,'(A,A1)',advance="no") trim(vSpc(vOrdAq(I))%NamSp),T_; end do
+    write(fDynMol,*)
     !
-  ENDIF
+  end if
   !
-  IF(iDebug>2 .AND. fDynElement==0) THEN
+  if(iDebug>2 .and. fDynElement==0) then
     !
-    CALL GetUnit(fDynElement)
-    OPEN(fDynElement,FILE=TRIM(DirOut)//"_elements.restab")
+    call GetUnit(fDynElement)
+    open(fDynElement,file=trim(DirOut)//"_elements.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_elements.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_elements.restab", &
     & "DYNAMIC: at each time step,"//  &
     & " mole numbers of elements within Box, in Fluid and in Minerals")
     !
@@ -95,321 +95,322 @@ SUBROUTINE Dynam_Files_Init
     !-- which are retrieved from vSpc(:)%vStoikio(:)
     !-- it is thus the element order in original vEle(:)
     !
-    WRITE(fDynElement,'(2(A,A1))',ADVANCE='NO') "STEP",T_,"TIME/"//TUnit,T_
-    DO I=1,SIZE(vEle); WRITE(fDynElement,'(A,A1)',ADVANCE='NO') &
-    & vEle(I)%NamEl//"inFluid", T_; ENDDO
-    DO I=1,SIZE(vEle); WRITE(fDynElement,'(A,A1)',ADVANCE='NO') &
-    & vEle(I)%NamEl//"inMin", T_; ENDDO
-    DO I=1,SIZE(vEle); WRITE(fDynElement,'(A,A1)',ADVANCE='NO') &
-    & vEle(I)%NamEl//"Total", T_; ENDDO
-    WRITE(fDynElement,*)
+    write(fDynElement,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
+    & vEle(I)%NamEl//"inFluid", T_; end do
+    do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
+    & vEle(I)%NamEl//"inMin", T_; end do
+    do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
+    & vEle(I)%NamEl//"Total", T_; end do
+    write(fDynElement,*)
     !
-  ENDIF
+  end if
   !
-  IF(fDynEle==0) THEN
+  if(fDynEle==0) then
     !
-    CALL GetUnit(fDynEle)
-    OPEN(fDynEle,FILE=TRIM(DirOut)//"_elem.restab")
+    call GetUnit(fDynEle)
+    open(fDynEle,file=trim(DirOut)//"_elem.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_elem.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_elem.restab", &
     & "DYNAMIC: at each time step,"//  &
     & " mole numbers of elements within Box, in Fluid and in Minerals")
     !
     !-- this header will be valid only when component--element !
-    !-- -> to be modified in other cases,
+    !-- -> to be MODIFIED in other cases,
     !-- e.g. when using orthogonal components !!
     !
-    WRITE(fDynEle,'(4(A,A1))',ADVANCE='NO') "STEP",T_,"TIME/"//TUnit,T_,"DeltaDarcy",T_
-    !~ DO I=1,SIZE(vEle); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') vEle(iCpnEle(I))%NamEl//"totF", T_; ENDDO
-    !~ DO I=1,SIZE(vEle); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') vEle(iCpnEle(I))%NamEl//"molal",T_; ENDDO
-    !~ DO I=1,SIZE(vEle); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') vEle(iCpnEle(I))%NamEl//"inMin",T_; ENDDO
-    DO I=1,SIZE(vCpn); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') TRIM(vCpn(I)%NamCp)//"totF", T_; ENDDO
-    DO I=1,SIZE(vCpn); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') TRIM(vCpn(I)%NamCp)//"molal",T_; ENDDO
-    DO I=1,SIZE(vCpn); WRITE(fDynEle,'(A,A1)',ADVANCE='NO') TRIM(vCpn(I)%NamCp)//"inMin",T_; ENDDO
-    WRITE(fDynEle,*)
+    write(fDynEle,'(4(A,A1))',advance="no") &
+    & "STEP",T_,"TIME/"//TUnit,T_,"DeltaDarcy",T_
+    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"totF", T_; end do
+    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"molal",T_; end do
+    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"inMin",T_; end do
+    write(fDynEle,'(100(A,A1))',advance="no") &
+    & (trim(vCpn(I)%NamCp)//"totF", T_,I=1,size(vCpn))
+    write(fDynEle,'(100(A,A1))',advance="no") &
+    & (trim(vCpn(I)%NamCp)//"molal",T_,I=1,size(vCpn))
+    write(fDynEle,'(100(A,A1))',advance="no") &
+    & (trim(vCpn(I)%NamCp)//"inMin",T_,I=1,size(vCpn))
+    write(fDynEle,*)
     !
-  ENDIF
+  end if
   !
-  IF(fDynMnK==0) THEN
+  if(fDynMnK==0) then
     !
-    CALL GetUnit(fDynMnK)
-    OPEN(fDynMnK,FILE=TRIM(DirOut)//"_minmol.restab")
+    call GetUnit(fDynMnK)
+    open(fDynMnK,file=trim(DirOut)//"_minmol.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_minmol.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_minmol.restab", &
     & "DYNAMIC: at each time step, pH, vol'fractions fluid and minerals, logQsK, etc")
     !
-    CALL EnTeteFMnk(fDynMnK) !,bCell)
+    call EnTeteFMnk(fDynMnK) !,bCell)
     !
-  ENDIF
+  end if
   !
-  IF(dTSav>Zero) THEN
-    CALL GetUnit(fSavTime)
-    OPEN(fSavTime,FILE=TRIM(DirOut)//"_time.restab")
+  if(dTSav>Zero) then
+    call GetUnit(fSavTime)
+    open(fSavTime,file=trim(DirOut)//"_time.restab")
     !
-    CALL EnTeteFMnk(fSavTime) !,bCell)
+    call EnTeteFMnk(fSavTime) !,bCell)
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_time.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_time.restab", &
     & "DYNAMIC: at regular time laps, pH, vol'fractions fluid and minerals, logQsK, etc")
-  ENDIF
+  end if
   !
-  IF(iDebug>2) THEN
-    IF(fSavRate==0) THEN
+  if(iDebug>2) then
+    if(fSavRate==0) then
       !
-      CALL GetUnit(fSavRate)
-      OPEN(fSavRate,FILE=TRIM(DirOut)//"_rate.restab")
+      call GetUnit(fSavRate)
+      open(fSavRate,file=trim(DirOut)//"_rate.restab")
       !
-      CALL EnTeteFRate(fSavRate)
+      call EnTeteFRate(fSavRate)
       !
-      CALL Files_Index_Write(fHtm, &
-      & TRIM(DirOut)//"_rate.restab", &
+      call Files_Index_Write(fHtm, &
+      & trim(DirOut)//"_rate.restab", &
       & "DYNAMIC: at each time step, details on mineral dissol/precip rates (surface,...)")
-     ENDIF
-  ENDIF
+     end if
+  end if
   !
-  IF(DebNewt) THEN
+  if(DebNewt) then
     !
     !fNewtF:  trace for Function values on aqu'species
     !fNewtR:  trace for Residual values on aqu'species
     !fNewtFm: trace for Function values on minerals
     !fNewtRm: trace for Residual values on minerals
     !
-    CALL GetUnit(fNewtF);  OPEN(fNewtF, FILE=TRIM(DirOut)//"_newtaqu1.log")
-    CALL GetUnit(fNewtR);  OPEN(fNewtR, FILE=TRIM(DirOut)//"_newtaqu2.log") !trace for Residual values
-    !CALL GetUnit(fNewtFm); OPEN(fNewtFm,FILE=TRIM(DirOut)//"_newtmin1.log")
-    !CALL GetUnit(fNewtRm); OPEN(fNewtRm,FILE=TRIM(DirOut)//"_newtmin2.log")
+    call GetUnit(fNewtF);  open(fNewtF, file=trim(DirOut)//"_newtaqu1.log")
+    call GetUnit(fNewtR);  open(fNewtR, file=trim(DirOut)//"_newtaqu2.log") !trace for Residual values
+    !call GetUnit(fNewtFm); open(fNewtFm,file=trim(DirOut)//"_newtmin1.log")
+    !call GetUnit(fNewtRm); open(fNewtRm,file=trim(DirOut)//"_newtmin2.log")
     !
     fNewt_I= 0
     !
-    WRITE(fNewtF,'(A,A1)',ADVANCE='NO') "Index",T_
-    CALL Equil_Write_EnTete(fNewtF,vSpc,vPrmFw,vSpc%Typ=="AQU",Str1="indx") 
+    write(fNewtF,'(A,A1)',advance="no") "Index",T_
+    call Equil_Write_EnTete(fNewtF,vSpc,vPrmFw,vSpc%Typ=="AQU",Str1="indx") 
     !
-    WRITE(fNewtR,'(A,A1)',ADVANCE='NO') "Index",T_
-    CALL Equil_Write_EnTete(fNewtR,vSpc,vPrmFw,vSpc%Typ=="AQU",Str1="indx") 
+    write(fNewtR,'(A,A1)',advance="no") "Index",T_
+    call Equil_Write_EnTete(fNewtR,vSpc,vPrmFw,vSpc%Typ=="AQU",Str1="indx") 
     !
-    DebJacob= .TRUE.
+    DebJacob= .true.
     !
-  ENDIF
+  end if
   !
-ENDSUBROUTINE Dynam_Files_Init
+end subroutine Dynam_Files_Init
 
-SUBROUTINE EnTeteFMnk(f) !,bCell)
-  USE M_Files, ONLY: cTitle
-  USE M_Global_Vars,ONLY: vKinFas
-  USE M_Dynam_Vars, ONLY: TUnit
+subroutine EnTeteFMnk(f) 
+  use M_Global_Vars,only: vKinFas
+  use M_Dynam_Vars, only: TUnit
   !
-  INTEGER,INTENT(IN):: f
-  !!LOGICAL,INTENT(IN):: bCell
+  integer,intent(in):: f
+  !!logical,intent(in):: bCell
   !
-  INTEGER::i,N
+  integer::i,N
   !
-  N=SIZE(vKinFas)
+  N=size(vKinFas)
   !
-  !WRITE(f,'(4(A,A1))',ADVANCE='NO') "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
-  !DO J=1,3
-  !  DO i=1,N; WRITE(f,'(A,A1)', ADVANCE='NO') TRIM(vKinFas(i)%Name),T_; ENDDO
-  !ENDDO
-  !WRITE(f,*)
+  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
+  !do J=1,3
+  !  do i=1,N; write(f,'(A,A1)', advance="no") trim(vKinFas(i)%Name),T_; end do
+  !end do
+  !write(f,*)
   !
-  !WRITE(f,'(4(A,A1))',ADVANCE='NO') "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
-  !DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "PhiM",T_;  ENDDO
-  !DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "LogQsK",T_;  ENDDO
-  !DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "MolNr",T_;  ENDDO
-  !WRITE(f,*)
+  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
+  !do i=1,N; write(f,'(A,A1)',advance="no") "PhiM",T_;  end do
+  !do i=1,N; write(f,'(A,A1)',advance="no") "LogQsK",T_;  end do
+  !do i=1,N; write(f,'(A,A1)',advance="no") "MolNr",T_;  end do
+  !write(f,*)
   !
-  !!IF(bCell) WRITE(f,'(A,A1)',ADVANCE='NO') "iCell",T_
-  WRITE(f,'(4(A,A1))',ADVANCE='NO') "iStep", T_,"Time/"//TUNit,T_,"pH",T_,"PhiFluid",T_
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "PhiM_"//TRIM(vKinFas(i)%NamKF),T_;   ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "LogQsK_"//TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "MolNr"//TRIM(vKinFas(i)%NamKF),T_;   ENDDO
-  WRITE(f,*)
-ENDSUBROUTINE EnTeteFMnk
+  !!if(bCell) write(f,'(A,A1)',advance="no") "iCell",T_
+  write(f,'(4(A,A1))',advance="no") "iStep", T_,"Time/"//TUNit,T_,"pH",T_,"PhiFluid",T_
+  do i=1,N; write(f,'(A,A1)',advance="no") "PhiM_"//trim(vKinFas(i)%NamKF),T_;   end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "LogQsK_"//trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "MolNr"//trim(vKinFas(i)%NamKF),T_;   end do
+  write(f,*)
+end subroutine EnTeteFMnk
 
-SUBROUTINE EnTeteFRate(f)
-  USE M_Files, ONLY: cTitle
-  USE M_Global_Vars,ONLY: vKinFas
+subroutine EnTeteFRate(f)
+  use M_Global_Vars,only: vKinFas
   !
-  INTEGER,INTENT(IN)::f
+  integer,intent(in)::f
   !
-  INTEGER::i,N
+  integer::i,N
   !
-  N=SIZE(vKinFas)
+  N=size(vKinFas)
   !
-  WRITE(f,'(4(A,A1))',ADVANCE='NO') "iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
+  write(f,'(4(A,A1))',advance="no") "iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
   !
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "Phi_"    //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "SurfR_"  //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "SurfKg_" //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "lgQsK_"  //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "ratQsK_" //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "ratAct_" //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "Radius_" //TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  !DO i=1,N; WRITE(f,'(A,A1)',ADVANCE='NO') "SferNum_"//TRIM(vKinFas(i)%NamKF),T_; ENDDO
-  WRITE(f,*)
+  do i=1,N; write(f,'(A,A1)',advance="no") "Phi_"    //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "SurfR_"  //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "SurfKg_" //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "lgQsK_"  //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "ratQsK_" //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "ratAct_" //trim(vKinFas(i)%NamKF),T_; end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "Radius_" //trim(vKinFas(i)%NamKF),T_; end do
+  !do i=1,N; write(f,'(A,A1)',advance="no") "SferNum_"//trim(vKinFas(i)%NamKF),T_; end do
+  write(f,*)
   !
-ENDSUBROUTINE EnTeteFRate
+end subroutine EnTeteFRate
 
-SUBROUTINE Dynam_Files_Close
-  USE M_Trace,ONLY: DebugCoores
-  USE M_Numeric_Tools,ONLY: fNewtF,fNewtR
-  USE M_Dynam_Vars, ONLY: fSavTime,fSavRate
-  !! USE M_Stockvar_Kinxim,ONLY: LSTOCK,DEL_STOCKVAR,PRINT_STOCKVAR !,SET_STOCKVAR,INIT_STOCKVAR
+subroutine Dynam_Files_Close
+  use M_Numeric_Tools,only: fNewtF,fNewtR
+  use M_Dynam_Vars, only: fSavTime,fSavRate
+  !! use M_Stockvar_Kinxim,only: LSTOCK,DEL_STOCKVAR,print_STOCKVAR !,SET_STOCKVAR,INIT_STOCKVAR
   !
-  IF(fSavTime>0) THEN; CLOSE(fSavTime); fSavTime= 0; ENDIF
-  IF(fSavRate>0) THEN; CLOSE(fSavRate); fSavRate= 0; ENDIF
+  if(fSavTime>0) then; close(fSavTime); fSavTime= 0; end if
+  if(fSavRate>0) then; close(fSavRate); fSavRate= 0; end if
   !
-  IF(fDynMol>0)  THEN; WRITE(fDynMol,*)  ; CLOSE(fDynMol);  fDynMol= 0; ENDIF 
-  IF(fDynAct>0)  THEN; WRITE(fDynAct,*)  ; CLOSE(fDynAct);  fDynAct= 0; ENDIF
-  IF(fDynGam>0)  THEN; WRITE(fDynAct,*)  ; CLOSE(fDynGam);  fDynGam= 0; ENDIF
+  if(fDynMol>0)  then; write(fDynMol,*)  ; close(fDynMol);  fDynMol= 0; end if 
+  if(fDynAct>0)  then; write(fDynAct,*)  ; close(fDynAct);  fDynAct= 0; end if
+  if(fDynGam>0)  then; write(fDynAct,*)  ; close(fDynGam);  fDynGam= 0; end if
   !
-  IF(fNewtF>0)   THEN; CLOSE(fNewtF);  fNewtF=  0; ENDIF
-  IF(fNewtR>0)   THEN; CLOSE(fNewtR);  fNewtR=  0; ENDIF
+  if(fNewtF>0)   then; close(fNewtF);  fNewtF=  0; end if
+  if(fNewtR>0)   then; close(fNewtR);  fNewtR=  0; end if
   !
-  !IF(fNewtFm>0)  THEN; CLOSE(fNewtFm); fNewtFm= 0; ENDIF
-  !IF(fNewtRm>0)  THEN; CLOSE(fNewtRm); fNewtRm= 0; ENDIF
+  !if(fNewtFm>0)  then; close(fNewtFm); fNewtFm= 0; end if
+  !if(fNewtRm>0)  then; close(fNewtRm); fNewtRm= 0; end if
   !
-  IF(fDynEle>0)  THEN; CLOSE(fDynEle); fDynEle=   0; ENDIF 
-  IF(fDynMnK>0)  THEN; CLOSE(fDynMnK); fDynMnK=    0; ENDIF
+  if(fDynEle>0)  then; close(fDynEle); fDynEle=   0; end if 
+  if(fDynMnK>0)  then; close(fDynMnK); fDynMnK=    0; end if
   !
-  IF(fDynElement>0)  THEN; CLOSE(fDynElement); fDynElement=   0; ENDIF 
+  if(fDynElement>0)  then; close(fDynElement); fDynElement=   0; end if 
   
   !---del table to store the time evolution of species 
   !--- stockage solution
-  !! IF (LSTOCK) THEN
-  !!    IF ( DebugCoores ) CALL Print_Stockvar('output.var');
-  !!    CALL Del_Stockvar
-  !! END IF
+  !! if (LSTOCK) then
+  !!    if ( DebugCoores ) call Print_Stockvar('output.var');
+  !!    call Del_Stockvar
+  !! end if
   
-ENDSUBROUTINE Dynam_Files_Close
+end subroutine Dynam_Files_Close
 
-SUBROUTINE Dynam_Files_OpenLogs(f1,f2,f3,f4)
-  USE M_IOTools,ONLY: GetUnit
-  USE M_Files,  ONLY: DirOut,DirLog,Files_Index_Write
-  USE M_Global_Vars,ONLY: vEle,vKinFas
-  !~ USE M_Basis_Vars, ONLY: iCpnEle
-  USE M_Dynam_Vars,ONLY: vCpnBox
-  USE M_Dynam_Vars, ONLY: TUnit
+subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
+  use M_IOTools,only: GetUnit
+  use M_Files,  only: DirOut,DirLog,Files_Index_Write
+  use M_Global_Vars,only: vEle
+  !~ use M_Basis_Vars, only: iCpnEle
+  use M_Dynam_Vars,only: vCpnBox
+  use M_Dynam_Vars, only: TUnit
   !
-  INTEGER,INTENT(OUT):: f1,f2,f3,f4
+  integer,intent(out):: f1,f2,f3,f4
   !
-  INTEGER:: I
+  integer:: I
   !
-  !----------------------------------------------------------------------------!
-  CALL GetUnit(f1)
-  !!OPEN(f1,FILE=TRIM(DirLog)//"calcdyn_totout.log")
-  OPEN(f1,FILE=TRIM(DirOut)//"_bilans.restab")
+  !--------------------------------------------------------------------!
+  call GetUnit(f1)
+  !!open(f1,file=trim(DirLog)//"calcdyn_totout.log")
+  open(f1,file=trim(DirOut)//"_bilans.restab")
   !
-  CALL Files_Index_Write(fHtm,&
-  !! & TRIM(DirLog)//"calcdyn_totout.log",& !
-  & TRIM(DirOut)//"_bilans.restab", &
+  call Files_Index_Write(fHtm,&
+  !! & trim(DirLog)//"calcdyn_totout.log",& !
+  & trim(DirOut)//"_bilans.restab", &
   & "DYNAMIC/LOG: balances on elements")
   !
-  WRITE(f1,'(2(A,A1))',ADVANCE='NO') "STEP",T_,"TIME/"//TUnit,T_
-  DO I=1,SIZE(vCpnBox)
-    WRITE(f1,'(A,A1)',ADVANCE='NO') &
-    & TRIM(vEle(vCpnBox(I)%iEle)%NamEl)//'inj',T_; ENDDO 
-  DO I=1,SIZE(vCpnBox)
-    WRITE(f1,'(A,A1)',ADVANCE='NO') &
-    & TRIM(vEle(vCpnBox(I)%iEle)%NamEl)//'bilan',T_; ENDDO 
-  DO I=1,SIZE(vCpnBox)
-    WRITE(f1,'(A,A1)',ADVANCE='NO') &
-    & TRIM(vEle(vCpnBox(I)%iEle)%NamEl)//'diff',T_; ENDDO 
-  WRITE(f1,*)
+  write(f1,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+  do I=1,size(vCpnBox)
+    write(f1,'(A,A1)',advance="no") &
+    & trim(vEle(vCpnBox(I)%iEle)%NamEl)//'inj',T_; end do 
+  do I=1,size(vCpnBox)
+    write(f1,'(A,A1)',advance="no") &
+    & trim(vEle(vCpnBox(I)%iEle)%NamEl)//'bilan',T_; end do 
+  do I=1,size(vCpnBox)
+    write(f1,'(A,A1)',advance="no") &
+    & trim(vEle(vCpnBox(I)%iEle)%NamEl)//'diff',T_; end do 
+  write(f1,*)
   !
-  !--------------------------------------------------------------------------!
-  CALL GetUnit(f2)
-  !OPEN(f2,FILE=TRIM(DirLog)//"calcdyn_steps.log")
-  OPEN(f2,FILE=TRIM(DirOut)//"_calcdyn_steps.log")
+  !--------------------------------------------------------------------!
+  call GetUnit(f2)
+  !open(f2,file=trim(DirLog)//"calcdyn_steps.log")
+  open(f2,file=trim(DirOut)//"_calcdyn_steps.log")
   !
-  CALL Files_Index_Write(fHtm,&
-  & TRIM(DirOut)//"_calcdyn_steps.log",&
+  call Files_Index_Write(fHtm,&
+  & trim(DirOut)//"_calcdyn_steps.log",&
   & "DYNAMIC/LOG: iMaxDelta,VarMax,iDo1,iDo2,etc.")
   !
-  WRITE(f2,'(14(A,A1))') &
+  write(f2,'(14(A,A1))') &
   & ".MaxVal",T_,"iStep",T_,"Time",T_,"dTime",T_,"PhiF",T_,&
   & "iMaxDelta",T_,"VarMAx",T_,&
   & "iDo1",T_,"iDo2",T_,"Newt_iDo",T_,&
   & "Newt_iErr",T_,"NewtErrF",T_,"NewtErrX",T_,"NewtErrG",T_
   !
-  !--------------------------------------------------------------------------!
-  CALL GetUnit(f3)
-  !OPEN(f3,FILE=TRIM(DirLog)//"calcdyn_maxvars.log")
-  OPEN(f3,FILE=TRIM(DirOut)//"_calcdyn_maxvars.log")
+  !--------------------------------------------------------------------!
+  call GetUnit(f3)
+  !open(f3,file=trim(DirLog)//"calcdyn_maxvars.log")
+  open(f3,file=trim(DirOut)//"_calcdyn_maxvars.log")
   !
-  CALL Files_Index_Write(fHtm,&
-  & TRIM(DirOut)//"_calcdyn_maxvars.log",&
+  call Files_Index_Write(fHtm,&
+  & trim(DirOut)//"_calcdyn_maxvars.log",&
   & "DYNAMIC/LOG: MaxAqu,MaxMin,MaxAquRel,MaxMinRel,...")
   !
-  WRITE(f3,'(9(A,A1))') &
+  write(f3,'(9(A,A1))') &
   & ".MaxAqu",T_,".MaxMin",T_,&
   & "iStep",T_,"Time",T_,"dTime",T_,&
   & "MaxAqu",T_,"MaxMin",T_,&
   & "MaxAquRel",T_,"MaxMinRel",T_
   !
-  !--------------------------------------------------------------------------!
-  CALL GetUnit(f4)
-  OPEN(f4,FILE=TRIM(DirLog)//"calcdyn_satur.log")
+  !--------------------------------------------------------------------!
+  call GetUnit(f4)
+  open(f4,file=trim(DirLog)//"calcdyn_satur.log")
   !
-  RETURN
-ENDSUBROUTINE Dynam_Files_OpenLogs
+  return
+end subroutine Dynam_Files_OpenLogs
 
-SUBROUTINE Dynam_Files_WriteFasAff(iStep,Time,vLnAct,vLnBuf)
-!.WRITE affinity of pure phases (i.e. non-aqu'species)
-  USE M_IOTools
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_Files,        ONLY: cTitle,DirOut,Files_Index_Write
-  USE M_Basis_Vars,   ONLY: vOrdPr,tNuFas,nCi
-  USE M_Global_Vars,  ONLY: vFas,vSpc
+subroutine Dynam_Files_WriteFasAff(iStep,Time,vLnAct,vLnBuf)
+!.write affinity of pure phases (i.e. non-aqu'species)
+  use M_IOTools
+  use M_Numeric_Const,only: Ln10
+  use M_Files,        only: DirOut,Files_Index_Write
+  use M_Basis_Vars,   only: vOrdPr,tNuFas,nCi
+  use M_Global_Vars,  only: vFas,vSpc
   !
-  INTEGER, INTENT(IN):: iStep
-  REAL(dp),INTENT(IN):: Time
-  REAL(dp),INTENT(IN):: vLnAct(:)
-  REAL(dp),INTENT(IN):: vLnBuf(:)
+  integer, intent(in):: iStep
+  real(dp),intent(in):: Time
+  real(dp),intent(in):: vLnAct(:)
+  real(dp),intent(in):: vLnBuf(:)
   !
-  INTEGER :: iFs,nFs,nCp,nCx
-  REAL(dp):: X
+  integer :: iFs,nFs,nCp,nCx
+  real(dp):: X
   !
-  nFs= SIZE(vFas)
-  nCp= SIZE(vOrdPr)
+  nFs= size(vFas)
+  nCp= size(vOrdPr)
   nCx= nCp -nCi
   !
-  IF(iStep>9999) RETURN
+  if(iStep>9999) return
   !
-  IF (nFs>0) THEN
+  if (nFs>0) then
     !
-    !------------------------------------------- open fDynQsK, write en tete --!
-    IF(fDynQsK==0) THEN
-      CALL GetUnit(fDynQsK)
-      OPEN(fDynQsK,FILE=TRIM(DirOut)//"_minqsk.restab")
-      CALL Files_Index_Write(fHtm, &
-      & TRIM(DirOut)//"_minqsk.restab", &
-      & "DYNAMIC: Q/K of all phases from DATAbase")
-      WRITE(fDynQsK,'(2(A,A1))',ADVANCE= 'NO') "Step",T_,"Time",T_ !,"pH",T_
-      DO iFs=1,nFs
-        WRITE(fDynQsK,'(A,A1)',ADVANCE= 'NO') TRIM(vFas(iFs)%NamFs),T_
-      ENDDO
-      WRITE(fDynQsK,*)
-    ENDIF
-    !--------------------------------------------------------------------------!
+    !--------------------------------------- open fDynQsK, write en tete
+    if(fDynQsK==0) then
+      call GetUnit(fDynQsK)
+      open(fDynQsK,file=trim(DirOut)//"_minqsk.restab")
+      call Files_Index_Write(fHtm, &
+      & trim(DirOut)//"_minqsk.restab", &
+      & "DYNAMIC: Q/K of all phases from database")
+      write(fDynQsK,'(2(A,A1))',advance= 'NO') "Step",T_,"Time",T_ !,"pH",T_
+      do iFs=1,nFs
+        write(fDynQsK,'(A,A1)',advance= 'NO') trim(vFas(iFs)%NamFs),T_
+      end do
+      write(fDynQsK,*)
+    end if
+    !------------------------------------------------------------------!
     !
-    WRITE(fDynQsK,'(I5,A1,G15.6,A1)',ADVANCE= 'NO') iStep,T_,Time,T_
-    DO iFs=1,nFs
+    write(fDynQsK,'(I5,A1,G15.6,A1)',advance= 'NO') iStep,T_,Time,T_
+    do iFs=1,nFs
       X= &
       & vFas(iFs)%Grt &
-      - DOT_PRODUCT( tNuFas(iFs,1:nCi), &
+      - dot_product( tNuFas(iFs,1:nCi), &
       &              vLnAct(1:nCi) +vSpc(vOrdPr(1:nCi))%G0rt )
-      IF(nCx>0) &
+      if(nCx>0) &
       & X= X &
-      &  - DOT_PRODUCT( tNuFas(iFs,nCi+1:nCp), &
+      &  - dot_product( tNuFas(iFs,nCi+1:nCp), &
       &              vLnBuf(1:nCx) +vSpc(vOrdPr(nCi+1:nCp))%G0rt )
       !
-      WRITE(fDynQsK,'(F12.3,A1)',ADVANCE='NO') -X /Ln10,T_
+      write(fDynQsK,'(F12.3,A1)',advance="no") -X /Ln10,T_
       !                                       log10(QsK)= - Affinity /Ln10
-    ENDDO
-    WRITE(fDynQsK,*)
-  ENDIF
-ENDSUBROUTINE Dynam_Files_WriteFasAff    
+    end do
+    write(fDynQsK,*)
+  end if
+end subroutine Dynam_Files_WriteFasAff    
 
-ENDMODULE M_Dynam_Files
+end module M_Dynam_Files

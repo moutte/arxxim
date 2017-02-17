@@ -1,161 +1,161 @@
-MODULE M_DiscretModel_Read
+module M_DiscretModel_Read
 !--
 !-- routine for reading block(s) MIXTURE.DISCRETIZE (was SOLUTION.DISCRETIZE)
 !-- and build pure species from discretization of mixture phase(s)
 !--
-  USE M_Kinds
-  USE M_Trace,         ONLY: iDebug,fTrc,T_,Stop_,Pause_,Warning_
-  USE M_T_DiscretModel,ONLY: T_DiscretModel
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,         only: iDebug,fTrc,T_,Stop_,Pause_,Warning_
+  use M_T_DiscretModel,only: T_DiscretModel
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: DiscretModel_Read
+  public:: DiscretModel_Read
   !
-  !~ TYPE:: T_LnkDiscretModel
-    !~ TYPE(T_DiscretModel):: Value
-    !~ TYPE(T_LnkDiscretModel),POINTER::Next
-  !~ ENDTYPE T_LnkDiscretModel
+  !~ type:: T_LnkDiscretModel
+    !~ type(T_DiscretModel):: Value
+    !~ type(T_LnkDiscretModel),pointer::Next
+  !~ end type T_LnkDiscretModel
   !
-CONTAINS
+contains
 
-SUBROUTINE DiscretModel_Read(vMixModel)
+subroutine DiscretModel_Read(vMixModel)
 !--
-!-- called by DiscretPhase_Add in MODULE m_global_alloc
+!-- called by DiscretPhase_Add in module m_global_alloc
 !--
-  USE M_T_MixModel,ONLY: T_MixModel
+  use M_T_MixModel,only: T_MixModel
   !
-  USE M_Global_Vars,ONLY: vDiscretModel
+  use M_Global_Vars,only: vDiscretModel
   !
-  TYPE(T_MixModel),INTENT(IN) :: vMixModel(:)  
+  type(T_MixModel),intent(in) :: vMixModel(:)  
   !
-  TYPE(T_DiscretModel),ALLOCATABLE:: vTmp(:)
-  INTEGER:: N
+  type(T_DiscretModel),allocatable:: vTmp(:)
+  integer:: N
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretModel_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Read"
   !
-  ALLOCATE(vTmp(100))
-  CALL DiscretModel_ReadFile(vMixModel,vTmp,N)
+  allocate(vTmp(100))
+  call DiscretModel_ReadFile(vMixModel,vTmp,N)
   !
-  IF(N>0) THEN
-    DEALLOCATE(vDiscretModel)
-    ALLOCATE(vDiscretModel(N))
+  if(N>0) then
+    deallocate(vDiscretModel)
+    allocate(vDiscretModel(N))
     vDiscretModel(1:N)= vTmp(1:N)
-  ENDIF
+  end if
   !
-  DEALLOCATE(vTmp)
+  deallocate(vTmp)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ DiscretModel_Read"
-  !! IF(iDebug>0) PRINT *,"DiscretModel_Read, N=", N
+  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_Read"
+  !! if(iDebug>0) print *,"DiscretModel_Read, N=", N
   !
-ENDSUBROUTINE DiscretModel_Read
+end subroutine DiscretModel_Read
 
-SUBROUTINE DiscretModel_ReadFile( & !
+subroutine DiscretModel_ReadFile( & !
 !--
 !-- reads the parameters for the "discretization" of a mixture
 !--
 & vMixModel,     & !in,  database of solution models
 & vDiscretModel, & !out
 & N)               !OUT
-  USE M_IOTools
-  USE M_Files,     ONLY: NamFInn
-  USE M_T_MixModel,ONLY: T_MixModel
-  USE M_T_DiscretModel
+  use M_IOTools
+  use M_Files,     only: NamFInn
+  use M_T_MixModel,only: T_MixModel
+  use M_T_DiscretModel
   !
-  TYPE(T_MixModel),    INTENT(IN) :: vMixModel(:)
-  TYPE(T_DiscretModel),INTENT(OUT):: vDiscretModel(:)
-  INTEGER,             INTENT(OUT):: N
+  type(T_MixModel),    intent(in) :: vMixModel(:)
+  type(T_DiscretModel),intent(out):: vDiscretModel(:)
+  integer,             intent(out):: N
   !
-  TYPE(T_DiscretModel):: DsModl
-  TYPE(T_MixModel)    :: MxModl
+  type(T_DiscretModel):: DsModl
+  type(T_MixModel)    :: MxModl
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios
-  INTEGER:: K,iMix,DD,i,DimMix
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios
+  integer:: K,iMix,DD,i,DimMix
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretModel_ReadFile"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_ReadFile"
   !
   N= 0
   !
-  IF(SIZE(vDiscretModel)<1) RETURN
+  if(size(vDiscretModel)<1) return
   !
   iMix= 0
-  CALL GetUnit(F)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(f,file=trim(NamFInn))
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
     !
-    CALL AppendToEnd(L,W,EoL)
-    SELECT CASE(W)
+    call AppendToEnd(L,W,EoL)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
     !
-    CASE("SOLUTION.DISCRETIZE","MIXTURE.DISCRETIZE") !for reading one "block"
+    case("SOLUTION.DISCRETIZE","MIXTURE.DISCRETIZE") !for reading one "block"
       !! MIXTURE.DISCRETIZE
       !!   NAME   BIOT
       !!   NUMBER 9
       !!   MODEL  BIOTITE_MG_IDEAL
-      !! ENDSOLUTION.DISCRETIZE
-      DoBlock: DO
+      !! endSOLUTION.DISCRETIZE
+      DoBlock: do
       
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
+        call AppendToEnd(L,W,EoL)
         
-        SELECT CASE(W)
+        select case(W)
           !
-          CASE("ENDINPUT"); EXIT DoFile
+          case("ENDINPUT"); exit DoFile
           !
-          CASE DEFAULT
-            CALL Warning_("Unknown (or Obsolete) Keyword: "//TRIM(W))
+          case default
+            call Warning_("Unknown (or Obsolete) Keyword: "//trim(W))
           !
-          CASE("END","ENDSOLUTION.DISCRETIZE","ENDMIXTURE.DISCRETIZE")
+          case("END","ENDSOLUTION.DISCRETIZE","ENDMIXTURE.DISCRETIZE")
             !
-            IF(iMix>0) THEN
+            if(iMix>0) then
               DimMix= vMixModel(DsModl%iMix)%NPole
               !
-              IF(DimMix>3) THEN
-                PRINT *,"only binary or ternary models !!!"
-              ELSE
+              if(DimMix>3) then
+                print *,"only binary or ternary models !!!"
+              else
                 N= N+1
                 !
-                IF(DimMix==2) DsModl%Dim2= 0
-                IF(DimMix==3) DsModl%Dim2= DsModl%Dim1
-                CALL DiscretModel_Dim(DsModl%Dim1,DsModl%Dim2,DsModl%DimTot)
+                if(DimMix==2) DsModl%Dim2= 0
+                if(DimMix==3) DsModl%Dim2= DsModl%Dim1
+                call DiscretModel_Dim(DsModl%Dim1,DsModl%Dim2,DsModl%DimTot)
                 !
                 vDiscretModel(N)= DsModl
                 !
-                IF(iDebug>2) THEN
-                PRINT '(3(A,I4),4A)', &
+                if(iDebug>2) then
+                print '(3(A,I4),4A)', &
                 & "  Dim1=  ", DsModl%Dim1,   &
                 & "  Dim2=  ", DsModl%Dim2,   &
                 & "  DimTot=", DsModl%DimTot, &
-                & "  MxModl=", TRIM(vMixModel(DsModl%iMix)%Name), &
-                & "  DsModl=", TRIM(DsModl%Name)
-                ENDIF
+                & "  MxModl=", trim(vMixModel(DsModl%iMix)%Name), &
+                & "  DsModl=", trim(DsModl%Name)
+                end if
                 !
-                IF(iDebug>0) WRITE(fTrc,'(3(A,I4),4A)') &
+                if(iDebug>0) write(fTrc,'(3(A,I4),4A)') &
                 & "  Dim1=  ", DsModl%Dim1,   &
                 & "  Dim2=  ", DsModl%Dim2,   &
                 & "  DimTot=", DsModl%DimTot, &
-                & "  MxModl=", TRIM(vMixModel(DsModl%iMix)%Name), &
-                & "  DsModl=", TRIM(DsModl%Name)
-              ENDIF
+                & "  MxModl=", trim(vMixModel(DsModl%iMix)%Name), &
+                & "  DsModl=", trim(DsModl%Name)
+              end if
               !
-            ENDIF
-            EXIT DoBlock
+            end if
+            exit DoBlock
             !
-          CASE("NAME")
-            CALL LinToWrd(L,W,EoL); DsModl%Name=TRIM(W)
+          case("NAME")
+            call LinToWrd(L,W,EoL); DsModl%Name=trim(W)
             !
-          CASE("NUMBER")
-            CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,DD) 
+          case("NUMBER")
+            call LinToWrd(L,W,EoL); call WrdToInt(W,DD) 
             DD= MIN(DD,MaxDiscret)
             DD= MAX(DD,MinDiscret)
             !
@@ -163,188 +163,188 @@ SUBROUTINE DiscretModel_ReadFile( & !
             DsModl%DimTot= DsModl%Dim1
             DsModl%Dim2=   0
             !
-            IF(.not. Eol) THEN
-              CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,DD)
+            if(.not. Eol) then
+              call LinToWrd(L,W,EoL); call WrdToInt(W,DD)
               DD= MIN(DD,MaxDiscret)
               DD= MAX(DD,MinDiscret)
               DsModl%Dim2= DD -1
               DsModl%Dim2= DsModl%Dim1
-            ENDIF
+            end if
             !
-          CASE("MODEL")
-            CALL LinToWrd(L,W,EoL)
+          case("MODEL")
+            call LinToWrd(L,W,EoL)
             ! find the solution name in vMixModel%Name
             iMix=0
-            DO K=1,SIZE(vMixModel) 
-              IF(TRIM(W)==TRIM(vMixModel(K)%Name)) iMix=K
-            ENDDO
+            do K=1,size(vMixModel) 
+              if(trim(W)==trim(vMixModel(K)%Name)) iMix=K
+            end do
             !
-            IF(iMix>0) THEN
-              IF(vMixModel(iMix)%NPole<2) iMix=0
-            ENDIF
-            IF(iMix==0) CALL Stop_ &
-            & ("MIXTURE.DISCRETIZE: "//TRIM(W)//"-> Mixing model not found ...")
+            if(iMix>0) then
+              if(vMixModel(iMix)%NPole<2) iMix=0
+            end if
+            if(iMix==0) call Stop_ &
+            & ("MIXTURE.DISCRETIZE: "//trim(W)//"-> Mixing model not found ...")
             !
             DsModl%iMix= iMix
             DsModl%P1= 1 !default values
             DsModl%P2= 2 !id
             DsModl%P3= 0 !id
             !
-          CASE("POLE")
-            IF(iMix>0) THEN
+          case("POLE")
+            if(iMix>0) then
               MxModl= vMixModel(iMix)
-              DO
-                CALL LinToWrd(L,W,EoL)
+              do
+                call LinToWrd(L,W,EoL)
                 I=0
-                DO K=1,MxModl%NPole
-                  IF(TRIM(W)==TRIM(MxModl%vNamPole(K))) I=K
-                ENDDO
-                IF(EoL) EXIT
-              ENDDO
-            ENDIF
+                do K=1,MxModl%NPole
+                  if(trim(W)==trim(MxModl%vNamPole(K))) I=K
+                end do
+                if(EoL) exit
+              end do
+            end if
             !
-        ENDSELECT
+        end select
         
-      ENDDO DoBlock
+      end do DoBlock
       
-    ENDSELECT
+    end select
     
-  ENDDO DoFile
-  CLOSE(F)
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ DiscretModel_ReadFile"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_ReadFile"
   !
-ENDSUBROUTINE DiscretModel_ReadFile
+end subroutine DiscretModel_ReadFile
 
-SUBROUTINE DiscretModel_Dim(Dim1,Dim2,N)
-  INTEGER,INTENT(IN) :: Dim1,Dim2
-  INTEGER,INTENT(OUT):: N
+subroutine DiscretModel_Dim(Dim1,Dim2,N)
+  integer,intent(in) :: Dim1,Dim2
+  integer,intent(out):: N
   !
-  INTEGER:: Dims,i0,i,j,k
+  integer:: Dims,i0,i,j,k
   !
   Dims= Dim1 +1
-  IF(Dim2>0) THEN  ;  i0= 2  ! ternary
-  ELSE             ;  i0= 1  ! binary
-  ENDIF
+  if(Dim2>0) then  ;  i0= 2  ! ternary
+  else             ;  i0= 1  ! binary
+  end if
   N=0
   i=0
-  DO
+  do
     i= i+1
     k= 0
-    DO
-      IF(Dim2>0) k= k +1
+    do
+      if(Dim2>0) k= k +1
       j= Dims -i -k
       N= N+1
-      IF(Dim2==0) EXIT
-      IF(k==Dims-1 -i) EXIT
-    ENDDO
-    IF(i==Dims -i0) EXIT
-  ENDDO
+      if(Dim2==0) exit
+      if(k==Dims-1 -i) exit
+    end do
+    if(i==Dims -i0) exit
+  end do
   !
-  RETURN
-END SUBROUTINE DiscretModel_Dim
+  return
+end subroutine DiscretModel_Dim
 
-!~ SUBROUTINE DiscretModel_Read_(vMixModel)
-!~ !.called by DiscretPhase_Add in MODULE m_global_alloc
-  !~ USE M_T_MixModel,ONLY: T_MixModel
+!~ subroutine DiscretModel_Read_(vMixModel)
+!~ !.called by DiscretPhase_Add in module m_global_alloc
+  !~ use M_T_MixModel,only: T_MixModel
   !~ !
-  !~ USE M_Global_Vars,ONLY: vDiscretModel
+  !~ use M_Global_Vars,only: vDiscretModel
   !~ !
-  !~ TYPE(T_MixModel),INTENT(IN) :: vMixModel(:)  
+  !~ type(T_MixModel),intent(in) :: vMixModel(:)  
   !~ !
-  !~ TYPE(T_LnkDiscretModel),POINTER:: Lnk
-  !~ INTEGER:: N
+  !~ type(T_LnkDiscretModel),pointer:: Lnk
+  !~ integer:: N
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretModel_Read_begin"
+  !~ if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Read_begin"
   !~ !
-  !~ CALL DiscretModel_BuildLnk(vMixModel,Lnk,N)
+  !~ call DiscretModel_BuildLnk(vMixModel,Lnk,N)
   !~ !
-  !~ IF(N>0) THEN
-    !~ DEALLOCATE(vDiscretModel)
-    !~ ALLOCATE(vDiscretModel(N))
-    !~ CALL DiscretModel_LnkToVec(Lnk,vDiscretModel)
-  !~ ENDIF
+  !~ if(N>0) then
+    !~ deallocate(vDiscretModel)
+    !~ allocate(vDiscretModel(N))
+    !~ call DiscretModel_LnkToVec(Lnk,vDiscretModel)
+  !~ end if
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(A,/)') "< DiscretModel_Read_END"
-  !~ !! IF(iDebug>0) PRINT *,"DiscretModel_Read, N=", N
+  !~ if(iDebug>0) write(fTrc,'(A,/)') "< DiscretModel_Read_end"
+  !~ !! if(iDebug>0) print *,"DiscretModel_Read, N=", N
   !~ !
-!~ ENDSUBROUTINE DiscretModel_Read_
+!~ end subroutine DiscretModel_Read_
 
-!~ SUBROUTINE DiscretModel_BuildLnk( &
-!~ !.READs the PARAMETERs for the "discretization" of a solid solution 
-!~ & vMixModel, & !IN,  DATAbase of solution models
-!~ & Lnk, & !POINTER
+!~ subroutine DiscretModel_BuildLnk( &
+!~ !.reads the parameters for the "discretization" of a solid solution 
+!~ & vMixModel, & !IN,  database of solution models
+!~ & Lnk, & !pointer
 !~ & N) !OUT
-  !~ USE M_IOTools
-  !~ USE M_Files,     ONLY: NamFInn
-  !~ USE M_T_MixModel,ONLY: T_MixModel
-  !~ USE M_T_DiscretModel
+  !~ use M_IOTools
+  !~ use M_Files,     only: NamFInn
+  !~ use M_T_MixModel,only: T_MixModel
+  !~ use M_T_DiscretModel
   !~ !
-  !~ TYPE(T_MixModel),INTENT(IN) :: vMixModel(:)
-  !~ TYPE(T_LnkDiscretModel),POINTER:: Lnk
-  !~ INTEGER,         INTENT(OUT):: N
+  !~ type(T_MixModel),intent(in) :: vMixModel(:)
+  !~ type(T_LnkDiscretModel),pointer:: Lnk
+  !~ integer,         intent(out):: N
   !~ !
-  !~ TYPE(T_LnkDiscretModel),POINTER:: pCur
-  !~ TYPE(T_DiscretModel):: DiscretModel
+  !~ type(T_LnkDiscretModel),pointer:: pCur
+  !~ type(T_DiscretModel):: DiscretModel
   !~ !
-  !~ CHARACTER(LEN=512):: L,W
-  !~ LOGICAL:: EoL
-  !~ INTEGER:: F,ios
-  !~ INTEGER:: K,I,DD
+  !~ character(len=512):: L,W
+  !~ logical:: EoL
+  !~ integer:: F,ios
+  !~ integer:: K,I,DD
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretModel_Read_begin"
+  !~ if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Read_begin"
   !~ !
   !~ N= 0
   !~ I= 0
-  !~ NULLIFY(Lnk)
+  !~ nullify(Lnk)
   !~ !
-  !~ CALL GetUnit(F)
-  !~ OPEN(f,FILE=TRIM(NamFInn))
-  !~ DoFile: DO 
-    !~ READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    !~ CALL LinToWrd(L,W,EoL)
-    !~ IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    !~ CALL AppENDToEnd(L,W,EoL)
-    !~ SELECT CASE(W)
+  !~ call GetUnit(F)
+  !~ open(f,file=trim(NamFInn))
+  !~ DoFile: do 
+    !~ read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    !~ call LinToWrd(L,W,EoL)
+    !~ if(W(1:1)=='!') cycle DoFile !skip comment lines
+    !~ call AppendToEnd(L,W,EoL)
+    !~ select case(W)
     !~ !
-    !~ CASE("ENDINPUT"); EXIT DoFile
+    !~ case("ENDINPUT"); exit DoFile
     !~ !
-    !~ CASE("SOLUTION.DISCRETIZE") !for READing one "block"
+    !~ case("SOLUTION.DISCRETIZE") !for reading one "block"
       !~ !! SOLUTION.DISCRETIZE
       !~ !!   NAME   BIOT
       !~ !!   NUMBER 9
       !~ !!   MODEL  BIOTITE_MG_IDEAL
-      !~ !! ENDSOLUTION.DISCRETIZE
-      !~ DoBlock: DO
-        !~ READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        !~ CALL LinToWrd(L,W,EoL)
-        !~ IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-        !~ CALL AppENDToEnd(L,W,EoL)
-        !~ SELECT CASE(W)
-          !~ CASE("ENDINPUT"); EXIT DoFile
-          !~ CASE("END","ENDSOLUTION.DISCRETIZE")
-            !~ IF(I/=0) THEN
+      !~ !! endSOLUTION.DISCRETIZE
+      !~ DoBlock: do
+        !~ read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        !~ call LinToWrd(L,W,EoL)
+        !~ if(W(1:1)=='!') cycle DoBlock !skip comment lines
+        !~ call AppendToEnd(L,W,EoL)
+        !~ select case(W)
+          !~ case("ENDINPUT"); exit DoFile
+          !~ case("END","ENDSOLUTION.DISCRETIZE")
+            !~ if(I/=0) then
               !~ N= N+1
               !~ !
-              !~ IF(iDebug>0) WRITE(fTrc,'(A,2(A,I3))') &
+              !~ if(iDebug>0) write(fTrc,'(A,2(A,I3))') &
               !~ & DiscretModel%Name, &
               !~ & "Dim1=  ", DiscretModel%Dim1, &
               !~ & "Model= ", DiscretModel%iMix
               !~ !
-              !~ IF(N==1) THEN !_________"fill" the linked list
-                !~ ALLOCATE(Lnk); NULLIFY(Lnk%next)
+              !~ if(N==1) then !_________"fill" the linked list
+                !~ allocate(Lnk); nullify(Lnk%next)
                 !~ Lnk%Value=DiscretModel; pCur=>Lnk
-              !~ ELSE
-                !~ ALLOCATE(pCur%next); NULLIFY(pCur%next%next)
+              !~ else
+                !~ allocate(pCur%next); nullify(pCur%next%next)
                 !~ pCur%next%Value=DiscretModel; pCur=>pCur%next
-              !~ ENDIF
+              !~ end if
               !~ !
-            !~ ENDIF
-            !~ EXIT DoBlock
-          !~ CASE("NAME")
-            !~ CALL LinToWrd(L,W,EoL); DiscretModel%Name=TRIM(W)
-          !~ CASE("NUMBER")
-            !~ CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,DD) 
+            !~ end if
+            !~ exit DoBlock
+          !~ case("NAME")
+            !~ call LinToWrd(L,W,EoL); DiscretModel%Name=trim(W)
+          !~ case("NUMBER")
+            !~ call LinToWrd(L,W,EoL); call WrdToInt(W,DD) 
             !~ DD= MIN(DD,MaxDiscret)
             !~ DD= MAX(DD,MinDiscret)
             !~ !
@@ -352,60 +352,60 @@ END SUBROUTINE DiscretModel_Dim
             !~ DiscretModel%DimTot= DiscretModel%Dim1
             !~ DiscretModel%Dim2=   0
             !~ !
-            !~ IF(.not. Eol) THEN
-              !~ CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,DD)
+            !~ if(.not. Eol) then
+              !~ call LinToWrd(L,W,EoL); call WrdToInt(W,DD)
               !~ DiscretModel%Dim2= DiscretModel%Dim1
-            !~ ENDIF
+            !~ end if
             !~ !
-          !~ CASE("MODEL")
-            !~ CALL LinToWrd(L,W,EoL)
+          !~ case("MODEL")
+            !~ call LinToWrd(L,W,EoL)
             !~ I=0
-            !~ DO K=1,SIZE(vMixModel) ! find the solution name in vMixModel%Name
-              !~ IF(TRIM(W)==TRIM(vMixModel(K)%Name)) I=K
-            !~ ENDDO
+            !~ do K=1,size(vMixModel) ! find the solution name in vMixModel%Name
+              !~ if(trim(W)==trim(vMixModel(K)%Name)) I=K
+            !~ end do
             !~ !
-            !~ IF(vMixModel(I)%NPole<2) I=0
+            !~ if(vMixModel(I)%NPole<2) I=0
             !~ !
             !~ DiscretModel%iMix= I
-            !~ ! IF(I==0) &
-            !~ ! & CALL Stop_("SOLUTION.DISCRETIZE: "//TRIM(W)//"-> Mixing model not found ...")
-        !~ ENDSELECT
-      !~ ENDDO DoBlock
-    !~ ENDSELECT
-  !~ ENDDO DoFile
-  !~ CLOSE(F)
+            !~ ! if(I==0) &
+            !~ ! & call Stop_("SOLUTION.DISCRETIZE: "//trim(W)//"-> Mixing model not found ...")
+        !~ end select
+      !~ end do DoBlock
+    !~ end select
+  !~ end do DoFile
+  !~ close(F)
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(A,/)') "< DiscretModel_BuildLnk_END"
+  !~ if(iDebug>0) write(fTrc,'(A,/)') "< DiscretModel_BuildLnk_end"
   !~ !
-!~ ENDSUBROUTINE DiscretModel_BuildLnk
+!~ end subroutine DiscretModel_BuildLnk
 
-!~ SUBROUTINE DiscretModel_LnkToVec(Lnk,vDiscretModel)
-  !~ USE M_T_DiscretModel,ONLY: T_DiscretModel
+!~ subroutine DiscretModel_LnkToVec(Lnk,vDiscretModel)
+  !~ use M_T_DiscretModel,only: T_DiscretModel
   !~ !
-  !~ TYPE(T_LnkDiscretModel), POINTER    :: Lnk
-  !~ TYPE(T_DiscretModel),    INTENT(OUT):: vDiscretModel(:)
+  !~ type(T_LnkDiscretModel), pointer    :: Lnk
+  !~ type(T_DiscretModel),    intent(out):: vDiscretModel(:)
   !~ !
-  !~ TYPE(T_LnkDiscretModel),POINTER:: pCur, pPrev
-  !~ INTEGER:: K
+  !~ type(T_LnkDiscretModel),pointer:: pCur, pPrev
+  !~ integer:: K
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "< DiscretModel_LnkToVec_begin"
-  !~ IF(iDebug>1) PRINT '(A)',"DiscretModel_LnkToVec_begin"
+  !~ if(iDebug>0) write(fTrc,'(/,A,/)') "< DiscretModel_LnkToVec_begin"
+  !~ if(iDebug>1) print '(A)',"DiscretModel_LnkToVec_begin"
   !~ !
   !~ pCur=>Lnk
   !~ K=0
-  !~ DO WHILE (ASSOCIATED(pCur))
+  !~ do while (associateD(pCur))
     !~ K=K+1
     !~ vDiscretModel(K)=pCur%Value
     !~ pPrev=>pCur
     !~ pCur=> pCur%next
-    !~ DEALLOCATE(pPrev)
+    !~ deallocate(pPrev)
     !~ !
-    !~ IF(iDebug>0) WRITE(fTrc,'(I3,2A,I3)') &
+    !~ if(iDebug>0) write(fTrc,'(I3,2A,I3)') &
     !~ & k," DiscretModel(i)%Name=",vDiscretModel(K)%Name,vDiscretModel(K)%iMix
-  !~ ENDDO
+  !~ end do
   !~ !
-  !~ IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "< DiscretModel_LnkToVec_END"
+  !~ if(iDebug>0) write(fTrc,'(/,A,/)') "< DiscretModel_LnkToVec_end"
   !~ !
-!~ ENDSUBROUTINE DiscretModel_LnkToVec
+!~ end subroutine DiscretModel_LnkToVec
 
-ENDMODULE M_DiscretModel_Read
+end module M_DiscretModel_Read

@@ -1,235 +1,235 @@
-MODULE M_Numeric_Tools 
+module M_Numeric_Tools 
 
   !---------------------------------------------------------
   ! "NR" Tools from Numerical Recipes"
   !---------------------------------------------------------
 
-  USE M_Kinds
-  USE M_Trace, ONLY:Stop_
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace, only:Stop_
+  implicit none
  
-  PRIVATE
+  private
   
   !---
-  PUBLIC:: Interpol
+  public:: Interpol
   !---
-  PUBLIC:: vAbs
+  public:: vAbs
   !---
-  PUBLIC:: Swap_RV
-  PUBLIC:: Swap_I
+  public:: Swap_RV
+  public:: Swap_I
   !---
-  PUBLIC:: OuterProd_R
-  PUBLIC:: OuterAnd
+  public:: OuterProd_R
+  public:: OuterAnd
   !---
-  PUBLIC:: iMaxLoc_R
-  PUBLIC:: iMinLoc_R
-  PUBLIC:: iFirstLoc
+  public:: iMaxLoc_R
+  public:: iMinLoc_R
+  public:: iFirstLoc
   !---
-  PUBLIC:: Unit_Matrix
-  PUBLIC:: Sort
-  PUBLIC:: CalcPermut
+  public:: Unit_Matrix
+  public:: Sort
+  public:: CalcPermut
   !---
-  PUBLIC:: Jacobian_Numeric
-  PUBLIC:: Jacobian_Numeric_Bis
+  public:: Jacobian_Numeric
+  public:: Jacobian_Numeric_Bis
   !---
 
-  INTEGER,PUBLIC:: fNewt_I= 0 !counter used for DebNewt
-  INTEGER,PUBLIC:: fNewtF=  0 !"trace" file for Newton, values of the unknown vector at each step, opened if DebNewt
-  INTEGER,PUBLIC:: fNewtR=  0 !"trace" file for Newton, values of the residue at each step, opened if DebNewt 
-  INTEGER,PUBLIC:: fNewtJ=  0 !
+  integer,public:: fNewt_I= 0 !counter used for DebNewt
+  integer,public:: fNewtF=  0 !"trace" file for Newton, values of the unknown vector at each step, opened if DebNewt
+  integer,public:: fNewtR=  0 !"trace" file for Newton, values of the residue at each step, opened if DebNewt 
+  integer,public:: fNewtJ=  0 !
   !
-  !INTEGER,PARAMETER::NPAR_ARTH=16,NPAR2_ARTH=8 !for ARTH_I
+  !integer,parameter::NPAR_ARTH=16,NPAR2_ARTH=8 !for ARTH_I
 
-CONTAINS
+contains
 
 
  !--------------- LINEAR TABLE INTERPOLATION  -------------------------------------------
 
 
-  REAL(dp) FUNCTION Interpol(T,iota,N,vT,vP)
+  real(dp) function Interpol(T,iota,N,vT,vP)
     !----------------------------------------------------------------------
     ! provisional, basic linear interpolation of P from a table (vT,vP)
     ! assumes the vT-series is strictly increasing from 1 to N
     !----------------------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp),              INTENT(IN)   :: T,iota
-    INTEGER,               INTENT(IN)   :: N
-    REAL(dp), DIMENSION(:),INTENT(IN)   :: vT,vP
+    implicit none
+    real(dp),              intent(in)   :: T,iota
+    integer,               intent(in)   :: N
+    real(dp), dimension(:),intent(in)   :: vT,vP
     !
-    REAL(dp):: P,K1,K2
-    INTEGER :: I
+    real(dp):: P,K1,K2
+    integer :: I
     !
-    IF(T<vT(1) .OR. T>vT(N)) CALL Stop_("T outside T-series")
+    if(T<vT(1) .or. T>vT(N)) call Stop_("T outside T-series")
     !
-    I=1; DO WHILE(T>vT(I)); I=I+1; ENDDO !-> find upper bound
+    I=1; do while(T>vT(I)); I=I+1; end do !-> find upper bound
     !
-    IF(ABS(T-vT(I))<=Iota) THEN
+    if(ABS(T-vT(I))<=Iota) then
        P= vP(I)
-    ELSE
+    else
        K1= (T-vT(I)  ) /(vT(I-1) - vT(I)  )
        K2= (T-vT(I-1)) /(vT(I)   - vT(I-1))
        P=  K1 *vP(I-1) + K2 *vP(I)
-    ENDIF
+    end if
     Interpol= P
-    RETURN
-  ENDFUNCTION Interpol
+    return
+  end function Interpol
 
 
   !--------------- VECTOR UTILS  -------------------------------------------
 
 
-  REAL(dp) FUNCTION vAbs(V) 
+  real(dp) function vAbs(V) 
     !----------------------
     ! Norm of Vector V
     !----------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:),INTENT(IN) :: V
-    vAbs=SQRT(DOT_PRODUCT(V,V))
-  ENDFUNCTION vAbs
+    implicit none
+    real(dp),dimension(:),intent(in) :: V
+    vAbs=SQRT(dot_product(V,V))
+  end function vAbs
 
   !---
 
-  SUBROUTINE Swap_RV(A,B) 
+  subroutine Swap_RV(A,B) 
     !-----------------------
     ! Swap RealVector
     !-----------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:),INTENT(INOUT):: A,B
-    REAL(dp),DIMENSION(SIZE(A))        :: DUM
+    implicit none
+    real(dp),dimension(:),intent(inout):: A,B
+    real(dp),dimension(size(A))        :: DUM
     DUM=A; A=B; B=DUM
-  ENDSUBROUTINE Swap_RV
+  end subroutine Swap_RV
 
   !---
 
-  FUNCTION iMaxLoc_R(ARR) 
+  function iMaxLoc_R(ARR) 
     !-------------------------------
     ! Localize maximum value
     !-------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:), INTENT(IN) :: ARR
-    INTEGER               :: iMaxLoc_R
-    INTEGER, DIMENSION(1) :: IMAX
+    implicit none
+    real(dp),dimension(:), intent(in) :: ARR
+    integer               :: iMaxLoc_R
+    integer, dimension(1) :: IMAX
     IMAX=MAXLOC(ARR(:))
     iMaxLoc_R=IMAX(1)
-  END FUNCTION iMaxLoc_R
+  end function iMaxLoc_R
 
   !---
 
-  FUNCTION iMinLoc_R(ARR) 
+  function iMinLoc_R(ARR) 
     !-------------------------------
     ! Localize minimum value
     !-------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:), INTENT(IN) :: ARR
-    INTEGER               :: iMinLoc_R
-    INTEGER, DIMENSION(1) :: IMin
+    implicit none
+    real(dp),dimension(:), intent(in) :: ARR
+    integer               :: iMinLoc_R
+    integer, dimension(1) :: IMin
     IMin=MINLOC(ARR(:))
     iMinLoc_R=IMin(1)
-  END FUNCTION iMinLoc_R
+  end function iMinLoc_R
 
   !---
 
-  FUNCTION iFirstLoc(MASK) 
+  function iFirstLoc(MASK) 
     !-------------------------------
     ! Localize first occurence
     !-------------------------------
-    IMPLICIT NONE
-    INTEGER                        :: iFirstLoc
-    LOGICAL,DIMENSION(:),INTENT(IN):: MASK
+    implicit none
+    integer                        :: iFirstLoc
+    logical,dimension(:),intent(in):: MASK
     !
-    INTEGER,DIMENSION(1):: LOC
+    integer,dimension(1):: LOC
     !
     LOC=MAXLOC(MERGE(1,0,MASK))
     iFirstLoc=LOC(1)
-    IF (.NOT. MASK(IFIRSTLOC)) IFIRSTLOC=SIZE(MASK)+1
-  ENDFUNCTION IFIRSTLOC
+    if (.not. MASK(ifIRSTLOC)) ifIRSTLOC=size(MASK)+1
+  end function ifIRSTLOC
 
   !---
 
-  FUNCTION OuterProd_R(A,B) 
+  function OuterProd_R(A,B) 
     !-------------------------------
     ! Outer product of vectors
     !-------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:), INTENT(IN) :: A,B
-    REAL(dp),DIMENSION(SIZE(A),SIZE(B)) :: OuterProd_R
+    implicit none
+    real(dp),dimension(:), intent(in) :: A,B
+    real(dp),dimension(size(A),size(B)) :: OuterProd_R
     !
-    OuterProd_R= SPREAD(A,DIM=2,NCOPIES=SIZE(B)) &
-         &          * SPREAD(B,DIM=1,NCOPIES=SIZE(A))
-  END FUNCTION OuterProd_R
+    OuterProd_R= SPread(A,DIM=2,NCOPIES=size(B)) &
+         &          * SPread(B,DIM=1,NCOPIES=size(A))
+  end function OuterProd_R
 
   !---
 
-  FUNCTION OuterAND(A,B) 
+  function OuterAND(A,B) 
     !-------------------------------
     ! Outer operator and 
     !-------------------------------
-    IMPLICIT NONE
-    LOGICAL, DIMENSION(:), INTENT(IN)   :: A,B
-    LOGICAL, DIMENSION(SIZE(A),SIZE(B)) :: OuterAND
-    OuterAND= SPREAD(A,DIM=2,NCOPIES=SIZE(B)) &
-         &   .AND. SPREAD(B,DIM=1,NCOPIES=SIZE(A))
-  END FUNCTION OuterAND
+    implicit none
+    logical, dimension(:), intent(in)   :: A,B
+    logical, dimension(size(A),size(B)) :: OuterAND
+    OuterAND= SPread(A,DIM=2,NCOPIES=size(B)) &
+         &   .and. SPread(B,DIM=1,NCOPIES=size(A))
+  end function OuterAND
 
   !---
 
-  SUBROUTINE Unit_Matrix(MAT) 
+  subroutine Unit_Matrix(MAT) 
     !------------------------------------------------------------
     ! Square real matrix Identity, dimension=MIN(nRows,nColumns)
     !------------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:,:),INTENT(OUT) :: MAT
-    INTEGER:: I,N
-    N=MIN(SIZE(MAT,1),SIZE(MAT,2))
+    implicit none
+    real(dp),dimension(:,:),intent(out) :: MAT
+    integer:: I,N
+    N=MIN(size(MAT,1),size(MAT,2))
     MAT(:,:)=Zero
-    DO I=1,N
+    do I=1,N
        MAT(I,I)=One
-    ENDDO
-  ENDSUBROUTINE UNIT_MATRIX
+    end do
+  end subroutine UNIT_MATRIX
 
 
   !--------------- SORTING ---------------------------------------------------
 
-  SUBROUTINE SWAP_R(A,B) 
+  subroutine SWAP_R(A,B) 
     !-----------------------
     ! Swap Real
     !-----------------------
-    IMPLICIT NONE
-    REAL(dp),INTENT(INOUT) :: A,B
-    REAL(dp) :: DUM
+    implicit none
+    real(dp),intent(inout) :: A,B
+    real(dp) :: DUM
     DUM=A; A=B; B=DUM
-  ENDSUBROUTINE SWAP_R
+  end subroutine SWAP_R
 
   !---
 
-  SUBROUTINE SWAP_I(A,B)
+  subroutine SWAP_I(A,B)
     !-----------------------
     ! Swap Integer
     !-----------------------
-    IMPLICIT NONE
-    INTEGER,INTENT(INOUT) :: A,B
-    INTEGER:: DUM
+    implicit none
+    integer,intent(inout) :: A,B
+    integer:: DUM
     DUM=A; A=B; B=DUM
-  ENDSUBROUTINE SWAP_I
+  end subroutine SWAP_I
 
   !---
 
-  SUBROUTINE SWAP_RMASKED(A,B,MASK)
+  subroutine SWAP_RMASKED(A,B,MASK)
     !-----------------------
     ! Swap Real with Mask
     !-----------------------
-    IMPLICIT NONE
-    REAL(dp),INTENT(INOUT) :: A,B
-    LOGICAL,  INTENT(IN)   :: MASK
-    REAL(dp):: SWP
-    IF (MASK) THEN
+    implicit none
+    real(dp),intent(inout) :: A,B
+    logical,  intent(in)   :: MASK
+    real(dp):: SWP
+    if (MASK) then
        SWP=A; A=B; B=SWP
-    ENDIF
-  ENDSUBROUTINE SWAP_RMASKED
+    end if
+  end subroutine SWAP_RMASKED
 
   !---
 
-  SUBROUTINE Sort(arr) 
+  subroutine Sort(arr) 
     !-------------------------------------------------------------
     ! NR, in ModSort Quicksort
     !------
@@ -241,232 +241,232 @@ CONTAINS
     ! NN=     size of subarrays sorted by straight insertion
     ! NSTACK= required auxiliary storage.
     !-------------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:), INTENT(INOUT) :: arr
-    INTEGER, PARAMETER :: NN=15, NSTACK=50
-    REAL(dp):: a
-    INTEGER :: n,k,i,j,jstack,l,r
-    INTEGER, DIMENSION(NSTACK) :: istack
+    implicit none
+    real(dp),dimension(:), intent(inout) :: arr
+    integer, parameter :: NN=15, NSTACK=50
+    real(dp):: a
+    integer :: n,k,i,j,jstack,l,r
+    integer, dimension(NSTACK) :: istack
     !-------
-    n=SIZE(arr)
+    n=size(arr)
     jstack=0
     l=1
     r=n
-    DO
-       IF (r-l < NN) THEN !Insertion sort when subarray small enough.
-          DO j=l+1,r
+    do
+       if (r-l < NN) then !Insertion sort when subarray small enough.
+          do j=l+1,r
              a=arr(j)
-             DO i=j-1,l,-1
-                IF (arr(i) <= a) EXIT
+             do i=j-1,l,-1
+                if (arr(i) <= a) exit
                 arr(i+1)=arr(i)
-             ENDDO
+             end do
              arr(i+1)=a
-          ENDDO
-          IF (jstack==0) RETURN
+          end do
+          if (jstack==0) return
           r=istack(jstack) !________________Pop stack and begin a new round of partitioning
           l=istack(jstack-1)
           jstack=jstack-2
-       ELSE
+       else
           k=(l+r)/2 !_______________________Choose median of left, center, and right elements as partitioning element a
-          CALL SWAP_R(arr(k),arr(l+1)) !______Also rearrange so that a(l)<=a(l+1)<=a(r).
-          CALL SWAP_RMASKED(arr(l),  arr(r),  arr(l)>arr(r))
-          CALL SWAP_RMASKED(arr(l+1),arr(r),  arr(l+1)>arr(r))
-          CALL SWAP_RMASKED(arr(l),  arr(l+1),arr(l)>arr(l+1))
+          call SWAP_R(arr(k),arr(l+1)) !______Also rearrange so that a(l)<=a(l+1)<=a(r).
+          call SWAP_RMASKED(arr(l),  arr(r),  arr(l)>arr(r))
+          call SWAP_RMASKED(arr(l+1),arr(r),  arr(l+1)>arr(r))
+          call SWAP_RMASKED(arr(l),  arr(l+1),arr(l)>arr(l+1))
           i=l+1
           j=r
           a=arr(l+1) !______________________Partitioning element
-          DO
-             DO !____________________________Scan up to find element >= a.
+          do
+             do !____________________________Scan up to find element >= a.
                 i=i+1
-                IF(arr(i)>=a) EXIT
-             ENDDO
-             DO !____________________________Scan down to find element <= a
+                if(arr(i)>=a) exit
+             end do
+             do !____________________________Scan down to find element <= a
                 j=j-1
-                IF(arr(j)<=a) EXIT
-             ENDDO
-             IF (j<i) EXIT !_______________Pointers crossed. Exit with partitioning complete.
-             CALL SWAP_R(arr(i),arr(j))
-          ENDDO
+                if(arr(j)<=a) exit
+             end do
+             if (j<i) exit !_______________Pointers crossed. Exit with partitioning complete.
+             call SWAP_R(arr(i),arr(j))
+          end do
           arr(l+1)=arr(j) !_________________Insert partitioning element.
           arr(j)=a
           jstack=jstack+2
-          IF (jstack > NSTACK) RETURN !CALL nrerror('sort: NSTACK too small')
-          IF (r-i+1>=j-l) THEN
+          if (jstack > NSTACK) return !call nrerror('sort: NSTACK too small')
+          if (r-i+1>=j-l) then
              istack(jstack)=r
              istack(jstack-1)=i
              r=j-1
-          ELSE
+          else
              istack(jstack)=j-1
              istack(jstack-1)=l
              l=i
-          ENDIF
-       ENDIF
-    ENDDO
-  ENDSUBROUTINE Sort
+          end if
+       end if
+    end do
+  end subroutine Sort
 
   !---
 
-  SUBROUTINE CalcPermut(Arr,vPermut)
+  subroutine CalcPermut(Arr,vPermut)
     !-----------------------------------------------------------------------------
     ! NR, Numerical Recipes for FORTRAN
     !-------------
     ! calc. permutation array vPermut that sorts Arr in increasing Arr(i)
     ! to apply permutation vPermut to array Arr: Arr=Arr(vPermut)
     !-----------------------------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp),DIMENSION(:),INTENT(IN) :: arr
-    INTEGER, DIMENSION(:),INTENT(OUT):: vPermut
-    INTEGER, PARAMETER:: NN=15, NSTACK=50
-    REAL(dp) :: a
-    INTEGER :: n,k,i,j,indext,jstack,iLeft,iRite
-    INTEGER, DIMENSION(NSTACK) :: istack
+    implicit none
+    real(dp),dimension(:),intent(in) :: arr
+    integer, dimension(:),intent(out):: vPermut
+    integer, parameter:: NN=15, NSTACK=50
+    real(dp) :: a
+    integer :: n,k,i,j,indext,jstack,iLeft,iRite
+    integer, dimension(NSTACK) :: istack
     !-------
-    IF(SIZE(vPermut)/=SIZE(arr)) RETURN
-    N=SIZE(vPermut)
-    DO I=1,N
+    if(size(vPermut)/=size(arr)) return
+    N=size(vPermut)
+    do I=1,N
        vPermut(I)=I
-    ENDDO
+    end do
     !vPermut=arth(1,1,n)
     JSTACK=0; iLeft=1; iRite=N
-    DO
-       IF (iRite-iLeft<NN) THEN
-          DO j=iLeft+1,iRite
+    do
+       if (iRite-iLeft<NN) then
+          do j=iLeft+1,iRite
              indext=vPermut(j)
              a=arr(indext)
-             DO i=j-1,iLeft,-1
-                IF (arr(vPermut(i)) <= a) EXIT
+             do i=j-1,iLeft,-1
+                if (arr(vPermut(i)) <= a) exit
                 vPermut(i+1)=vPermut(i)
-             ENDDO
+             end do
              vPermut(i+1)=indext
-          ENDDO
-          IF (jstack==0) RETURN
+          end do
+          if (jstack==0) return
           iRite=istack(jstack)
           iLeft=istack(jstack-1)
           jstack=jstack-2
-       ELSE
+       else
           k=(iLeft+iRite)/2
-          CALL SWAP_I(vPermut(k),vPermut(iLeft+1))
-          CALL icomp_xchg(vPermut(iLeft),vPermut(iRite))
-          CALL icomp_xchg(vPermut(iLeft+1),vPermut(iRite))
-          CALL icomp_xchg(vPermut(iLeft),vPermut(iLeft+1))
+          call SWAP_I(vPermut(k),vPermut(iLeft+1))
+          call icomp_xchg(vPermut(iLeft),vPermut(iRite))
+          call icomp_xchg(vPermut(iLeft+1),vPermut(iRite))
+          call icomp_xchg(vPermut(iLeft),vPermut(iLeft+1))
           i=iLeft+1
           j=iRite
           indext=vPermut(iLeft+1)
           a=arr(indext)
-          DO
-             DO
+          do
+             do
                 i=i+1
-                IF (arr(vPermut(i)) >= a) EXIT
-             ENDDO
-             DO
+                if (arr(vPermut(i)) >= a) exit
+             end do
+             do
                 j=j-1
-                IF (arr(vPermut(j)) <= a) EXIT
-             ENDDO
-             IF (j < i) EXIT
-             CALL SWAP_I(vPermut(i),vPermut(j))
-          ENDDO
+                if (arr(vPermut(j)) <= a) exit
+             end do
+             if (j < i) exit
+             call SWAP_I(vPermut(i),vPermut(j))
+          end do
           vPermut(iLeft+1)=vPermut(j)
           vPermut(j)=indext
           jstack=jstack+2
-          IF (jstack > NSTACK) RETURN !CALL nrerror('indexx: NSTACK too small')
-          IF (iRite-i+1 >= j-iLeft) THEN
+          if (jstack > NSTACK) return !call nrerror('indexx: NSTACK too small')
+          if (iRite-i+1 >= j-iLeft) then
              istack(jstack)=iRite
              istack(jstack-1)=i
              iRite=j-1
-          ELSE
+          else
              istack(jstack)=j-1
              istack(jstack-1)=iLeft
              iLeft=i
-          ENDIF
-       ENDIF
-    ENDDO
+          end if
+       end if
+    end do
 
-  CONTAINS
+  contains
 
-    SUBROUTINE Icomp_Xchg(i,j) !in CalcPermut
-      INTEGER, INTENT(INOUT) :: i,j
-      INTEGER :: swp
-      IF (arr(j)<arr(i)) THEN
+    subroutine Icomp_Xchg(i,j) !in CalcPermut
+      integer, intent(inout) :: i,j
+      integer :: swp
+      if (arr(j)<arr(i)) then
          swp=i; i=j; j=swp
-      ENDIF
-    ENDSUBROUTINE Icomp_Xchg
+      end if
+    end subroutine Icomp_Xchg
 
-  ENDSUBROUTINE CalcPermut
+  end subroutine CalcPermut
 
 
-  !--------------- FINITE DIFFERENCE JACOBIAN -------------------------------------------
+  !--------------- FINITE DifFERENCE JACOBIAN -------------------------------------------
   
 
-  SUBROUTINE Jacobian_Numeric(vFunc,X,vFuncX,tJac) !from "NR"
+  subroutine Jacobian_Numeric(vFunc,X,vFuncX,tJac) !from "NR"
     !.forward-difference approximation to Jacobian
-    !USE M_Numeric_Tools
-    REAL(dp),DIMENSION(:),   INTENT(IN)   :: vFuncX !vector(:) of function values at x
-    REAL(dp),DIMENSION(:),   INTENT(INOUT):: X !point(:) at which Jacobian is evaluated
-    REAL(dp),DIMENSION(:,:), INTENT(OUT)  :: tJac !(:,:) output Jacobian
-    INTERFACE
-       FUNCTION vFunc(X)
-         USE M_Kinds
-         IMPLICIT NONE
-         REAL(dp),DIMENSION(:),INTENT(IN):: X
-         REAL(dp),DIMENSION(SIZE(X))     :: vFunc
-       ENDFUNCTION vFunc
-    ENDINTERFACE
+    !use M_Numeric_Tools
+    real(dp),dimension(:),   intent(in)   :: vFuncX !vector(:) of function values at x
+    real(dp),dimension(:),   intent(inout):: X !point(:) at which Jacobian is evaluated
+    real(dp),dimension(:,:), intent(out)  :: tJac !(:,:) output Jacobian
+    interface
+       function vFunc(X)
+         use M_Kinds
+         implicit none
+         real(dp),dimension(:),intent(in):: X
+         real(dp),dimension(size(X))     :: vFunc
+       end function vFunc
+    endinterface
     !
-    REAL(dp),PARAMETER:: EPS=1.0E-6_dp
-    REAL(dp),DIMENSION(SIZE(x)) :: Xsav,Xph,H
-    INTEGER:: J,N
+    real(dp),parameter:: EPS=1.0E-6_dp
+    real(dp),dimension(size(x)) :: Xsav,Xph,H
+    integer:: J,N
     !
-    N=   SIZE(x)
+    N=   size(x)
     Xsav=X
     H=   EPS*ABS(Xsav)
-    WHERE (H==Zero) H=Eps
+    where (H==Zero) H=Eps
     Xph=Xsav+H
     H=  Xph-Xsav !Trick to reduce finite precision error.
-    DO j=1,N
+    do j=1,N
       X(J)= Xph(J)
       tJac(:,J)=(vFunc(x)-vFuncX(:))/H(J) !Forward difference formula.
       X(J)= Xsav(J)
-    ENDDO
-  ENDSUBROUTINE Jacobian_Numeric
+    end do
+  end subroutine Jacobian_Numeric
 
   !---
 
-  SUBROUTINE Jacobian_Numeric_Bis(vFunc,X,vFX,tJac) !from "NR"
+  subroutine Jacobian_Numeric_Bis(vFunc,X,vFX,tJac) !from "NR"
     !.forward-difference approximation to Jacobian
-    !USE M_Numeric_Tools
-    REAL(dp),DIMENSION(:),   INTENT(IN)   :: X      !point(:) at which Jacobian is evaluated
-    REAL(dp),DIMENSION(:),   INTENT(IN)   :: vFX     !vector(:) of function values at x
-    REAL(dp),DIMENSION(:,:), INTENT(OUT)  :: tJac   !(:,:) output Jacobian
-    INTERFACE
-       FUNCTION vFunc(X)
-         USE M_Kinds
-         IMPLICIT NONE
-         REAL(dp),DIMENSION(:),INTENT(IN):: X
-         REAL(dp),DIMENSION(SIZE(X))     :: vFunc
-       ENDFUNCTION vFunc
-    ENDINTERFACE
+    !use M_Numeric_Tools
+    real(dp),dimension(:),   intent(in)   :: X      !point(:) at which Jacobian is evaluated
+    real(dp),dimension(:),   intent(in)   :: vFX     !vector(:) of function values at x
+    real(dp),dimension(:,:), intent(out)  :: tJac   !(:,:) output Jacobian
+    interface
+       function vFunc(X)
+         use M_Kinds
+         implicit none
+         real(dp),dimension(:),intent(in):: X
+         real(dp),dimension(size(X))     :: vFunc
+       end function vFunc
+    endinterface
     !
-    REAL(dp),PARAMETER:: EPS=1.0E-6_dp
-    REAL(dp),DIMENSION(SIZE(x)) :: XplusH, H 
-    INTEGER:: J,N
+    real(dp),parameter:: EPS=1.0E-6_dp
+    real(dp),dimension(size(x)) :: XplusH, H 
+    integer:: J,N
     
     !--
-    N = SIZE(x)
+    N = size(x)
     H = EPS*ABS(X)
 
-    DO j=1,N
+    do j=1,N
        if (H(j)==Zero) H(j)=Eps
-    end DO
+    end do
 
     !--
     XplusH = X
-    DO j=1,N  
+    do j=1,N  
        XplusH(j) = X(J) + H(J)
        tJac(:,j) = ( vFunc(XplusH) - vFX )/ H(j) !Forward difference formula.
        XplusH(j) = X(j)
-    ENDDO
+    end do
 
-  ENDSUBROUTINE Jacobian_Numeric_Bis
+  end subroutine Jacobian_Numeric_Bis
 
-ENDMODULE M_Numeric_Tools
+end module M_Numeric_Tools
 

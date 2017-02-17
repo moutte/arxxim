@@ -1,195 +1,195 @@
-MODULE M_SetOption
+module M_SetOption
 
-  USE M_Kinds
-  USE M_Trace
-  USE M_IOTools
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  use M_Trace
+  use M_IOTools
+  implicit none
+  private
 
-  PUBLIC :: SetOption
-  PUBLIC :: ComputeTimeFactor
-  PUBLIC :: SetOption_Time
-  PUBLIC :: SetOption_FlowRate
+  public :: SetOption
+  public :: ComputeTimeFactor
+  public :: SetOption_Time
+  public :: SetOption_FlowRate
 
    !// SetOption Procedure Interface
-  INTERFACE SetOption
-     MODULE PROCEDURE SetOption_Real
-  END INTERFACE
+  interface SetOption
+     module procedure SetOption_Real
+  end interface
 
-  INTERFACE SetOption
-     MODULE PROCEDURE SetOption_Integer
-  END INTERFACE
+  interface SetOption
+     module procedure SetOption_Integer
+  end interface
 
-  INTERFACE SetOption
-     MODULE PROCEDURE SetOption_String
-  END INTERFACE
+  interface SetOption
+     module procedure SetOption_String
+  end interface
 
-  INTERFACE SetOption
-     MODULE PROCEDURE SetOption_Logical
-  END INTERFACE
+  interface SetOption
+     module procedure SetOption_Logical
+  end interface
 
   !// Private Real Procedure
-  PRIVATE :: SetOption_Real
-  PRIVATE :: SetOption_Integer
-  PRIVATE :: SetOption_String
-  PRIVATE :: SetOption_Logical
+  private :: SetOption_Real
+  private :: SetOption_Integer
+  private :: SetOption_String
+  private :: SetOption_Logical
 
-CONTAINS
-
-  !---
-
-  SUBROUTINE ComputeTimeFactor( TimeFactor, Tunit)
-    IMPLICIT NONE
-    !---
-    REAL(dp), INTENT(out) :: TimeFactor
-    CHARACTER(LEN=*), INTENT(in) :: Tunit
-    !---
-    SELECT CASE(trim(TUNIT))
-    CASE ("SECOND") ; TimeFactor = 1.D0
-    CASE ("HOUR")   ; TimeFactor = 3600
-    CASE ("DAY")    ; TimeFactor = 3600 * 24
-    CASE ("YEAR")   ; TimeFactor = 3600 * 24 * 365
-    CASE DEFAULT
-        CALL FATAL_("Wrong Time Unit "// TUnit )
-    END SELECT
-
-  END SUBROUTINE ComputeTimeFactor
+contains
 
   !---
 
-  SUBROUTINE SetOption_Time( Keyword , Str, Var, Tunit)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
-    CHARACTER(LEN=*), INTENT(in) :: Tunit
+  subroutine ComputeTimeFactor( TimeFactor, Tunit)
+    implicit none
     !---
-    REAL(dp), INTENT(out) :: Var
+    real(dp), intent(out) :: TimeFactor
+    character(len=*), intent(in) :: Tunit
     !---
-    CALL SetOption_Info("SetOption_Time", Keyword, trim(Str)//" "//trim(Tunit) )
-    CALL WrdToReal(Str//' ',Var)
-    SELECT CASE(trim(TUNIT))
-    CASE ("SECOND") ; Var = Var
-    CASE ("HOUR")    ; Var = Var * 3600
-    CASE ("DAY")    ; Var = Var * 3600 * 24
-    CASE ("YEAR")   ; Var = Var * 3600 * 24 * 365
-    CASE DEFAULT
-        CALL FATAL_("Wrong Time Unit "// TUnit )
-    END SELECT
+    select case(trim(TUNIT))
+    case ("SECOND") ; TimeFactor = 1.D0
+    case ("HOUR")   ; TimeFactor = 3600
+    case ("DAY")    ; TimeFactor = 3600 * 24
+    case ("YEAR")   ; TimeFactor = 3600 * 24 * 365
+    case default
+        call FATAL_("Wrong Time Unit "// TUnit )
+    end select
 
-  END SUBROUTINE SetOption_Time
+  end subroutine ComputeTimeFactor
 
   !---
 
-  SUBROUTINE SetOption_FlowRate( Keyword , Str, Var, Tunit)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
-    CHARACTER(LEN=*), INTENT(in) :: Tunit
+  subroutine SetOption_Time( Keyword , Str, Var, Tunit)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
+    character(len=*), intent(in) :: Tunit
     !---
-    REAL(dp), INTENT(out) :: Var
+    real(dp), intent(out) :: Var
     !---
-    CALL SetOption_Info("SetOption_FlowRate", Keyword, trim(Str)//" m3 by"//trim(Tunit) )
-    CALL WrdToReal(Str//' ',Var)
-    SELECT CASE(trim(TUNIT))
-    CASE ("SECOND")  ; Var = Var
-    CASE ("HOUR")    ; Var = Var / 3600
-    CASE ("DAY")     ; Var = Var / ( 3600 * 24 )
-    CASE ("YEAR")    ; Var = Var / ( 3600 * 24 * 365 )
-    CASE DEFAULT
-        CALL FATAL_("Wrong Time Unit "// TUnit )
-    END SELECT
+    call SetOption_Info("SetOption_Time", Keyword, trim(Str)//" "//trim(Tunit) )
+    call WrdToReal(Str//' ',Var)
+    select case(trim(TUNIT))
+    case ("SECOND") ; Var = Var
+    case ("HOUR")    ; Var = Var * 3600
+    case ("DAY")    ; Var = Var * 3600 * 24
+    case ("YEAR")   ; Var = Var * 3600 * 24 * 365
+    case default
+        call FATAL_("Wrong Time Unit "// TUnit )
+    end select
 
-  END SUBROUTINE SetOption_FlowRate
-
-  !---
-
-  SUBROUTINE SetOption_Real( Keyword , Str, Var)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
-    !---
-    REAL(dp), INTENT(out) :: Var
-    !---
-
-    CALL SetOption_Info("SetOption_Real", Keyword,Str)
-    CALL WrdToReal(Str//' ',Var)
-  END SUBROUTINE SetOption_Real
+  end subroutine SetOption_Time
 
   !---
 
-  SUBROUTINE SetOption_Integer( Keyword , Str, Var)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
+  subroutine SetOption_FlowRate( Keyword , Str, Var, Tunit)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
+    character(len=*), intent(in) :: Tunit
     !---
-    INTEGER, INTENT(out) :: Var
+    real(dp), intent(out) :: Var
     !---
-    CALL SetOption_Info("SetOption_Integer", Keyword,Str)
-    CALL WrdToInt(Str//' ',Var)
-  END SUBROUTINE SetOption_Integer
+    call SetOption_Info("SetOption_FlowRate", Keyword, trim(Str)//" m3 by"//trim(Tunit) )
+    call WrdToReal(Str//' ',Var)
+    select case(trim(TUNIT))
+    case ("SECOND")  ; Var = Var
+    case ("HOUR")    ; Var = Var / 3600
+    case ("DAY")     ; Var = Var / ( 3600 * 24 )
+    case ("YEAR")    ; Var = Var / ( 3600 * 24 * 365 )
+    case default
+        call FATAL_("Wrong Time Unit "// TUnit )
+    end select
+
+  end subroutine SetOption_FlowRate
 
   !---
 
-  SUBROUTINE SetOption_String( Keyword , Str, Var)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
+  subroutine SetOption_Real( Keyword , Str, Var)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
     !---
-    CHARACTER(LEN=*), INTENT(inout) :: Var
+    real(dp), intent(out) :: Var
     !---
-    CALL SetOption_Info("SetOption_String", Keyword,Str)
+
+    call SetOption_Info("SetOption_Real", Keyword,Str)
+    call WrdToReal(Str//' ',Var)
+  end subroutine SetOption_Real
+
+  !---
+
+  subroutine SetOption_Integer( Keyword , Str, Var)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
+    !---
+    integer, intent(out) :: Var
+    !---
+    call SetOption_Info("SetOption_Integer", Keyword,Str)
+    call WrdToInt(Str//' ',Var)
+  end subroutine SetOption_Integer
+
+  !---
+
+  subroutine SetOption_String( Keyword , Str, Var)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
+    !---
+    character(len=*), intent(inout) :: Var
+    !---
+    call SetOption_Info("SetOption_String", Keyword,Str)
     Var = trim(adjustl(Str))
 
-  END SUBROUTINE SetOption_String
+  end subroutine SetOption_String
 
   !---
 
-  SUBROUTINE SetOption_Logical( Keyword , Str, Var)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
+  subroutine SetOption_Logical( Keyword , Str, Var)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
     !---
-    LOGICAL, INTENT(out) :: Var
+    logical, intent(out) :: Var
     !---
-    CALL SetOption_Info("SetOption_Logical", Keyword,Str)
-    CALL WrdToLogical(Str,Var)
+    call SetOption_Info("SetOption_Logical", Keyword,Str)
+    call WrdToLogical(Str,Var)
 
-  END SUBROUTINE SetOption_Logical
+  end subroutine SetOption_Logical
 
   !------------------------ Utils ------------------------------------------------------
 
-  SUBROUTINE SetOption_Info(Tag, Keyword, Str)
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(in) :: Keyword
-    CHARACTER(LEN=*), INTENT(in) :: Str
-    CHARACTER(LEN=*), INTENT(IN) :: Tag
+  subroutine SetOption_Info(Tag, Keyword, Str)
+    implicit none
+    character(len=*), intent(in) :: Keyword
+    character(len=*), intent(in) :: Str
+    character(len=*), intent(in) :: Tag
     !---
-    CALL Info_(Tag //" ["//TRIM(Keyword)//"|"//TRIM(Str)//"]");
+    call Info_(Tag //" ["//trim(Keyword)//"|"//trim(Str)//"]");
 
-  END SUBROUTINE SetOption_Info
+  end subroutine SetOption_Info
 
   !---
 
-  SUBROUTINE WrdToLogical(StrIn,LOut) !conversion of string StrIn to integer IOut
-    IMPLICIT NONE
-    CHARACTER*(*),INTENT(IN) :: StrIn
-    LOGICAL,      INTENT(OUT):: LOut
+  subroutine WrdToLogical(StrIn,LOut) !conversion of string StrIn to integer IOut
+    implicit none
+    character*(*),intent(in) :: StrIn
+    logical,      intent(out):: LOut
     !---
-    CHARACTER(LEN=10):: StrVal
+    character(len=10):: StrVal
     !---
     StrVal = StrIn
-    CALL Str_Upper(StrVal)
+    call Str_Upper(StrVal)
 
-    LOut = .FALSE.
-    SELECT CASE(StrVal)
-    CASE("TRUE", "T", "YES")
-       LOut = .TRUE.
-    CASE("FALSE", "F", "NO")
-       LOut = .FALSE.
-    CASE DEFAULT
-       CALL Fatal_("WrdToLogical, error in translation of "//trim(StrIn))
-    END SELECT
+    LOut = .false.
+    select case(StrVal)
+    case("TRUE", "T", "YES")
+       LOut = .true.
+    case("FALSE", "F", "NO")
+       LOut = .false.
+    case default
+       call Fatal_("WrdToLogical, error in translation of "//trim(StrIn))
+    end select
 
-  ENDSUBROUTINE WrdToLogical
+  end subroutine WrdToLogical
 
-END MODULE M_SetOption
+end module M_SetOption

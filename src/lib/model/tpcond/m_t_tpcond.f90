@@ -1,59 +1,59 @@
-MODULE M_T_TPCond
+module M_T_TPCond
 !--
 !-- T,P conditions
 !--
 
-  USE M_Kinds
-  IMPLICIT NONE
+  use M_Kinds
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: T_TPCond
+  public:: T_TPCond
   !
-  !! PUBLIC:: TPcond_IndexTP
-  !! PUBLIC:: TPcond_IndexT
+  !! public:: TPcond_IndexTP
+  !! public:: TPcond_IndexT
   !
-  TYPE:: T_TPCond !container for T,P Properties
-    CHARACTER(15)::Name
-    REAL(dp):: TdgC, Pbar
-  ENDTYPE T_TPCond
+  type:: T_TPCond !container for T,P Properties
+    character(15)::Name
+    real(dp):: TdgC, Pbar
+  end type T_TPCond
   
-  TYPE:: T_TPSeries !container for a series of T,P Properties
-    CHARACTER(15)::Name
-    INTEGER:: NPoints
-    REAL(dp),ALLOCATABLE:: vTdgC(:), vPbar(:)
-  ENDTYPE T_TPSeries
+  type:: T_TPSeries !container for a series of T,P Properties
+    character(15)::Name
+    integer:: NPoints
+    real(dp),allocatable:: vTdgC(:), vPbar(:)
+  end type T_TPSeries
   
-  REAL(dp),PARAMETER:: Delta=1.0D0
+  real(dp),parameter:: Delta=1.0D0
 
-CONTAINS
+contains
 
-!!  IF(ALLOCATED(vTPpath)) DEALLOCATE(vTPpath)
+!!  if(allocated(vTPpath)) deallocate(vTPpath)
 
-INTEGER FUNCTION TPcond_IndexTP(TdgK,Pbar,vTPCond)
-  USE M_Dtb_Const,ONLY: T_CK
-  REAL(dp),       INTENT(IN):: TdgK,Pbar
-  TYPE(T_TPCond), INTENT(IN):: vTPCond(:)
-  INTEGER :: I,J
+integer function TPcond_IndexTP(TdgK,Pbar,vTPCond)
+  use M_Dtb_Const,only: T_CK
+  real(dp),       intent(in):: TdgK,Pbar
+  type(T_TPCond), intent(in):: vTPCond(:)
+  integer :: I,J
   J=0
-  DO I=1,SIZE(vTPCond)
-    IF(   ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta &
-    .AND. ABS(Pbar      -vTPCond(I)%Pbar)<Delta ) J=I
-  ENDDO
+  do I=1,size(vTPCond)
+    if(   ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta &
+    .and. ABS(Pbar      -vTPCond(I)%Pbar)<Delta ) J=I
+  end do
   TPcond_IndexTP= J
-ENDFUNCTION TPcond_IndexTP
+end function TPcond_IndexTP
 
-INTEGER FUNCTION TPcond_IndexT(TdgK,vTPCond)
-  USE M_Dtb_Const,ONLY: T_CK
-  REAL(dp),      INTENT(IN):: TdgK
-  TYPE(T_TPCond),INTENT(IN):: vTPCond(:)
-  INTEGER :: I,J
+integer function TPcond_IndexT(TdgK,vTPCond)
+  use M_Dtb_Const,only: T_CK
+  real(dp),      intent(in):: TdgK
+  type(T_TPCond),intent(in):: vTPCond(:)
+  integer :: I,J
   J=0
-  DO I=1,SIZE(vTPCond)
-    IF(ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta) J=I
-  ENDDO
+  do I=1,size(vTPCond)
+    if(ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta) J=I
+  end do
   TPcond_IndexT= J
-ENDFUNCTION TPcond_IndexT
+end function TPcond_IndexT
 
-ENDMODULE M_T_Tpcond
+end module M_T_Tpcond
 

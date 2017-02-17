@@ -1,378 +1,377 @@
-MODULE M_TPCond_Read
-  USE M_Kinds
-  USE M_Trace
+module M_TPCond_Read
+  use M_Kinds
+  use M_Trace
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
   !
-  PUBLIC:: TPpath_Read
-  PUBLIC:: TPgrid_Read
-  PUBLIC:: TPgrid_Build
+  public:: TPpath_Read
+  public:: TPgrid_Read
+  public:: TPgrid_Build
   !
-CONTAINS
+contains
 
-SUBROUTINE TPpath_Read(TdgK0,Pbar0)
+subroutine TPpath_Read(TdgK0,Pbar0)
 !--
 !-- scan the input file, reads block TP.TABLE, if present
 !-- -> allocate & build vTPpath
 !--
-  USE M_IoTools !,ONLY:GetUnit,dimV
-  USE M_Files,     ONLY: NamFInn
+  use M_IoTools !,only:GetUnit,dimV
+  use M_Files,     only: NamFInn
   !
-  USE M_Dtb_Const, ONLY: T_CK,Tref,Pref
-  USE M_Dtb_Calc,  ONLY: Dtb_TP_Check
-  USE M_T_Tpcond,  ONLY: T_TPCond
-  USE M_Fluid_Calc,ONLY: Eos_H2O_Psat
+  use M_Dtb_Const, only: T_CK,Tref,Pref
+  use M_Dtb_Calc,  only: Dtb_TP_Check
+  use M_T_Tpcond,  only: T_TPCond
+  use M_Fluid_Calc,only: Eos_H2O_Psat
   !
-  USE M_Dtb_Vars,  ONLY: DtbFormat,DtbLogK_vTPCond,Psat_Auto
-  USE M_Path_Vars, ONLY: vTPpath,DimPath
+  use M_Dtb_Vars,  only: DtbFormat,DtbLogK_vTPCond,Psat_Auto
+  use M_Path_Vars, only: vTPpath,DimPath
   !
-  REAL(dp),INTENT(IN),OPTIONAL:: TdgK0,Pbar0
+  real(dp),intent(in),optional:: TdgK0,Pbar0
   != default values when no TP.TABLE or TP.PATH is found
   !
-  LOGICAL :: EoL,Ok
-  INTEGER :: i,mDum,ios,f,N !,m1,m2
-  REAL(dp):: TdgK,Pbar
-  CHARACTER(LEN=512):: L,W,W1
-  CHARACTER(LEN=80) :: Msg
+  logical :: EoL,Ok
+  integer :: i,mDum,ios,f,N !,m1,m2
+  real(dp):: TdgK,Pbar
+  character(len=512):: L,W,W1
+  character(len=80) :: Msg
   !
-  REAL(dp):: vX(dimV)
-  TYPE(T_TPCond):: vCond(dimV)
+  real(dp):: vX(dimV)
+  type(T_TPCond):: vCond(dimV)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< TPpath_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< TPpath_Read"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  Ok=.FALSE.
+  Ok=.false.
   !
   vCond(:)%Name= "x"
   vCond(:)%Pbar= Pref
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT  DoFile
+    case("ENDINPUT"); exit  DoFile
     !
-    CASE("TP.TABLE","TPTABLE","TP.PATH")
+    case("TP.TABLE","TPTABLE","TP.PATH")
 
-      IF(iDebug>0 .and. &
+      if(iDebug>0 .and. &
       &   DtbFormat=="LOGKTBL" .and. &
-      &  (TRIM(W)=="TP.TABLE" .or. TRIM(W)=="TPTABLE")) THEN
-        CALL Warning_("with logK table, USE TP.PATH, to distinguish from TP.TABLE")
-      ENDIF
+      &  (trim(W)=="TP.TABLE" .or. trim(W)=="TPTABLE")) then
+        call Warning_("with logK table, use TP.PATH, to distinguish from TP.TABLE")
+      end if
 
-      Ok=  .TRUE.
+      Ok=  .true.
       N= dimV
-      DoTPtable: DO
+      DoTPtable: do
 
-        READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,Eol)
-        IF(W(1:1)=='!') CYCLE DoTPtable
-        !WRITE(fTrc,'(A)') L
-        CALL AppendToEnd(L,W,EoL)
+        read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,Eol)
+        if(W(1:1)=='!') cycle DoTPtable
+        !write(fTrc,'(A)') L
+        call AppendToEnd(L,W,EoL)
 
-        SELECT CASE(W)
+        select case(W)
 
-          !! CASE("ENDINPUT"); EXIT DoFile
-          CASE("END","ENDTPTABLE","ENDTP.TABLE","ENDTP.PATH")
-            EXIT DoTPtable
-          !---------------!
+        !! case("ENDINPUT"); exit DoFile
+        case("END","ENDTPTABLE","ENDTP.TABLE","ENDTP.PATH")
+          exit DoTPtable
+        !---------------!
 
-          CASE("TDGC", "TDGK", "PBAR","PMPA", "TDEGC","TDEGK")
-            !
-            !! CALL ReadRValsV(L,mDum,vX)
-            !
-            i=0
-            DO
-              CALL LinToWrd(L,W1,EoL)
-              i=i+1
-              IF(i>DimV) EXIT
-              IF(TRIM(W1)=="PSAT") THEN
-                IF(vCond(i)%TdgC>Zero) THEN
-                  CALL Eos_H2O_Psat(vCond(i)%TdgC+T_CK,vX(i))
-                  !PRINT *,"TdgC= ", vCond(i)%TdgC
-                  !PRINT *,"psat= ", vX(i)  ;  CALL PaUSE_
-                ELSE
-                  CALL Stop_("error in TP.TABLE: invalid TdgC for Psat computation")
-                ENDIF
-              ELSE
-                CALL WrdToReal(W1,vX(i))
-              ENDIF
-              IF(EoL) EXIT
-            ENDDO
-            !
-            mDum= i
-            N=MIN(N,mDum)
-            IF(iDebug>0) &
-            & WRITE(fTrc,'(A,A1,A,2I3)') TRIM(W),T_," DIM= ", mDum, N
-            !
-            SELECT CASE(TRIM(W))
-            !
-            CASE("TDGC");  vCond(:)%TdgC= vX(:)
-            CASE("TDGK");  vCond(:)%TdgC= vX(:)-T_CK
-            !
-            CASE("PBAR");  vCond(:)%Pbar= vX(:)       !pressure in bar
-            CASE("PMPA");  vCond(:)%Pbar= vX(:)*1.D-1 !pressure in MegaPascal
-            !
-            CASE("TDEGC"); vCond(:)%TdgC=vX(:)
-              CALL Warning_("Depreciated Keyword TDEGC")
-            CASE("TDEGK"); vCond(:)%TdgC=vX(:)-T_CK
-              CALL Warning_("Depreciated Keyword TDEGK")
-            !
-            END SELECT
-          !---------------!
+        case("TDGC", "TDGK", "PBAR","PMPA", "TDEGC","TDEGK")
+          !
+          !! call ReadRValsV(L,mDum,vX)
+          !
+          i=0
+          do
+            call LinToWrd(L,W1,EoL)
+            i=i+1
+            if(i>DimV) exit
+            if(trim(W1)=="PSAT") then
+              if(vCond(i)%TdgC>Zero) then
+                call Eos_H2O_Psat(vCond(i)%TdgC+T_CK,vX(i))
+                !print *,"TdgC= ", vCond(i)%TdgC
+                !print *,"psat= ", vX(i)  ;  call pause_
+              else
+                call Stop_("error in TP.TABLE: invalid TdgC for Psat computation")
+              end if
+            else
+              call WrdToReal(W1,vX(i))
+            end if
+            if(EoL) exit
+          end do
+          !
+          mDum= i
+          N=MIN(N,mDum)
+          if(iDebug>0) &
+          & write(fTrc,'(A,A1,A,2I3)') trim(W),T_," DIM= ", mDum, N
+          !
+          select case(trim(W))
+          !
+          case("TDGC");  vCond(:)%TdgC= vX(:)
+          case("TDGK");  vCond(:)%TdgC= vX(:)-T_CK
+          !
+          case("PBAR");  vCond(:)%Pbar= vX(:)       !pressure in bar
+          case("PMPA");  vCond(:)%Pbar= vX(:)*1.D-1 !pressure in MegaPascal
+          !
+          case("TDEGC"); vCond(:)%TdgC=vX(:)
+            call Warning_("Depreciated Keyword TDEGC")
+          case("TDEGK"); vCond(:)%TdgC=vX(:)-T_CK
+            call Warning_("Depreciated Keyword TDEGK")
+          !
+          end select
+        !---------------!
 
-          CASE("NAME")
-            i=0
-            DoName: DO
-              CALL LinToWrd(L,W,EoL)
-              i=i+1
-              IF(I>DimV) EXIT DoName
-              vCond(i)%Name=TRIM(W)
-              IF(EoL) EXIT DoName
-            ENDDO DoName
-          !---------------!
+        case("NAME")
+          i=0
+          DoName: do
+            call LinToWrd(L,W,EoL)
+            i=i+1
+            if(I>DimV) exit DoName
+            vCond(i)%Name=trim(W)
+            if(EoL) exit DoName
+          end do DoName
+        !---------------!
 
-          CASE DEFAULT
-            CALL Stop_(TRIM(W)//"<<unknown Keyword...")
+        case default
+          call Stop_(trim(W)//"<<unknown Keyword...")
 
-        END SELECT !ENDIF
-        !ENDIF
-      ENDDO DoTPtable
-    END SELECT
+        end select !end if
+        !end if
+      end do DoTPtable
+    end select
     !
-  ENDDO DoFile
-  CLOSE(f)
+  end do DoFile
+  close(f)
   !
-  IF(Ok) THEN
+  if(Ok) then
 
-    DO I=1,N
+    do I=1,N
       TdgK= vCond(I)%TdgC +T_CK
       Pbar= vCond(I)%Pbar
       !
-      CALL Dtb_TP_Check(DtbFormat,DtbLogK_vTPCond,Psat_Auto,TdgK,Pbar,Ok,Msg)
+      call Dtb_TP_Check(DtbFormat,DtbLogK_vTPCond,Psat_Auto,TdgK,Pbar,Ok,Msg)
       !
-      IF(.NOT. Ok) CALL Stop_(TRIM(Msg))
+      if(.not. Ok) call Stop_(trim(Msg))
       !
       vCond(I)%TdgC= TdgK -T_CK
       vCond(I)%Pbar= Pbar
       !
-      IF(iDebug>0) &
-      & WRITE(fTrc,'(2(G12.3,1X))') vCond(I)%TdgC, vCond(I)%Pbar !!i,vCond(i)%Name
-    ENDDO
+      if(iDebug>0) &
+      & write(fTrc,'(2(G12.3,1X))') vCond(I)%TdgC, vCond(I)%Pbar !!i,vCond(i)%Name
+    end do
 
-  ELSE
+  else
 
     N=1
-    IF(PRESENT(TdgK0)) THEN ;  vCond(1)%TdgC= TdgK0 -T_CK
-    ELSE                    ;  vCond(1)%TdgC= Tref  -T_CK
-    ENDIF
-    IF(PRESENT(Pbar0)) THEN ;  vCond(1)%Pbar= Pbar0
-    ELSE                    ;  vCond(1)%Pbar= Pref
-    ENDIF
+    if(present(TdgK0)) then ;  vCond(1)%TdgC= TdgK0 -T_CK
+    else                    ;  vCond(1)%TdgC= Tref  -T_CK
+    end if
+    if(present(Pbar0)) then ;  vCond(1)%Pbar= Pbar0
+    else                    ;  vCond(1)%Pbar= Pref
+    end if
 
-  ENDIF
+  end if
   !
-  IF(ALLOCATED(vTPpath)) DEALLOCATE(vTPpath)
-  ALLOCATE(vTPpath(1:N))
+  if(allocated(vTPpath)) deallocate(vTPpath)
+  allocate(vTPpath(1:N))
   vTPpath(1:N)= vCond(1:N)
   !
   DimPath= N
   !
-  !!IF(.NOT.Ok) CALL Stop_("Block TP.PATH not Found ...!!!")
+  !!if(.not.Ok) call Stop_("Block TP.PATH not Found ...!!!")
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ TPpath_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ TPpath_Read"
   !
-ENDSUBROUTINE TPpath_Read
+end subroutine TPpath_Read
 
-SUBROUTINE TPgrid_Read( &
+subroutine TPgrid_Read( &
 & Ok, &
 & T_Min,T_Max,T_ratio,T_delta, &
 & P_Min,P_Max,P_ratio,P_delta)
   !
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_Dtb_Const,ONLY: T_CK
-  USE M_Files,    ONLY: NamFInn
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_Dtb_Const,only: T_CK
+  use M_Files,    only: NamFInn
   !
-  LOGICAL, INTENT(OUT):: Ok
-  REAL(dp),INTENT(OUT):: T_Min,T_Max,T_ratio,T_delta,P_Min,P_Max,P_ratio,P_delta
+  logical, intent(out):: Ok
+  real(dp),intent(out):: T_Min,T_Max,T_ratio,T_delta,P_Min,P_Max,P_ratio,P_delta
   !
-  CHARACTER(LEN=512):: L,W,W1
-  LOGICAL :: EoL
-  INTEGER :: F,ios
-  REAL(dp):: rBegin,rFinal,rRatio,rDelta
+  character(len=512):: L,W,W1
+  logical :: EoL
+  integer :: F,ios
+  real(dp):: rBegin,rFinal,rRatio,rDelta
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dtb_Read_TPgrid"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dtb_Read_TPgrid"
   !
-  Ok= .FALSE.
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  Ok= .false.
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
   !
-  DoFile: DO
+  DoFile: do
 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
 
-    CALL AppENDToEnd(L,W,EoL)
-    SELECT CASE(W)
+    call AppendToEnd(L,W,EoL)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
     !
-    CASE("TP.GRID","TPGRID") !!!!!!canevas for reading one "block"
+    case("TP.GRID","TPGRID") !!!!!!canevas for reading one "block"
       !... I=0
-      Ok= .TRUE.
+      Ok= .true.
       !
-      DoBlock: DO
+      DoBlock: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(W)
         !
-        CASE("ENDINPUT"); EXIT DoFile
+        case("ENDINPUT"); exit DoFile
         !
-        CASE("END","ENDTP.GRID","ENDTPGRID"); EXIT DoBlock
+        case("END","ENDTP.GRID","ENDTPGRID"); exit DoBlock
         !
-        CASE DEFAULT
-          CALL Pause_("< WARNING!!! "//TRIM(W)//"=UNKNOWN keyword in TPgrid")
+        case default
+          call Pause_("< WARNING!!! "//trim(W)//"=UNKNOWN keyword in TPgrid")
         !
-        CASE("TDGC","TDGK","PBAR") !,"PMPA")
-          !!PRINT '(A)',TRIM(L)  ; PAUSE_
+        case("TDGC","TDGK","PBAR")
+          !
           rBegin=Zero; rFinal=Zero; rRatio=One; rDelta=Zero
           !
-          DoLine: DO
-            IF(EoL) EXIT DoLine
-            CALL LinToWrd(L,W1,EoL)
-            SELECT CASE(W1)
-              CASE("INITIAL"); CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rBegin)
-              CASE("FINAL");   CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rFinal)
-              CASE("RATIO");   CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rRatio)
-              CASE("DELTA");   CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rDelta)
-              CASE DEFAULT;    CALL Stop_(W1//"= unknown keyword in TPgrid !!!") !STOP
-            END SELECT
-          ENDDO DoLine
+          DoLine: do
+            if(EoL) exit DoLine
+            call LinToWrd(L,W1,EoL)
+            select case(W1)
+            case("INITIAL") ; call LinToWrd(L,W1,EoL); call WrdToReal(W1,rBegin)
+            case("FINAL")   ; call LinToWrd(L,W1,EoL); call WrdToReal(W1,rFinal)
+            case("RATIO")   ; call LinToWrd(L,W1,EoL); call WrdToReal(W1,rRatio)
+            case("DELTA")   ; call LinToWrd(L,W1,EoL); call WrdToReal(W1,rDelta)
+            case default    ; call Stop_(W1//"= unknown keyword in TPgrid !!!") !stop
+            end select
+          end do DoLine
           !
-          SELECT CASE(W)
-          CASE("TDGC")
+          select case(W)
+          case("TDGC")
             T_Min=   rBegin ;      T_Max=   rFinal
             T_ratio= rRatio ;      T_delta= rDelta
-          CASE("TDGK")
+          case("TDGK")
             T_Min=   rBegin-T_CK;  T_Max=   rFinal-T_CK
             T_ratio= rRatio ;      T_delta= rDelta
-          CASE("PBAR")
+          case("PBAR")
             P_Min=   rBegin ;      P_Max=   rFinal
             P_ratio= rRatio ;      P_delta= rDelta
-          END SELECT
-        !ENDCASE("TDGC","PBAR","PMPA")
+          end select !case(W)
         !
-        END SELECT
+        end select !case(W)
         !
-      ENDDO DoBlock
+      end do DoBlock
     !
-    END SELECT
-  ENDDO DoFile
-  CLOSE(F)
+    end select
+  end do DoFile
+  close(F)
 
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dtb_Read_TPgrid"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dtb_Read_TPgrid"
 
-  RETURN
-ENDSUBROUTINE TPgrid_Read
+  return
+end subroutine TPgrid_Read
 
-SUBROUTINE TPgrid_Build(Ok)
-  USE M_T_TPcond,   ONLY: T_TPCond
-  USE M_Dtb_Const,  ONLY: T_CK
-  USE M_Fluid_Calc, ONLY: Eos_H2O_Psat
+subroutine TPgrid_Build(Ok)
+  use M_T_TPcond,   only: T_TPCond
+  use M_Dtb_Const,  only: T_CK
+  use M_Fluid_Calc, only: Eos_H2O_Psat
   !
-  USE M_Path_Vars,  ONLY: vTPpath
+  use M_Path_Vars,  only: vTPpath
   !
-  LOGICAL,INTENT(OUT):: Ok
+  logical,intent(out):: Ok
   !
-  REAL(dp):: T_Min, T_Max, T_delta, T_ratio
-  REAL(dp):: P_Min, P_Max, P_delta, P_ratio
-  REAL(dp):: TdgC,TdgK,Pbar,Psat
+  real(dp):: T_Min, T_Max, T_delta, T_ratio
+  real(dp):: P_Min, P_Max, P_delta, P_ratio
+  real(dp):: TdgC,TdgK,Pbar,Psat
   !
-  INTEGER:: N
+  integer:: N
   !
-  CALL TPgrid_Read( Ok, &
+  call TPgrid_Read( Ok, &
   & T_Min,T_Max,T_ratio,T_delta, &
   & P_Min,P_Max,P_ratio,P_delta)
   !
   ! when a specific TP.GRID block is not found,
   ! use a simple TP.TABLE
-  IF(.NOT. Ok) THEN
-    != IF TP.GRID block not found
-    !N= SIZE(vTPcond)
-    !IF(ALLOCATED(vTPgrid)) DEALLOCATE(vTPgrid)
-    !ALLOCATE(vTPgrid(1:N))
+  if(.not. Ok) then
+    != if TP.GRID block not found
+    !N= size(vTPcond)
+    !if(allocated(vTPgrid)) deallocate(vTPgrid)
+    !allocate(vTPgrid(1:N))
     !vTPgrid= vTPcond
-    RETURN
-  ENDIF
+    return
+  end if
   !
-  IF(iDebug==4) THEN
-    PRINT *,"TPgrid_Build"
-    PRINT '(A,4G15.6)',"T_Min,T_Max,T_ratio,T_delta",T_Min,T_Max,T_ratio,T_delta
-    PRINT '(A,4G15.6)',"P_Min,P_Max,P_ratio,P_delta",P_Min,P_Max,P_ratio,P_delta
-    CALL Pause_
-  ENDIF
+  if(iDebug==4) then
+    print *,"TPgrid_Build"
+    print '(A,4G15.6)',"T_Min,T_Max,T_ratio,T_delta",T_Min,T_Max,T_ratio,T_delta
+    print '(A,4G15.6)',"P_Min,P_Max,P_ratio,P_delta",P_Min,P_Max,P_ratio,P_delta
+    call Pause_
+  end if
 
   !-------------------------------- first, count number of T,P points --
   N= 0
   TdgC= T_Min
-  DO
+  do
     Pbar= P_Min
-    DO
+    do
       TdgK= TdgC +T_CK
       Psat= Zero
-      IF(TdgK<=647.25D0) CALL Eos_H2O_Psat(TdgK,Psat)
-      IF(Pbar>Psat) N= N+1
-      IF(P_ratio>One) THEN ; Pbar= Pbar * P_ratio
-      ELSE                 ; Pbar= Pbar + P_delta
-      ENDIF
-      IF(Pbar>P_Max) EXIT
-    ENDDO
+      if(TdgK<=647.25D0) call Eos_H2O_Psat(TdgK,Psat)
+      if(Pbar>Psat) N= N+1
+      if(P_ratio>One) then ; Pbar= Pbar * P_ratio
+      else                 ; Pbar= Pbar + P_delta
+      end if
+      if(Pbar>P_Max) exit
+    end do
     TdgC= TdgC + T_delta
-    IF(TdgC>T_max) EXIT
-  ENDDO
+    if(TdgC>T_max) exit
+  end do
   !
-  IF(ALLOCATED(vTPpath)) DEALLOCATE(vTPpath)
-  ALLOCATE(vTPpath(1:N))
+  if(allocated(vTPpath)) deallocate(vTPpath)
+  allocate(vTPpath(1:N))
 
   !----------------------------------------------- then, fill vTPpath --
   TdgC= T_Min
   N= 0
-  DO
+  do
     Pbar= P_Min
-    DO
+    do
       TdgK= TdgC +T_CK
-      !PRINT '(F7.2,1X,F7.2)',TdgC,Pbar
+      !print '(F7.2,1X,F7.2)',TdgC,Pbar
       Psat= Zero
-      IF (TdgK<=647.25D0) CALL Eos_H2O_Psat(TdgK,Psat)
-      IF(Pbar>Psat) THEN
+      if (TdgK<=647.25D0) call Eos_H2O_Psat(TdgK,Psat)
+      if(Pbar>Psat) then
         N= N+1
         vTPpath(N)%TdgC= TdgC
         vTPpath(N)%Pbar= Pbar
-      ENDIF
-      IF(P_ratio>One) THEN ; Pbar= Pbar * P_ratio
-      ELSE                 ; Pbar= Pbar + P_delta
-      ENDIF
-      IF(Pbar>P_Max) EXIT
-    ENDDO
+      end if
+      if(P_ratio>One) then ; Pbar= Pbar * P_ratio
+      else                 ; Pbar= Pbar + P_delta
+      end if
+      if(Pbar>P_Max) exit
+    end do
     TdgC= TdgC + T_delta
-    IF(TdgC>T_max) EXIT
-  ENDDO
+    if(TdgC>T_max) exit
+  end do
 
-  RETURN
-ENDSUBROUTINE TPgrid_Build
+  return
+end subroutine TPgrid_Build
 
-ENDMODULE M_TPcond_Read
+end module M_TPcond_Read

@@ -1,160 +1,160 @@
-MODULE M_KinModel_Read
+module M_KinModel_Read
 !--
 !-- routines for reading kinetic models
 !--
-  USE M_Kinds
-  USE M_Trace,     ONLY: Stop_,iDebug,fTrc,T_, Fatal_, Warning_,Pause_
-  USE M_T_Kinmodel,ONLY: T_KinModel
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,     only: Stop_,iDebug,fTrc,T_, Fatal_, Warning_,Pause_
+  use M_T_Kinmodel,only: T_KinModel
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: KinModel_Init
+  public:: KinModel_Init
   !
-  !PUBLIC:: KinModel_FileToLnk
-  !PUBLIC:: KinModel_Alloc
+  !public:: KinModel_FileToLnk
+  !public:: KinModel_Alloc
   !
-  TYPE T_LnkKinModel
-    TYPE(T_KinModel)   :: Value
-    TYPE(T_LnkKinModel),POINTER:: Next
-  ENDTYPE T_LnkKinModel
-  TYPE(T_LnkKinModel),POINTER:: Lnk
+  type T_LnkKinModel
+    type(T_KinModel)   :: Value
+    type(T_LnkKinModel),pointer:: Next
+  end type T_LnkKinModel
+  type(T_LnkKinModel),pointer:: Lnk
   !
-  !TYPE(T_KinModel),DIMENSION(:),ALLOCATABLE:: vKinModel
+  !type(T_KinModel),dimension(:),allocatable:: vKinModel
   !
-CONTAINS
+contains
 
-SUBROUTINE KinModel_Init(vSpc)
-  USE M_T_Species,  ONLY: T_Species
-  USE M_Global_Vars,ONLY: vKinModel
+subroutine KinModel_Init(vSpc)
+  use M_T_Species,  only: T_Species
+  use M_Global_Vars,only: vKinModel
   
-  TYPE(T_Species),DIMENSION(:),INTENT(IN):: vSpc
+  type(T_Species),dimension(:),intent(in):: vSpc
   
-  TYPE(T_LnkKinModel),POINTER:: Lnk
-  INTEGER::N, i
+  type(T_LnkKinModel),pointer:: Lnk
+  integer::N, i
   
-  CALL KinModel_FileToLnk(vSpc,N,Lnk) !-> available kinetic DATA on minerals
+  call KinModel_FileToLnk(vSpc,N,Lnk) !-> available kinetic data on minerals
   !
-  IF(N>0) THEN
-    IF(ALLOCATED(vKinModel)) DEALLOCATE(vKinModel)
-    ALLOCATE(vKinModel(1:N))
-    CALL KinModel_Alloc(Lnk,vKinModel)
-  ELSE
-    IF(iDebug>0) WRITE(fTrc,'(A)') "NO Kinetic Data Found !!!!!!!!!!!!!!"
-    IF(iDebug>2) PRINT *,"NO Kinetic Database Found !!!"
-  ENDIF
+  if(N>0) then
+    if(allocated(vKinModel)) deallocate(vKinModel)
+    allocate(vKinModel(1:N))
+    call KinModel_Alloc(Lnk,vKinModel)
+  else
+    if(iDebug>0) write(fTrc,'(A)') "NO Kinetic Data Found !!!!!!!!!!!!!!"
+    if(iDebug>2) print *,"NO Kinetic Database Found !!!"
+  end if
   !
-  IF(iDebug==4) THEN
-    PRINT *,"KinModel_Init >>"
-    DO i=1,SIZE(vKinModel)
-      PRINT *,vKinModel(i)%Name
-    ENDDO
-    CALL pause_
-  ENDIF
+  if(iDebug==4) then
+    print *,"KinModel_Init >>"
+    do i=1,size(vKinModel)
+      print *,vKinModel(i)%Name
+    end do
+    call pause_
+  end if
   
-  RETURN
-ENDSUBROUTINE KinModel_Init
+  return
+end subroutine KinModel_Init
 
-SUBROUTINE BuildLnk(B,E,Lnk,pCur)
-  LOGICAL            :: B !TRUE=first element
-  TYPE(T_KinModel)   :: E
-  TYPE(T_LnkKinModel),POINTER:: Lnk,pCur
+subroutine BuildLnk(B,E,Lnk,pCur)
+  logical            :: B !TRUE=first element
+  type(T_KinModel)   :: E
+  type(T_LnkKinModel),pointer:: Lnk,pCur
   
-  IF(B) NULLIFY(Lnk)
+  if(B) nullify(Lnk)
   
-  IF(B) THEN
-    ALLOCATE(Lnk)
-    NULLIFY(Lnk%next)
+  if(B) then
+    allocate(Lnk)
+    nullify(Lnk%next)
     Lnk%Value=E
     pCur => Lnk
-  ELSE
-    ALLOCATE(pCur%next)
-    NULLIFY(pCur%next%next)
+  else
+    allocate(pCur%next)
+    nullify(pCur%next%next)
     pCur%next%Value=E
     pCur => pCur%next
-  ENDIF
+  end if
   
-ENDSUBROUTINE BuildLnk
+end subroutine BuildLnk
 
-SUBROUTINE KinModel_FileToLnk( &
+subroutine KinModel_FileToLnk( &
 & vSpc, & !IN
 & N,Lnk)  !OUT
 !--
 !-- read kinetic data for minerals (and any other species)
 !-- -> build LnkKin
 !--
-  USE M_IOTools !, ONLY:dimV,LinToWrd,ReadRValsV
-  USE M_Files,   ONLY: NamFKin,DirLog
-  USE M_Global_Vars,  ONLY: nAq !,vSpc,nSp
-  USE M_T_Species, ONLY: T_Species,Species_Index,Species_Rename
-  USE M_T_Kinmodel,ONLY: MaxKinTerm,T_KinModel
+  use M_IOTools !, only:dimV,LinToWrd,ReadRValsV
+  use M_Files,   only: NamFKin,DirLog
+  use M_Global_Vars,  only: nAq !,vSpc,nSp
+  use M_T_Species, only: T_Species,Species_Index,Species_Rename
+  use M_T_Kinmodel,only: MaxKinTerm,T_KinModel
   !
-  TYPE(T_Species),DIMENSION(:),INTENT(IN):: vSpc
-  INTEGER,            INTENT(OUT):: N
-  TYPE(T_LnkKinModel),POINTER    :: Lnk
+  type(T_Species),dimension(:),intent(in):: vSpc
+  integer,            intent(out):: N
+  type(T_LnkKinModel),pointer    :: Lnk
   !
-  TYPE(T_LnkKinModel),POINTER::p
-  CHARACTER(LEN=512):: L,W,W1
-  TYPE(T_KinModel)  ::MK
-  LOGICAL :: EoL,NewM,OldFormat
-  LOGICAL :: LPrecip,LDissol,ModelIsOk
-  INTEGER :: iAq,J
-  INTEGER :: f,ios
-  REAL(dp):: X1,X2,X3
+  type(T_LnkKinModel),pointer::p
+  character(len=512):: L,W,W1
+  type(T_KinModel)  ::MK
+  logical :: EoL,NewM,OldFormat
+  logical :: LPrecip,LDissol,ModelIsOk
+  integer :: iAq,J
+  integer :: f,ios
+  real(dp):: X1,X2,X3
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< KinModel_FileToLnk"
+  if(iDebug>0) write(fTrc,'(/,A)') "< KinModel_FileToLnk"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFKin))
+  call GetUnit(f)
+  open(f,file=trim(NamFKin))
   !
-  OldFormat=  .FALSE.
+  OldFormat=  .false.
   N= 0
   !
-  DoFile: DO 
+  DoFile: do 
     
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     
-    S1: SELECT CASE(W)
+    S1: select case(W)
     
-    CASE("ENDINPUT") S1
-      EXIT  DoFile  
+    case("ENDINPUT") S1
+      exit  DoFile  
     
-    CASE("KINETICS") S1
+    case("KINETICS") S1
     !format for kinetic models, a la USGS, new version with possibly two species
       !
-      IF(.NOT. EoL) THEN
-        CALL LinToWrd(L,W1,EoL)
-        OldFormat= TRIM(W1)=="OLD"
-      ENDIF
+      if(.not. EoL) then
+        call LinToWrd(L,W1,EoL)
+        OldFormat= trim(W1)=="OLD"
+      end if
       !
-      IF(OldFormat) THEN
+      if(OldFormat) then
       !
-      N=0; NewM=.FALSE.
+      N=0; NewM=.false.
       !
-      DoBlockOld: DO !build LnkKin of all "kinetic" minerals
+      DoBlockOld: do !build LnkKin of all "kinetic" minerals
       
-        READ(F,'(A)',IOSTAT=ios) L
-        IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlockOld !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlockOld !skip comment lines
+        call AppendToEnd(L,W,EoL)
         
-        S2_: SELECT CASE(W)
-          CASE("ENDINPUT") S2_; EXIT DoFile !to prevent bad file format 
-          CASE("END","ENDKINETICS") S2_; EXIT DoBlockOld
-        END SELECT S2_
+        S2_: select case(W)
+          case("ENDINPUT") S2_; exit DoFile !to prevent bad file format 
+          case("END","ENDKINETICS") S2_; exit DoBlockOld
+        end select S2_
         
-        IF(W(1:1)/='&') THEN
-          !-- IF first char is not '&', the line contain a name
-          IF(NewM) THEN
-            CALL BuildLnk(N==1,MK,Lnk,p)
-            NewM=.FALSE.
-            !!IF(iDebug>0) WRITE(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
-          ENDIF
+        if(W(1:1)/='&') then
+          !-- if first char is not '&', the line contain a name
+          if(NewM) then
+            call BuildLnk(N==1,MK,Lnk,p)
+            NewM=.false.
+            !!if(iDebug>0) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
+          end if
           !
           !!MK%Special=0
           MK%NTermD=0; MK%pK_d=Zero;  MK%E_d=Zero; MK%N_d=Zero; MK%AlfaD=One; MK%BetaD=One
@@ -162,172 +162,172 @@ SUBROUTINE KinModel_FileToLnk( &
           MK%ISpcDiss(:)=0; MK%JSpcDiss(:)=0 
           MK%ISpcPrec(:)=0; MK%JSpcPrec(:)=0 
           !
-          MK%Name=TRIM(W)
-          IF(.NOT. EoL) CALL LinToWrd(L,W,EoL)
-          J=Species_Index(TRIM(W),vSpc)
+          MK%Name=trim(W)
+          if(.not. EoL) call LinToWrd(L,W,EoL)
+          J=Species_Index(trim(W),vSpc)
           !check whether the mineral is also in the thermodynamic dtb
-          IF(J>0) THEN !IF mineral is Ok, THEN set NewM true -> will be saved in LnkKin
+          if(J>0) then !if mineral is Ok, then set NewM true -> will be saved in LnkKin
             N=N+1
-            NewM=.TRUE.
-          ENDIF
+            NewM=.true.
+          end if
           
-        ELSE
+        else
           !-- W(1:1)--'&'
-          !-- IF first char is '&',
+          !-- if first char is '&',
           !-- the line is the continuation of preceding, i.e. contains data
-          IF(NewM) THEN
-            !-- READ first word after &, should be either DISSOL or PRECIP
-            CALL LinToWrd(L,W,Eol)
+          if(NewM) then
+            !-- read first word after &, should be either DISSOL or PRECIP
+            call LinToWrd(L,W,Eol)
             !
-            SELECT CASE(TRIM(W))
-              CASE("PRECIP")
-                LPrecip=.TRUE.; LDissol=.FALSE.
-              CASE("DISSOL")
-                LDissol=.TRUE.; LPrecip=.FALSE.
-              CASE DEFAULT
-                CALL Stop_(TRIM(W)//"should have either PRECIP or DISSOL !!!...")
-            END SELECT
+            select case(trim(W))
+              case("PRECIP")
+                LPrecip=.true.; LDissol=.false.
+              case("DISSOL")
+                LDissol=.true.; LPrecip=.false.
+              case default
+                call Stop_(trim(W)//"should have either PRECIP or DISSOL !!!...")
+            end select
             !
-            CALL LinToWrd(L,W,Eol) !-> W will contain species name, or "QSK"
+            call LinToWrd(L,W,Eol) !-> W will contain species name, or "QSK"
             !
-            IF(TRIM(W)=="QSK") THEN
+            if(trim(W)=="QSK") then
               !--- read Alpha, Beta
-              CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1)
-              IF(LPrecip) MK%AlfaP=X1
-              IF(LDissol) MK%AlfaD=X1 
+              call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
+              if(LPrecip) MK%AlfaP=X1
+              if(LDissol) MK%AlfaD=X1 
               
-              CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1)
-              IF(LPrecip) MK%BetaP=X1
-              IF(LDissol) MK%BetaD=X1 
+              call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
+              if(LPrecip) MK%BetaP=X1
+              if(LDissol) MK%BetaD=X1 
             
-            ELSE
+            else
               !--- read activator parameters
-              CALL Species_Rename(W)
-              iAq= Species_Index(TRIM(W),vSpc)
-              IF (iAq==0) THEN
-                IF(iDebug>0) &
-                & WRITE(fTrc,'(2A)') &
-                & "in KinModel "//TRIM(MK%Name),", unknown species : "//TRIM(W)
-              ENDIF
+              call Species_Rename(W)
+              iAq= Species_Index(trim(W),vSpc)
+              if (iAq==0) then
+                if(iDebug>0) &
+                & write(fTrc,'(2A)') &
+                & "in KinModel "//trim(MK%Name),", unknown species : "//trim(W)
+              end if
               !
-              CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1) !-> read kinetic parameters
-              CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X2) !-> read kinetic parameters
-              CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X3) !-> read kinetic parameters
+              call LinToWrd(L,W,Eol); call WrdToReal(W,X1) !-> read kinetic parameters
+              call LinToWrd(L,W,Eol); call WrdToReal(W,X2) !-> read kinetic parameters
+              call LinToWrd(L,W,Eol); call WrdToReal(W,X3) !-> read kinetic parameters
               !
-              IF(iAq>0 .AND. iAq<=nAq) THEN
-                !! IF(iDebug>0) WRITE(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",TRIM(W)
-                IF(LPrecip .AND. MK%NTermP<MaxKinTerm) THEN
+              if(iAq>0 .and. iAq<=nAq) then
+                !! if(iDebug>0) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",trim(W)
+                if(LPrecip .and. MK%NTermP<MaxKinTerm) then
                 !activation energies in kiloJoule in input file !!!!!!!!!!!!!
                   MK%NTermP= MK%NTermP+1
                   MK%ISpcPrec(MK%NTermP)= iAq !-> variable, updated in KinModel_UpDate
                   MK%pK_P(MK%NTermP)=     X1
                   MK%E_P(MK%NTermP)=      X2*1.D3
                   MK%N_P(MK%NTermP)=      X3
-                ENDIF
-                IF(LDissol .AND. MK%NTermD<MaxKinTerm) THEN
+                end if
+                if(LDissol .and. MK%NTermD<MaxKinTerm) then
                   MK%NTermD= MK%NTermD+1
                   MK%ISpcDiss(MK%NTermD)= iAq !-> variable, updated in KinModel_UpDate
                   MK%pK_D(MK%NTermD)=     X1
                   MK%E_D(MK%NTermD)=      X2*1.D3
                   MK%N_D(MK%NTermD)=      X3
-                ENDIF
-              ENDIF
+                end if
+              end if
               
-            ENDIF
+            end if
             !! M%KModel=MK
-          ENDIF !IF NEWM
-        ENDIF
-      ENDDO DoBlockOld
+          end if !if NEWM
+        end if
+      end do DoBlockOld
       
-      IF(NewM) CALL BuildLnk(N==1,MK,Lnk,p) !SAVE last mineral in list
+      if(NewM) call BuildLnk(N==1,MK,Lnk,p) !save last mineral in list
       !
-      ELSE
+      else
       !
-      N=0; NewM=.FALSE.
+      N=0; NewM=.false.
       !
-      DoBlock: DO !build LnkKin of all "kinetic" minerals
+      DoBlock: do !build LnkKin of all "kinetic" minerals
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        S2: SELECT CASE(W)
-          CASE("ENDINPUT") S2; EXIT DoFile !to prevent bad file format 
-          CASE("END","ENDKINETICS") S2; EXIT DoBlock
-        END SELECT S2
+        S2: select case(W)
+          case("ENDINPUT") S2; exit DoFile !to prevent bad file format 
+          case("END","ENDKINETICS") S2; exit DoBlock
+        end select S2
         !
-        IF(W(1:1)/='&') THEN
+        if(W(1:1)/='&') then
           !-- if first char is not '&', the line contains the model name
           !
           !-- first save model from current buffer to list
-          IF(NewM .AND. ModelIsOk) THEN
+          if(NewM .and. ModelIsOk) then
             N=N+1
-            CALL BuildLnk(N==1,MK,Lnk,p)
-            NewM=.FALSE.
-            !!IF(iDebug>0) WRITE(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
-          ENDIF
+            call BuildLnk(N==1,MK,Lnk,p)
+            NewM=.false.
+            !!if(iDebug>0) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
+          end if
           !
-          MK%Name=TRIM(W)
+          MK%Name=trim(W)
           !
           MK%NTermD=0; MK%pK_d=Zero;  MK%E_d=Zero; MK%N_d=Zero; MK%AlfaD=One; MK%BetaD=One
           MK%NTermP=0; MK%pK_p=Zero;  MK%E_p=Zero; MK%N_p=Zero; MK%AlfaP=One; MK%BetaP=One
           MK%ISpcDiss(:)=0; MK%JSpcDiss(:)=0 
           MK%ISpcPrec(:)=0; MK%JSpcPrec(:)=0 
           !
-          NewM=.TRUE.
-          ModelIsOk= .TRUE.
+          NewM=.true.
+          ModelIsOk= .true.
           !
           !QUARTZ USGS2004-1068
           !&  DISSOL  1     1     QsK      
           !&  DISSOL  13.4  90.9  H2O  0    
           !&  PRECIP  1     1     QsK      
           !&  PRECIP  13.4  90.9  H2O  0    
-        ELSE
+        else
           !-- W(1:1)--'&'
-          !-- IF first char is '&',
+          !-- if first char is '&',
           !-- the line is the continuation of preceding, i.e. contains data
-          IF(NewM) THEN
-            CALL LinToWrd(L,W,Eol) !READ first word after &, should be either DISSOL or PRECIP
-            SELECT CASE(TRIM(W))
-              CASE("PRECIP"); LPrecip=.TRUE.; LDissol=.FALSE.
-              CASE("DISSOL"); LDissol=.TRUE.; LPrecip=.FALSE.
-              CASE DEFAULT
-                CALL Stop_(TRIM(W)//"should have either PRECIP or DISSOL !!!...")
-            END SELECT
+          if(NewM) then
+            call LinToWrd(L,W,Eol) !read first word after &, should be either DISSOL or PRECIP
+            select case(trim(W))
+              case("PRECIP"); LPrecip=.true.; LDissol=.false.
+              case("DISSOL"); LDissol=.true.; LPrecip=.false.
+              case default
+                call Stop_(trim(W)//"should have either PRECIP or DISSOL !!!...")
+            end select
             !
-            CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1)
-            CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X2)
+            call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
+            call LinToWrd(L,W,Eol); call WrdToReal(W,X2)
             !
-            CALL LinToWrd(L,W,Eol) !-> W will contain a species name, or "QSK"
+            call LinToWrd(L,W,Eol) !-> W will contain a species name, or "QSK"
             !
-            IF(TRIM(W)=="QSK") THEN
+            if(trim(W)=="QSK") then
               !-- read Alpha, Beta
-              IF(LPrecip) MK%AlfaP=X1
-              IF(LDissol) MK%AlfaD=X1
-              IF(LPrecip) MK%BetaP=X2
-              IF(LDissol) MK%BetaD=X2
+              if(LPrecip) MK%AlfaP=X1
+              if(LDissol) MK%AlfaD=X1
+              if(LPrecip) MK%BetaP=X2
+              if(LDissol) MK%BetaD=X2
               !
-            ELSE
+            else
               !-- read activator parameters
-              CALL Species_Rename(W)
-              iAq=Species_Index(TRIM(W),vSpc)
+              call Species_Rename(W)
+              iAq=Species_Index(trim(W),vSpc)
               !
-              IF (iAq==0) THEN
-                IF(iDebug>0) &
-                & WRITE(fTrc,'(3A)') &
-                & "in KinModel "//TRIM(MK%Name), &
-                & ", unknown species : "//TRIM(W), &
-                & ", >> KINETIC MODEL NOT INCLUDED"
-                ModelIsOk= .FALSE.
-              ENDIF
+              if (iAq==0) then
+                if(iDebug>0) &
+                & write(fTrc,'(3A)') &
+                & "in KinModel "//trim(MK%Name), &
+                & ", unknown species : "//trim(W), &
+                & ", >> KINETIC MODEL NOT includeD"
+                ModelIsOk= .false.
+              end if
               !
-              CALL LinToWrd(L,W,Eol)  ;  CALL WrdToReal(W,X3)
+              call LinToWrd(L,W,Eol)  ;  call WrdToReal(W,X3)
               !
-              IF(iAq>0 .AND. iAq<=nAq) THEN
-                IF(iDebug>0) WRITE(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",vSpc(iAq)%NamSp
+              if(iAq>0 .and. iAq<=nAq) then
+                if(iDebug>0) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",vSpc(iAq)%NamSp
                 !
-                IF(LPrecip .AND. MK%NTermP<MaxKinTerm) THEN
+                if(LPrecip .and. MK%NTermP<MaxKinTerm) then
                   !
                   MK%NTermP= MK%NTermP +1
                   MK%ISpcPrec(MK%NTermP)=iAq
@@ -338,27 +338,27 @@ SUBROUTINE KinModel_FileToLnk( &
                   !
                   MK%JSpcPrec(MK%NTermP)=0
                   !
-                  IF(.NOT.EoL) THEN !CASE of second species
-                    CALL LinToWrd(L,W,Eol)
-                    CALL Species_Rename(W)
-                    iAq=Species_Index(TRIM(W),vSpc)
-                    IF(iAq>0 .AND. iAq<=nAq) THEN 
+                  if(.not.EoL) then !case of second species
+                    call LinToWrd(L,W,Eol)
+                    call Species_Rename(W)
+                    iAq=Species_Index(trim(W),vSpc)
+                    if(iAq>0 .and. iAq<=nAq) then 
                       MK%JSpcPrec(MK%NTermP)=iAq
-                      CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1)
+                      call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
                       MK%NJ_P(MK%NTermP)=X1
-                    ELSE
-                      IF(iDebug>0) &
-                      & WRITE(fTrc,'(3A)') &
-                      & "in KinModel "//TRIM(MK%Name), &
-                      & ", unknown species : "//TRIM(W), &
-                      & ", >> KINETIC MODEL NOT INCLUDED"
-                      ModelIsOk= .FALSE.
-                    ENDIF
-                  ENDIF
+                    else
+                      if(iDebug>0) &
+                      & write(fTrc,'(3A)') &
+                      & "in KinModel "//trim(MK%Name), &
+                      & ", unknown species : "//trim(W), &
+                      & ", >> KINETIC MODEL NOT includeD"
+                      ModelIsOk= .false.
+                    end if
+                  end if
                   !
-                ENDIF
+                end if
                 !
-                IF(LDissol .AND. MK%NTermD<MaxKinTerm) THEN
+                if(LDissol .and. MK%NTermD<MaxKinTerm) then
                   !
                   MK%NTermD= MK%NTermD +1
                   MK%ISpcDiss(MK%NTermD)=iAq
@@ -370,61 +370,61 @@ SUBROUTINE KinModel_FileToLnk( &
                   !
                   MK%JSpcDiss(MK%NTermD)=0
                   !
-                  IF(.NOT.EoL) THEN !CASE of second species
-                    CALL LinToWrd(L,W,Eol)
-                    iAq=Species_Index(TRIM(W),vSpc)
-                    IF(iAq>0 .AND. iAq<=nAq) THEN 
+                  if(.not.EoL) then !case of second species
+                    call LinToWrd(L,W,Eol)
+                    iAq=Species_Index(trim(W),vSpc)
+                    if(iAq>0 .and. iAq<=nAq) then 
                       MK%JSpcDiss(MK%NTermD)=iAq
-                      CALL LinToWrd(L,W,Eol); CALL WrdToReal(W,X1)
+                      call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
                       MK%NJ_D(MK%NTermD)=X1
-                    ENDIF
-                  ENDIF
-                ENDIF
+                    end if
+                  end if
+                end if
                 !
-              ENDIF
+              end if
               
-            ENDIF
-          ENDIF !IF NEWM
-        ENDIF !IF W(1:1)=='&'
-      ENDDO DoBlock
-      IF(NewM .AND. ModelIsOk) THEN
+            end if
+          end if !if NEWM
+        end if !if W(1:1)=='&'
+      end do DoBlock
+      if(NewM .and. ModelIsOk) then
         N= N+1
-        CALL BuildLnk(N==1,MK,Lnk,p) !save last mineral in list
-      ENDIF
+        call BuildLnk(N==1,MK,Lnk,p) !save last mineral in list
+      end if
       !
-      ENDIF
-    !ENDCASE("KINETICS")  
-    END SELECT S1
+      end if
+    !endcase("KINETICS")  
+    end select S1
      
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,I3)') "N=", N
+  if(iDebug>0) write(fTrc,'(A,I3)') "N=", N
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ KinModel_FileToLnk"
-ENDSUBROUTINE KinModel_FileToLnk
+  if(iDebug>0) write(fTrc,'(A,/)') "</ KinModel_FileToLnk"
+end subroutine KinModel_FileToLnk
 
-SUBROUTINE KinModel_Alloc(Lnk,vKinModel)
+subroutine KinModel_Alloc(Lnk,vKinModel)
   !
-  TYPE(T_LnkKinModel),POINTER:: Lnk
-  TYPE(T_KinModel),DIMENSION(:),INTENT(OUT):: vKinModel
+  type(T_LnkKinModel),pointer:: Lnk
+  type(T_KinModel),dimension(:),intent(out):: vKinModel
   !
-  TYPE(T_LnkKinModel),POINTER::pCur, pPrev
-  INTEGER::I
+  type(T_LnkKinModel),pointer::pCur, pPrev
+  integer::I
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< KinModel_Alloc"
+  if(iDebug>0) write(fTrc,'(/,A)') "< KinModel_Alloc"
   I=0
   pCur=>Lnk
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associateD(pCur))
     I= I+1
     vKinModel(I)=pCur%Value 
-    IF(iDebug>0) WRITE(fTrc,'(I4,A1,A12)') I," ",vKinModel(I)%Name
-    pPrev=>pCur; pCur=> pCur%next; DEALLOCATE(pPrev)
-  ENDDO
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ KinModel_Alloc"
-ENDSUBROUTINE KinModel_Alloc
+    if(iDebug>0) write(fTrc,'(I4,A1,A12)') I," ",vKinModel(I)%Name
+    pPrev=>pCur; pCur=> pCur%next; deallocate(pPrev)
+  end do
+  if(iDebug>0) write(fTrc,'(A,/)') "</ KinModel_Alloc"
+end subroutine KinModel_Alloc
 
-ENDMODULE M_KinModel_Read
+end module M_KinModel_Read
 
 

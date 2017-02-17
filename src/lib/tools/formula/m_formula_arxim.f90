@@ -1,4 +1,4 @@
-MODULE M_Formula_Arxim
+module M_Formula_Arxim
 !===============================================================
 ! Purpose :  Arxim Formulas Utils 
 !---------------------------------------------------------------
@@ -10,160 +10,161 @@ MODULE M_Formula_Arxim
 ! CO3(MgCa)0.5 = C(2)O(6)MG(1)CA(1)/(2) 
 !             or C(2)O(6)MG(1)CA(1)DIV(2)
 !===============================================================
-  IMPLICIT NONE
-  PRIVATE
+  use m_kinds
+  implicit none
 
-  !// PUBLIC FUNCTIONs
-  PUBLIC :: Formula_Arxim_Build
-  PUBLIC :: Formula_Arxim_Read
+  private
+
+  !// public functions
+  public :: Formula_Arxim_Build
+  public :: Formula_Arxim_Read
   
-  INTERFACE Formula_Arxim_Build
-    MODULE PROCEDURE Formula_Arxim_Build_Real
-    MODULE PROCEDURE Formula_Arxim_Build_Int
-  END INTERFACE
+  interface Formula_Arxim_Build
+    module procedure Formula_Arxim_Build_Real
+    module procedure Formula_Arxim_Build_Int
+  end interface
 
-  LOGICAL, PARAMETER :: DebFormula = .false.
+  logical, parameter :: DebFormula = .false.
 
-CONTAINS
+contains
 
-  SUBROUTINE Formula_Arxim_Build_Int ( vName, vCoef, OutFormula )
+  subroutine Formula_Arxim_Build_Int ( vName, vCoef, OutFormula )
   !=====================================================================
   ! Purpose : Create an Arxim Formula from a table of Integer Coefficients
   ! Remark. Name can contain the pseudo-elements (+) and (-) 
   !=====================================================================
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(IN) :: vName(:) 
-    CHARACTER(LEN=*), INTENT(OUT) :: OutFormula
+    implicit none
+    character(len=*), intent(in) :: vName(:) 
+    character(len=*), intent(out) :: OutFormula
     !---
-    INTEGER, INTENT(IN) :: vCoef(:)
-    INTEGER :: n, i
-    CHARACTER(LEN=20) :: scoef
+    integer, intent(in) :: vCoef(:)
+    integer :: n, i
+    character(len=20) :: scoef
     !---
     OutFormula = ''
-    n = SIZE(vName)
-    DO i =1,n
-      IF (vCoef(i)==0) THEN 
-      !// nothing to DO
-      ELSE
+    n = size(vName)
+    do i =1,n
+      if (vCoef(i)==0) then 
+      !// nothing to do
+      else
         scoef=''
-        WRITE(scoef,'(I6)') vCoef(i)
-        scoef = ADJUSTL(scoef)
-        OutFormula = TRIM(OutFormula)//TRIM(vName(i))//'('//TRIM(scoef)//')'
-      END IF
-    END DO
+        write(scoef,'(I6)') vCoef(i)
+        scoef = adjustl(scoef)
+        OutFormula = trim(OutFormula)//trim(vName(i))//'('//trim(scoef)//')'
+      end if
+    end do
     !
-  END SUBROUTINE Formula_Arxim_Build_Int
+  end subroutine Formula_Arxim_Build_Int
 
   !---
   
-  SUBROUTINE Formula_Arxim_Build_Real ( vName, vCoef, OutFormula )
+  subroutine Formula_Arxim_Build_Real ( vName, vCoef, OutFormula )
   !=====================================================================
   ! Purpose : Create an Arxim Formula from a table of Real Coefficients$
   ! Remark. Name can contain the pseudo-elements (+) and (-) 
   !=====================================================================
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(IN) :: vName(:) 
-    CHARACTER(LEN=*), INTENT(OUT) :: OutFormula
+    character(len=*), intent(in) :: vName(:) 
+    real(dp), intent(in) :: vCoef(:)
+    character(len=*), intent(out) :: OutFormula
     !---
-    REAL(kind=8), INTENT(IN) :: vCoef(:)
-    INTEGER :: n, i
-    CHARACTER(LEN=20) :: scoef
-    REAL(kind=8) :: epsilon = 1.d-20
+    integer :: n, i
+    character(len=20) :: scoef
+    real(dp) :: epsilon = 1.d-20
     !---
     OutFormula = ''
-    n = SIZE(vName)
-    DO i =1,n
-      IF (ABS(vCoef(i))<epsilon) THEN 
-      !// nothing to DO
-      ELSE
-        !// WRITE(*,*) TRIM(name(i)), ':', vCoef(i)
+    n = size(vName)
+    do i =1,n
+      if (ABS(vCoef(i))<epsilon) then 
+      !// nothing to do
+      else
+        !// write(*,*) trim(name(i)), ':', vCoef(i)
         scoef=''
-        WRITE(scoef,'(F10.6)') vCoef(i)
-        scoef = ADJUSTL(scoef)
-        OutFormula = TRIM(OutFormula)//TRIM(vName(i))//'('//TRIM(scoef)//')'
-      END IF
-    END DO
+        write(scoef,'(F10.6)') vCoef(i)
+        scoef = adjustl(scoef)
+        OutFormula = trim(OutFormula)//trim(vName(i))//'('//trim(scoef)//')'
+      end if
+    end do
 
-  END SUBROUTINE Formula_Arxim_Build_Real
+  end subroutine Formula_Arxim_Build_Real
 
  
   !---
 
-  SUBROUTINE Formula_Arxim_Read(sFormul,vNameEle,Z,nDiv,fOk,vStoik) 
+  subroutine Formula_Arxim_Read(sFormul,vNameEle,Z,nDiv,fOk,vStoik) 
   !=====================================================================
   !.read a chemical formula sFormul to a stoikiometric vector (vStoik)/Div 
   !.and the charge Z according to the element list vEle
   !.
   !.CAVEAT
   !.vStoik is an array of integers; nDiv the formula divisor
-  !.thus, the "REAL" stoichio coeff for element vEle(i) is vstoik(i)/Div !!!
+  !.thus, the "real" stoichio coeff for element vEle(i) is vstoik(i)/Div !!!
   !.
   !.-> used to read the elemental decompositon of a substance from its formula
   !=====================================================================
-    USE M_Formula_Utils
-    USE M_IOTools,ONLY: WrdToInt
+    use M_Formula_Utils
+    use M_IOTools,only: WrdToInt
     !
-    CHARACTER(LEN=*),INTENT(IN) :: sFormul       !the stoichio'formula of a substance
-    CHARACTER(LEN=*),INTENT(IN) :: vNameEle(:)   !the current element name list
-    INTEGER,         INTENT(OUT):: Z,nDiv        !the charge and the "divisor"
-    LOGICAL,         INTENT(OUT):: fOk           !the formula is consistent (with elemental basis)
-    INTEGER,         INTENT(OUT):: vStoik(:)     !the "formula vector"
+    character(len=*),intent(in) :: sFormul       !the stoichio'formula of a substance
+    character(len=*),intent(in) :: vNameEle(:)   !the current element name list
+    integer,         intent(out):: Z,nDiv        !the charge and the "divisor"
+    logical,         intent(out):: fOk           !the formula is consistent (with elemental basis)
+    integer,         intent(out):: vStoik(:)     !the "formula vector"
     !
-    CHARACTER(LEN=80):: sRest
-    CHARACTER(LEN=3) :: sElem
-    CHARACTER(LEN=7) :: sCoeff
-    INTEGER          :: Coeff,I,LenRest,iEl
+    character(len=80):: sRest
+    character(len=3) :: sElem
+    character(len=7) :: sCoeff
+    integer          :: Coeff,I,LenRest,iEl
     !-------
-    fOk= .TRUE. 
-    sRest= TRIM(sFormul)//"_"
+    fOk= .true. 
+    sRest= trim(sFormul)//"_"
     vStoik= 0
     Coeff=  0; Z=0; nDiv=1
     
-    DO
+    do
       
-      IF (sRest(1:1)=='_') EXIT      !end of formula
+      if (sRest(1:1)=='_') exit      !end of formula
       
-      LenRest=LEN_TRIM(sRest)
+      LenRest=len_trim(sRest)
       I=SCAN(sRest,'(')              !find 1st occurrence of '('
       
-      IF(I==0) EXIT                  !no '(' found --> END of string
+      if(I==0) exit                  !no '(' found --> end of string
       
-      IF(I>1) THEN
+      if(I>1) then
         sElem=sRest(1:I-1)           !ElementName
         sRest=sRest(I+1:LenRest)     !rest of string
         I=SCAN(sRest,')')
-        IF(I>1) THEN
+        if(I>1) then
           sCoeff=sRest(1:I-1)        !Element Coeff
           sRest=sRest(I+1:LenRest)   !rest of string
-        ENDIF
-      ENDIF
+        end if
+      end if
       
-      !CALL Str_AppEND(sElem,3)
-      CALL WrdToInt(sCoeff,Coeff)
+      !call Str_Append(sElem,3)
+      call WrdToInt(sCoeff,Coeff)
       
-      SELECT CASE(TRIM(sElem))
-      CASE(""); EXIT                 !end of formula
-      CASE("DIV") ; nDiv=Coeff ; CYCLE
-      CASE("/")   ; nDiv=Coeff ; CYCLE
-      CASE("E")   ; Z= Coeff   ; CYCLE
-      CASE("+")   ; Z= Coeff   ; CYCLE
-      CASE("-")   ; Z=-Coeff   ; CYCLE
-      END SELECT
+      select case(trim(sElem))
+      case(""); exit                 !end of formula
+      case("DIV") ; nDiv=Coeff ; cycle
+      case("/")   ; nDiv=Coeff ; cycle
+      case("E")   ; Z= Coeff   ; cycle
+      case("+")   ; Z= Coeff   ; cycle
+      case("-")   ; Z=-Coeff   ; cycle
+      end select
       
-      !IF(DebFormula) WRITE(fTrc,'(A)') TRIM(sElem)
+      !if(DebFormula) write(fTrc,'(A)') trim(sElem)
       iEl=Name_Index(sElem,vNameEle)
-      IF(iEl==0) THEN
-        fOk=.FALSE.
-        RETURN    !element not found in input element list
-      ELSE
+      if(iEl==0) then
+        fOk=.false.
+        return    !element not found in input element list
+      else
         vStoik(iEl)=Coeff
-        !IF(iFirst==0) iFirst=iEl !iFirst==0 checks whether iFirst already allocated
-        !IF(DebFormula) WRITE(fTrc,'(A13,A3,A1,I3,A1,I3)') "El iEl Coeff ",sElem,T_,iEl,T_,Coeff  !,T_,Z
-      ENDIF
+        !if(iFirst==0) iFirst=iEl !iFirst==0 checks whether iFirst already allocated
+        !if(DebFormula) write(fTrc,'(A13,A3,A1,I3,A1,I3)') "El iEl Coeff ",sElem,T_,iEl,T_,Coeff  !,T_,Z
+      end if
     
-    ENDDO
+    end do
     
-    RETURN
-  ENDSUBROUTINE Formula_Arxim_Read
+    return
+  end subroutine Formula_Arxim_Read
 
-END MODULE M_Formula_Arxim
+end module M_Formula_Arxim

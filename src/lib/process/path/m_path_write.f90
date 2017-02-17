@@ -1,18 +1,18 @@
-MODULE M_Path_Write
-  USE M_Kinds
-  USE M_Trace,ONLY: T_,fHtm !Stop_,fTrc,T_,iDebug,Pause_
+module M_Path_Write
+  use M_Kinds
+  use M_Trace,only: T_,fHtm,Pause_ !Stop_,fTrc,T_,iDebug
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC:: Path_Write_Line
-  PUBLIC:: Path_Write_FasAff
-  PUBLIC:: Path_Write_FasEnTete
-  PUBLIC:: Path_Write_Distrib
-  PUBLIC:: Path_Files_Close
+  public:: Path_Write_Line
+  public:: Path_Write_FasAff
+  public:: Path_Write_FasEnTete
+  public:: Path_Write_Distrib
+  public:: Path_Files_Close
   
-  INTEGER::     & !
+  integer::     & !
   & fQsK=    0, & !saturation states
   & fActiv=  0, & !log10(activities)
   & fPoten=  0, & !potentials /RT, Mu/RT(:)= Mu°(:)/RT + ln(act(:))
@@ -20,178 +20,191 @@ MODULE M_Path_Write
   & fMolal=  0, & !molality solutes
   & fGamma=  0    !gammas
   !
-  LOGICAL:: bOpenDist=.FALSE.
+  logical:: bOpenDist=.false.
   !
-  CHARACTER(LEN=15),ALLOCATABLE:: vNamFasYes(:)
+  character(len=15),allocatable:: vNamFasYes(:)
 
-CONTAINS
+contains
 
-SUBROUTINE Path_Write_FasEnTete
+subroutine Path_Write_FasEnTete
 !--
 !-- write entete for the file of affinities of pure phases
 !-- (i.e. non-aqu'species)
 !--
-  USE M_IOTools,   ONLY: GetUnit
-  USE M_Files,     ONLY: cTitle,DirOut, Files_Index_Write
-  USE M_Global_Vars,ONLY: vFas
+  use M_IOTools,   only: GetUnit
+  use M_Files,     only: cTitle,DirOut, Files_Index_Write
+  use M_Global_Vars,only: vFas
   !
-  INTEGER :: iFs
+  integer :: iFs
   !
-  CALL GetUnit(fQsK)
-  OPEN(fQsK,FILE=TRIM(DirOut)//"_minqsk.restab")
-  CALL Files_Index_Write(fHtm, &
-  & TRIM(DirOut)//"_minqsk.restab", &
+  call GetUnit(fQsK)
+  open(fQsK,file=trim(DirOut)//"_minqsk.restab")
+  call Files_Index_Write(fHtm, &
+  & trim(DirOut)//"_minqsk.restab", &
   & "Q/K of all phases along path ")
   !
-  WRITE(fQsK,'(A,A1)',ADVANCE= 'NO') "Count",T_ !,"pH",T_
-  DO iFs=1,SIZE(vFas)
-    WRITE(fQsK,'(A,A1)',ADVANCE= 'NO') TRIM(vFas(iFs)%NamFs),T_
-  ENDDO
-  WRITE(fQsK,*)
+  write(fQsK,'(A,A1)',advance= 'NO') "Count",T_ !,"pH",T_
+  do iFs=1,size(vFas)
+    write(fQsK,'(A,A1)',advance= 'NO') trim(vFas(iFs)%NamFs),T_
+  end do
+  write(fQsK,*)
   !
-END SUBROUTINE Path_Write_FasEnTete
+end subroutine Path_Write_FasEnTete
 
-SUBROUTINE Path_Write_FasAff(iStep)
+subroutine Path_Write_FasAff(iStep)
 !--
 !-- write affinity of pure phases (i.e. non-aqu'species)
 !--
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_Global_Vars,  ONLY: vFas,vSpc
-  USE M_Basis_Vars,   ONLY: tNuFas,vOrdPr
+  use M_Numeric_Const,only: Ln10
+  use M_Global_Vars,  only: vFas,vSpc
+  use M_Basis_Vars,   only: tNuFas,vOrdPr
   !
-  INTEGER,INTENT(IN):: iStep
+  integer,intent(in):: iStep
   !
-  INTEGER :: iFs
-  REAL(dp):: X
+  integer :: iFs
+  real(dp):: X
   !
-  WRITE(fQsK,'(I4,A1)',ADVANCE= 'NO') iStep,T_
-  DO iFs=1,SIZE(vFas)
+  write(fQsK,'(I4,A1)',advance= 'NO') iStep,T_
+  do iFs=1,size(vFas)
     X= &
     & vFas(iFs)%Grt &
-    - DOT_PRODUCT( tNuFas(iFs,:), &
+    - dot_product( tNuFas(iFs,:), &
     &              vSpc(vOrdPr(:))%Dat%LAct+vSpc(vOrdPr(:))%G0rt )
     X= - X /SUM(ABS(tNuFas(iFs,:))) /Ln10
-    !!WRITE(fQsK,'(G15.6,A1)',ADVANCE='NO') -vFasAff(iFs) /Ln10,T_ !-> log10(QsK)= - Affinity /Ln10
-    WRITE(fQsK,'(G15.6,A1)',ADVANCE='NO') X,T_ !-> log10(QsK)= - Affinity /Ln10
-  ENDDO
-  WRITE(fQsK,*)
+    !!write(fQsK,'(G15.6,A1)',advance="no") -vFasAff(iFs) /Ln10,T_ !-> log10(QsK)= - Affinity /Ln10
+    write(fQsK,'(G15.6,A1)',advance="no") X,T_ !-> log10(QsK)= - Affinity /Ln10
+  end do
+  write(fQsK,*)
   !
-END SUBROUTINE Path_Write_FasAff
+end subroutine Path_Write_FasAff
 
-SUBROUTINE Path_Write_Distrib(N)
+subroutine Path_Write_Distrib(N)
 !--- distribution of all elements among their different species --
 !--- to be used after Equil_Save (to update vSpc%Mole) --
 !--
-!Element iEl is distributed among all Species iAq that have tFormula(iEl,iAq)/=0
-!IF Speciation succeeds, 
-!THEN we should have
-!  vCpn(iEl)%Mole=DOt_product(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)),
-!except for element iBal or for a mobile element
+!-- Element iEl is distributed among all Species iAq that have
+!-- tFormula(iEl,iAq)/=0
 !--
-!Output format is designed for easy data processing w/ spreadsheet
-!(sort according to column vNamEl, -> produce tables for the different elements)
-!currently no special treatment for ReDOx !!! should DO something...
+!-- if Speciation succeeds, 
+!-- then we should have
+!--   vCpn(iEl)%Mole=dot_product(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)),
+!-- except for element iBal or for a mobile element
 !--
-  USE M_IoTools,ONLY: GetUnit
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_SolModel_Tools,ONLY: Solmodel_pHpE
+!-- Output format is designed for easy data processing w/ spreadsheet
+!-- (sort according to column vNamEl, -> produce tables for the different elements)
+!-- currently no special treatment for Redox !!! should do something...
+!--
+  use M_IoTools,only: GetUnit
+  use M_Numeric_Const,  only: Ln10
+  use M_SolModel_Tools,only: Solmodel_pHpE
   !
-  USE M_Global_Vars, ONLY: vEle,nAq,vSpc,tFormula
-  USE M_System_Vars, ONLY: vCpn
-  USE M_Files,       ONLY: DirOut
-  USE M_Basis_Vars,  ONLY: isW,iOx,isH_,isO2
+  use M_Global_Vars, only: vEle,nAq,vSpc,tFormula
+  use M_System_Vars, only: vCpn
+  use M_Files,       only: DirOut
+  use M_Basis_Vars,  only: isW,iOx,isH_,isO2
   !
-  INTEGER ::fDist,N,iAq,iEl,nCp
-  REAL(dp)::Tot, X, pH_,pE_
+  integer ::fDist,N,iAq,iEl,nCp
+  real(dp)::Tot, X, pH_,pE_
   !
-  CALL Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
-  nCp=SIZE(vCpn)
-  IF(.NOT.bOpenDist) THEN
-    CALL EnTeteDistrib
-    bOpenDist=.TRUE.
-  ENDIF
-  DO iEl=2,nCp
-    CALL GetUnit(fDist)
-    OPEN(fDist, &
-    & FILE=TRIM(DirOut)//"_distrib_"//TRIM(vEle(vCpn(iEl)%iEle)%NamEl)//".restab", &
-    & ACCESS='APPEND')
-    Tot=DOT_PRODUCT(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)
-    IF(TRIM(vCpn(iEl)%Statut)/="INERT") vCpn(iEl)%Mole=Tot
-    WRITE(fDist,'(I3,A1,A,A1,F7.3,A1,F7.3,A1)',ADVANCE='NO') &
-    &             N,T_,TRIM(vEle(vCpn(iEl)%iEle)%NamEl),T_,pH_,T_,pE_,T_
-    DO iAq=2,nAq
-      !IF(iAq/=iH_) THEN
-        IF(tFormula(iEl,iAq)/=0) THEN
+  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  !
+  nCp=size(vCpn)
+  !
+  if(.not.bOpenDist) then
+    call EnTeteDistrib
+    bOpenDist=.true.
+  end if
+  !
+  do iEl=2,nCp
+    !
+    call GetUnit(fDist)
+    open(fDist, &
+    & file=trim(DirOut)//"_distrib_"//trim(vEle(vCpn(iEl)%iEle)%NamEl)//".restab", &
+    & ACCESS='APPend')
+    !
+    Tot=dot_product(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)
+    if(trim(vCpn(iEl)%Statut)/="INERT") vCpn(iEl)%Mole=Tot
+    !
+    write(fDist,'(I3,A1,A,A1,F7.3,A1,F7.3,A1)',advance="no") &
+    &             N,T_,trim(vEle(vCpn(iEl)%iEle)%NamEl),T_,pH_,T_,pE_,T_
+    !
+    do iAq=2,nAq
+      !if(iAq/=iH_) then
+        if(tFormula(iEl,iAq)/=0) then
           X=vSpc(iAq)%Dat%Mole/tFormula(iEl,iAq)/Tot*1000.0D0
           !divides vMolF of species iAq by number of moles of iEl in one mole of iAq
-          !IF(X>1.0D-3) THEN; WRITE(fDist,'(F12.3,A1)',ADVANCE='NO') X,T_ 
-          !             ELSE; WRITE(fDist,'(A12,A1)',  ADVANCE='NO') "0",T_; ENDIF 
-          WRITE(fDist,'(G15.6,A1)',ADVANCE='NO') X,T_
-        ENDIF
-      !ENDIF
-    ENDDO
-    DO iAq=2,nAq
-      IF(tFormula(iEl,iAq)/=0) &
-      & WRITE(fDist,'(G15.6,A1)',ADVANCE='NO') 1.0E6*vSpc(iAq)%Dat%Mole,T_
+          !if(X>1.0D-3) then; write(fDist,'(F12.3,A1)',advance="no") X,T_ 
+          !             else; write(fDist,'(A12,A1)',  advance="no") "0",T_; end if 
+          write(fDist,'(G15.6,A1)',advance="no") X,T_
+        end if
+      !end if
+    end do
+    !
+    do iAq=2,nAq
+      if(tFormula(iEl,iAq)/=0) &
+      & write(fDist,'(G15.6,A1)',advance="no") 1.0E6*vSpc(iAq)%Dat%Mole,T_
       !*1.0E6 -> output in MICROMOLES !!!
-    ENDDO
-    DO iAq=2,nAq
-      IF(tFormula(iEl,iAq)/=0) &
-      & WRITE(fDist,'(G15.6,A1)',ADVANCE='NO') EXP(vSpc(iAq)%Dat%LGam),T_ !vSpc(iAq)%LnGam/Ln10
-    ENDDO
-    WRITE(fDist,'(2(G15.6,A1))') 1.0E6*Tot,T_,1.0E6*vCpn(iEl)%Mole
-    CLOSE(fDist)
-  ENDDO
-END SUBROUTINE Path_Write_Distrib
+    end do
+    do iAq=2,nAq
+      if(tFormula(iEl,iAq)/=0) &
+      & write(fDist,'(G15.6,A1)',advance="no") exp(vSpc(iAq)%Dat%LGam),T_ !vSpc(iAq)%LnGam/Ln10
+    end do
+    !
+    write(fDist,'(2(G15.6,A1))') 1.0E6*Tot,T_,1.0E6*vCpn(iEl)%Mole
+    close(fDist)
+    !
+  end do
+  !
+end subroutine Path_Write_Distrib
 
-SUBROUTINE EnteteDistrib
+subroutine EnteteDistrib
 !--
 !-- write head line for distribution of elements among species --
 !--
-  USE M_IoTools,     ONLY: GetUnit
-  USE M_Global_Vars, ONLY: nAq,vEle,vSpc,tFormula
-  USE M_System_Vars, ONLY: vCpn
-  USE M_Files,       ONLY: cTitle,DirOut
+  use M_IoTools,     only: GetUnit
+  use M_Global_Vars, only: nAq,vEle,vSpc,tFormula
+  use M_System_Vars, only: vCpn
+  use M_Files,       only: cTitle,DirOut
   !
-  INTEGER::fDist,iAq,iEl
+  integer::fDist,iAq,iEl
   !
-  DO iEl=2,SIZE(vCpn)
+  do iEl=2,size(vCpn)
     !
-    CALL GetUnit(fDist)
-    OPEN(fDist,FILE=TRIM(DirOut)//"_distrib_"//TRIM(vEle(vCpn(iEl)%iEle)%NamEl//".restab"))
+    call GetUnit(fDist)
+    open(fDist,file=trim(DirOut)//"_distrib_"//trim(vEle(vCpn(iEl)%iEle)%NamEl//".restab"))
     !
-    !IF(iEl/=iH_) THEN
-    WRITE(fDist,'(A,/A)') &
-    & "!."//TRIM(cTitle), &
+    !if(iEl/=iH_) then
+    write(fDist,'(A,/A)') &
+    & "!."//trim(cTitle), &
     & "!.species distribution for a given element, relative (permil) and absolute (micromoles/kgH2O)"
     !
-    WRITE(fDist,'(4(A,A1))',ADVANCE='NO') &
-    &            "count",T_,TRIM(vEle(vCpn(iEl)%iEle)%NamEl),T_,"pH",T_,"pE",T_
+    write(fDist,'(4(A,A1))',advance="no") &
+    &            "count",T_,trim(vEle(vCpn(iEl)%iEle)%NamEl),T_,"pH",T_,"pE",T_
     !
-    DO iAq=2,nAq
-      IF(tFormula(iEl,iAq)/=0) &
-      &  WRITE(fDist,'(A,A1)',  ADVANCE='NO') TRIM(vSpc(iAq)%NamSp)//"_rel",T_
-    ENDDO
-    DO iAq=2,nAq
-      IF(tFormula(iEl,iAq)/=0) &
-      &  WRITE(fDist,'(A,A1)',  ADVANCE='NO') TRIM(vSpc(iAq)%NamSp),T_
-    ENDDO
-    DO iAq=2,nAq
-      IF(tFormula(iEl,iAq)/=0) &
-      &  WRITE(fDist,'(A,A1)',  ADVANCE='NO') TRIM(vSpc(iAq)%NamSp)//"_Gam",T_
-    ENDDO
+    do iAq=2,nAq
+      if(tFormula(iEl,iAq)/=0) &
+      &  write(fDist,'(A,A1)',  advance="no") trim(vSpc(iAq)%NamSp)//"_rel",T_
+    end do
+    do iAq=2,nAq
+      if(tFormula(iEl,iAq)/=0) &
+      &  write(fDist,'(A,A1)',  advance="no") trim(vSpc(iAq)%NamSp),T_
+    end do
+    do iAq=2,nAq
+      if(tFormula(iEl,iAq)/=0) &
+      &  write(fDist,'(A,A1)',  advance="no") trim(vSpc(iAq)%NamSp)//"_Gam",T_
+    end do
     !
-    WRITE(fDist,'(A,A1,A)',ADVANCE='NO') "TOT,umoles",T_,"Check"
-    WRITE(fDist,*)
+    write(fDist,'(A,A1,A)',advance="no") "TOT,umoles",T_,"Check"
+    write(fDist,*)
     !
-    !ENDIF
-    CLOSE(fDist)
-  ENDDO
+    !end if
+    close(fDist)
+  end do
   !
-  RETURN
-END SUBROUTINE EnTeteDistrib
+  return
+end subroutine EnTeteDistrib
 
-SUBROUTINE Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
+subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
 !--
 !-- one result on one line
 !-- writes on several files:
@@ -199,555 +212,562 @@ SUBROUTINE Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
 !-- species molalities on _molal,
 !-- element abundance on _moles
 !--
-  USE M_IOTools
-  USE M_Files,        ONLY: DirOut,cTitle,Files_Index_Write
-  USE M_Dtb_Const,    ONLY: T_CK
-  USE M_Dtb_Const,    ONLY: R_JK,Tref
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_SolModel_Tools, ONLY: Solmodel_pHpE,Solmodel_CalcMolal
-  USE M_T_Species,    ONLY: Species_EntropyZero
+  use M_IOTools
+  use M_Files,        only: DirOut,cTitle,Files_Index_Write
+  use M_Dtb_Const,    only: T_CK
+  use M_Dtb_Const,    only: R_JK,Tref
+  use M_Numeric_Const,only: Ln10
+  use M_SolModel_Tools, only: Solmodel_pHpE,Solmodel_CalcMolal
+  use M_T_Species,    only: Species_EntropyZero
   !
-  USE M_Global_Vars,ONLY: vEle,vSpc,vFas,nAq,SolModel !!,Solvent
-  USE M_System_Vars,ONLY: TdgK,Pbar,vCpn
-  USE M_Basis_Vars, ONLY: isW,MWsv,iOx,isH_,isO2,tStoikio,tAlfFs
-  USE M_Basis_Vars, ONLY: vLCi,vLAs,vLAx,vLMx !,nAx,nMx,vYesList
-  USE M_Path_Vars,  ONLY: DimPath,tPathResults
+  use M_Global_Vars,only: vEle,vSpc,vFas,nAq,SolModel !!,Solvent
+  use M_System_Vars,only: TdgK,Pbar,vCpn
+  use M_Basis_Vars, only: isW,MWsv,iOx,isH_,isO2,tStoikio,tAlfFs
+  use M_Basis_Vars, only: vLCi,vLAs,vLAx,vLMx !,nAx,nMx,vYesList
+  use M_Path_Vars,  only: DimPath,tPathResults
   !
-  INTEGER,              INTENT(IN):: WrCount
-  CHARACTER(LEN=3),     INTENT(IN):: WrCod
-  LOGICAL,     OPTIONAL,INTENT(IN):: vYes(:)
-  CHARACTER(*),OPTIONAL,INTENT(IN):: WrTitl
+  integer,              intent(in):: WrCount
+  character(len=3),     intent(in):: WrCod
+  logical,     optional,intent(in):: vYes(:)
+  character(*),optional,intent(in):: WrTitl
   !
-  LOGICAL,PARAMETER:: OutputInGrams = .FALSE.  !! .TRUE.
+  logical,parameter:: OutputInGrams = .false.  !! .true.
   !
-  REAL(dp):: vMolal(1:nAq)
-  REAL(dp):: ZBal,ZRdx,IonStr,xTotF
-  REAL(dp):: pH_,pE_,X,nOx
-  INTEGER :: iPr,I,N,K,nCp
+  real(dp):: vMolal(1:nAq)
+  real(dp):: ZBal,ZRdx,IonStr,xTotF
+  real(dp):: pH_,pE_,X,nOx
+  integer :: iPr,I,N,K,nCp
   !
-  REAL(dp),ALLOCATABLE:: vS0Ele(:)
-  REAL(dp),ALLOCATABLE:: vPot(:)
+  real(dp),allocatable:: vS0Ele(:)
+  real(dp),allocatable:: vPot(:)
   
-  ALLOCATE(vS0Ele(SIZE(vSpc)))
-  ALLOCATE(vPot(SIZE(vSpc)))
+  allocate(vS0Ele(size(vSpc)))
+  allocate(vPot(size(vSpc)))
   !
-  nCp= SIZE(vCpn)
+  nCp= size(vCpn)
   !
-  DO I=1,SIZE(vSpc)
-    !vS0Ele(I)= DOT_PRODUCT(vSpc(I)%vStoikio(1:N),vEle(1:N)%S0) /REAL(vSpc(I)%vStoikio(0))
+  do I=1,size(vSpc)
+    !vS0Ele(I)= dot_product(vSpc(I)%vStoikio(1:N),vEle(1:N)%S0) /real(vSpc(I)%vStoikio(0))
     vS0Ele(I)= Species_EntropyZero(vEle,vSpc(I))
-  ENDDO
+  end do
   !
-  CALL Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
   !
-  !------------------------------------------------ACTIV'COEFFS.HEADER--
-  IF(fGamma==0) THEN
+  !--------------------------------------------------ACTIV'COEFFS.HEADER
+  if(fGamma==0) then
     !
-    CALL GetUnit(fGamma)
-    OPEN(fGamma,FILE=TRIM(DirOut)//"_gamma.restab")
+    call GetUnit(fGamma)
+    open(fGamma,file=trim(DirOut)//"_gamma.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_gamma.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_gamma.restab", &
     & "PATH: log10(activity coeff's)")
     !
-    WRITE(fGamma,'(A,A1)',   ADVANCE='NO') "Count",T_
-    WRITE(fGamma,'(3(A,A1))',ADVANCE='NO') "TempC",T_,"Pbar",T_,"RhoW",T_
-    WRITE(fGamma,'(3(A,A1))',ADVANCE='NO') "IonStr",T_,"pH",T_,"ChargeDiff",T_
+    write(fGamma,'(A,A1)',   advance="no") "Count",T_
+    write(fGamma,'(3(A,A1))',advance="no") "TempC",T_,"Pbar",T_,"RhoW",T_
+    write(fGamma,'(3(A,A1))',advance="no") "IonStr",T_,"pH",T_,"ChargeDiff",T_
     !
-    IF(iOx/=0) &
-    & WRITE(fGamma,'(A2,A1,A5,A1)',ADVANCE='NO') "pE",T_,"RedOx",T_
+    if(iOx/=0) &
+    & write(fGamma,'(A2,A1,A5,A1)',advance="no") "pE",T_,"RedOx",T_
     !
-    !WRITE component names
-    DO iPr=1,SIZE(vCpn) 
-      WRITE(fGamma,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    ENDDO
+    !write component names
+    do iPr=1,size(vCpn) 
+      write(fGamma,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    end do
     !
-    !WRITE species names (aqu'species ONLY)
-    DO I=1,SIZE(vSpc)
-      IF(vSpc(I)%Typ(1:3)=="AQU") & !!(vLCi(I).OR.vLAs(I).OR.vLAx(I))
-      & WRITE(fGamma,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-    ENDDO
+    !write species names (aqu'species only)
+    do I=1,size(vSpc)
+      if(vSpc(I)%Typ(1:3)=="AQU") & !!(vLCi(I).or.vLAs(I).or.vLAx(I))
+      & write(fGamma,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+    end do
     !
-    WRITE(fGamma,*)
+    write(fGamma,*)
     !
-  ENDIF
-  !-----------------------------------------------/ACTIV'COEFFS.HEADER--
+  end if
+  !-------------------------------------------------/ACTIV'COEFFS.HEADER
   !
-  !--------------------------------------------------MOLALITIES.HEADER--
-  IF(fMolal==0) THEN
+  !----------------------------------------------------MOLALITIES.HEADER
+  if(fMolal==0) then
     !
-    CALL GetUnit(fMolal)
-    OPEN(fMolal,FILE=TRIM(DirOut)//"_molal.restab")
+    call GetUnit(fMolal)
+    open(fMolal,file=trim(DirOut)//"_molal.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_molal.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_molal.restab", &
     & "PATH: molalities")
     !
-    WRITE(fMolal,'(A,A1)',   ADVANCE='NO') "Count",T_
-    WRITE(fMolal,'(3(A,A1))',ADVANCE='NO') "TempC",T_,"Pbar",T_,"RhoW",T_
-    WRITE(fMolal,'(3(A,A1))',ADVANCE='NO') "IonStr",T_,"pH",T_,"ChargeDiff",T_
+    write(fMolal,'(A,A1)',   advance="no") "Count",T_
+    write(fMolal,'(3(A,A1))',advance="no") "TempC",T_,"Pbar",T_,"RhoW",T_
+    write(fMolal,'(3(A,A1))',advance="no") "IonStr",T_,"pH",T_,"ChargeDiff",T_
     !
-    IF(iOx/=0) &
-    & WRITE(fMolal,'(A2,A1,A5,A1)',ADVANCE='NO') "pE",T_,"RedOx",T_
+    if(iOx/=0) &
+    & write(fMolal,'(A2,A1,A5,A1)',advance="no") "pE",T_,"RedOx",T_
     !
     !--- write component names
-    DO iPr=1,SIZE(vCpn) 
-      WRITE(fMolal,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    ENDDO
+    do iPr=1,size(vCpn) 
+      write(fMolal,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    end do
     !
-    !--- write species names (aqu'species ONLY)
-    DO I=1,SIZE(vSpc)
-      IF(vSpc(I)%Typ(1:3)=="AQU") & !!(vLCi(I).OR.vLAs(I).OR.vLAx(I))
-      & WRITE(fMolal,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-    ENDDO
+    !--- write species names (aqu'species only)
+    do I=1,size(vSpc)
+      if(vSpc(I)%Typ(1:3)=="AQU") & !!(vLCi(I).or.vLAs(I).or.vLAx(I))
+      & write(fMolal,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+    end do
     !
-    WRITE(fMolal,*)
+    write(fMolal,*)
     !
-  ENDIF
-  !-------------------------------------------------/MOLALITIES.HEADER--
+  end if
+  !---------------------------------------------------/MOLALITIES.HEADER
   !
-  !--------------------------------------------------POTENTIALS.HEADER--
-  IF(fPoten==0) THEN
+  !----------------------------------------------------POTENTIALS.HEADER
+  if(fPoten==0) then
     !
-    CALL GetUnit(fPoten)
-    OPEN(fPoten,FILE=TRIM(DirOut)//"_potent.restab")
+    call GetUnit(fPoten)
+    open(fPoten,file=trim(DirOut)//"_potent.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_potent.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_potent.restab", &
     & "PATH result: log10(species activities)")
     !
-    IF(PRESENT(WrTitl)) WRITE(fPoten,'(A,A1)',ADVANCE='NO') ".Title",T_
-    WRITE(fPoten,'(A,A1)',   ADVANCE='NO') "Count",T_
-    WRITE(fPoten,'(3(A,A1))',ADVANCE='NO') "TempC",T_,"Pbar",T_,"RhoW",T_
-    WRITE(fPoten,'(3(A,A1))',ADVANCE='NO') "IonStr",T_,"pH",T_,"ChargeDiff",T_
+    if(present(WrTitl)) write(fPoten,'(A,A1)',advance="no") ".Title",T_
+    write(fPoten,'(A,A1)',   advance="no") "Count",T_
+    write(fPoten,'(3(A,A1))',advance="no") "TempC",T_,"Pbar",T_,"RhoW",T_
+    write(fPoten,'(3(A,A1))',advance="no") "IonStr",T_,"pH",T_,"ChargeDiff",T_
     !
-    IF(iOx/=0) &
-    & WRITE(fPoten,'(A2,A1,A5,A1)',ADVANCE='NO') "pE",T_,"RedOx",T_
+    if(iOx/=0) &
+    & write(fPoten,'(A2,A1,A5,A1)',advance="no") "pE",T_,"RedOx",T_
     !
     !--- write component names
-    DO iPr=1,SIZE(vCpn) 
-      WRITE(fPoten,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    ENDDO
+    do iPr=1,size(vCpn) 
+      write(fPoten,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    end do
     !
     !--- write species names (all aqu' + mobile non'aqu')
-    DO I=1,SIZE(vSpc)
-      IF(vLCi(I).OR.vLAs(I).OR.vLAx(I).OR.vLMx(I)) &
-      & WRITE(fPoten,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-    ENDDO
-    WRITE(fPoten,*)
+    do I=1,size(vSpc)
+      if(vLCi(I).or.vLAs(I).or.vLAx(I).or.vLMx(I)) &
+      & write(fPoten,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+    end do
+    write(fPoten,*)
     !
-    !~ !-------------------------------------------------------------------
-    !~ !
-    !~ IF(PRESENT(WrTitl)) WRITE(fPoten,'(A,A1)',ADVANCE='NO') ".Title",T_
-    !~ WRITE(fPoten,'(A,A1)',   ADVANCE='NO') "Count",T_
-    !~ WRITE(fPoten,'(3(A,A1))',ADVANCE='NO') "TempC",T_,"Pbar",T_,"RhoW",T_
-    !~ WRITE(fPoten,'(3(A,A1))',ADVANCE='NO') "IonStr",T_,"pH",T_,"ChargeDiff",T_
-    !~ !
-    !~ IF(iOx/=0) &
-    !~ & WRITE(fPoten,'(A2,A1,A5,A1)',ADVANCE='NO') "pE",T_,"RedOx",T_
-    !~ !
-    !~ !--- write component names
-    !~ DO iPr=1,SIZE(vCpn) 
-      !~ WRITE(fPoten,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    !~ ENDDO
-    !~ !
-    !~ DO I=1,SIZE(vSpc)
-      !~ IF(vLCi(I).OR.vLAs(I).OR.vLAx(I).OR.vLMx(I)) &
-      !~ & WRITE(fPoten,'(G15.6,A1)',ADVANCE='NO') vSpc(I)%G0rt,T_
-    !~ ENDDO
-    !~ WRITE(fPoten,*)
+    !-------------------------------------------------------------------
+    !! !
+    !! if(present(WrTitl)) write(fPoten,'(A,A1)',advance="no") ".Title",T_
+    !! write(fPoten,'(A,A1)',   advance="no") "Count",T_
+    !! write(fPoten,'(3(A,A1))',advance="no") "TempC",T_,"Pbar",T_,"RhoW",T_
+    !! write(fPoten,'(3(A,A1))',advance="no") "IonStr",T_,"pH",T_,"ChargeDiff",T_
+    !! !
+    !! if(iOx/=0) &
+    !! & write(fPoten,'(A2,A1,A5,A1)',advance="no") "pE",T_,"RedOx",T_
+    !! !
+    !! !--- write component names
+    !! do iPr=1,size(vCpn) 
+    !!   write(fPoten,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    !! end do
+    !! !
+    !! do I=1,size(vSpc)
+    !!   if(vLCi(I).or.vLAs(I).or.vLAx(I).or.vLMx(I)) &
+    !!   & write(fPoten,'(G15.6,A1)',advance="no") vSpc(I)%G0rt,T_
+    !! end do
+    !! write(fPoten,*)
     !
-  ENDIF
-  !-----------------------------------------------/ POTENTIALS.HEADER --
+  end if
+  !--------------------------------------------------/ POTENTIALS.HEADER
   !
-  !------------------------------------------------ ACTIVITIES.HEADER --
-  IF(fActiv==0) THEN
+  !--------------------------------------------------- ACTIVITIES.HEADER
+  if(fActiv==0) then
     !
-    CALL GetUnit(fActiv)
-    OPEN(fActiv,FILE=TRIM(DirOut)//"_activ.restab")
+    call GetUnit(fActiv)
+    open(fActiv,file=trim(DirOut)//"_activ.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_activ.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_activ.restab", &
     & "PATH result: log10(species activities)")
     !
-    IF(PRESENT(WrTitl)) WRITE(fActiv,'(A,A1)',ADVANCE='NO') ".Title",T_
-    WRITE(fActiv,'(A,A1)',   ADVANCE='NO') "Count",T_
-    WRITE(fActiv,'(3(A,A1))',ADVANCE='NO') "TempC",T_,"Pbar",T_,"RhoW",T_
-    WRITE(fActiv,'(3(A,A1))',ADVANCE='NO') "IonStr",T_,"pH",T_,"ChargeDiff",T_
+    if(present(WrTitl)) write(fActiv,'(A,A1)',advance="no") ".Title",T_
+    write(fActiv,'(A,A1)',   advance="no") "Count",T_
+    write(fActiv,'(3(A,A1))',advance="no") "TempC",T_,"Pbar",T_,"RhoW",T_
+    write(fActiv,'(3(A,A1))',advance="no") "IonStr",T_,"pH",T_,"ChargeDiff",T_
     !
-    IF(iOx/=0) &
-    & WRITE(fActiv,'(A2,A1,A5,A1)',ADVANCE='NO') "pE",T_,"RedOx",T_
+    if(iOx/=0) &
+    & write(fActiv,'(A2,A1,A5,A1)',advance="no") "pE",T_,"RedOx",T_
     !
     !--- write component names
-    DO iPr=1,SIZE(vCpn) 
-      WRITE(fActiv,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    ENDDO
+    do iPr=1,size(vCpn) 
+      write(fActiv,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    end do
     !
     !--- write species names (all aqu' + mobile non'aqu')
-    DO I=1,SIZE(vSpc)
-      IF(vLCi(I).OR.vLAs(I).OR.vLAx(I).OR.vLMx(I)) &
-      & WRITE(fActiv,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-    ENDDO
-    WRITE(fActiv,*)
+    do I=1,size(vSpc)
+      if(vLCi(I).or.vLAs(I).or.vLAx(I).or.vLMx(I)) &
+      & write(fActiv,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+    end do
+    write(fActiv,*)
     !
-  ENDIF
+  end if
   !-------------------------------------------------/ACTIVITIES.HEADER--
   !
-  !CALL OutStrVec(fMoles,vCpn(1:nCp)%Mole,I=WrCount,S="TotEle=",C="F")
+  !call OutStrVec(fMoles,vCpn(1:nCp)%Mole,I=WrCount,S="TotEle=",C="F")
   !_____________________________________Output
-  !CALL OutStrVec(fMoles,vSpc(1:nAq)%Dat%Mole,I=WrCount,S="MolNum=",C="F")
+  !call OutStrVec(fMoles,vSpc(1:nAq)%Dat%Mole,I=WrCount,S="MolNum=",C="F")
   !
-  ZBal=DOT_PRODUCT(vSpc(1:nAq)%Dat%Mole,vSpc(1:nAq)%Z)
+  ZBal=dot_product(vSpc(1:nAq)%Dat%Mole,vSpc(1:nAq)%Z)
   !
-  CALL Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
+  call Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
   !
-  !------------------------------------------------left part of tables--
+  !--------------------------------------------------left part of tables
   !
-  !----------------------------------------------ACTIV'COEFF'.RESULTS--
-  WRITE(fGamma,'(I3,A1)',      ADVANCE='NO') WrCount,T_
-  WRITE(fGamma,'(3(G15.3,A1))',ADVANCE='NO') TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
-  WRITE(fGamma,'(3(G15.6,A1))',ADVANCE='NO') IonStr,T_,pH_,T_,ZBal,T_
+  !-------------------------------------------------ACTIV'COEFF'.resultS
+  write(fGamma,'(I3,A1)',      advance="no") WrCount,T_
+  write(fGamma,'(3(G15.3,A1))',advance="no") TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
+  write(fGamma,'(3(G15.6,A1))',advance="no") IonStr,T_,pH_,T_,ZBal,T_
   !
-  !-------------------------------------------------ACTIVITIES.RESULTS--
-  IF(PRESENT(WrTitl)) WRITE(fActiv,'(A,A1)',ADVANCE='NO') TRIM(WrTitl),T_
-  WRITE(fActiv,'(I3,A1)',      ADVANCE='NO') WrCount,T_
-  WRITE(fActiv,'(3(G15.3,A1))',ADVANCE='NO') TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
-  WRITE(fActiv,'(3(G15.6,A1))',ADVANCE='NO') IonStr,T_,pH_,T_,ZBal,T_
+  !---------------------------------------------------ACTIVITIES.resultS
+  if(present(WrTitl)) write(fActiv,'(A,A1)',advance="no") trim(WrTitl),T_
+  write(fActiv,'(I3,A1)',      advance="no") WrCount,T_
+  write(fActiv,'(3(G15.3,A1))',advance="no") TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
+  write(fActiv,'(3(G15.6,A1))',advance="no") IonStr,T_,pH_,T_,ZBal,T_
   !
-  !-------------------------------------------------POTENTIALS.RESULTS--
-  IF(PRESENT(WrTitl)) WRITE(fActiv,'(A,A1)',ADVANCE='NO') TRIM(WrTitl),T_
-  WRITE(fPoten,'(I3,A1)',      ADVANCE='NO') WrCount,T_
-  WRITE(fPoten,'(3(G15.3,A1))',ADVANCE='NO') TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
-  WRITE(fPoten,'(3(G15.6,A1))',ADVANCE='NO') IonStr,T_,pH_,T_,ZBal,T_
+  !---------------------------------------------------POTENTIALS.resultS
+  if(present(WrTitl)) write(fActiv,'(A,A1)',advance="no") trim(WrTitl),T_
+  write(fPoten,'(I3,A1)',      advance="no") WrCount,T_
+  write(fPoten,'(3(G15.3,A1))',advance="no") TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
+  write(fPoten,'(3(G15.6,A1))',advance="no") IonStr,T_,pH_,T_,ZBal,T_
   !
-  !-------------------------------------------------MOLALITIES.RESULTS--
-  WRITE(fMolal,'(I3,A1)',      ADVANCE='NO') WrCount,T_
-  WRITE(fMolal,'(3(G15.3,A1))',ADVANCE='NO') TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
-  WRITE(fMolal,'(3(G15.6,A1))',ADVANCE='NO') IonStr,T_,pH_,T_,ZBal,T_
+  !---------------------------------------------------MOLALITIES.resultS
+  write(fMolal,'(I3,A1)',      advance="no") WrCount,T_
+  write(fMolal,'(3(G15.3,A1))',advance="no") TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
+  write(fMolal,'(3(G15.6,A1))',advance="no") IonStr,T_,pH_,T_,ZBal,T_
   !
-  IF(iOx/=0) THEN
-    ZRdx= DOT_PRODUCT(vSpc(1:nAq)%Dat%Mole,tStoikio(iOx,1:nAq))
-    WRITE(fActiv,'(2(G15.6,A1))',ADVANCE='NO') pE_,T_,ZRdx,T_
-    WRITE(fPoten,'(2(G15.6,A1))',ADVANCE='NO') pE_,T_,ZRdx,T_
-    WRITE(fGamma,'(2(G15.6,A1))',ADVANCE='NO') pE_,T_,ZRdx,T_
-    WRITE(fMolal,'(2(G15.6,A1))',ADVANCE='NO') pE_,T_,ZRdx,T_
-  ENDIF
+  if(iOx/=0) then
+    ZRdx= dot_product(vSpc(1:nAq)%Dat%Mole,tStoikio(iOx,1:nAq))
+    write(fActiv,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
+    write(fPoten,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
+    write(fGamma,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
+    write(fMolal,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
+  end if
   !
-  DO iPr=1,SIZE(vCpn)
+  do iPr=1,size(vCpn)
     !
     xTotF= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
     !
-    WRITE(fActiv,'(G15.8,A1)',ADVANCE='NO') xTotF,T_
-    WRITE(fPoten,'(G15.8,A1)',ADVANCE='NO') xTotF,T_
-    WRITE(fGamma,'(G15.8,A1)',ADVANCE='NO') xTotF,T_
-    WRITE(fMolal,'(G15.8,A1)',ADVANCE='NO') xTotF,T_
+    write(fActiv,'(G15.8,A1)',advance="no") xTotF,T_
+    write(fPoten,'(G15.8,A1)',advance="no") xTotF,T_
+    write(fGamma,'(G15.8,A1)',advance="no") xTotF,T_
+    write(fMolal,'(G15.8,A1)',advance="no") xTotF,T_
     !
-  ENDDO
+  end do
   !-----------------------------------------------/left part of tables--
   !
   !!RdxBal=Zero
-  !!IF(iOx/=0) THEN !redox balance
+  !!if(iOx/=0) then !redox balance
   !!  RdxBal=                    dot_product(tAlfPr(iOx,1:nCi),        vMolF(1:        nCi))
-  !!  IF(nAs>0) RdxBal= RdxBal + dot_product(tAlfAs(iOx,1:    nAs),    vMolF(nCi+1:    nCi+nAs))
-  !!  IF(nAx>0) RdxBal= RdxBal + dot_product(tAlfPr(iOx,nCi+1:nCi+nAx),vMolF(nCi+nAs+1:nCi+nAs+nAx))
-  !!ENDIF
+  !!  if(nAs>0) RdxBal= RdxBal + dot_product(tAlfAs(iOx,1:    nAs),    vMolF(nCi+1:    nCi+nAs))
+  !!  if(nAx>0) RdxBal= RdxBal + dot_product(tAlfPr(iOx,nCi+1:nCi+nAx),vMolF(nCi+nAs+1:nCi+nAs+nAx))
+  !!end if
   !
   !
-  !!! DO I=1,SIZE(vSpc)
-  !!!   IF(vLCi(I).OR.vLAs(I).OR.vLAx(I).OR.vLMx(I)) &
-  !!!   & WRITE(fActiv,'(G15.6,A1)',ADVANCE='NO') vSpc(I)%LnAct/Ln10,T_
-  !!! ENDDO
-  !!! WRITE(fActiv,*)
+  !!! do I=1,size(vSpc)
+  !!!   if(vLCi(I).or.vLAs(I).or.vLAx(I).or.vLMx(I)) &
+  !!!   & write(fActiv,'(G15.6,A1)',advance="no") vSpc(I)%LnAct/Ln10,T_
+  !!! end do
+  !!! write(fActiv,*)
   !
   !-----------------------------------------------RIGHT PART OF TABLES--
-  !-------------------------------------------------ACTIVITIES.RESULTS--
-  CALL OutStrVec( &
-  & fOut= fActiv,&
-  & Vec=  vSpc(:)%Dat%LAct/Ln10, &
-  & vL=   vLCi.OR.vLAs.OR.vLAx.OR.vLMx)
+  !-------------------------------------------------ACTIVITIES.resultS--
+  !! print *,"vLMx=",size(vLCi),size(vLAs),size(vLAx),size(vLMx)
+  !! do i=1,size(vLMx)
+  !! print *,vLMx(i)
+  !! end do
+  !! print *,"OutStrVec"  ;  call pause_
+  call OutStrVec( &
+  & fActiv,vSpc(:)%Dat%LAct/Ln10) !, &
+  ! & vLc(:)= vLCi &
+  ! & .or.vLAs &
+  ! & .or.vLAx &
+  ! & .or.vLMx)
   !
-  !-------------------------------------------------POTENTIALS.RESULTS--
+  !---------------------------------------------------POTENTIALS.resultS
   vPot(:)= vSpc(:)%Dat%LAct +vSpc(:)%G0rt !-> "reduced"potential, dimensionless
   vPot(:)= vPot(:) *R_JK *TdgK            !-> potential in Joule
   ! vPot(:)= vPot(:) - Tref*vS0Ele(:)       !-> in Berman-Brown convention
   !
-  CALL OutStrVec( &
+  call OutStrVec( &
   & fOut= fPoten,&
   & Vec=  vPot(:), &
-  & vL=   vLCi.OR.vLAs.OR.vLAx.OR.vLMx)
+  & vL=   vLCi.or.vLAs.or.vLAx.or.vLMx)
   !
-  !------------------------------------------------ACTIV'COEFF'.RESULTS--
-  CALL OutStrVec( &
+  !--------------------------------------------------ACTIV'COEFF'.resultS
+  call OutStrVec( &
   & fOut= fGamma,&
   & Vec=  vSpc(:)%Dat%LGam/Ln10, &
-  & vL=   vLCi.OR.vLAs.OR.vLAx)
+  & vL=   vLCi.or.vLAs.or.vLAx)
   !
-  !-------------------------------------------------MOLALITIES.RESULTS--
-  CALL OutStrVec( &
+  !---------------------------------------------------MOLALITIES.resultS
+  call OutStrVec( &
   & fOut= fMolal,&
   & Vec=  vMolal(:))
-  !----------------------------------------------/RIGHT PART OF TABLES--
+  !------------------------------------------------/RIGHT PART OF TABLES
   !
   !---------------------------------------------------------------------
-  !------------------------------------------------MOLE.NUMBERS.HEADER--
-  IF(fMoles==0) THEN
+  !--------------------------------------------------MOLE.NUMBERS.HEADER
+  if(fMoles==0) then
     !
-    !IF(ALLOCATED(tPathResults)) DEALLOCATE(tPathResults)
-    !IF(ALLOCATED(vNamFasYes)) DEALLOCATE(vNamFasYes)
+    !if(allocated(tPathResults)) deallocate(tPathResults)
+    !if(allocated(vNamFasYes)) deallocate(vNamFasYes)
     !
-    CALL GetUnit(fMoles)
-    OPEN(fMoles,FILE=TRIM(DirOut)//"_moles.restab")
+    call GetUnit(fMoles)
+    open(fMoles,file=trim(DirOut)//"_moles.restab")
     !
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_moles.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_moles.restab", &
     & "PATH: mole nrs of elements, influid, in system, mole nrs of other phases")
     !
-    IF(PRESENT(WrTitl)) WRITE(fMoles,'(A,A1)',ADVANCE='NO') ".Title",T_
-    WRITE(fMoles,'(4(A,A1))',ADVANCE='NO') "COUNT",T_,"TdgC",T_,"Pbar",T_,"RhoW",T_
-    WRITE(fMoles,'(2(A,A1))',ADVANCE='NO') "pH",T_,"pE",T_
+    if(present(WrTitl)) write(fMoles,'(A,A1)',advance="no") ".Title",T_
+    write(fMoles,'(4(A,A1))',advance="no") "count",T_,"TdgC",T_,"Pbar",T_,"RhoW",T_
+    write(fMoles,'(2(A,A1))',advance="no") "pH",T_,"pE",T_
     !
-    !--------------------------------------------write component names--
-    DO iPr=1,SIZE(vCpn)
-      WRITE(fMoles,'(A,A1)',ADVANCE='NO') TRIM(vEle(vCpn(iPr)%iEle)%NamEl),T_
-    ENDDO
+    !----------------------------------------------write component names
+    do iPr=1,size(vCpn)
+      write(fMoles,'(A,A1)',advance="no") trim(vEle(vCpn(iPr)%iEle)%NamEl),T_
+    end do
     !
-    !---------------------------------------write non'aqu'phases names--
-    IF(PRESENT(vYes) .AND. WrCod(1:2)=="EQ") THEN
+    !-----------------------------------------write non'aqu'phases names
+    if(present(vYes) .and. WrCod(1:2)=="EQ") then
       !
-      !------------------------------------------ALLOCATE BUFFER TABLE--
-      !-------will be used to build a result file without zero columns--
-      !------used especially for EQUPATH with large number of minerals--
+      !--------------------------------------------allocate BUFFER TABLE
+      !---------will be used to build a result file without zero columns
+      !--------used especially for EQUPATH with large number of minerals
       !
-      IF(COUNT(vYes)>0) THEN
-        ALLOCATE(vNamFasYes(COUNT(vYes)))
-        ALLOCATE(tPathResults(DimPath,2+2*nCp+COUNT(vYes)))
+      if(count(vYes)>0) then
+        allocate(vNamFasYes(count(vYes)))
+        allocate(tPathResults(DimPath,2+2*nCp+count(vYes)))
         tPathResults(:,:)= Zero
-      ENDIF
-      !-----------------------------------------/ALLOCATE BUFFER TABLE--
+      end if
+      !-------------------------------------------/allocate BUFFER TABLE
       !
-      DO iPr=1,SIZE(vCpn)
-        WRITE(fMoles,'(A,A1)',ADVANCE='NO') &
-        & TRIM(vEle(vCpn(iPr)%iEle)%NamEl)//"Tot",T_
-      ENDDO
+      do iPr=1,size(vCpn)
+        write(fMoles,'(A,A1)',advance="no") &
+        & trim(vEle(vCpn(iPr)%iEle)%NamEl)//"Tot",T_
+      end do
       !
       K=0
-      DO I=1,SIZE(vFas)
-        IF(vYes(I)) THEN
-          WRITE(fMoles,'(A,A1)',ADVANCE='NO') TRIM(vFas(I)%NamFs),T_
+      do I=1,size(vFas)
+        if(vYes(I)) then
+          write(fMoles,'(A,A1)',advance="no") trim(vFas(I)%NamFs),T_
           K=K+1
-          IF(ALLOCATED(vNamFasYes)) vNamFasYes(K)= TRIM(vFas(I)%NamFs)
-        ENDIF
-      ENDDO
-    ENDIF
+          if(allocated(vNamFasYes)) vNamFasYes(K)= trim(vFas(I)%NamFs)
+        end if
+      end do
+    end if
     !
-    WRITE(fMoles,*)
+    write(fMoles,*)
     !
-  ENDIF
-  !-----------------------------------------------/MOLE.NUMBERS.HEADER--
+  end if
+  !-------------------------------------------------/MOLE.NUMBERS.HEADER
   !
-  !-----------------------------------------------MOLE.NUMBERS.RESULTS--
-  !WRITE(fMoles,'(A4,A1,I3,A1)',ADVANCE='NO') "ELEM",T_,WrCount,T_
-  IF(PRESENT(WrTitl)) WRITE(fMoles,'(A,A1)',ADVANCE='NO') TRIM(WrTitl),T_
+  !-------------------------------------------------MOLE.NUMBERS.resultS
+  !write(fMoles,'(A4,A1,I3,A1)',advance="no") "ELEM",T_,WrCount,T_
+  if(present(WrTitl)) write(fMoles,'(A,A1)',advance="no") trim(WrTitl),T_
   !
-  WRITE(fMoles,'(I4,A1,3(G15.3,A1))',ADVANCE='NO')  &
+  write(fMoles,'(I4,A1,3(G15.3,A1))',advance="no")  &
   & WrCount,T_,TdgK -T_CK,T_,Pbar,T_,SolModel%Dat%Rho,T_
   !
-  WRITE(fMoles,'(2(G15.3,A1))',ADVANCE='NO')  pH_,T_,pE_,T_
+  write(fMoles,'(2(G15.3,A1))',advance="no")  pH_,T_,pE_,T_
   !
-  IF(ALLOCATED(tPathResults)) THEN !-------------WRITE IN BUFFER TABLE--
+  if(allocated(tPathResults)) then !---------------write IN BUFFER TABLE
     tPathResults(WrCount,1)= TdgK -T_CK
     tPathResults(WrCount,2)= Pbar
-  ENDIF
+  end if
   !
-  !---------------------------------------write total element in fluid--
-  DO iPr=1,SIZE(vCpn)
+  !-----------------------------------------write total element in fluid
+  do iPr=1,size(vCpn)
     X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> mole nrs in fluid
-    WRITE(fMoles,'(G15.8,A1)',ADVANCE='NO') X,T_
-    IF(ALLOCATED(tPathResults)) &
-    & tPathResults(WrCount,iPr+2)= X !-----------WRITE IN BUFFER TABLE--
-  ENDDO
+    write(fMoles,'(G15.8,A1)',advance="no") X,T_
+    if(allocated(tPathResults)) &
+    & tPathResults(WrCount,iPr+2)= X !-------------write IN BUFFER TABLE
+  end do
   !
-  !-------------------------------write total element in fluid + min's--
-  IF(PRESENT(vYes) .AND. WrCod(1:2)=="EQ") THEN
+  !---------------------------------write total element in fluid + min's
+  if(present(vYes) .and. WrCod(1:2)=="EQ") then
     !
-    DO iPr=1,SIZE(vCpn)
+    do iPr=1,size(vCpn)
       !
       X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> mole nrs in fluid
       !
-      DO I=1,SIZE(vFas)
-        IF(vYes(I) .AND. vFas(I)%Mole>Zero) &
-        & X= X + tAlfFs(iPr,I) *vFas(I)%Mole !-> mole nrs in fluid + min's
-      ENDDO
+      do I=1,size(vFas)
+        if(vYes(I) .and. vFas(I)%MolFs>Zero) &
+        & X= X + tAlfFs(iPr,I) *vFas(I)%MolFs !-> mole nrs in fluid + min's
+      end do
       !
-      WRITE(fMoles,'(G15.8,A1)',ADVANCE='NO') X,T_
+      write(fMoles,'(G15.8,A1)',advance="no") X,T_
       !
-      IF(ALLOCATED(tPathResults)) &
-      & tPathResults(WrCount,iPr+nCp+2)= X !-----WRITE IN BUFFER TABLE--
+      if(allocated(tPathResults)) &
+      & tPathResults(WrCount,iPr+nCp+2)= X !-------write IN BUFFER TABLE
       !
-    ENDDO
+    end do
     !
     K= nCp*2 +2
-    DO I=1,SIZE(vFas) !mineral mole numbers from Equil_N
-      !IF(.NOT.vFasYes(I))  vFas(I)%Mole=-999.D0 
-      IF(vYes(I)) THEN
+    do I=1,size(vFas) !mineral mole numbers from Equil_N
+      !if(.not.vFasYes(I))  vFas(I)%MolFs=-999.D0 
+      if(vYes(I)) then
         !
         K=K+1
-        IF(vFas(I)%Mole>Zero) THEN
+        if(vFas(I)%MolFs>Zero) then
           !
           !! nOx= One !*tFormula(iFs,1)
-          !! IF(tAlfFs(1,I)/=0) nOx= tAlfFs(1,I) !-> nr of oxygens in formula
-          !! WRITE(fMoles,'(G15.6,A1)',ADVANCE='NO') vFas(I)%Mole*nOx,T_ !  &
+          !! if(tAlfFs(1,I)/=0) nOx= tAlfFs(1,I) !-> nr of oxygens in formula
+          !! write(fMoles,'(G15.6,A1)',advance="no") vFas(I)%MolFs*nOx,T_ !  &
           !
-          !! WRITE(fMoles,'(G15.6,A1)',ADVANCE='NO') 
-          !! & vFas(I)%Mole /vCpn(1)%Mole/MWsv,T_
+          !! write(fMoles,'(G15.6,A1)',advance="no") 
+          !! & vFas(I)%MolFs /vCpn(1)%Mole/MWsv,T_
           !!-> mole nrs of phase / kgH2O
           !
           nOx= One !*tFormula(iFs,1)
           !
-          IF(OutputInGrams) THEN
+          if(OutputInGrams) then
             !
-            WRITE(fMoles,'(G15.6,A1)',ADVANCE='NO') &
-            & vFas(I)%Mole*vFas(I)%WeitKg*1.0D3,T_
+            write(fMoles,'(G15.6,A1)',advance="no") &
+            & vFas(I)%MolFs*vFas(I)%WeitKg*1.0D3,T_
             !
-            !-- WRITE IN BUFFER TABLE --
-            IF(ALLOCATED(tPathResults)) &
-            & tPathResults(WrCount,K)= vFas(I)%Mole*vFas(I)%WeitKg*1.0D3
+            !-- write IN BUFFER TABLE --
+            if(allocated(tPathResults)) &
+            & tPathResults(WrCount,K)= vFas(I)%MolFs*vFas(I)%WeitKg*1.0D3
             !
-          ELSE
+          else
             !
-            IF(tAlfFs(1,I)/=0) nOx= tAlfFs(1,I) !-> nr of oxygens in formula
-            WRITE(fMoles,'(G15.6,A1)',ADVANCE='NO') vFas(I)%Mole*nOx,T_ !  &
+            if(tAlfFs(1,I)/=0) nOx= tAlfFs(1,I) !-> nr of oxygens in formula
+            write(fMoles,'(G15.6,A1)',advance="no") vFas(I)%MolFs*nOx,T_ !  &
             !
-            !-- WRITE IN BUFFER TABLE --
-            IF(ALLOCATED(tPathResults)) &
-            & tPathResults(WrCount,K)= vFas(I)%Mole*nOx
+            !-- write IN BUFFER TABLE --
+            if(allocated(tPathResults)) &
+            & tPathResults(WrCount,K)= vFas(I)%MolFs*nOx
             !
-          END IF
+          end if
           !
-        ELSE
+        else
           !
-          WRITE(fMoles,'(A,A1)',ADVANCE='NO') "0.0",T_
-          IF(ALLOCATED(tPathResults)) &
+          write(fMoles,'(A,A1)',advance="no") "0.0",T_
+          if(allocated(tPathResults)) &
           & tPathResults(WrCount,K)= Zero
           !
-        ENDIF
+        end if
         !
         !
-      ENDIF
-    ENDDO
+      end if
+    end do
     !
-  ENDIF
-  !------------------------------/write total element in fluid + min's--
-  WRITE(fMoles,*)
-  !----------------------------------------------/MOLE.NUMBERS.RESULTS--
+  end if
+  !--------------------------------/write total element in fluid + min's
+  write(fMoles,*)
+  !------------------------------------------------/MOLE.NUMBERS.resultS
   !---------------------------------------------------------------------
   !
-  DEALLOCATE(vS0Ele)
-  DEALLOCATE(vPot)
+  deallocate(vS0Ele)
+  deallocate(vPot)
   !
-  RETURN
-END SUBROUTINE Path_Write_Line
+  return
+end subroutine Path_Write_Line
 
-SUBROUTINE WriteBuffer
-  USE M_IOTools
-  USE M_Files,    ONLY: DirOut
+subroutine WriteBuffer
+  use M_IOTools
+  use M_Files,    only: DirOut
   !
-  USE M_Global_Vars,ONLY: vFas,vEle
-  USE M_System_Vars,ONLY: vCpn
-  USE M_Path_Vars,ONLY: tPathResults
+  use M_Global_Vars,only: vFas,vEle
+  use M_System_Vars,only: vCpn
+  use M_Path_Vars,only: tPathResults
   !
-  INTEGER:: FF,I,J,K,nYes,nCp
-  LOGICAL,ALLOCATABLE:: vIsZero(:)
+  integer:: FF,I,J,K,nYes,nCp
+  logical,allocatable:: vIsZero(:)
   !
-  nCp= SIZE(vCpn)
-  nYes= SIZE(tPathResults,2) -(2+2*nCp)
-  ALLOCATE(vIsZero(nYes))
+  nCp= size(vCpn)
+  nYes= size(tPathResults,2) -(2+2*nCp)
+  allocate(vIsZero(nYes))
   !
-  DO J=1,nYes
+  do J=1,nYes
     vIsZero(J)= (ABS(MAXVAL(tPathResults(:,2+2*nCp+J)))<1.D-16)
-  ENDDO
+  end do
   !
-  !PRINT *,"=====nYes-COUNT(vIsZero)===",nYes-COUNT(vIsZero)
-  !RETURN
+  !print *,"=====nYes-count(vIsZero)===",nYes-count(vIsZero)
+  !return
   !
-  CALL GetUnit(FF)
-  OPEN(FF,FILE=TRIM(DirOut)//"_moles_clean.restab")
+  call GetUnit(FF)
+  open(FF,file=trim(DirOut)//"_moles_clean.restab")
   !
   !-------------------------------------------------------------HEADER--
-  WRITE(FF,'(A,A1)',ADVANCE='NO') "COUNT",T_
-  WRITE(FF,'(2(A,A1))',ADVANCE='NO') "TdgC",T_,"Pbar",T_
-  !~ WRITE(FF,'(3(A,A1))',ADVANCE='NO') "RhoW",T_,"pH",T_,"pE",T_
+  write(FF,'(A,A1)',advance="no") "count",T_
+  write(FF,'(2(A,A1))',advance="no") "TdgC",T_,"Pbar",T_
+  !~ write(FF,'(3(A,A1))',advance="no") "RhoW",T_,"pH",T_,"pE",T_
   !~ !
   !-----------------------------------------------write component names--
-  DO I=1,SIZE(vCpn)
-    WRITE(FF,'(A,A1)',ADVANCE='NO') &
-    & TRIM(vEle(vCpn(I)%iEle)%NamEl)//"Fluid",T_
-  ENDDO
+  do I=1,size(vCpn)
+    write(FF,'(A,A1)',advance="no") &
+    & trim(vEle(vCpn(I)%iEle)%NamEl)//"Fluid",T_
+  end do
   !
-  DO I=1,SIZE(vCpn)
-    WRITE(FF,'(A,A1)',ADVANCE='NO') &
-    & TRIM(vEle(vCpn(I)%iEle)%NamEl)//"Tot",T_
-  ENDDO
+  do I=1,size(vCpn)
+    write(FF,'(A,A1)',advance="no") &
+    & trim(vEle(vCpn(I)%iEle)%NamEl)//"Tot",T_
+  end do
   !-----------------------------------------write non'aqu'phases names--
   K=0
-  DO I=1,nYes
+  do I=1,nYes
     K=K+1
-    IF(.NOT. vIsZero(I)) THEN
-      WRITE(FF,'(A,A1)',ADVANCE='NO') TRIM(vNamFasYes(K)),T_
-    ENDIF
-  ENDDO
-  WRITE(FF,*)
+    if(.not. vIsZero(I)) then
+      write(FF,'(A,A1)',advance="no") trim(vNamFasYes(K)),T_
+    end if
+  end do
+  write(FF,*)
   !------------------------------------------------------------/HEADER--
   !
-  DO I=1,SIZE(tPathResults,1)
+  do I=1,size(tPathResults,1)
     !
-    WRITE(FF,'(I3,A1)',ADVANCE='NO') I,T_
-    WRITE(FF,'(G15.8,A1)',ADVANCE='NO') tPathResults(I,1),T_ !! TdgC
-    WRITE(FF,'(G15.8,A1)',ADVANCE='NO') tPathResults(I,2),T_ !! Pbar
+    write(FF,'(I3,A1)',advance="no") I,T_
+    write(FF,'(G15.8,A1)',advance="no") tPathResults(I,1),T_ !! TdgC
+    write(FF,'(G15.8,A1)',advance="no") tPathResults(I,2),T_ !! Pbar
     !
-    DO J=1,2*nCp
-      WRITE(FF,'(G15.8,A1)',ADVANCE='NO') tPathResults(I,J+2),T_
-    ENDDO
+    do J=1,2*nCp
+      write(FF,'(G15.8,A1)',advance="no") tPathResults(I,J+2),T_
+    end do
     !
-    DO J=1,nYes
-      IF(.NOT. vIsZero(J)) &
-      & WRITE(FF,'(G15.8,A1)',ADVANCE='NO') tPathResults(I,J+2+2*nCp),T_
-    ENDDO
+    do J=1,nYes
+      if(.not. vIsZero(J)) &
+      & write(FF,'(G15.8,A1)',advance="no") tPathResults(I,J+2+2*nCp),T_
+    end do
     !
-    WRITE(FF,*)
+    write(FF,*)
     !
-  ENDDO
+  end do
    !
-  DEALLOCATE(vIsZero)
+  deallocate(vIsZero)
   !
-  CLOSE(FF)
+  close(FF)
   !
-END SUBROUTINE WriteBuffer
+end subroutine WriteBuffer
 
-SUBROUTINE Path_Files_Close
-  USE M_Path_Vars,ONLY: tPathResults
+subroutine Path_Files_Close
+  use M_Path_Vars,only: tPathResults
   !
-  IF(fActiv>0) THEN  ;  WRITE(fActiv,*)  ;  CLOSE(fActiv) ;  fActiv=0  ;  ENDIF
-  IF(fPoten>0) THEN  ;  WRITE(fPoten,*)  ;  CLOSE(fPoten) ;  fPoten=0  ;  ENDIF
-  IF(fMolal>0) THEN  ;  WRITE(fMolal,*)  ;  CLOSE(fMolal) ;  fMolal=0  ;  ENDIF
-  IF(fGamma>0) THEN  ;                      CLOSE(fGamma) ;  fGamma=0  ;  ENDIF
-  IF(fQsk>0)   THEN  ;                      CLOSE(fQsk)   ;  fQsk=0    ;  ENDIF
+  if(fActiv>0) then  ;  write(fActiv,*)  ;  close(fActiv) ;  fActiv=0  ;  end if
+  if(fPoten>0) then  ;  write(fPoten,*)  ;  close(fPoten) ;  fPoten=0  ;  end if
+  if(fMolal>0) then  ;  write(fMolal,*)  ;  close(fMolal) ;  fMolal=0  ;  end if
+  if(fGamma>0) then  ;                      close(fGamma) ;  fGamma=0  ;  end if
+  if(fQsk>0)   then  ;                      close(fQsk)   ;  fQsk=0    ;  end if
   !
-  IF(fMoles>0) THEN
+  if(fMoles>0) then
   
-    WRITE(fMoles,*)
-    CLOSE(fMoles)
+    write(fMoles,*)
+    close(fMoles)
     fMoles=0
     
-    IF(ALLOCATED(tPathResults)) THEN
-      CALL WriteBuffer
-      DEALLOCATE(tPathResults)
-      DEALLOCATE(vNamFasYes)
-    ENDIF
+    if(allocated(tPathResults)) then
+      call WriteBuffer
+      deallocate(tPathResults)
+      deallocate(vNamFasYes)
+    end if
     
-  ENDIF
+  end if
   !
-END SUBROUTINE Path_Files_Close
+end subroutine Path_Files_Close
 
-ENDMODULE M_Path_Write
+end module M_Path_Write
 

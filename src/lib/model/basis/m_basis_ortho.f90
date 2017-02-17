@@ -1,317 +1,316 @@
-MODULE M_Basis_Ortho
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_, Stop_
-  IMPLICIT NONE
+module M_Basis_Ortho
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_, Stop_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Basis_Ortho_Compute
-  PUBLIC:: Basis_Ortho_Compute_Debug
+  public:: Basis_Ortho_Compute
+  public:: Basis_Ortho_Compute_Debug
 
-  !~ PUBLIC:: OrthoBasis
-  !~ PUBLIC:: Basis_Ortho_Alloc
-  !~ PUBLIC:: Basis_Ortho_Clear
+  !~ public:: OrthoBasis
+  !~ public:: Basis_Ortho_Alloc
+  !~ public:: Basis_Ortho_Clear
   !
-  !~ REAL(dp),DIMENSION(:,:),ALLOCATABLE:: tOrthoAlfSp
+  !~ real(dp),dimension(:,:),allocatable:: tOrthoAlfSp
 
-  !~ PUBLIC :: tOrthoAlfSp
+  !~ public :: tOrthoAlfSp
 
-CONTAINS
+contains
 
-  SUBROUTINE Basis_Ortho_Compute(vIndexBuffer,tAlfSp,tXOrthoBasis)
-    INTEGER, INTENT(IN) :: vIndexBuffer(:)
-    REAL(dp),INTENT(IN) :: tAlfSp(:,:)
-    REAL(dp),INTENT(OUT):: tXOrthoBasis(:,:)
+  subroutine Basis_Ortho_Compute(vIndexBuffer,tAlfSp,tXOrthoBasis)
+    integer, intent(in) :: vIndexBuffer(:)
+    real(dp),intent(in) :: tAlfSp(:,:)
+    real(dp),intent(out):: tXOrthoBasis(:,:)
     !
-    REAL(dp), ALLOCATABLE :: tVBasis(:, :)
-    REAL(dp), ALLOCATABLE :: tEBasis(:, :) !, tXOrthoBasis(:,:)
-    REAL(dp), ALLOCATABLE :: tOrthoBasis(:,:), tNormBasis(:)
-    INTEGER :: nE, nV, nCi, nCp
-    INTEGER :: iE, iV, iCp
-    LOGICAL :: Ok
-    ! REAL(dp) :: coef
+    real(dp), allocatable :: tVBasis(:, :)
+    real(dp), allocatable :: tEBasis(:, :) !, tXOrthoBasis(:,:)
+    real(dp), allocatable :: tOrthoBasis(:,:), tNormBasis(:)
+    integer :: nE, nV, nCi, nCp
+    integer :: iE, iV, iCp
+    logical :: Ok
+    ! real(dp) :: coef
     !---
 
-    IF (iDebug>0) write(fTrc,'(/,A)') "< Basis_Ortho_Compute"
+    if (iDebug>0) write(fTrc,'(/,A)') "< Basis_Ortho_Compute"
 
     !// Allocate Working Arrays
 
-    nE =  SIZE(vIndexBuffer)
-    nV =  COUNT(vIndexBuffer(:)>0)
+    nE =  size(vIndexBuffer)
+    nV =  count(vIndexBuffer(:)>0)
     nCp=  nE
     nCi=  nE - nV
 
-    ALLOCATE( tVBasis(nV, nE) )          ! MOBILE or BUFFER COMPONENTS
-    ALLOCATE( tEBasis(nE, nE) )          ! PRIMARY COMPONENTS
-    ALLOCATE( tOrthoBasis(nE, nE) )
-    ALLOCATE( tNormBasis(nE) )
-    !ALLOCATE( tXOrthoBasis(nE, nE) )
+    allocate( tVBasis(nV, nE) )          ! MOBILE or BUFFER COMPONENTS
+    allocate( tEBasis(nE, nE) )          ! PRIMARY COMPONENTS
+    allocate( tOrthoBasis(nE, nE) )
+    allocate( tNormBasis(nE) )
+    !allocate( tXOrthoBasis(nE, nE) )
 
     iV= 0
-    DO iCp=1,nCp
-      IF(vIndexBuffer(iCp)>0) THEN
+    do iCp=1,nCp
+      if(vIndexBuffer(iCp)>0) then
         iV= iV +1
         tVBasis(iV,:)= tAlfSp(:,vIndexBuffer(iCp))
-      ENDIF
-    END DO
+      end if
+    end do
 
-    DO iE = 1, nE
+    do iE = 1, nE
       tEBasis(iE,:)  = 0.D0
       tEBasis(iE,iE) = 1.D0
-    END DO
+    end do
 
     !// Compute Basis
 
-    CALL OrthoBasis( &
+    call OrthoBasis( &
     & 0,tVBasis, tEBasis, nV, nE, &
     & tOrthoBasis, tNormBasis, Ok)
-    IF ( .not.( Ok ) ) CALL Stop_("Error OrthoBasis")
+    if ( .not.( Ok ) ) call Stop_("Error OrthoBasis")
 
-    DO iCp = 1, nCi
+    do iCp = 1, nCi
       iV = nV + iCp
       tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
-    END DO
-    DO iCp = nCi+1, nCp
+    end do
+    do iCp = nCi+1, nCp
       iV = iCp - nCi
       tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
-    END DO
+    end do
 
-    IF(iDebug>2) CALL Matrix_Sho(tOrthoBasis)
+    if(iDebug>2) call Matrix_Sho(tOrthoBasis)
 
     !// Compute Formula Matrices
 
-    !tOrthoAlfSp  = MATMUL( tXOrthoBasis , tAlfSp  )
+    !tOrthoAlfSp  = matmul( tXOrthoBasis , tAlfSp  )
 
     !// Deallocate Working Arrays
 
-    DEALLOCATE ( tVBasis )
-    DEALLOCATE ( tEBasis )
-    DEALLOCATE ( tOrthoBasis )
-    DEALLOCATE ( tNormBasis )
-    !DEALLOCATE ( tXOrthoBasis )
+    deallocate ( tVBasis )
+    deallocate ( tEBasis )
+    deallocate ( tOrthoBasis )
+    deallocate ( tNormBasis )
+    !deallocate ( tXOrthoBasis )
 
-    IF (iDebug>0) write(fTrc,'(A,/)') "</ Basis_Ortho_Compute"
+    if (iDebug>0) write(fTrc,'(A,/)') "</ Basis_Ortho_Compute"
 
-  END SUBROUTINE Basis_Ortho_Compute
+  end subroutine Basis_Ortho_Compute
 
-  SUBROUTINE Matrix_Sho(T)
-    USE M_IoTools,    ONLY: GetUnit
-    USE M_Files,      ONLY: DirOut
+  subroutine Matrix_Sho(T)
+    use M_IoTools,    only: GetUnit
+    use M_Files,      only: DirOut
 
-    REAL(dp),DIMENSION(:,:),INTENT(IN):: T
+    real(dp),dimension(:,:),intent(in):: T
     !
-    INTEGER:: nS,nC
-    INTEGER:: F
-    INTEGER:: I,J
+    integer:: nS,nC
+    integer:: F
+    integer:: I,J
     !
-    CALL GetUnit(F)
-    OPEN(F,FILE=TRIM(DirOut)//"_othobasis.log")
-    !CALL Files_Index_Write(fHtm,...
+    call GetUnit(F)
+    open(F,file=trim(DirOut)//"_othobasis.log")
+    !call Files_Index_Write(fHtm,...
     !
-    nC= SIZE(T,1)
-    nS= SIZE(T,2)
+    nC= size(T,1)
+    nS= size(T,2)
     !
-    DO I=1,nC
-      DO J=1,nS
-        WRITE(F,'(F7.3,A1)',ADVANCE='NO') T(I,J), T_
-      ENDDO
-      WRITE(F,*)
-    ENDDO
+    do I=1,nC
+      do J=1,nS
+        write(F,'(F7.3,A1)',advance="no") T(I,J), T_
+      end do
+      write(F,*)
+    end do
     !
-    CLOSE(F)
+    close(F)
     !
-  END SUBROUTINE Matrix_Sho
+  end subroutine Matrix_Sho
 
-  SUBROUTINE Basis_Ortho_Compute_Debug(vIndexBuffer,tAlfSp,tXOrthoBasis)
-    USE M_IoTools,    ONLY: GetUnit
-    USE M_Files,      ONLY: DirOut
-    USE M_Global_Vars,ONLY: vEle
-    USE M_System_Vars,ONLY: vCpn
+  subroutine Basis_Ortho_Compute_Debug(vIndexBuffer,tAlfSp,tXOrthoBasis)
+    use M_IoTools,    only: GetUnit
+    use M_Files,      only: DirOut
+    use M_System_Vars,only: vCpn
     !
-    INTEGER, INTENT(IN) :: vIndexBuffer(:)
-    REAL(dp),INTENT(IN) :: tAlfSp(:,:)
-    REAL(dp),INTENT(OUT):: tXOrthoBasis(:,:)
+    integer, intent(in) :: vIndexBuffer(:)
+    real(dp),intent(in) :: tAlfSp(:,:)
+    real(dp),intent(out):: tXOrthoBasis(:,:)
     !
-    REAL(dp), ALLOCATABLE :: tVBasis(:, :)
-    REAL(dp), ALLOCATABLE :: tEBasis(:, :)
-    REAL(dp), ALLOCATABLE :: tOrthoBasis(:,:), tNormBasis(:)
-    INTEGER :: nE, nV, nCi, nCp
-    INTEGER :: iE, iV, J, iCp
-    INTEGER :: F
-    LOGICAL :: Ok
-    REAL(dp) :: coef
+    real(dp), allocatable :: tVBasis(:, :)
+    real(dp), allocatable :: tEBasis(:, :)
+    real(dp), allocatable :: tOrthoBasis(:,:), tNormBasis(:)
+    integer :: nE, nV, nCi, nCp
+    integer :: iE, iV, J, iCp
+    integer :: F
+    logical :: Ok
+    real(dp) :: coef
     !---
 
-    CALL GetUnit(F)
-    OPEN(F,FILE=TRIM(DirOut)//"_orthobasis.log")
+    call GetUnit(F)
+    open(F,file=trim(DirOut)//"_orthobasis.log")
 
-    IF (iDebug>0) write(F,*) "Basis_Ortho_Compute"
+    if (iDebug>0) write(F,*) "Basis_Ortho_Compute"
     !
     !// Allocate Working Arrays
 
-    nCp= SIZE(vCpn)
-    nCi= COUNT(vCpn(:)%Statut=="INERT")
+    nCp= size(vCpn)
+    nCi= count(vCpn(:)%Statut=="INERT")
 
     nE = nCp
-    nV = COUNT(vIndexBuffer(:)>0)
+    nV = count(vIndexBuffer(:)>0)
 
-    ALLOCATE( tVBasis(nV, nE) )          ! MOBILE or BUFFER COMPONENTS
-    ALLOCATE( tEBasis(nE, nE) )          ! PRIMARY COMPONENTS
-    ALLOCATE( tOrthoBasis(nE, nE) )
-    ALLOCATE( tNormBasis(nE) )
-    !ALLOCATE( tXOrthoBasis(nE, nE) )
+    allocate( tVBasis(nV, nE) )          ! MOBILE or BUFFER COMPONENTS
+    allocate( tEBasis(nE, nE) )          ! PRIMARY COMPONENTS
+    allocate( tOrthoBasis(nE, nE) )
+    allocate( tNormBasis(nE) )
+    !allocate( tXOrthoBasis(nE, nE) )
 
-    DO iV = 1, nV
+    do iV = 1, nV
       J = nCi + iV
       tVBasis(iV,:)= tAlfSp(:,vCpn(J)%iSpc)
-    END DO
+    end do
 
     !~ iV= 0
-    !~ DO iE=1,nE
-    !~ IF(vIndexBuffer(iE)>0) THEN
+    !~ do iE=1,nE
+    !~ if(vIndexBuffer(iE)>0) then
     !~ iV= iV +1
     !~ tVBasis(iV,:)= tAlfSp(:,vIndexBuffer(iE))
-    !~ ENDIF
-    !~ END DO
+    !~ end if
+    !~ end do
 
-    DO iE = 1, nE
+    do iE = 1, nE
       tEBasis(iE,:)  = 0.D0
       tEBasis(iE,iE) = 1.D0
-    END DO
+    end do
 
     !// Compute Basis
 
-    IF (iDebug>0) THEN
-      WRITE(F,'(A)') "================================================"
-      WRITE(F,'(A)') 'Compute Orthogonal Basis'
-      WRITE(F,'(A)') "================================================"
-    END IF
+    if (iDebug>0) then
+      write(F,'(A)') "================================================"
+      write(F,'(A)') 'Compute Orthogonal Basis'
+      write(F,'(A)') "================================================"
+    end if
 
-    CALL OrthoBasis( &
+    call OrthoBasis( &
     & F,tVBasis, tEBasis, nV, nE, &
     & tOrthoBasis, tNormBasis, Ok)
     if ( .not.( Ok ) ) call Stop_("Error OrthoBasis")
 
     !// Show Ortho Basis Results
 
-    IF (iDebug>0) THEN
-      WRITE(F,'(A)') "=========================================================="
-      WRITE(F,'(A)') 'Orthogonal Formulas System = tOrthoBasis'
-      WRITE(F,'(A)') "=========================================================="
-    END IF
+    if (iDebug>0) then
+      write(F,'(A)') "=========================================================="
+      write(F,'(A)') 'Orthogonal Formulas System = tOrthoBasis'
+      write(F,'(A)') "=========================================================="
+    end if
 
-    IF (iDebug>0) THEN
-      DO iV = 1, nE
-        IF (iV<=nV) WRITE(F,'(A,I3,A)',ADVANCE='NO') 'Buffer Basis       ', iV, ' = '
-        IF (iV>nV)  WRITE(F,'(A,I3,A)',ADVANCE='NO') 'Orthogonal Formula ', iV-nV, ' = '
-        DO iE = 1, nE
+    if (iDebug>0) then
+      do iV = 1, nE
+        if (iV<=nV) write(F,'(A,I3,A)',advance="no") 'Buffer Basis       ', iV, ' = '
+        if (iV>nV)  write(F,'(A,I3,A)',advance="no") 'Orthogonal Formula ', iV-nV, ' = '
+        do iE = 1, nE
           coef = tOrthoBasis(iV, iE)
-          !~ IF ( abs(coef) > 0.00001) WRITE(F,'(A4,A,F8.3,A)',ADVANCE='NO') &
-            !~ & TRIM( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
-          IF ( abs(coef) > 0.00001) WRITE(F,'(I3,A,F8.3,A)',ADVANCE='NO') &
+          !~ if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
+            !~ & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
+          if ( abs(coef) > 0.00001) write(F,'(I3,A,F8.3,A)',advance="no") &
             & iE,'(',coef, ') '
-        END DO
+        end do
 
-        WRITE(F,*) ' '
-        IF ( iV == nV ) WRITE(F,*) "----------"
-      END DO
-    END IF
+        write(F,*) ' '
+        if ( iV == nV ) write(F,*) "----------"
+      end do
+    end if
 
     !// Reorder Equations For Arxim Dynamic Problem
 
-    IF (iDebug>0) THEN
-      WRITE(F,'(A)') "=========================================================="
-      WRITE(F,'(A)') 'Mole Balance Equations Re-Ordered for Arxim = tXOrthoBasis'
-      WRITE(F,'(A)') "=========================================================="
-    END IF
+    if (iDebug>0) then
+      write(F,'(A)') "=========================================================="
+      write(F,'(A)') 'Mole Balance Equations Re-Ordered for Arxim = tXOrthoBasis'
+      write(F,'(A)') "=========================================================="
+    end if
 
-    DO iCp = 1, nCi
+    do iCp = 1, nCi
       iV = nV + iCp
       tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
-    END DO
-    DO iCp = nCi+1, nCp
+    end do
+    do iCp = nCi+1, nCp
       iV = iCp - nCi
       tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
-    END DO
+    end do
 
-    IF (iDebug>0) THEN
-      DO iV = 1, nE
-        !~ IF (iV<=nCi)  WRITE(F,'(A,I3,A,A,A)',ADVANCE='NO') 'Balance Equation Ci', iV ,      '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
-        !~ IF (iV>nCi)   WRITE(F,'(A,I3,A,A,A)',ADVANCE='NO') 'Balance Buffer   Bx', iV - nCi, '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
-        IF (iV<=nCi) WRITE(F,'(A,I3,A)',ADVANCE='NO') &
+    if (iDebug>0) then
+      do iV = 1, nE
+        !~ if (iV<=nCi)  write(F,'(A,I3,A,A,A)',advance="no") 'Balance Equation Ci', iV ,      '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
+        !~ if (iV>nCi)   write(F,'(A,I3,A,A,A)',advance="no") 'Balance Buffer   Bx', iV - nCi, '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
+        if (iV<=nCi) write(F,'(A,I3,A)',advance="no") &
         & 'Balance Equation Ci', iV ,      ' = '
-        IF (iV>nCi)  WRITE(F,'(A,I3,A)',ADVANCE='NO') &
+        if (iV>nCi)  write(F,'(A,I3,A)',advance="no") &
         & 'Balance Buffer   Bx', iV - nCi, ' = '
 
-        DO iE = 1, nE
+        do iE = 1, nE
           coef = tXOrthoBasis(iV, iE)
-          !~ IF ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',ADVANCE='NO') &
-            !~ & TRIM( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
-          IF ( abs(coef) > 0.00001) write(F,'(I3,A,F8.3,A)',ADVANCE='NO') &
+          !~ if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
+            !~ & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
+          if ( abs(coef) > 0.00001) write(F,'(I3,A,F8.3,A)',advance="no") &
             & iE,'(',coef, ') '
-        END DO
+        end do
 
-        WRITE(F,*) ' '
-        IF ( iV == nCi ) WRITE(F,*) "----------"
-      END DO
-    END IF
+        write(F,*) ' '
+        if ( iV == nCi ) write(F,*) "----------"
+      end do
+    end if
 
     !// Compute Formula Matrices
 
-    IF (iDebug>0) THEN
-      WRITE(F,'(A)') "====================================================="
-      WRITE(F,'(A)') 'Compute Modified Formula Matrices'
-      WRITE(F,'(A)') "====================================================="
-      WRITE(F,*) 'tOrthoAlfSp  = matmul( tXOrthoBasis , tAlfSp  )'
-    END IF
+    if (iDebug>0) then
+      write(F,'(A)') "====================================================="
+      write(F,'(A)') 'Compute MODIFIED Formula Matrices'
+      write(F,'(A)') "====================================================="
+      write(F,*) 'tOrthoAlfSp  = matmul( tXOrthoBasis , tAlfSp  )'
+    end if
 
-    !tOrthoAlfSp  = MATMUL( tXOrthoBasis , tAlfSp  )
+    !tOrthoAlfSp  = matmul( tXOrthoBasis , tAlfSp  )
 
     !// Deallocate Working Arrays
 
-    DEALLOCATE ( tVBasis )
-    DEALLOCATE ( tEBasis )
-    DEALLOCATE ( tOrthoBasis )
-    DEALLOCATE ( tNormBasis )
-    !DEALLOCATE ( tXOrthoBasis )
+    deallocate ( tVBasis )
+    deallocate ( tEBasis )
+    deallocate ( tOrthoBasis )
+    deallocate ( tNormBasis )
+    !deallocate ( tXOrthoBasis )
 
-    IF (iDebug>0) THEN
-      WRITE(F,'(A)') "====================================================="
-      WRITE(F,'(A)') "Basis_Ortho_Basis Compute Done !"
-    END IF
+    if (iDebug>0) then
+      write(F,'(A)') "====================================================="
+      write(F,'(A)') "Basis_Ortho_Basis Compute Done !"
+    end if
 
-    CLOSE(F)
+    close(F)
 
-  END SUBROUTINE Basis_Ortho_Compute_Debug
+  end subroutine Basis_Ortho_Compute_Debug
 
   !----
 
-  SUBROUTINE OrthoBasis(FF,tVBasis, tEBasis, nV, nE, tOrthoBasis, tNormBasis, Ok)
+  subroutine OrthoBasis(FF,tVBasis, tEBasis, nV, nE, tOrthoBasis, tNormBasis, Ok)
     !-------------------------------------------
     ! Purpose : Orthogonalize Basis of Subspace
     !           Using Gramm Schmitt Method
     !-------------------------------------------
 
-    IMPLICIT NONE
+    implicit none
 
-    INTEGER, INTENT(in) :: FF                         ! trace file
-    INTEGER, INTENT(in) :: nV                         ! Dimension of SubSpace V
-    INTEGER, INTENT(in) :: nE                         ! Dimension of Space V
-    REAL(dp), INTENT(in)  :: tVBasis(nV, nE)          ! Basis of E
-    REAL(dp), INTENT(in)  :: tEBasis(nE, nE)          ! Basis of E
-    REAL(dp), INTENT(out) :: tOrthoBasis(nE, nE)      ! Ortho Basis of E = [V|V']
-    REAL(dp), INTENT(out) :: tNormBasis(nE)           ! Norm of Ortho Basis of E = [V|V']
-    LOGICAL, INTENT(out) :: Ok
+    integer, intent(in) :: FF                         ! trace file
+    integer, intent(in) :: nV                         ! Dimension of SubSpace V
+    integer, intent(in) :: nE                         ! Dimension of Space V
+    real(dp), intent(in)  :: tVBasis(nV, nE)          ! Basis of E
+    real(dp), intent(in)  :: tEBasis(nE, nE)          ! Basis of E
+    real(dp), intent(out) :: tOrthoBasis(nE, nE)      ! Ortho Basis of E = [V|V']
+    real(dp), intent(out) :: tNormBasis(nE)           ! Norm of Ortho Basis of E = [V|V']
+    logical, intent(out) :: Ok
     !-----
-    REAL(dp) :: CheckZero = 1.d-6
-    REAL(dp) :: vj(nE), vk(nE)
-    REAL(dp) :: normvk, pjk
+    real(dp) :: CheckZero = 1.d-6
+    real(dp) :: vj(nE), vk(nE)
+    real(dp) :: normvk, pjk
 
-    INTEGER :: iV, iE, k, j
+    integer :: iV, iE, k, j
 
-    IF (FF>0) WRITE(FF,'(A,2I3,A)') "OrthoBasis : nE,nV =[", nE,  nV, ']'
+    if (FF>0) write(FF,'(A,2I3,A)') "OrthoBasis : nE,nV =[", nE,  nV, ']'
 
-    Ok = .FALSE.
+    Ok = .false.
     tOrthoBasis = 0.D0
     tNormBasis  = 1.D0
 
@@ -320,96 +319,96 @@ CONTAINS
     k = 1
 
 
-    DO iV = 1, nV
+    do iV = 1, nV
 
       !write(21,*) "k=", k
 
       vk = tVBasis(iV,:)
 
-      DO j = 1, k-1
+      do j = 1, k-1
         vj     = tOrthoBasis(j,:)
-        pjk    = DOT_PRODUCT (vk,vj)
+        pjk    = dot_product (vk,vj)
         vk     = vk - pjk*vj
-      END DO
+      end do
 
-      normvk = SQRT(DOT_PRODUCT(vk,vk))
+      normvk = SQRT(dot_product(vk,vk))
       !write(21,*) "iV =", iV, " Normvk = ", normvK
 
-      IF (normvk < CheckZero ) THEN
-        STOP "VBasis Problem"
-      ELSE
+      if (normvk < CheckZero ) then
+        stop "VBasis Problem"
+      else
         vk = vk/normvk
-        IF (FF>0) WRITE(FF,'(A,I3,A,20F8.3)') "[",k,"]", vk(1:nE)
-        IF ( k > nE ) STOP "OrthoBasis Max ESize Problem"
+        if (FF>0) write(FF,'(A,I3,A,20F8.3)') "[",k,"]", vk(1:nE)
+        if ( k > nE ) stop "OrthoBasis Max ESize Problem"
         tOrthoBasis(k,:) = vk
         tNormBasis(k)    = normvk
         k = k + 1
-      END IF
+      end if
 
-    END DO
+    end do
 
     !------------
     ! Complete by vectors of tEBasis
     k = nV + 1
 
-    DO iE =1, nE
+    do iE =1, nE
 
       !write(21,*) "k=", k
 
 
       vk = tEBasis(iE,:)
 
-      DO j = 1, k-1
+      do j = 1, k-1
         vj     = tOrthoBasis(j,:)
-        pjk    = DOT_PRODUCT (vk,vj)
+        pjk    = dot_product (vk,vj)
         vk     = vk - pjk*vj
-      END DO
+      end do
 
-      normvk = SQRT(DOT_PRODUCT(vk,vk))
+      normvk = SQRT(dot_product(vk,vk))
       !write(21,*) "iE =", iE, " Normvk = ", normvK
 
-      IF (normvk < CheckZero) THEN
+      if (normvk < CheckZero) then
         !write(21,*) "Vector", iE, "is Zero Projected"
-      ELSE
+      else
         vk = vk/normvk
-        IF (FF>0) WRITE(FF,'(A,I3,A,20F8.3)') "[",k,"]", vk(1:nE)
-        IF ( k > nE ) STOP "OrthoBasis Max ESize Problem"
+        if (FF>0) write(FF,'(A,I3,A,20F8.3)') "[",k,"]", vk(1:nE)
+        if ( k > nE ) stop "OrthoBasis Max ESize Problem"
         tOrthoBasis(k,:) = vk
         tNormBasis(k)    = normvk
         k = k + 1
-      END IF
+      end if
 
-    END DO
+    end do
 
-    IF ( k <= nE ) STOP "Total ESize Problem"
+    if ( k <= nE ) stop "Total ESize Problem"
 
-    Ok = .TRUE.
+    Ok = .true.
 
-  END SUBROUTINE OrthoBasis
+  end subroutine OrthoBasis
 
-  !~ SUBROUTINE Basis_Ortho_Alloc(tAlfSp)
-  !~ REAL(dp),INTENT(IN):: tAlfSp(:,:)
+  !~ subroutine Basis_Ortho_Alloc(tAlfSp)
+  !~ real(dp),intent(in):: tAlfSp(:,:)
   !~ !---
-  !~ !IF (iDebug>0) write(21,*) "Basis_Ortho_Alloc"
+  !~ !if (iDebug>0) write(21,*) "Basis_Ortho_Alloc"
 
-  !~ ALLOCATE(tOrthoAlfSp(SIZE(tAlfSp,1), SIZE(tAlfSp,2)))
+  !~ allocate(tOrthoAlfSp(size(tAlfSp,1), size(tAlfSp,2)))
 
-  !~ IF (iDebug>0) THEN
-  !~ WRITE(21,'(A)') "=========================================================="
-  !~ WRITE(21,*) "Shape of tOrthoAlfSp  = ",  SHAPE(tOrthoAlfSp)
-  !~ WRITE(21,'(A)') "=========================================================="
-  !~ END IF
+  !~ if (iDebug>0) then
+  !~ write(21,'(A)') "=========================================================="
+  !~ write(21,*) "Shape of tOrthoAlfSp  = ",  SHAPE(tOrthoAlfSp)
+  !~ write(21,'(A)') "=========================================================="
+  !~ end if
 
-  !~ END SUBROUTINE Basis_Ortho_Alloc
+  !~ end subroutine Basis_Ortho_Alloc
 
   !~ !---
 
-  !~ SUBROUTINE Basis_Ortho_Clear
+  !~ subroutine Basis_Ortho_Clear
 
-  !~ DEALLOCATE(tOrthoAlfSp)
+  !~ deallocate(tOrthoAlfSp)
 
-  !~ END SUBROUTINE Basis_Ortho_Clear
+  !~ end subroutine Basis_Ortho_Clear
 
   !---
 
-END MODULE M_Basis_Ortho
+end module M_Basis_Ortho

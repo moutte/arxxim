@@ -1,23 +1,23 @@
-MODULE M_Formula_Parser
+module M_Formula_Parser
 
   !------------------------------------------------------
   ! Interface to Formula Parsing Utils 
   !------------------------------------------------------
 
-  USE M_Formula_Vector
-  USE M_Formula_Arxim
-  USE M_Formula_Arxim_Standard
-  IMPLICIT NONE
-  PRIVATE
+  use M_Formula_Vector
+  use M_Formula_Arxim
+  use M_Formula_Arxim_Standard
+  implicit none
+  private
 
-  PUBLIC :: Formula_Vector_Read
+  public :: Formula_Vector_Read
   !---
-  PUBLIC :: Formula_Arxim_Build
-  PUBLIC :: Formula_Arxim_Read
+  public :: Formula_Arxim_Build
+  public :: Formula_Arxim_Read
   !---
-  PUBLIC :: Formula_Arxim_Read_Standard
-  PUBLIC :: Formula_Arxim_Build_Standard
+  public :: Formula_Arxim_Read_Standard
+  public :: Formula_Arxim_Build_Standard
 
-ENDMODULE M_Formula_Parser
+end module M_Formula_Parser
 
   

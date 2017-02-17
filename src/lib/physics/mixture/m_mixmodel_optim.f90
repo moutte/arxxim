@@ -1,52 +1,52 @@
-MODULE M_Mixmodel_Optim
+module M_Mixmodel_Optim
 !--
 !-- interface between Mixture model and optimization routine
 !--
-  USE M_Kinds
-  USE M_T_MixModel
-  USE M_Global_Vars
+  use M_Kinds
+  use M_T_MixModel
+  use M_Global_Vars
   !
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  !~ PUBLIC:: Mixmodel_Optim_GetGibbs
-  !~ PUBLIC:: Mixmodel_Optim_GetPotentials
-  PUBLIC:: Mixmodel_Optim_GetMu
-  PUBLIC:: Mixmodel_Optim_SetParams
+  !~ public:: Mixmodel_Optim_GetGibbs
+  !~ public:: Mixmodel_Optim_GetPotentials
+  public:: Mixmodel_Optim_GetMu
+  public:: Mixmodel_Optim_SetParams
   !
-  PUBLIC:: Mixmodel_Optim_vMu0rt
-  PUBLIC:: Mixmodel_Optim_vLPole
+  public:: Mixmodel_Optim_vMu0rt
+  public:: Mixmodel_Optim_vLPole
 
-  REAL(dp),ALLOCATABLE:: Mixmodel_Optim_vMu0rt(:)
-  LOGICAL, ALLOCATABLE:: Mixmodel_Optim_vLPole(:)
+  real(dp),allocatable:: Mixmodel_Optim_vMu0rt(:)
+  logical, allocatable:: Mixmodel_Optim_vLPole(:)
 
-  TYPE(T_MixModel):: MixModel
-  REAL(dp):: TdgK,Pbar
+  type(T_MixModel):: MixModel
+  real(dp):: TdgK,Pbar
 
-CONTAINS
+contains
 
-SUBROUTINE Mixmodel_Optim_SetParams(T,P,MM) !,vG0rt)
-  REAL(dp),INTENT(IN):: T,P !T= dgK / P= bar
-  TYPE(T_MixModel),INTENT(IN):: MM
-  !REAL(dp),INTENT(IN):: vG0rt(:)
+subroutine Mixmodel_Optim_SetParams(T,P,MM) !,vG0rt)
+  real(dp),intent(in):: T,P !T= dgK / P= bar
+  type(T_MixModel),intent(in):: MM
+  !real(dp),intent(in):: vG0rt(:)
   !
   TdgK= T
   Pbar= P
   MixModel= MM
   !
-END SUBROUTINE Mixmodel_Optim_SetParams
+end subroutine Mixmodel_Optim_SetParams
 
-!~ FUNCTION Mixmodel_Optim_GetGibbs(vX) RESULT(G)
-  !~ REAL(dp),INTENT(IN):: vX(:)
-  !~ REAL(dp):: G
+!~ function Mixmodel_Optim_GetGibbs(vX) result(G)
+  !~ real(dp),intent(in):: vX(:)
+  !~ real(dp):: G
   !~ !
-  !~ LOGICAL,ALLOCATABLE:: vLPole(:)
+  !~ logical,allocatable:: vLPole(:)
   !~ !
-  !~ REAL(dp):: Gmix,Gmeca
-  !~ INTEGER :: I
+  !~ real(dp):: Gmix,Gmeca
+  !~ integer :: I
   !~ !
-  !~ ALLOCATE(vLPole(SIZE(vX)))
+  !~ allocate(vLPole(size(vX)))
   !~ vLPole(:)= (vX(:)>Zero)
   !~ !
   !~ Gmix= MixModel_GibbsMixRT( & !
@@ -57,35 +57,35 @@ END SUBROUTINE Mixmodel_Optim_SetParams
   !~ !
   !~ !---------------------------------------------- "mechanical" mixing --
   !~ Gmeca= Zero
-  !~ DO I=1,MixModel%NPole
-    !~ IF(vLPole(I)) &
+  !~ do I=1,MixModel%NPole
+    !~ if(vLPole(I)) &
     !~ & Gmeca= Gmeca &
     !~ &      + vX(I) *vSpc(MixModel%vIPole(I))%G0rt
-  !~ ENDDO
+  !~ end do
   !~ !----------------------------------------------/"mechanical" mixing --
   !~ !
   !~ G= Gmix +Gmeca
   !~ !
-  !~ DEALLOCATE(vLPole)
+  !~ deallocate(vLPole)
   !~ !
-!~ END FUNCTION Mixmodel_Optim_GetGibbs
+!~ end function Mixmodel_Optim_GetGibbs
 
-SUBROUTINE Mixmodel_Optim_GetMu(vX,vMu)
-  !REAL(dp),INTENT(IN):: G
-  REAL(dp),INTENT(IN):: vX(:)
-  REAL(dp),INTENT(OUT):: vMu(:)
+subroutine Mixmodel_Optim_GetMu(vX,vMu)
+  !real(dp),intent(in):: G
+  real(dp),intent(in):: vX(:)
+  real(dp),intent(out):: vMu(:)
   !
-  INTEGER:: N
+  integer:: N
   !
-  REAL(dp),ALLOCATABLE:: vLGam(:),vLIdeal(:),vLnAct(:)
-  LOGICAL:: Ok
-  CHARACTER(LEN=30):: Msg
+  real(dp),allocatable:: vLGam(:),vLIdeal(:),vLnAct(:)
+  logical:: Ok
+  character(len=30):: Msg
   !
   N= MixModel%NPole
   !
-  ALLOCATE(vLGam(N),vLIdeal(N),vLnAct(N))
+  allocate(vLGam(N),vLIdeal(N),vLnAct(N))
   !
-  CALL MixModel_Activities( & !
+  call MixModel_Activities( & !
   & TdgK,Pbar, & ! in
   & MixModel,  & ! in: mixing model
   & vX,        & ! in
@@ -95,18 +95,18 @@ SUBROUTINE Mixmodel_Optim_GetMu(vX,vMu)
   & vLIdeal,   & !
   & vLnAct)      !
   !
-  WHERE(Mixmodel_Optim_vLPole)  ;  vMu= vLnAct + Mixmodel_Optim_vMu0rt
-  ELSEWHERE                     ;  vMu= Zero
-  END WHERE
+  where(Mixmodel_Optim_vLPole)  ;  vMu= vLnAct + Mixmodel_Optim_vMu0rt
+  elsewhere                     ;  vMu= Zero
+  end where
   !
-  DEALLOCATE(vLGam,vLIdeal,vLnAct)
+  deallocate(vLGam,vLIdeal,vLnAct)
   !
-  !DO i=1,MixFas_Optim%Model%NPole
+  !do i=1,MixFas_Optim%Model%NPole
   !  vMu(I)= G0RT(I) +MixFas_Optim%vLnAct(I)
-  !END DO
+  !end do
   !
-  !~ REAL(dp):: xx
-  !~ REAL(dp),ALLOCATABLE:: grad(:)
+  !~ real(dp):: xx
+  !~ real(dp),allocatable:: grad(:)
   !~ !
   !~ allocate(grad(size(vX)))
   !~ !
@@ -116,27 +116,27 @@ SUBROUTINE Mixmodel_Optim_GetMu(vX,vMu)
   !~ !
   !~ deallocate(grad)
   !
-END SUBROUTINE Mixmodel_Optim_GetMu
+end subroutine Mixmodel_Optim_GetMu
 
-SUBROUTINE Mixmodel_Optim_GetPotentials(G,vX,vMu)
-  REAL(dp),INTENT(IN):: G
-  REAL(dp),INTENT(IN):: vX(:)
-  REAL(dp),INTENT(OUT):: vMu(:)
+subroutine Mixmodel_Optim_GetPotentials(G,vX,vMu)
+  real(dp),intent(in):: G
+  real(dp),intent(in):: vX(:)
+  real(dp),intent(out):: vMu(:)
   !
-  INTEGER:: i,N
+  integer:: i,N
   !
-  LOGICAL, ALLOCATABLE:: vLPole(:)
-  REAL(dp),ALLOCATABLE:: vLGam(:),vLIdeal(:),vLnAct(:)
-  LOGICAL:: Ok
-  CHARACTER(LEN=30):: Msg
+  logical, allocatable:: vLPole(:)
+  real(dp),allocatable:: vLGam(:),vLIdeal(:),vLnAct(:)
+  logical:: Ok
+  character(len=30):: Msg
   !
   N= MixModel%NPole
-  ALLOCATE(vLPole(N))
-  vLPole(:)= (vX(:)>Zero) ! .AND. (MixModel%vHasPole(:))
+  allocate(vLPole(N))
+  vLPole(:)= (vX(:)>Zero) ! .and. (MixModel%vHasPole(:))
   !
-  ALLOCATE(vLGam(N),vLIdeal(N),vLnAct(N))
+  allocate(vLGam(N),vLIdeal(N),vLnAct(N))
   !
-  CALL MixModel_Activities( & !
+  call MixModel_Activities( & !
   & TdgK,Pbar, & ! in
   & MixModel,  & ! in: mixing model
   & vX,        & ! in
@@ -146,19 +146,19 @@ SUBROUTINE Mixmodel_Optim_GetPotentials(G,vX,vMu)
   & vLIdeal,   & !
   & vLnAct)      !
   !
-  DO i=1,N
+  do i=1,N
     vMu(i)= vLnAct(i) + Mixmodel_Optim_vMu0rt(i)
-  ENDDO
+  end do
   !
-  DEALLOCATE(vLPole)
-  DEALLOCATE(vLGam,vLIdeal,vLnAct)
+  deallocate(vLPole)
+  deallocate(vLGam,vLIdeal,vLnAct)
   !
-  !DO i=1,MixFas_Optim%Model%NPole
+  !do i=1,MixFas_Optim%Model%NPole
   !  vMu(I)= G0RT(I) +MixFas_Optim%vLnAct(I)
-  !END DO
+  !end do
   !
-  !~ REAL(dp):: xx
-  !~ REAL(dp),ALLOCATABLE:: grad(:)
+  !~ real(dp):: xx
+  !~ real(dp),allocatable:: grad(:)
   !~ !
   !~ allocate(grad(size(vX)))
   !~ !
@@ -168,6 +168,6 @@ SUBROUTINE Mixmodel_Optim_GetPotentials(G,vX,vMu)
   !~ !
   !~ deallocate(grad)
   !
-END SUBROUTINE Mixmodel_Optim_GetPotentials
+end subroutine Mixmodel_Optim_GetPotentials
 
-END MODULE M_Mixmodel_Optim
+end module M_Mixmodel_Optim

@@ -1,39 +1,42 @@
-MODULE M_Path_Vars !variables for path calculations
-  USE M_Kinds
-  USE M_T_Tpcond,ONLY: T_TPCond
+module M_Path_Vars
+!--
+!-- variables for path calculations
+!--
+  use M_Kinds
+  use M_T_Tpcond,only: T_TPCond
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PUBLIC
+  public
   !
-  LOGICAL, ALLOCATABLE:: vLPath(:),vFasFound(:)
-  INTEGER, ALLOCATABLE:: vPhasBegin(:),vPhasFinal(:) !index of phases in vMixFas
-  REAL(dp),ALLOCATABLE:: tPathData(:,:)
-  REAL(dp),ALLOCATABLE:: vPathLogK(:)
+  logical, allocatable:: vLPath(:),vFasFound(:)
+  integer, allocatable:: vPhasBegin(:),vPhasFinal(:) !index of phases in vMixFas
+  real(dp),allocatable:: tPathData(:,:)
+  real(dp),allocatable:: vPathLogK(:)
   !
-  INTEGER:: DimPath
-  INTEGER:: iLogK
+  integer:: DimPath
+  integer:: iLogK
   !
-  INTEGER,PARAMETER:: TotalMixStep= 100
+  integer,parameter:: TotalMixStep= 100
   !
-  REAL(dp),ALLOCATABLE:: tGrt(:,:)
-  REAL(dp),ALLOCATABLE:: tPathResults(:,:)
+  real(dp),allocatable:: tGrt(:,:)
+  real(dp),allocatable:: tPathResults(:,:)
   !
-  !CHARACTER(LEN=15):: PathMode
+  !character(len=15):: PathMode
   !
-  TYPE(T_TPCond),ALLOCATABLE:: vTPpath(:)
+  type(T_TPCond),allocatable:: vTPpath(:)
   !
-CONTAINS
+contains
 
-SUBROUTINE Path_Vars_Clean
-  IF(ALLOCATED(vLPath))      DEALLOCATE(vLPath)
-  IF(ALLOCATED(vFasFound))   DEALLOCATE(vFasFound)
-  IF(ALLOCATED(vPhasBegin))  DEALLOCATE(vPhasBegin)
-  IF(ALLOCATED(vPhasFinal))  DEALLOCATE(vPhasFinal)
-  IF(ALLOCATED(tPathData))   DEALLOCATE(tPathData)
-  IF(ALLOCATED(vTPpath))     DEALLOCATE(vTPpath)
-  IF(ALLOCATED(vPathLogK))   DEALLOCATE(vPathLogK)
-ENDSUBROUTINE Path_Vars_Clean 
+subroutine Path_Vars_Clean
+  if(allocated(vLPath))      deallocate(vLPath)
+  if(allocated(vFasFound))   deallocate(vFasFound)
+  if(allocated(vPhasBegin))  deallocate(vPhasBegin)
+  if(allocated(vPhasFinal))  deallocate(vPhasFinal)
+  if(allocated(tPathData))   deallocate(tPathData)
+  if(allocated(vTPpath))     deallocate(vTPpath)
+  if(allocated(vPathLogK))   deallocate(vPathLogK)
+end subroutine Path_Vars_Clean 
 
-ENDMODULE M_Path_Vars
+end module M_Path_Vars
 

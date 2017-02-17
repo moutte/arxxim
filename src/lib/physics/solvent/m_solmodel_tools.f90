@@ -1,29 +1,29 @@
-MODULE M_SolModel_Tools
+module M_SolModel_Tools
 !--
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: Stop_,fTrc,T_,iDebug
-  USE M_T_DtbLogKTbl,ONLY: DimLogK_Max
+  use M_Kinds
+  use M_Trace,only: Stop_,fTrc,T_,iDebug,pause_
+  use M_T_DtbLogKTbl,only: DimLogK_Max
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Solmodel_pHpE
-  PUBLIC:: Solmodel_CalcMolal
-  PUBLIC:: Solmodel_CalcMolal2
-  PUBLIC:: SolModel_TP_Update
-  PUBLIC:: Solmodel_Init_TotO_TotH
+  public:: Solmodel_pHpE
+  public:: Solmodel_CalcMolal
+  public:: Solmodel_CalcMolal2
+  public:: SolModel_TP_Update
+  public:: Solmodel_Init_TotO_TotH
   
-CONTAINS
+contains
 
-!SUBROUTINE Solmodel_Zero
+!subroutine Solmodel_Zero
 !  !default SolModel parameters, in case not found in input
 !  isW= 1; iH_= 0; iOx= 0
 !  isH_=0; isOH=0; isO2=0
-!ENDSUBROUTINE Solmodel_Zero
+!end subroutine Solmodel_Zero
 
-SUBROUTINE Solmodel_Init_TotO_TotH( & !
+subroutine Solmodel_Init_TotO_TotH( & !
 & AdjustMode, &                       !
 & iBal,ic_W,ic_H,vEle, &              !IN
 & vCpn)                               !INOUT
@@ -32,103 +32,99 @@ SUBROUTINE Solmodel_Init_TotO_TotH( & !
 !-- to molar amounts of other elements
 !-- -> values of vTotF
 !--
-  USE M_T_Element,  ONLY: T_Element
-  USE M_T_Component,ONLY: T_Component
+  use M_T_Element,  only: T_Element
+  use M_T_Component,only: T_Component
   !
-  INTEGER,          INTENT(IN)   :: AdjustMode
-  INTEGER,          INTENT(IN)   :: iBal
-  INTEGER,          INTENT(IN)   :: ic_W,ic_H
-  TYPE(T_Element),  INTENT(IN)   :: vEle(:)
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  integer,          intent(in)   :: AdjustMode
+  integer,          intent(in)   :: iBal
+  integer,          intent(in)   :: ic_W,ic_H
+  type(T_Element),  intent(in)   :: vEle(:)
+  type(T_Component),intent(inout):: vCpn(:)
   !
   !
-  REAL(dp):: Zbalance,TotO_
-  INTEGER :: I,iBal_
+  real(dp):: Zbalance,TotO_
+  integer :: I,iBal_
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Solmodel_Init_TotO_TotH"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Solmodel_Init_TotO_TotH"
 
   TotO_= vCpn(ic_W)%Mole
 
-  IF(iBal==0) THEN ;  iBal_= ic_H
-  ELSE             ;  iBal_= iBal
-  ENDIF
+  if(iBal==0) then ;  iBal_= ic_H
+  else             ;  iBal_= iBal
+  end if
 
-  IF(iBal_ /= ic_H .AND. vCpn(ic_H)%Statut=="INERT") THEN
+  if(iBal_ /= ic_H .and. vCpn(ic_H)%Statut=="INERT") then
     vCpn(ic_W)%Mole= TotO_
     vCpn(ic_H)%Mole= TotO_*Two
-    !RETURN
-  ENDIF
+    !return
+  end if
   
   Zbalance= Zero
-  DO I=1,SIZE(vCpn)
-    IF(vCpn(I)%Statut=="INERT" .AND. I/=ic_W .AND. I/=ic_H) THEN
+  do I=1,size(vCpn)
+    if(vCpn(I)%Statut=="INERT" .and. I/=ic_W .and. I/=ic_H) then
       Zbalance= Zbalance + vEle(vCpn(I)%iEle)%Z *vCpn(I)%Mole
-    ENDIF
-  ENDDO
+    end if
+  end do
 
-  !! SELECT CASE(AdjustMode)
+  !! select case(AdjustMode)
   !!   !
-  !!   CASE(1)
-  !!     !--- IF excess cation, Na>Cl, adjust with OH
-  !!     IF(Zbalance > Zero) THEN
+  !!   case(1)
+  !!     !--- if excess cation, Na>Cl, adjust with OH
+  !!     if(Zbalance > Zero) then
   !!       vCpn(ic_W)%Mole= TotO_     +Zbalance
   !!       vCpn(ic_H)%Mole= TotO_*Two +Zbalance
-  !!     !--- IF excess anion, Cl>Na, adjust with H
-  !!     ELSE
+  !!     !--- if excess anion, Cl>Na, adjust with H
+  !!     else
   !!       vCpn(ic_W)%Mole= TotO_
   !!       vCpn(ic_H)%Mole= TotO_*Two -Zbalance
-  !!     ENDIF
+  !!     end if
   !!   !
-  !!   CASE(2)
+  !!   case(2)
   !!     !--- Oxygen number unchanged, equilibrate using hydrogen only
   !!     vCpn(ic_W)%Mole= TotO_
   !!     vCpn(ic_H)%Mole= TotO_*Two -Zbalance
   !!   !
-  !! ENDSELECT
+  !! end select
 
-  SELECT CASE(AdjustMode)
-  
-  CASE(1)
-    !--- IF excess cation, Na>Cl, adjust with OH
-    IF(Zbalance > Zero) THEN
+  select case(AdjustMode)  
+  case(1)
+    !----------------------------if excess cation, Na>Cl, adjust with OH
+    if(Zbalance > Zero) then
       vCpn(ic_W)%Mole= TotO_     +Zbalance
       vCpn(iBal_)%Mole= TotO_*Two +Zbalance
-    !--- IF excess anion, Cl>Na, adjust with H
-    ELSE
+    !------------------------------if excess anion, Cl>Na, adjust with H
+    else
       vCpn(ic_W)%Mole=  TotO_
-      vCpn(iBal_)%Mole= (TotO_*Two -Zbalance) /REAL(vEle(iBal_)%Z)
-    ENDIF
-
-  CASE(2)
-    !--- Oxygen number unchanged, equilibrate using hydrogen only
+      vCpn(iBal_)%Mole= (TotO_*Two -Zbalance) /real(vEle(iBal_)%Z)
+    end if
+  case(2)
+    !-----------Oxygen number unchanged, equilibrate using hydrogen only
     vCpn(ic_W)%Mole= TotO_
     vCpn(iBal_)%Mole= TotO_*Two -Zbalance
-
-  ENDSELECT
-  
-  IF(iDebug>2) THEN
-    WRITE(fTrc,'(A,G15.6)')  "Zbalance       =", Zbalance
-    WRITE(fTrc,'(A,G15.6)')  "vCpn(ic_W)%Mole=", vCpn(ic_W)%Mole
-    WRITE(fTrc,'(A,G15.6)')  "vCpn(ic_H)%Mole=", vCpn(ic_H)%Mole
-  ENDIF
-
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Solmodel_Init_TotO_TotH"
-  
-ENDSUBROUTINE Solmodel_Init_TotO_TotH
+  end select
   !
-SUBROUTINE Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
-  USE M_Numeric_Const,ONLY: LN10
-  USE M_T_Species,    ONLY: T_Species
+  if(iDebug>2) then !----------------------------------------------trace
+    write(fTrc,'(A,G15.6)')  "Zbalance       =", Zbalance
+    write(fTrc,'(A,G15.6)')  "vCpn(ic_W)%Mole=", vCpn(ic_W)%Mole
+    write(fTrc,'(A,G15.6)')  "vCpn(ic_H)%Mole=", vCpn(ic_H)%Mole
+  end if
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Solmodel_Init_TotO_TotH" !------/
+  !  
+end subroutine Solmodel_Init_TotO_TotH
   !
-  INTEGER,        INTENT(IN) :: isW,iOx,isH_,isO2
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  REAL(dp),       INTENT(OUT):: pH_, pE_
+subroutine Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  use M_Numeric_Const,only: LN10
+  use M_T_Species,    only: T_Species
+  !
+  integer,        intent(in) :: isW,iOx,isH_,isO2
+  type(T_Species),intent(in) :: vSpc(:)
+  real(dp),       intent(out):: pH_, pE_
   
-  !pH_= - (LOG(vMolF(isH_)) + vLnGam(isH_) - LOG(vMolF(isW)*MolWeitSv))/LN10
+  !pH_= - (log(vMolF(isH_)) + vLnGam(isH_) - log(vMolF(isW)*MolWeitSv))/LN10
   pH_= -vSpc(isH_)%Dat%LAct/LN10
   pE_=  Zero
   
-  IF(iOx/=0 .AND. isO2/=0) &
+  if(iOx/=0 .and. isO2/=0) &
     pE_= & 
     & (  vSpc(isO2)%G0rt + vSpc(isO2)%Dat%LAct          &
     &  -(vSpc(isW )%G0rt + vSpc(isW )%Dat%LAct) *Two  ) &
@@ -140,62 +136,61 @@ SUBROUTINE Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
   !4.(pH + pE)=  [G(O2) +lnA_O2 -2.G(H2O) -2.lnA_H2O]/ln10
   !log10(Act(O2))=4*(pH_+pE_)+ 2[G(H2O) + lnA_H2O] - [G(O2) + lnA_O2]
   !
-  !IF ReDOx species is H2aq:
+  !if Redox species is H2aq:
   !2H+ + 2E-=  H2 -> pH + pE=  -( vSpc(iOx)%G0 + vLnAct(iOx)) /2
   
-ENDSUBROUTINE Solmodel_pHpE
+end subroutine Solmodel_pHpE
 
-SUBROUTINE Solmodel_CalcMolal( &
+subroutine Solmodel_CalcMolal( &
 & vSpc,isW, &
 & vMolal,IonStrTrue)
 !-- from S%Mole, S%Z,
-!-- calc. Molalities vMolal, and ionic strengths ("true")
+!-- calc. Molalities vMolal, and "true" ionic strength
 !--
 !-- we assume that SolModel has index 1 in vSpc 
 !-- and solute species are indexed 2:nAq !!!
 !--
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  INTEGER,        INTENT(IN) :: isW
-  REAL(dp),       INTENT(OUT):: vMolal(:)
-  REAL(dp),       INTENT(OUT):: IonStrTrue !,IonStrStoik
+  type(T_Species),intent(in) :: vSpc(:)
+  integer,        intent(in) :: isW
+  real(dp),       intent(out):: vMolal(:)
+  real(dp),       intent(out):: IonStrTrue !,IonStrStoik
   !
-  REAL(dp):: MolWeitSv
-  INTEGER :: I,J
+  real(dp):: MolWeitSv
+  integer :: I,J
   !
-  IonStrTrue= Zero
   MolWeitSv=  vSpc(isW)%WeitKg
+  IonStrTrue= Zero
   J= 0
-  DO I=1,SIZE(vSpc)
-    IF(vSpc(I)%Typ=="AQU") THEN
+  do I=1,size(vSpc)
+    if(vSpc(I)%Typ=="AQU") then
       J= J+1
       vMolal(J)= vSpc(I)%Dat%Mole /vSpc(isW)%Dat%Mole /MolWeitSv
       IonStrTrue= IonStrTrue + vSpc(I)%Z*vSpc(I)%Z*vMolal(I)
-    ENDIF
-  ENDDO
-  
+    end if
+  end do
   IonStrTrue= IonStrTrue /Two
-  
-ENDSUBROUTINE Solmodel_CalcMolal
+  !
+end subroutine Solmodel_CalcMolal
 
-SUBROUTINE Solmodel_CalcMolal2( &
+subroutine Solmodel_CalcMolal2( &
 & vSpc,nAq, &
 & vMolal,IonStrTrue) !,IonStrStoik
 !-- from S%Mole, S%Z, 
 !-- calc. Molalities vMolal, and ionic strengths ("true")
 !-- we assume that SolModel has index 1 in vSpc 
 !-- and solute species are indexed 2:nAq !!!
-  USE M_T_Species,ONLY: T_Species,Species_Index
+  use M_T_Species,only: T_Species,Species_Index
   !
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  INTEGER,        INTENT(IN) :: nAq
-  REAL(dp),       INTENT(OUT):: vMolal(:)
-  REAL(dp),       INTENT(OUT):: IonStrTrue !,IonStrStoik
+  type(T_Species),intent(in) :: vSpc(:)
+  integer,        intent(in) :: nAq
+  real(dp),       intent(out):: vMolal(:)
+  real(dp),       intent(out):: IonStrTrue !,IonStrStoik
   !
-  INTEGER, DIMENSION(1:nAq):: vZ2
-  REAL(dp):: MolWeitSv
-  INTEGER :: isW
+  integer, dimension(1:nAq):: vZ2
+  real(dp):: MolWeitSv
+  integer :: isW
   !
   isW=  Species_Index("H2O",vSpc)
   MolWeitSv=vSpc(isW)%WeitKg
@@ -204,78 +199,78 @@ SUBROUTINE Solmodel_CalcMolal2( &
   
   vZ2(1:nAq)=    vSpc(1:nAq)%Z *vSpc(1:nAq)%Z
   
-  IonStrTrue=    DOT_PRODUCT(vZ2(2:nAq),vMolal(2:nAq))/Two
+  IonStrTrue=    dot_product(vZ2(2:nAq),vMolal(2:nAq))/Two
   
-ENDSUBROUTINE Solmodel_CalcMolal2
+end subroutine Solmodel_CalcMolal2
 
-SUBROUTINE Solmodel_TP_Update_LogK( &
+subroutine Solmodel_TP_Update_LogK( &
 & TdgK,Pbar, &
 & Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl, &
 & Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot, &
 & SolModel)
 
-  USE M_Dtb_Const,ONLY: T_CK
-  USE M_Solmodel_Vars,ONLY: T_Spline
-  USE M_T_SolModel,ONLY: T_SolModel
-  USE M_CMM_Spline
+  use M_Dtb_Const,only: T_CK
+  use M_Solmodel_Vars,only: T_Spline
+  use M_T_SolModel,only: T_SolModel
+  use M_CMM_Spline
   
-  REAL(dp),        INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_Spline),  INTENT(IN)   :: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl
-  LOGICAL,         INTENT(IN)   :: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
-  TYPE(T_SolModel),INTENT(INOUT):: SolModel
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_Spline),  intent(in)   :: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl
+  logical,         intent(in)   :: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
+  type(T_SolModel),intent(inout):: SolModel
   
-  INTEGER:: N
+  integer:: N
   
   !--
   
-  IF(Ok_Rho) THEN
+  if(Ok_Rho) then
     N= Rho_Spl%Dimm
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & Rho_Spl%vX(1:n), Rho_Spl%vY(1:n), &
     & Rho_Spl%vSplineB(1:n),Rho_Spl%vSplineC(1:n),Rho_Spl%vSplineD(1:n),&
     & TdgK-T_CK, SolModel%Dat%Rho)
-  ENDIF
-  IF(Ok_Eps) THEN
+  end if
+  if(Ok_Eps) then
     N= Eps_Spl%Dimm
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & Eps_Spl%vX(1:n), Eps_Spl%vY(1:n), &
     & Eps_Spl%vSplineB(1:n),Eps_Spl%vSplineC(1:n),Eps_Spl%vSplineD(1:n),&
     & TdgK-T_CK, SolModel%Dat%Eps)
-  ENDIF
-  IF(Ok_DHA) THEN
+  end if
+  if(Ok_DHA) then
     N= DHA_Spl%Dimm
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & DHA_Spl%vX(1:n), DHA_Spl%vY(1:n), &
     & DHA_Spl%vSplineB(1:n),DHA_Spl%vSplineC(1:n),DHA_Spl%vSplineD(1:n),&
     & TdgK-T_CK, SolModel%Dat%DHA)
-  ENDIF
-  IF(Ok_Rho) THEN
+  end if
+  if(Ok_Rho) then
     N= DHB_Spl%Dimm
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & DHB_Spl%vX(1:n), DHB_Spl%vY(1:n), &
     & DHB_Spl%vSplineB(1:n),DHB_Spl%vSplineC(1:n),DHB_Spl%vSplineD(1:n),&
     & TdgK-T_CK, SolModel%Dat%DHB)
-  ENDIF
-  IF(Ok_BDot) THEN
+  end if
+  if(Ok_BDot) then
     N= BDot_Spl%Dimm
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & BDot_Spl%vX(1:n), BDot_Spl%vY(1:n), &
     & BDot_Spl%vSplineB(1:n),BDot_Spl%vSplineC(1:n),BDot_Spl%vSplineD(1:n),&
     & TdgK-T_CK, SolModel%Dat%BDot)
-  ENDIF
+  end if
   
-  IF(iDebug>2) THEN
-    IF(Ok_Rho)  PRINT '(A,G15.6)',"Rho= ",SolModel%Dat%Rho
-    IF(Ok_Eps)  PRINT '(A,G15.6)',"Eps= ",SolModel%Dat%Eps
-    IF(Ok_DHA)  PRINT '(A,G15.6)',"DHA= ",SolModel%Dat%DHA
-    IF(Ok_DHB)  PRINT '(A,G15.6)',"DHB= ",SolModel%Dat%DHB
-    IF(Ok_BDot) PRINT '(A,G15.6)',"BDot=",SolModel%Dat%BDot
-  ENDIF
+  ! if(iDebug>2) then
+  !   if(Ok_Rho)  print '(A,G15.6)',"Rho= ",SolModel%Dat%Rho
+  !   if(Ok_Eps)  print '(A,G15.6)',"Eps= ",SolModel%Dat%Eps
+  !   if(Ok_DHA)  print '(A,G15.6)',"DHA= ",SolModel%Dat%DHA
+  !   if(Ok_DHB)  print '(A,G15.6)',"DHB= ",SolModel%Dat%DHB
+  !   if(Ok_BDot) print '(A,G15.6)',"BDot=",SolModel%Dat%BDot
+  ! end if
   
-  RETURN
-END SUBROUTINE Solmodel_TP_Update_LogK
+  return
+end subroutine Solmodel_TP_Update_LogK
 
-SUBROUTINE SolModel_TP_Update( &
+subroutine SolModel_TP_Update( &
 & TdgK,Pbar, &
 & SolModel)
 !--
@@ -285,22 +280,22 @@ SUBROUTINE SolModel_TP_Update( &
 !-- it may contains tabulated values for either Rho, Eps, etc.
 !-- apply special procedure that will overwrite SolModel
 !--
-  USE M_Dtb_Const,  ONLY: T_CK
-  USE M_T_DtbH2OHkf,ONLY: DtbH2OHkf_Calc,T_DtbH2OHkf
-  USE M_T_SolModel, ONLY: T_SolModel
-  USE M_Solmodel_Pitzer_Dtb, ONLY: Solmodel_Pitzer_Dtb_TPUpdate
+  use M_Dtb_Const,  only: T_CK
+  use M_T_DtbH2OHkf,only: DtbH2OHkf_Calc,T_DtbH2OHkf
+  use M_T_SolModel, only: T_SolModel
+  use M_Solmodel_Pitzer_Dtb, only: Solmodel_Pitzer_Dtb_TPUpdate
   
-  USE M_Dtb_Vars,    ONLY: DtbFormat
-  USE M_Solmodel_Vars,ONLY: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
-  USE M_Solmodel_Vars,ONLY: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl,T_Spline
+  use M_Dtb_Vars,    only: DtbFormat
+  use M_Solmodel_Vars,only: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
+  use M_Solmodel_Vars,only: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl,T_Spline
     
-  REAL(dp),        INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_SolModel),INTENT(INOUT):: SolModel
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_SolModel),intent(inout):: SolModel
   
-  TYPE(T_DtbH2OHkf)::PropsH2O
+  type(T_DtbH2OHkf)::PropsH2O
   
   !-- compute solvent (-H2O) properties at T,P
-  CALL DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
+  call DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
   
   SolModel%Dat%Rho=  PropsH2O%Rho
   SolModel%Dat%Eps=  PropsH2O%Eps
@@ -310,36 +305,39 @@ SUBROUTINE SolModel_TP_Update( &
   SolModel%Dat%bDot= Solmodel_BDot(TdgK)
   
   ! LOGK databases may contain specific values 
-  ! for RHO, EPS, DHA, DHB, BDOT
+  ! for RHO, EPS, DHA, DHB, BdoT
   
-  IF(DtbFormat=="LOGKTBL") &
-  & CALL Solmodel_TP_Update_LogK( &
+  if(DtbFormat=="LOGKTBL") &
+  & call Solmodel_TP_Update_LogK( &
   & TdgK,Pbar, &
   & Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl, &
   & Ok_Rho, Ok_Eps, Ok_DHA, Ok_DHB, Ok_BDot, &
   & SolModel)
   
-  IF(iDebug>2) THEN
-    WRITE(fTrc,'(/,A,/)') "< SolModel_TP_Update"
-    WRITE(fTrc,'(5(A,G15.6,/))') &
+  if(iDebug>2) then
+    write(fTrc,'(/,A,/)') "< SolModel_TP_Update"
+    write(fTrc,'(5(A,G15.6,/))') &
     & "Rho= ",SolModel%Dat%Rho, & 
     & "Eps= ",SolModel%Dat%Eps, &
     & "dhA= ",SolModel%Dat%dhA, &
     & "dhB= ",SolModel%Dat%dhB, &
     & "Bdot=",SolModel%Dat%bDot
-    WRITE(fTrc,'(A,/)') "</ SolModel_TP_Update"
-  ENDIF
+    write(fTrc,'(A,/)') "</ SolModel_TP_Update"
+  end if
   
-  IF(SolModel%iActModel== 8  .OR. &    !! "PITZER"
-  &  SolModel%iActModel== 11 ) THEN    !! "SIT"
-    CALL Solmodel_Pitzer_Dtb_TPUpdate(TdgK,Pbar)
-  ENDIF
+  !call pause_ !!debug!!
+  call flush(fTrc)
+  
+  if(SolModel%iActModel== 8  .or. &    !! "PITZER"
+  &  SolModel%iActModel== 11 ) then    !! "SIT"
+    call Solmodel_Pitzer_Dtb_TPUpdate(TdgK,Pbar)
+  end if
     
-  RETURN
-ENDSUBROUTINE SolModel_TP_Update
+  return
+end subroutine SolModel_TP_Update
 
-REAL(dp) FUNCTION Solmodel_Bdot(TdgK)
-  REAL(dp),INTENT(IN):: TdgK
+real(dp) function Solmodel_Bdot(TdgK)
+  real(dp),intent(in):: TdgK
   
   Solmodel_Bdot=  &
   & -0.616616D0  &
@@ -348,7 +346,7 @@ REAL(dp) FUNCTION Solmodel_Bdot(TdgK)
   & +4.87313D-8  *TdgK**3 &
   & -3.26030D-11 *TdgK**4
 
-END FUNCTION Solmodel_Bdot
+end function Solmodel_Bdot
 
-ENDMODULE M_SolModel_Tools
+end module M_SolModel_Tools
 

@@ -1,76 +1,75 @@
-MODULE M_Mixmodel_Duan
+module M_Mixmodel_Duan
 !--
 !-- interface between Mixture model and optimization routine
 !--
-  USE M_Kinds
+  use M_Kinds
 
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC:: DUAN92EQ
-  PUBLIC:: DUAN92CO2
-  PUBLIC:: DUAN92H2O
+  public:: EoS_H2O_CO2_Duan92
+  public:: EoS_CO2_Duan92
+  public:: EoS_H2O_Duan92
   
-  PUBLIC:: DUAN06HL
-  PUBLIC:: DUAN06H2OLO
-  PUBLIC:: DUAN06CO2LO
-  PUBLIC:: DUAN06H2OHI
-  PUBLIC:: DUAN06CO2HI
+  public:: EoS_H2O_CO2_Duan06
+  public:: EoS_H2O_Duan06_LP
+  public:: EoS_CO2_Duan06_LP
+  public:: EoS_H2O_Duan06_HP
+  public:: EoS_CO2_Duan06_HP
   
-  !! IF(SOLNAM=='HC-DU92') THEN
+  !! if(SOLNAM=='HC-DU92') then
   !!   F1PLO=0.0D0
   !!   F2PLO=0.0D0
-  !!   CALL DUAN92EQ(T,P,X,VAT,AC1,AC2,F1PLO,F2PLO)
+  !!   call EoS_H2O_CO2_Duan92(T,P,X,VAT,AC1,AC2,F1PLO,F2PLO)
   !!   A(1)=AC1
   !!   A(2)=AC2
-  !!   RETURN
-  !! END IF
+  !!   return
+  !! end if
   !!
-  !! IF (FALL=='DU92H2O') CALL DUAN92H2O(T,PGAS,G,V,F1)
-  !! IF (FALL=='DU92CO2') CALL DUAN92CO2(T,PGAS,G,V,F1)
+  !! if (FALL=='DU92H2O') call EoS_H2O_Duan92(T,PGAS,G,V,F1)
+  !! if (FALL=='DU92CO2') call EoS_CO2_Duan92(T,PGAS,G,V,F1)
   
-  REAL(dp):: &
-  & BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2, &
-  & R,RT,MWT, &
-  & BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  & BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
+  real(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2
+  real(dp):: R,RT,MWT
+  real(dp):: BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1
+  real(dp):: BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
   
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
+  !! real*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
   !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
+  !! common /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
   !! MWT, &
   !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
   
-CONTAINS
+contains
 
-SUBROUTINE DUAN92H2O(T,P,G,VOLUM,FUGCF)
-  
-  REAL(dp),INTENT(IN) :: T,P
-  REAL(dp),INTENT(OUT):: G,VOLUM,FUGCF
-  
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL(dp):: &
-  & PR,TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,Z,V,INTE, &
-  & V2,V4,V5,EXPON,PHI1,H0,S0,K1,K2,K3,K4,K6, &
+subroutine EoS_H2O_Duan92( &  !
+& T,P, &                      !IN
+& Grt,V_m3,LnPhi)             !OUT
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  real(dp),intent(in) :: T,P
+  real(dp),intent(out):: Grt,V_m3,LnPhi
+  !---------------------------------------------------------------------
+  real(dp):: &
+  & PR,TR,TR2,TR3, &
+  & VC,VC2,VC4,VC5,EU3,Z,V,INTE, &
+  & V2,V4,V5,EXPON, &
+  & G,H0,S0,S0Ele, &
+  & K1,K2,K3,K4,K6, &
   & CPDT,CPTDT,T0,TT,TT0,SQT,SQT0
-  
+  integer:: NP,NSTAB
+  !---------------------------------------------------------------------
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
 
-  R=0.08314467D0
+  R=0.08314467D0 ! R_JK=8.314502D0 
   RT=R*T
   
   EU3=1.0D0/3.0D0
@@ -94,7 +93,8 @@ SUBROUTINE DUAN92H2O(T,P,G,VOLUM,FUGCF)
   
   BETA1=4.02D+00
   GAMMAVC2=2.57D-02*VC2
-  MWT=0.0180154D0
+  MWT=0.0180154D0  ! molar weight kg/mole
+  
   BST1=2.0D0*BVC
   CST1=3.0D0*CVC2
   DST1=5.0D0*DVC4
@@ -102,6 +102,7 @@ SUBROUTINE DUAN92H2O(T,P,G,VOLUM,FUGCF)
   FST1=2.0D0*FVC2
   BESTST1=BETA1
   GAMST1=3.0D0*GAMMAVC2
+  
   BST2=0.0D0
   CST2=0.0D0
   DST2=0.0D0
@@ -111,130 +112,96 @@ SUBROUTINE DUAN92H2O(T,P,G,VOLUM,FUGCF)
   GAMST2=0.0D0
  
   !----------------------------------------------------- find the volume
-  CALL DUANZ(T,P, Z,V,INTE)
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
   
   !--------------------------------------------------------- EQ9 for H2O
-  V2=V*V
-  V4=V2*V2
+  V2=V**2
+  V4=V2**2
   V5=V4*V
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI1= -DLOG(Z) &
+  EXPON=exp(-GAMMAVC2/V2)
+  lnPhi= -log(Z) &
   &   + BST1/V &
   &   + CST1/(2.0D0*V2) &
-  &   + DST1/(4.0D0*V4)+EST1/(5.0D0*V5)
-  PHI1=PHI1 &
-  &   +((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
-  PHI1=PHI1 &
-  &   + ((FST1*GAMMAVC2+GAMST1*FVC2-FVC2*BETA1*(GAMST1-GAMMAVC2))&
+  &   + DST1/(4.0D0*V4) &
+  &   + EST1/(5.0D0*V5) &
+  &   +((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON) &
+  &   +((FST1*GAMMAVC2 +GAMST1*FVC2 -FVC2*BETA1*(GAMST1-GAMMAVC2)) &
   &      /(2.0D0*GAMMAVC2**2)) &
   &    *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
   &   -(((GAMST1-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
-  &   *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
+  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
       
   !----------------------------------------------------- G for ideal gas
-  H0=-241816.00D0
+  H0=-241816.00D0 
   S0=188.7200D0
   K1=115.45000D0
   K4=-3799.900D0
   K3=-2871300.00D0
   K6=51055.16D0
   K2=-0.002062D0
+  !
   CPDT= K1*(T-T0) &
   &   + K2*(TT-TT0)/2.0D0 &
   &   - K3*(1.0D0/T-1.0D0/T0) &
   &   + K4*2D0*(SQT-SQT0) &
-  &   + K6*DLOG(T/T0)
-  CPTDT=K1*DLOG(T/T0) &
+  &   + K6*log(T/T0)
+  CPTDT=K1*log(T/T0) &
   &    +K2*(T-T0) &
   &    -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
   &    -K4*2D0*(1.0D0/SQT-1.0D0/SQT0) &
   &    -K6*(1.0D0/T-1.0D0/T0)
   G=H0+CPDT-T*(S0+CPTDT)
   
+  !----------------------------------------------------Benson convention
+  S0Ele= 102.575D0 + 65.34D0 *2.0D0 !H2O, joule
+  G= G + S0Ele*T0
+
   !------------------------------------------------ correct for fugacity
-  FUGCF=DEXP(PHI1)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
-  VOLUM=V*100.0D0
-  
-  RETURN
-END SUBROUTINE DUAN92H2O
+  G=       G + R*100.0D0 *T *(lnPhi + log(P))
+  Grt=     G/8.314502D0/T
+  V_m3=    V*1.0D-3
 
-SUBROUTINE EQUA9(T,V,Z,PHI1,PHI2)
+  ! Michelsen Mollerup eq 86
+  ! for pure fluid,
+  ! RT.ln(fug(T,P) / P0)= mu(T,P) - mu*(T,P0)
+  ! mu*(T,P0) is for pure perfect gas at T,P0
+  ! mu*(T,P) - mu*(T,P0)= RT.ln(P / P0)
   !
-  REAL(dp),INTENT(IN) :: T,V,Z
-  REAL(dp),INTENT(OUT):: PHI1,PHI2
+  ! P0= 1
+  ! mu(T,P)= mu*(T,P0) + RT.ln(fug(T,P))
+  !        = mu*(T,P0) + RT.ln(phi(T,P)) + RT.ln(P)
+  
+  return
+end subroutine EoS_H2O_Duan92
+
+subroutine EoS_CO2_Duan92( &
+& T,P, &
+& Grt,V_m3,LnPhi)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
   !---------------------------------------------------------------------
-  REAL(dp):: V2,V4,V5,EXPON
+  real(dp),intent(in) :: T,P
+  real(dp),intent(out):: Grt,V_m3,lnPhi
   !---------------------------------------------------------------------
-  
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  V2=V*V
-  V4=V2*V2
-  V5=V4*V
-  
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI1=-DLOG(Z) &
-  &   + BST1/V &
-  &   + CST1/(2.0D0*V2) &
-  &   + DST1/(4.0D0*V4) &
-  &   + EST1/(5.0D0*V5)
-  PHI1=PHI1 &
-  &   +((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
-  PHI1=PHI1 &
-  &   +((FST1*GAMMAVC2+GAMST1*FVC2-FVC2*BETA1*(GAMST1-GAMMAVC2)) &
-  &     /(2.0D0*GAMMAVC2**2)) &
-  &    *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
-  &   -(((GAMST1-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
-  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
-
-  PHI2=-DLOG(Z) &
-  &   + BST2/V  &
-  &   + CST2/(2.0D0*V2) &
-  &   + DST2/(4.0D0*V4) &
-  &   + EST2/(5.0D0*V5)
-  PHI2=PHI2 &
-  &   +((FST2*BETA1+BESTST2*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
-  PHI2=PHI2 &
-  &   +((FST2*GAMMAVC2+GAMST2*FVC2-FVC2*BETA1*(GAMST2-GAMMAVC2)) &
-  &     /(2.0D0*GAMMAVC2**2)) &
-  &    *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
-  &   -(((GAMST2-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
-  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
-  
-  RETURN
-END SUBROUTINE EQUA9
-
-SUBROUTINE DUAN92CO2(T,P,G,VOLUM,FUGCF)
-  IMPLICIT NONE
-
-  REAL(dp),INTENT(IN) :: T,P
-  REAL(dp),INTENT(OUT):: G,VOLUM,FUGCF
-  
-  !! COMMON /DTHINGS/ &
-  !! & BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! & BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! & BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-
-  REAL(dp):: &
-  & PR,TR,TR2,TR3, &
-  & VC,VC2,VC4,VC5,&
-  & EU3,Z,V,INTE, &
-  & V2,V4,V5,EXPON,PHI2,H0,S0,&
+  real(dp):: &
+  & TR,TR2,TR3,  &
+  & VC,VC2,VC4,VC5, &
+  & EU3,Z,V,INTE,   &
+  & V2,V4,V5,EXPON,G,H0,S0,S0Ele, &
   & K1,K2,K3,K4,K6, &
   & CPDT,CPTDT,T0,TT,TT0,SQT,SQT0
-  
+  integer:: NP,NSTAB
+  !---------------------------------------------------------------------
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
   
   R=0.08314467D0
   RT=R*T
@@ -255,7 +222,7 @@ SUBROUTINE DUAN92CO2(T,P,G,VOLUM,FUGCF)
   DVC4=( 5.20600880D-04 - 2.93540971D-04/TR2 - 1.77265112D-03/TR3)*VC4
   EVC5=(-2.51101973D-05 + 8.93353441D-05/TR2 + 7.88998563D-05/TR3)*VC5
   FVC2=(                                     - 1.66727022D-02/TR3)*VC2
-  BETA1=1.398D+00
+  BETA1=1.398D0
   GAMMAVC2=2.96D-02*VC2
   
   MWT=0.0440098D0
@@ -275,16 +242,18 @@ SUBROUTINE DUAN92CO2(T,P,G,VOLUM,FUGCF)
   FST1=0.0D0
   BESTST1=0.0D0
   GAMST1=0.0D0
-  
   !----------------------------------------------------- find the volume
-  CALL DUANZ(T,P, Z,V,INTE)
-  
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
+  !
   !--------------------------------------------------------- EQ9 for CO2
   V2=V*V
   V4=V2*V2
   V5=V4*V
-  EXPON= DEXP(-GAMMAVC2/V2)
-  PHI2= -DLOG(Z) &
+  EXPON= exp(-GAMMAVC2/V2)
+  lnPhi= -log(Z) &
   &   +  BST2/V &
   &   +  CST2/(2.0D0*V2) &
   &   +  DST2/(4.0D0*V4) &
@@ -294,8 +263,8 @@ SUBROUTINE DUAN92CO2(T,P,G,VOLUM,FUGCF)
   &     /(2.0D0*GAMMAVC2**2)) &
   &     *(1.0D0-(GAMMAVC2/V2+1.0D0)*EXPON) &
   &   - (((GAMST2-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
-  &     *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
-  
+  &     *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)  
+  !
   !----------------------------------------------------- G for ideal gas
   H0= -393510.010
   S0=  213.6770D0
@@ -304,100 +273,152 @@ SUBROUTINE DUAN92CO2(T,P,G,VOLUM,FUGCF)
   K3=  123800.000D0
   K6=  6336.20D0
   K2= -0.002876D0
-  
+  !
   CPDT= K1*(T-T0) &
   &   + K2*(TT-TT0)/2.0D0 &
   &   - K3*(1.0D0/T-1.0D0/T0) &
-  &   +2D0*K4*(SQT-SQT0) &
-  &   + K6*DLOG(T/T0)
-  
-  CPTDT= K1*DLOG(T/T0) &
+  &   + K4*2D0*(SQT-SQT0) &
+  &   + K6*log(T/T0)
+  !
+  CPTDT= K1*log(T/T0) &
   &    + K2*(T-T0) &
   &    - K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
-  &    -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
+  &    - K4*2D0*(1.0D0/SQT-1.0D0/SQT0) &
   &    - K6*(1.0D0/T-1.0D0/T0)
-  
+  !
   G=H0+CPDT-T*(S0+CPTDT)
+  !-----------------------------------------------------/G for ideal gas
   
+  !----------------------------------------------------Benson convention
+  S0Ele= 5.74D0  + 102.575D0 *2.0D0
+  G= G + S0Ele*T0
+
   !------------------------------------------------ correct for fugacity
-  FUGCF=DEXP(PHI2)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
-  VOLUM=V*100.0D0
+  ! mu(T,P)= mu*(T,P0) + RT.ln(fug(T,P))
+  !        = mu*(T,P0) + RT.ln(phi(T,P)) + RT.ln(P)
+  G=       G + R*100.0D0 *T *(lnPhi + log(P))
+  !FugCoef=exp(lnPhi)
+  !G= G + R*100.0D0 *T *(lnPhi +log(P))
+  Grt= G/8.314502D0/T
+  V_m3=V*1.0D-3
   
-  RETURN
-END SUBROUTINE DUAN92CO2
+  return
+end subroutine EoS_CO2_Duan92
 
-SUBROUTINE DUAN92EQ( &
-& T,P,XF,            & ! IN
-& VAT,AC1,AC2,       & ! OUT
-& FUGH2O,FUGCO2)       !
+subroutine EoS_H2O_CO2_Duan92( & !
+& T,P,XF,                    & ! IN
+& UpdatePhi,                 & ! IN
+& LnPhiH2O_Pur,LnPhiCO2_Pur, & ! INOUT
+& V_H2O_Pur,   V_CO2_Pur,    & ! INOUT
+& V_m3,LnActH2O,LnActCO2)      ! OUT
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  real(dp),intent(in) :: T,P
+  real(dp),intent(in) :: XF(2)
+  logical, intent(in) :: UpdatePhi
+  real(dp),intent(inout):: LnPhiH2O_Pur,LnPhiCO2_Pur
+  real(dp),intent(inout):: V_H2O_Pur,V_CO2_Pur
+  real(dp),intent(out):: V_m3
+  real(dp),intent(out):: LnActH2O,LnActCO2
+  !--------------------------------------------------------------------- 
+  real(dp):: VATP,INTATP,ZATP
+  real(dp):: LnPhiH2O,LnPhiCO2,G
+  integer :: NP,NSTAB
+  !---------------------------------------------------------------------
+  if(UpdatePhi) then
+    call EoS_H2O_Duan92(T,P,   G,V_H2O_Pur,LnPhiH2O_Pur)
+    call EoS_CO2_Duan92(T,P,   G,V_CO2_Pur,LnPhiCO2_Pur)
+  end if
+  ! print *,FugH2O,FugCO2
 
-  REAL(dp),INTENT(IN) :: T,P
-  REAL(dp),INTENT(IN) :: XF(2)
-  REAL(dp),INTENT(INOUT):: FUGH2O,FUGCO2
-  REAL(dp),INTENT(OUT):: VAT,AC1,AC2
+  call MixRules92(T,P,           XF)
+  call DuanZ     (T,P,           NP,NSTAB,ZATP,VATP,INTATP)
+  call EQUA9     (VATP,ZATP,     LnPhiH2O,LnPhiCO2)
+
+  write(91,'(A,2I7)') "NP,NSTAB",NP,NSTAB
   
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
+  V_m3=VATP*1.0D-3
+  LnActH2O= log(XF(1)) +LnPhiH2O -LnPhiH2O_Pur
+  LnActCO2= log(XF(2)) +LnPhiCO2 -LnPhiCO2_Pur
+  
+  ! Michelsen Mollerup eq 119 - 122
+  ! fug_i_mix(T,P,x)= phi_i_mix(T,P,x).P.x_i
+  !                 = fug_i_pur(T,P).gamma_i(T,P,x).x_i
+  !
+  ! gamma_i(T,P,x)= activ_i(T,P,x) / x_i
+  !               = fug_i_mix(T,P,x) / fug_i_pur(T,P)
+  ! 
+  ! activ_i(T,P,x)= x_i * fug_i_mix(T,P,x) / fug_i_pur(T,P) 
+
+  return
+end subroutine EoS_H2O_CO2_Duan92
+
+subroutine EQUA9( &
+& V,Z, &
+& lnPhi1,lnPhi2)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- 
+!--
+  real(dp),intent(in) :: V,Z
+  real(dp),intent(out):: lnPhi1,lnPhi2
+  !---------------------------------------------------------------------
+  real(dp):: V2,V4,V5,EXPON
+  !---------------------------------------------------------------------
+  V2=V*V
+  V4=V2*V2
+  V5=V4*V
+  
+  EXPON=exp(-GAMMAVC2/V2)
+  
+  lnPhi1=-log(Z) &
+  &   + BST1/V &
+  &   + CST1/(2.0D0*V2) &
+  &   + DST1/(4.0D0*V4) &
+  &   + EST1/(5.0D0*V5) &
+  &   +((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON) &
+  &   +((FST1*GAMMAVC2+GAMST1*FVC2-FVC2*BETA1*(GAMST1-GAMMAVC2))  &
+  &     /(2.0D0*GAMMAVC2**2)) &
+  &    *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
+  &   -(((GAMST1-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
+  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
+
+  lnPhi2=-log(Z) &
+  &   + BST2/V  &
+  &   + CST2/(2.0D0*V2) &
+  &   + DST2/(4.0D0*V4) &
+  &   + EST2/(5.0D0*V5) &
+  &   +((FST2*BETA1+BESTST2*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON) &
+  &   +((FST2*GAMMAVC2+GAMST2*FVC2-FVC2*BETA1*(GAMST2-GAMMAVC2))  &
+  &     /(2.0D0*GAMMAVC2**2)) &
+  &    *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
+  &   -(((GAMST2-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
+  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
+  
+  return
+end subroutine EQUA9
+
+subroutine MixRules92(T,P,XF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+
+  real(dp),intent(in):: T,P
+  real(dp),intent(in):: XF(2)
+  
+  !! real(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
   !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL(dp):: &
-  & VATP,INTATP,ZATP, &
-  & PHI1,PHI2,ACH,ACC, &
-  & V01,PH01,V02,PH02, &
-  & AH2O,ACO2,G
-  INTEGER:: I
-  
-  IF (FUGH2O==0.0D0 .AND. FUGCO2==0.0D0) THEN
-  
-    CALL DUAN92H2O(T,P,G,V01,PH01)
-    FUGH2O=PH01
-
-    CALL DUAN92CO2(T,P,G,V02,PH02)
-    FUGCO2=PH02
-    
-  END IF
-  
-  print *,FUGH2O,FUGCO2
-
-  CALL MIXRULES92(T,P,XF)
-  CALL DUANZ(T,P,ZATP,VATP,INTATP)
-  CALL EQUA9(T,VATP,ZATP,PHI1,PHI2)
-  
-  VAT=VATP
-  ACH=DEXP(PHI1)
-  ACC=DEXP(PHI2)
-
-  AH2O=ACH*XF(1)/FUGH2O
-  ACO2=ACC*XF(2)/FUGCO2
-
-  AC1=AH2O
-  AC2=ACO2
-
-  RETURN
-END SUBROUTINE DUAN92EQ
-
-SUBROUTINE MIXRULES92(T,P,XF)
-
-  REAL(dp),INTENT(IN):: T,P
-  REAL(dp),INTENT(IN):: XF(2)
-  
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ &
+  !! common /DTHINGS/ &
   !! & BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
   !! & BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! & BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
   
   !------------------------------------------------- 1=H2O, 2=CO2, 3=CH4
-  REAL(dp):: &
-  & A1(2),A2(2),A3(2),A4(2),A5(2),A6(2),A7(2),A8(2),A9(2), &
-  & A10(2),A11(2),A12(2), &
+  real(dp):: &
+  & A1(2),A2(2),A3(2),A4(2),A5(2),A6(2), &
+  & A7(2),A8(2),A9(2),A10(2),A11(2),A12(2), &
   & ALPHA(2),BETA(2),GAMMA(2), &
   & TC(2),PC(2), &
   & BB(2),CC(2),DD(2),EE(2),FF(2), &
@@ -406,207 +427,210 @@ SUBROUTINE MIXRULES92(T,P,XF)
   & VC(2),VC2(2),VC4(2),VC5(2), &
   & TR(2),TR2(2),TR3(2),PR(2),EU3
   
-  INTEGER:: I,J,K,II,L,M,N
+  integer:: I,J,K,II,L,M,N
   
-  REAL(dp):: &
+  real(dp):: &
   & K1(2,2),K2(2,2,2),K3(2,2,2), &
   & BIJ(2,2),VCIJ(2,2),CIJK(2,2,2),VCIJK(2,2,2), &
   & DIJKLM(2,2,2,2,2),VCIJKLM(2,2,2,2,2), &
   & EIJKLMN(2,2,2,2,2,2),VCIJKLMN(2,2,2,2,2,2), &
   & FIJ(2,2),GAMIJK(2,2,2)
   
-  DATA A1  / 8.64449220D-02, 8.99288497D-02/
-  DATA A2  /-3.96918955D-01,-4.94783127D-01/
-  DATA A3  /-5.73334886D-02, 4.77922245D-02/
-  DATA A4  /-2.93893000D-04, 1.03808883D-02/
-  DATA A5  /-4.15775512D-03,-2.82516861D-02/
-  DATA A6  / 1.99496791D-02, 9.49887563D-02/
-  DATA A7  / 1.18901426D-04, 5.20600880D-04/
-  DATA A8  / 1.55212063D-04,-2.93540971D-04/
-  DATA A9  /-1.06855859D-04,-1.77265112D-03/
-  DATA A10 /-4.93197687D-06,-2.51101973D-05/
-  DATA A11 /-2.73739155D-06, 8.93353441D-05/
-  DATA A12 / 2.65571238D-06, 7.88998563D-05/
+  data A1  / 8.64449220D-02, 8.99288497D-02/
+  data A2  /-3.96918955D-01,-4.94783127D-01/
+  data A3  /-5.73334886D-02, 4.77922245D-02/
+  data A4  /-2.93893000D-04, 1.03808883D-02/
+  data A5  /-4.15775512D-03,-2.82516861D-02/
+  data A6  / 1.99496791D-02, 9.49887563D-02/
+  data A7  / 1.18901426D-04, 5.20600880D-04/
+  data A8  / 1.55212063D-04,-2.93540971D-04/
+  data A9  /-1.06855859D-04,-1.77265112D-03/
+  data A10 /-4.93197687D-06,-2.51101973D-05/
+  data A11 /-2.73739155D-06, 8.93353441D-05/
+  data A12 / 2.65571238D-06, 7.88998563D-05/
   
-  DATA ALPHA / 8.96079018D-03,-1.66727022D-02/
-  DATA BETA  / 4.02D+00,       1.398D+00/
-  DATA GAMMA / 2.57D-02,       2.96D-02/
+  data ALPHA / 8.96079018D-03,-1.66727022D-02/
+  data BETA  / 4.02D+00,       1.398D+00/
+  data GAMMA / 2.57D-02,       2.96D-02/
   
-  DATA TC /647.25D0,304.20D0/
-  DATA PC /221.19D0,73.825D0/
-  DATA PM /0.0180154D0,0.0440098D0/
+  data TC /647.25D0,304.20D0/
+  data PC /221.19D0,73.825D0/
+  data PM /0.0180154D0,0.0440098D0/
   
   R=0.08314467D0
   RT=R*T
   EU3=1.0D0/3.0D0
   II=1
   
-  DO I=1,2
+  do I=1,2
   
     PR(I)=P/PC(I)
+    
     TR(I)=T/TC(I)
-    TR2(I)=TR(I)*TR(I)
-    TR3(I)=TR2(I)*TR(I)
+    TR2(I)=TR(I)**2
+    TR3(I)=TR(I)**3
+
     VC(I)=R*TC(I)/PC(I)
-    VC2(I)=VC(I)*VC(I)
-    VC4(I)=VC2(I)*VC2(I)
-    VC5(I)=VC4(I)*VC(I)
+    VC2(I)=VC(I)**2
+    VC4(I)=VC(I)**4
+    VC5(I)=VC(I)**5
     
-    BB(I)=A1(I)+A2(I)/TR2(I)+A3(I)/TR3(I)
-    CC(I)=A4(I)+A5(I)/TR2(I)+A6(I)/TR3(I)
-    DD(I)=A7(I)+A8(I)/TR2(I)+A9(I)/TR3(I)
-    EE(I)=A10(I)+A11(I)/TR2(I)+A12(I)/TR3(I)
-    FF(I)=ALPHA(I)/TR3(I)
+    BB(I)= A1(I)  +A2(I)/TR2(I)  +A3(I)/TR3(I)
+    CC(I)= A4(I)  +A5(I)/TR2(I)  +A6(I)/TR3(I)
+    DD(I)= A7(I)  +A8(I)/TR2(I)  +A9(I)/TR3(I)
+    EE(I)= A10(I) +A11(I)/TR2(I) +A12(I)/TR3(I)
+    FF(I)= ALPHA(I)/TR3(I)
     
-    IF (BB(I) < 0.0D0) THEN
+    if (BB(I) < 0.0D0) then
       BB(I)=-BB(I)
       BS(I)=-1.0D0
-    ELSE
+    else
       BS(I)=1.0D0
-    END IF
+    end if
     
-    IF (CC(I) < 0.0D0) THEN
+    if (CC(I) < 0.0D0) then
       CC(I)=-CC(I)
       CS(I)=-1.0D0
-    ELSE
+    else
       CS(I)=1.0D0
-    END IF
+    end if
     
-    IF (DD(I) < 0.0D0) THEN
+    if (DD(I) < 0.0D0) then
       DD(I)=-DD(I)
       DS(I)=-1.0D0
-    ELSE
+    else
       DS(I)=1.0D0
-    END IF
+    end if
     
-    IF (EE(I) < 0.0D0) THEN
+    if (EE(I) < 0.0D0) then
       EE(I)=-EE(I)
       ES(I)=-1.0D0
-    ELSE
+    else
       ES(I)=1.0D0
-    END IF
+    end if
     
-    IF (FF(I) < 0.0D0) THEN
+    if (FF(I) < 0.0D0) then
       FF(I)=-FF(I)
       FS(I)=-1.0D0
-    ELSE
+    else
       FS(I)=1.0D0
-    END IF
+    end if
     
-  END DO
+  end do
   
-  CALL MAKEK1_92(T,K1,K2,K3)
+  call MAKEK1_92(T,K1,K2,K3)
   
-  DO I=1,2
-    DO J=1,2
-      BIJ(I,J)=(((BS(I)*BB(I)**EU3+BS(J)*BB(J)**EU3) &
-      /2.0D0)**3)*K1(I,J)
+  do I=1,2
+    do J=1,2
+      BIJ(I,J)=(((BS(I)*BB(I)**EU3 +BS(J)*BB(J)**EU3)/2.0D0)**3)*K1(I,J)
       VCIJ(I,J)=((VC(I)**EU3+VC(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   
   BVC=0.0D0
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       BVC=BVC+XF(I)*XF(J)*BIJ(I,J)*VCIJ(I,J)
-    END DO
-  END DO
+    end do
+  end do
   
   BST1=0.0D0
   BST2=0.0D0
-  DO J=1,2
+  do J=1,2
     BST1=BST1+2.0D0*XF(J)*BIJ(1,J)*VCIJ(1,J)
     BST2=BST2+2.0D0*XF(J)*BIJ(J,2)*VCIJ(J,2)
-  END DO
+  end do
   
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        CIJK(I,J,K)=(((CS(I)*CC(I)**EU3+CS(J)*CC(J)**EU3+CC(K)**EU3) &
-        /3.0D0)**3)*K2(I,J,K)
-        VCIJK(I,J,K)=((VC(I)**EU3+VC(J)**EU3+VC(K)**EU3)/3.0D0)**3
-      END DO
-    END DO
-  END DO
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        CIJK(I,J,K)=( (( CS(I)*CC(I)**EU3 &
+        &              + CS(J)*CC(J)**EU3 &
+        &              +       CC(K)**EU3 )/3.0D0)**3) &
+        &           *K2(I,J,K)
+        VCIJK(I,J,K)=( (VC(I)**EU3 +VC(J)**EU3 +VC(K)**EU3)/3.0D0 )**3
+      end do
+    end do
+  end do
   
   CVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        CVC2=CVC2+XF(I)*XF(J)*XF(K)*CIJK(I,J,K)*VCIJK(I,J,K)**2
-      END DO
-    END DO
-  END DO
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        CVC2=CVC2 +XF(I)*XF(J)*XF(K)*CIJK(I,J,K)*VCIJK(I,J,K)**2
+      end do
+    end do
+  end do
   
   CST1=0.0D0
   CST2=0.0D0
-  DO J=1,2
-    DO K=1,2
-      CST1=CST1+3.0D0*XF(J)*XF(K)*CIJK(1,J,K)*VCIJK(1,J,K)**2
-      CST2=CST2+3.0D0*XF(J)*XF(K)*CIJK(J,2,K)*VCIJK(J,2,K)**2
-    END DO
-  END DO
+  do J=1,2
+    do K=1,2
+      CST1=CST1 +3.0D0*XF(J)*XF(K)*CIJK(1,J,K)*VCIJK(1,J,K)**2
+      CST2=CST2 +3.0D0*XF(J)*XF(K)*CIJK(J,2,K)*VCIJK(J,2,K)**2
+    end do
+  end do
   
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        DO L=1,2
-          DO M=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        do L=1,2
+          do M=1,2
             DIJKLM(I,J,K,L,M)= &
             & (( DS(I)*DD(I)**EU3 &
             &  + DS(J)*DD(J)**EU3 &
             &  + DS(K)*DD(K)**EU3 &
             &  + DS(L)*DD(L)**EU3 &
-            &  + DS(M)*DD(M)**EU3)/5.0D0)**3
+            &  + DS(M)*DD(M)**EU3 )/5.0D0)**3
             VCIJKLM(I,J,K,L,M)= &
             & (( VC(I)**EU3 &
             &  + VC(J)**EU3 &
             &  + VC(K)**EU3 &
             &  + VC(L)**EU3 &
-            &  + VC(M)**EU3)/5.0D0)**3
-          END DO
-        END DO
-      END DO
-    END DO
-  END DO
+            &  + VC(M)**EU3 )/5.0D0)**3
+          end do
+        end do
+      end do
+    end do
+  end do
   DVC4=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        DO L=1,2
-          DO M=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        do L=1,2
+          do M=1,2
             DVC4= DVC4 &
             &   + XF(I)*XF(J)*XF(K)*XF(L)*XF(M) &
-            &    *DIJKLM(I,J,K,L,M) &
-            &    *VCIJKLM(I,J,K,L,M)**4
-          END DO
-        END DO
-      END DO
-    END DO
-  END DO
+            &          *DIJKLM(I,J,K,L,M) &
+            &          *VCIJKLM(I,J,K,L,M)**4
+          end do
+        end do
+      end do
+    end do
+  end do
   DST1=0.0D0
   DST2=0.0D0
-  DO J=1,2
-    DO K=1,2
-      DO L=1,2
-        DO M=1,2
+  do J=1,2
+    do K=1,2
+      do L=1,2
+        do M=1,2
           DST1=DST1 &
           &   +5.0D0*XF(J)*XF(K)*XF(L)*XF(M) &
           &         *DIJKLM(1,J,K,L,M)*VCIJKLM(1,J,K,L,M)**4
           DST2=DST2 &
           &   +5.0D0*XF(J)*XF(K)*XF(L)*XF(M) &
           &         *DIJKLM(J,2,K,L,M)*VCIJKLM(J,2,K,L,M)**4
-        END DO
-      END DO
-    END DO
-  END DO
+        end do
+      end do
+    end do
+  end do
   !---
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        DO L=1,2
-          DO M=1,2
-            DO N=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        do L=1,2
+          do M=1,2
+            do N=1,2
               EIJKLMN(I,J,K,L,M,N)= &
               & ((ES(I)*EE(I)**EU3 &
               &  +ES(J)*EE(J)**EU3 &
@@ -621,128 +645,131 @@ SUBROUTINE MIXRULES92(T,P,XF)
               &  +VC(L)**EU3 &
               &  +VC(M)**EU3 &
               &  +VC(N)**EU3)/6.0D0)**3
-            END DO
-          END DO
-        END DO
-      END DO
-    END DO
-  END DO
+            end do
+          end do
+        end do
+      end do
+    end do
+  end do
   
   EVC5=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        DO L=1,2
-          DO M=1,2
-            DO N=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        do L=1,2
+          do M=1,2
+            do N=1,2
               EVC5= EVC5 &
-              &   +XF(I)*XF(J)*XF(K)*XF(L)*XF(M)*XF(N) &
+              &   + XF(I)*XF(J)*XF(K)*XF(L)*XF(M)*XF(N) &
               &    *EIJKLMN(I,J,K,L,M,N)*VCIJKLMN(I,J,K,L,M,N)**5
-            END DO
-          END DO
-        END DO
-      END DO
-    END DO
-  END DO
+            end do
+          end do
+        end do
+      end do
+    end do
+  end do
   
   EST1=0.0D0
   EST2=0.0D0
-  DO J=1,2
-    DO K=1,2
-      DO L=1,2
-        DO M=1,2
-          DO N=1,2
+  do J=1,2
+    do K=1,2
+      do L=1,2
+        do M=1,2
+          do N=1,2
             EST1=EST1 &
             &   +6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N) &
             &         *EIJKLMN(1,J,K,L,M,N)*VCIJKLMN(1,J,K,L,M,N)**5
             EST2=EST2 &
             &   +6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N) &
             &         *EIJKLMN(J,2,K,L,M,N)*VCIJKLMN(J,2,K,L,M,N)**5
-          END DO
-        END DO
-      END DO
-    END DO
-  END DO
+          end do
+        end do
+      end do
+    end do
+  end do
   
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FIJ(I,J)=((FS(I)*FF(I)**EU3+FS(J)*FF(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   
   FVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FVC2=FVC2+XF(I)*XF(J)*FIJ(I,J)*VCIJ(I,J)**2
-    END DO
-  END DO
+    end do
+  end do
   
   FST1=0.0D0
   FST2=0.0D0
-  DO J=1,2
+  do J=1,2
     FST1=FST1+2.0D0*XF(J)*FIJ(1,J)*VCIJ(1,J)**2
     FST2=FST2+2.0D0*XF(J)*FIJ(J,2)*VCIJ(J,2)**2
-  END DO
+  end do
   
   BETA1=0.0D0
-  DO I=1,2
+  do I=1,2
     BETA1=BETA1+XF(I)*BETA(I)
-  END DO
+  end do
   
   BESTST1=BETA(1)
   BESTST2=BETA(2)
   
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        GAMIJK(I,J,K)=(((GAMMA(I)**EU3+GAMMA(J)**EU3+ &
-        GAMMA(K)**EU3)/3.0D0)**3)*K3(I,J,K)
-      END DO
-    END DO
-  END DO
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        GAMIJK(I,J,K)=(((GAMMA(I)**EU3 +GAMMA(J)**EU3 +GAMMA(K)**EU3)/3.0D0)**3) &
+        &             *K3(I,J,K)
+      end do
+    end do
+  end do
   
   GAMMAVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
-        GAMMAVC2=GAMMAVC2+XF(I)*XF(J)*XF(K)*GAMIJK(I,J,K)* &
-        VCIJK(I,J,K)**2
-      END DO
-    END DO
-  END DO
+  do I=1,2
+    do J=1,2
+      do K=1,2
+        GAMMAVC2= GAMMAVC2 &
+        &       + XF(I)*XF(J)*XF(K)*GAMIJK(I,J,K)*VCIJK(I,J,K)**2
+      end do
+    end do
+  end do
   
   GAMST1=0.0D0
   GAMST2=0.0D0
-  DO J=1,2
-    DO K=1,2
-      GAMST1=GAMST1+3.0D0*XF(J)*XF(K)*GAMIJK(1,J,K)* &
-      VCIJK(1,J,K)**2
-      GAMST2=GAMST2+3.0D0*XF(J)*XF(K)*GAMIJK(J,2,K)* &
-      VCIJK(J,2,K)**2
-    END DO
-  END DO
+  do J=1,2
+    do K=1,2
+      GAMST1=GAMST1 &
+      &     +3.0D0*XF(J)*XF(K)*GAMIJK(1,J,K)*VCIJK(1,J,K)**2
+      GAMST2=GAMST2 &
+      &     +3.0D0*XF(J)*XF(K)*GAMIJK(J,2,K)*VCIJK(J,2,K)**2
+    end do
+  end do
   
   MWT=XF(1)*PM(1)+XF(2)*PM(2)
   
-  RETURN
-END SUBROUTINE MIXRULES92
+  return
+end subroutine MixRules92
 
-SUBROUTINE MAKEK1_92(T,K1,K2,K3)
-  IMPLICIT NONE
+subroutine MAKEK1_92(T,K1,K2,K3)
+!--
+!-- called by MixRules92
+!--
+  implicit none
   
-  REAL(dp),INTENT(IN) :: T
-  REAL(dp),INTENT(OUT):: K1(2,2),K2(2,2,2),K3(2,2,2)
+  real(dp),intent(in) :: T
+  real(dp),intent(out):: K1(2,2),K2(2,2,2),K3(2,2,2)
   
-  REAL(dp):: T2
+  real(dp):: T2
   
   !---  bis jetzt nur index 1 und 2
   !---- 1=H2O, 2=CO2, 3=CH4
+    
+  T2=T*T
   
   K1(:,:)=0.0D0
   K2(:,:,:)=0.0D0
   K3(:,:,:)=0.0D0
-  
-  T2=T*T
   
   K1(1,1)=1.0D0
   K1(2,2)=1.0D0
@@ -755,92 +782,92 @@ SUBROUTINE MAKEK1_92(T,K1,K2,K3)
   
   !----- binary H2O-CO2
   
-  IF (T<=373.15) THEN
+  if (T<=373.15) then
     
-    K1(1,2)=0.20611+0.0006*T
+    K1(1,2)=0.20611D0+0.0006D0*T
     K1(2,1)=K1(1,2)
     
-    K2(1,1,2)=0.8023278-0.0022206*T+184.76824/T
+    K2(1,1,2)=0.8023278D0-0.0022206D0*T+184.76824D0/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
     
-    K3(1,1,2)=1.80544-0.0032605*T
+    K3(1,1,2)=1.80544D0-0.0032605D0*T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
     
-  END IF
+  end if
   
-  IF (T > 373.15.AND.T<=495.15) THEN
+  if (T > 373.15D0.and.T<=495.15D0) then
     
-    K1(1,2)=-10084.5042-4.27134485*T+256477.783/T+ &
-    0.00166997474*T2+1816.78*DLOG(T)
+    K1(1,2)=-10084.5042 -4.27134485*T +256477.783D0/T &
+    &       +0.00166997474D0*T2 +1816.78D0*log(T)
     K1(2,1)=K1(1,2)
     
-    K2(1,1,2)=9.000263-0.00623494*T-2307.7125/T
+    K2(1,1,2)=9.000263D0-0.00623494D0*T-2307.7125D0/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
     
-    K3(1,1,2)=-74.1163+0.1800496*T-1.40904946E-04*T2+10130.5246/T
+    K3(1,1,2)=-74.1163D0+0.1800496D0*T-1.40904946D-4*T2+10130.5246D0/T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
     
-  END IF
+  end if
   
-  IF (T > 495.15.AND.T<=623.15) THEN
+  if (T > 495.15.and.T<=623.15) then
     
-    K1(1,2)=-0.3568+7.8888E-04*T+333.399/T
+    K1(1,2)=-0.3568D0+7.8888D-4*T+333.399D0/T
     K1(2,1)=K1(1,2)
     
-    K2(1,1,2)=-19.97444+0.0192515*T+5707.4229/T
+    K2(1,1,2)=-19.97444D0+0.0192515D0*T+5707.4229D0/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
     
-    K3(1,1,2)=12.1308-0.0099489*T-3042.09583/T
+    K3(1,1,2)=12.1308D0-0.0099489D0*T-3042.09583D0/T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
   
-  END IF
+  end if
   
-  IF (T > 623.15) THEN
+  if (T > 623.15) then
     
-    K1(1,2)=-4.53122+0.0042113*T+1619.7/T
+    K1(1,2)=-4.53122D0+0.0042113D0*T+1619.7D0/T
     K1(2,1)=K1(1,2)
     
-    K2(1,1,2)=-163.4855+0.190552*T-7.228514E-05*T2+46082.885/T
+    K2(1,1,2)=-163.4855D0+0.190552D0*T-7.228514D-5*T2+46082.885D0/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
     
-    K3(1,1,2)=1.7137-6.7136E-04*T
+    K3(1,1,2)=1.7137D0-6.7136D-4*T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
   
-  END IF
+  end if
   
-  !!!!      IF (T > 623.15) THEN
+  !!!!      if (T > 623.15) then
   !!      K1(1,2)=0.5D0
   !!      K1(2,1)=K1(1,2)
   !!      K2(1,1,2)=1.0D0
@@ -855,19 +882,19 @@ SUBROUTINE MAKEK1_92(T,K1,K2,K3)
   !!      K3(1,2,2)=K3(1,1,2)
   !!      K3(2,1,2)=K3(1,1,2)
   !!      K3(2,2,1)=K3(1,1,2)
-  !!!!      END IF
+  !!!!      end if
   !-----
-  !!      CALL FAKEK(T,1,FF)
+  !!      call FAKEK(T,1,FF)
   !!      K1(1,2)=FF
   !!      K1(2,1)=K1(1,2)
-  !!      CALL FAKEK(T,2,FF)
+  !!      call FAKEK(T,2,FF)
   !!      K2(1,1,2)=FF
   !!      K2(1,2,1)=K2(1,1,2)
   !!      K2(2,1,1)=K2(1,1,2)
   !!      K2(1,2,2)=K2(1,1,2)
   !!      K2(2,1,2)=K2(1,1,2)
   !!      K2(2,2,1)=K2(1,1,2)
-  !!      CALL FAKEK(T,3,K3)
+  !!      call FAKEK(T,3,K3)
   !!      K3(1,1,2)=FF
   !!      K3(1,2,1)=K3(1,1,2)
   !!      K3(2,1,1)=K3(1,1,2)
@@ -875,114 +902,115 @@ SUBROUTINE MAKEK1_92(T,K1,K2,K3)
   !!      K3(2,1,2)=K3(1,1,2)
   !!      K3(2,2,1)=K3(1,1,2)
   
-  RETURN
-END SUBROUTINE MAKEK1_92
+  return
+end subroutine MAKEK1_92
 
-SUBROUTINE DUANZ(T,P,ZST,VOLST,INTST)
-  IMPLICIT NONE
-  
-  REAL(dp),INTENT(IN) :: T,P
-  REAL(dp),INTENT(OUT):: ZST,VOLST,INTST
-  
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL(dp):: &
-  & V,Z,VOUT,V2,V4,V5,DELTA,POUT,START,XX,INTP(5),VOLP(5),FF, &
-  & ZP(5),EQ11,EQ10
-  INTEGER*4 I,NP,NSTAB
-  LOGICAL*4 FOUND
-  
+subroutine DuanZ( &
+& T,P, &
+& NP,NSTAB, &
+& ZST,VOLST,INTST)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
+  !
+  real(dp),intent(in) :: T,P
+  integer, intent(out) :: NP,NSTAB 
+  real(dp),intent(out):: ZST,VOLST,INTST
+  ! logical, intent(out):: Error
+  !
+  real(dp):: Z,DELTA,START,XX,FF
+  real(dp):: ZP(5),INTP(5),VOLP(5)
+  integer :: I
+  logical :: FOUND
+  !
+  ! Error= .false.
+  !
   NP=0
   START=0.001D0
   DELTA=0.001D0
   
-  FOUND=.FALSE.
+  FOUND=.false.
   
-  DO I=1,5
+  do I=1,5
   
-    CALL FINDPT(START,DELTA,FOUND,P,T,Z,XX)
+    call FINDPT( &
+    & T,P,START,DELTA, &
+    & FOUND,Z,XX)
     
-    IF (FOUND) THEN
+    if (FOUND) then
       NP=NP+1
       VOLP(NP)=XX
       ZP(NP)=Z
-      CALL INTEGRALF(T,XX,FF)
+      call INTEGRALF(XX,FF)
       INTP(NP)=FF
       START=XX+DELTA
-      FOUND=.FALSE.
-    ELSE
-      EXIT !GOTO 888
-    END IF
+      FOUND=.false.
+    else
+      exit !goto 888
+    end if
     
-  END DO
+  end do
   
-  ! 888 CONTINUE
+  ! 888 continue
   
-  IF (NP==1) NSTAB=1
+  if (NP==1) NSTAB=1
   
-  IF (NP==2) THEN
-    IF (INTP(2) > INTP(1)) THEN
-      NSTAB=2
-    ELSE
-      NSTAB=1
-    END IF
-  END IF
+  if (NP==2) then
+    if (INTP(2) > INTP(1)) then  ;  NSTAB=2
+    else                         ;  NSTAB=1
+    end if
+  end if
   
-  IF (NP > 2) THEN
-    WRITE (UNIT=6,FMT='(2(F20.10),'' more phases than expected'')') T,P
-    IF (INTP(NP) > INTP(1)) THEN
+  if (NP > 2) then
+    write (UNIT=6,FMT='(2(F20.10),'' more phases than expected'')') T,P
+    if (INTP(NP) > INTP(1)) then
       NSTAB=NP
-    ELSE
+    else
       NSTAB=1
-    END IF
+    end if
     !     NSTAB=NP
-  END IF
+  end if
   
-  IF (NP==0) THEN
-    WRITE (UNIT=6,FMT= &
+  if (NP==0) then
+    write (UNIT=6,FMT= &
     '(2(F20.10),'' less phases than expected'')') T,P
+    ! Error= .true.
+    ! ErrorMessage= "less phases than expected"
     NSTAB=1
     VOLP(1)=1000.0D0
     INTP(1)=0.0d0
-  END IF
+  end if
   
   VOLST=VOLP(NSTAB)
   INTST=INTP(NSTAB)
   ZST=ZP(NSTAB)
   
-  RETURN
-END SUBROUTINE DUANZ
+  return
+end subroutine DuanZ
 
-SUBROUTINE FINDPT(START,DELTA,FOUND,P,T,Z,XX)
-  IMPLICIT NONE
-
-  REAL(dp),INTENT(IN) :: START,DELTA
-  REAL(dp),INTENT(IN) :: T,P
-  LOGICAL, INTENT(OUT):: FOUND
-  REAL(dp),INTENT(OUT):: Z,XX
-  
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !--
-  REAL(dp):: &
-  & V,VOUT,V2,V4,V5,POUT,P1,P2,P3,X1,X2,X3, &
-  & VMAXI,PMINI,PDEL,DX,XDEL,VXMINI,PST,AB1,AB2,AB3,VVOR
-  LOGICAL*4 COD1,COD2,COD3
-  LOGICAL*4 JUM
-  
-  JUM=.FALSE.
-  FOUND=.FALSE.
+subroutine FINDPT( &
+& T,P,START,DELTA, &
+& FOUND,Z,XX)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by DuanZ
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in) :: T,P
+  real(dp),intent(in) :: START,DELTA
+  logical, intent(out):: FOUND
+  real(dp),intent(out):: Z,XX
+  !---------------------------------------------------------------------
+  real(dp):: &
+  & V,P1,P2,P3,X1,X2,X3, &
+  & VMAXI,PMINI,PDEL,DX,XDEL,VXMINI,AB1,AB2,VVOR
+  logical*4 COD1,COD2,COD3
+  logical*4 JUM
+  !---------------------------------------------------------------------
+  JUM=.false.
+  FOUND=.false.
   XX=START
   VMAXI=500.0D0
   PMINI=0.00001D0
@@ -990,9 +1018,9 @@ SUBROUTINE FINDPT(START,DELTA,FOUND,P,T,Z,XX)
   DX=DELTA
   V=START
   X1=V
-  
-  CALL JUSTF(T,V,Z,P1)
-  CALL ABLEITF(T,V,AB1)
+
+  call JUSTF(V,Z,P1)
+  call ABLEITF(V,AB1)
   
   COD1=(P > P1)
   
@@ -1000,227 +1028,232 @@ SUBROUTINE FINDPT(START,DELTA,FOUND,P,T,Z,XX)
   AB2=AB1
   COD2=COD1
   
-  DO1: DO WHILE(V<=VMAXI)
+  do1: do while(V<=VMAXI)
     
     DX=V/5.0D0
     VVOR=V
     
-    3 V=VVOR+DX
+    do3: do
     
-    X2=V
+      V=VVOR+DX      
+      X2=V
+      
+      call JUSTF  (V,     Z,P2)
+      call ABLEITF(V,     AB2)
+      
+      COD2=(P > P2)
+      
+      if (    COD1 &
+      & .and. COD2 &
+      & .and.(AB1 > 0.0D0) &
+      & .and.(AB2 < 0.0D0) &
+      & .and. DX  > 1D-5) then
+        DX=DX/2.0D0
+        cycle do3 ! goto 3
+      end if
+      
+      exit do3
     
-    CALL JUSTF(T,V,Z,P2)
-    CALL ABLEITF(T,V,AB2)
+    end do do3
     
-    COD2=(P > P2)
-    
-    IF (    COD1 &
-    & .AND. COD2 &
-    & .AND.(AB1 > 0.0D0) &
-    & .AND.(AB2 < 0.0D0) &
-    & .AND. DX  > 1D-5) THEN
-      DX=DX/2.0D0
-      GOTO 3
-    END IF
-    
-    !--- ...OR.COD1 ist damit positive Ableitungen uebersprungen werden
-    IF ((COD1.EQV.COD2).OR.COD1) THEN
+    !--- ...or.COD1 ist damit positive Ableitungen uebersprungen werden
+    if ((COD1.eqv.COD2).or.COD1) then
       X1=X2
       P1=P2
       AB1=AB2
       COD1=COD2
-    ELSE
-      JUM=.TRUE.
-      EXIT DO1 !GOTO 10
-    END IF
+    else
+      JUM=.true.
+      exit do1 !goto 10
+    end if
     !---
 
-  END DO DO1
+  end do do1
   
-  ! 10 CONTINUE
+  ! 10 continue
   
-  IF (.NOT.JUM) RETURN
+  if (.not.JUM) return
   
-  DO11: DO
+  do11: do
   
-    PDEL=DABS(P2-P1)
-    XDEL=DABS(X2-X1)
+    PDEL=abs(P2-P1)
+    XDEL=abs(X2-X1)
     
-    IF ((PDEL < PMINI).AND.(XDEL < VXMINI)) EXIT DO11 !GOTO 15
+    if ((PDEL < PMINI).and.(XDEL < VXMINI)) exit do11 !goto 15
     
     V=(X1+X2)/2.0D0
-    CALL JUSTF(T,V,Z,P3)
+    call JUSTF(V,Z,P3)
     X3=V
     COD3=(P > P3)
     !-----
-    IF (COD3.EQV.COD1) THEN
+    if (COD3.EQV.COD1) then
       X1=X3
       P1=P3
       COD1=COD3
-    ELSE
+    else
       X2=X3
       P2=P3
       COD2=COD3
-    END IF
+    end if
     
-    !GOTO 11
-  END DO DO11
+    !goto 11
+  end do do11
   
   !-----
-  ! 15 CONTINUE
+  ! 15 continue
   V=(X1+X2)/2.0D0
-  CALL JUSTF(T,V,Z,P1)
+  call JUSTF(V,Z,P1)
   X1=V
   
-  FOUND=.TRUE.
+  FOUND=.true.
   XX=X1
 
-  RETURN
-END SUBROUTINE FINDPT
+  return
+end subroutine FINDPT
 
-SUBROUTINE INTEGRALF(T,V,PST)
-  IMPLICIT NONE
+subroutine INTEGRALF(V,PST)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by DuanZ
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in) :: V
+  real(dp),intent(out):: PST
+  !---------------------------------------------------------------------
+  real(dp):: V2,V4,V5
+  !---------------------------------------------------------------------
+  V2=V**2
+  V4=V**4
+  V5=V**5
   
-  REAL(dp),INTENT(IN) :: T,V
-  REAL(dp),INTENT(OUT):: PST
-  
-  REAL(dp):: V2,V4,V5
-  
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  V2=V*V
-  V4=V2*V2
-  V5=V4*V
-  
-  PST=(DEXP(-GAMMAVC2/V2)) &
+  PST=(exp(-GAMMAVC2/V2)) &
   &   *(FVC2/V2 +BETA1*FVC2/GAMMAVC2 +FVC2/GAMMAVC2)/2.0D0 &
-  &  +DLOG(V) &
+  &  +log(V) &
   &  -BVC/V -CVC2/(2.0D0*V2) -DVC4/(4.0D0*V4) -EVC5/(5.0D0*V5)
   PST=PST*RT
   
-  RETURN
-END SUBROUTINE INTEGRALF
+  return
+end subroutine INTEGRALF
 
-SUBROUTINE JUSTF(T,V,Z,P1)
-  IMPLICIT NONE
-  
-  REAL(dp),INTENT(IN) :: T,V
-  REAL(dp),INTENT(OUT):: Z,P1
-  
-  REAL(dp):: V2,V4,V5
+subroutine JUSTF(V,Z,P1)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by FINDPT
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in) :: V
+  real(dp),intent(out):: Z,P1
+  !---------------------------------------------------------------------
+  real(dp):: V2,V4,V5
   !--
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !--
-  V2=V*V
-  V4=V2*V2
+  V2=V**2
+  V4=V2**2
   V5=V4*V
-  
+  !
   Z=  1.0D0   &
   & + BVC /V  &
   & + CVC2/V2 &
   & + DVC4/V4 &
   & + EVC5/V5 &
-  & +(FVC2/V2)*(BETA1+GAMMAVC2/V2)*DEXP(-GAMMAVC2/V2)
-  
+  & +(FVC2/V2)*(BETA1+GAMMAVC2/V2)*exp(-GAMMAVC2/V2)
+  !
   P1=Z*RT/V
-  
-  RETURN
-END SUBROUTINE JUSTF
+  !
+  return
+end subroutine JUSTF
 
-SUBROUTINE ABLEITF(T,V,PST)
-  IMPLICIT NONE
-  
-  REAL(dp),INTENT(IN) :: T,V
-  REAL(dp),INTENT(OUT):: PST
-  
-  REAL(dp):: V2,V3,V4,V5
+subroutine ABLEITF(V,PST)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by FINDPT
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in) :: V
+  real(dp),intent(out):: PST
+  !---------------------------------------------------------------------
+  real(dp):: V2,V3,V4
   !--
-  !! REAL(dp):: BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
   V2=V*V
   V3=V2*V
   V4=V2*V2
-  PST=(DEXP(-GAMMAVC2/V2)) &
-  &  *(-3.0D0*BETA1*FVC2 &
-  &    +2.0D0*BETA1*FVC2*GAMMAVC2/V2 &
-  &    -5.0D0*FVC2*GAMMAVC2/V2 &
-  &    +(2.0D0*FVC2*GAMMAVC2**2)/V4)/V4 &
-  &  +(-V-2.0D0*BVC-3.0D0*CVC2/V-5.0D0*DVC4/V3-6.0D0*EVC5/V4)/V3
+  PST=(exp(-GAMMAVC2/V2)) &
+  &  *( -3.0D0 *BETA1 *FVC2 &
+  &     +2.0D0 *BETA1 *FVC2*GAMMAVC2/V2 &
+  &     -5.0D0 *FVC2 *GAMMAVC2/V2 &
+  &     +(2.0D0*FVC2*GAMMAVC2**2)/V4 ) /V4 &
+  &  +(-V -2.0D0*BVC -3.0D0*CVC2/V -5.0D0*DVC4/V3 -6.0D0*EVC5/V4)/V3
   PST=PST*RT
-  
-  RETURN
-END SUBROUTINE ABLEITF
+  !
+  return
+end subroutine ABLEITF
 
-SUBROUTINE DUAN06HL(   &
+subroutine EoS_H2O_CO2_Duan06(   &
 & T,P,XF,              &
-& VOLUM,               &
+& V_m3,                &
 & ACTIV1,   ACTIV2,    &
 & F1PLO,    F2PLO,     &
 & F1PHI,    F2PHI,     &
 & F1PHI2000,F2PHI2000, &
 & F1PLO2000,F2PLO2000)
-
-  IMPLICIT NONE
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+!-- Duan et al, 2006
+!-- T= 273 - 533 K
+!-- P= 1 - 1000 bar
+!--
+  implicit none
   
-  REAL(dp):: &
-  & TC,T,P,XF(2), &
-  & VAT,AC1,AC2,VOLUM, &
-  & ACTIV1,ACTIV2,FH2OP,FCO2P,FH2OX,FCO2X, &
-  & F1XHI,F2XHI,F1PHI,F2PHI,P2000, &
-  & F1XHI2000,F2XHI2000,F1PHI2000,F2PHI2000, &
-  & F1XLO2000,F2XLO2000,F1PLO2000,F2PLO2000, &
-  & F1PLO,F2PLO,F1XLO,F2XLO
-  
-  INTEGER*4 I,JJ
+  real(dp),intent(in) :: T,P,XF(2)
+  real(dp),intent(out):: V_m3,ACTIV1,ACTIV2
+  real(dp),intent(out):: F1PLO,F2PLO,F1PLO2000,F2PLO2000
+  real(dp),intent(out):: F1PHI,F2PHI,F1PHI2000,F2PHI2000
+  !
+  real(dp):: &
+  & VAT,AC1,AC2,P2000, &
+  & FH2OP,FCO2P, &
+  & FH2OX,FCO2X, &
+  & F1XHI,    F2XHI, &
+  & F1XHI2000,F2XHI2000, &
+  & F1XLO2000,F2XLO2000, &
+  & F1XLO,F2XLO
       
   P2000=2000.0D0
 
-  IF (P<=P2000) THEN
+  if (P<=P2000) then
   
-    CALL DUAN06EQLO( &
+    call DUAN06EQLO( &
     & T,P,XF,        &
     & VAT,AC1,AC2,   &
     & F1PLO,F2PLO,   &
     & F1XLO,F2XLO)
     
-    VOLUM=VAT*100.0D0
+    !VOLUM=VAT*100.0D0
+    V_m3=VAT*1.0D-3
+    
     FH2OP=F1PLO
     FCO2P=F2PLO
     ACTIV1=F1XLO*XF(1)/F1PLO
     ACTIV2=F2XLO*XF(2)/F2PLO
     
-  ELSE
+  else
   
-    CALL DUAN06EQHI( &
+    call DUAN06EQHI( &
     & T,P,XF,        &
     & VAT,AC1,AC2,   &
     & F1PHI,F2PHI,   &
     & F1XHI,F2XHI)
     
-    VOLUM=VAT*100.0D0
-    
-    CALL DUAN06EQHI( &
+    call DUAN06EQHI( &
     & T,P2000,XF,    &
     & VAT,AC1,AC2,   &
     & F1PHI2000,F2PHI2000, &
     & F1XHI2000,F2XHI2000)
     
-    CALL DUAN06EQLO( &
+    call DUAN06EQLO( &
     & T,P2000,XF,    &
     & VAT,AC1,AC2,   &
     & F1PLO2000,F2PLO2000, &
@@ -1235,118 +1268,126 @@ SUBROUTINE DUAN06HL(   &
     ACTIV1=XF(1)*FH2OX/FH2OP
     ACTIV2=XF(2)*FCO2X/FCO2P
     !
+    V_m3=VAT*1.0D-3
+    !
     !! ACTIV1=(F1XHI*F1XLO2000/F1XHI2000) /(F1PHI*F1PLO2000/F1PHI2000)
     !! ACTIV1=ACTIV1*XF(1)
     !! ACTIV2=(F2XHI*F2XLO2000/F2XHI2000)/(F2PHI*F2PLO2000/F2PHI2000)
     !! ACTIV2=ACTIV2*XF(2)
     
-  END IF
+  end if
 
-END SUBROUTINE DUAN06HL
+end subroutine EoS_H2O_CO2_Duan06
 
-SUBROUTINE DUAN06EQHI(T,P,XF,VAT,AC1,AC2,FUGH2O,FUGCO2,ACH,ACC)
-  IMPLICIT NONE
+subroutine DUAN06EQHI( &
+& T,P,XF, &
+& VAT,AH2O,ACO2, &
+& FugH2O,FugCO2, &
+& ACH,ACC)
+! & Error)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
   
-  REAL(dp):: T,P,XF(2),VAT,AC1,AC2,FUGH2O,FUGCO2,ACH,ACC
+  real(dp),intent(in)   :: T,P,XF(2)
+  real(dp),intent(inout):: FugH2O,FugCO2
+  real(dp),intent(out)  :: VAT,AH2O,ACO2,ACH,ACC
+  ! logical, intent(out):: Error
   !
-  REAL(dp):: &
+  real(dp):: &
   & VATP,INTATP,ZATP, &
-  & PHI1,PHI2,V01,PH01,V02,PH02, &
-  & AH2O,ACO2,G
-  INTEGER*4 I
+  & lnPhi1,lnPhi2,V01,V02, &
+  & G
+  integer:: NP,NSTAB
+  ! logical:: Error_DuanZ
   
-  IF (FUGH2O==0.0D0.AND.FUGCO2==0.0D0) THEN
-    CALL DUAN06H2OHI(T,P,G,V01,PH01)
-    FUGH2O=PH01
-    CALL DUAN06CO2HI(T,P,G,V02,PH02)
-    FUGCO2=PH02
-  END IF
+  ! Error= .false.
   
-  CALL MIXRULESHI(T,P,XF)
-  CALL DUANZ(T,P,ZATP,VATP,INTATP)
-  CALL EQUA9(T,VATP,ZATP,PHI1,PHI2)
+  if (FugH2O==0.0D0 .and. FugCO2==0.0D0) then
+    call EoS_H2O_Duan06_HP(T,P,G, V01,FugH2O)
+    call EoS_CO2_Duan06_HP(T,P,G, V02,FugCO2)
+  end if
   
-  VAT=VATP
-  ACH=DEXP(PHI1)
-  ACC=DEXP(PHI2)
-  
-  AH2O=ACH*XF(1)/FUGH2O
-  ACO2=ACC*XF(2)/FUGCO2
-  
-  AC1=AH2O
-  AC2=ACO2
-  
-  RETURN
-END SUBROUTINE DUAN06EQHI
-
-SUBROUTINE DUAN06EQLO(T,P,XF,VAT,AC1,AC2,FUGH2O,FUGCO2,ACH,ACC)
-  IMPLICIT NONE
-  
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL*8 P,T,VATP,INTATP, &
-  XF(2),ZATP,PHI1,PHI2,VAT,ACH,ACC, &
-  V01,PH01,V02,PH02, &
-  FUGH2O,FUGCO2,AH2O,ACO2,AC1,AC2,G
-  INTEGER*4 I
-  
-  IF (FUGH2O==0.0D0 .AND. FUGCO2==0.0D0) THEN
-  
-    CALL DUAN06H2OLO(T,P,G,V01,PH01)
-    FUGH2O=PH01
-    
-    CALL DUAN06CO2LO(T,P,G,V02,PH02)
-    FUGCO2=PH02
-    
-  END IF
-  
-  CALL MIXRULESLO(T,P,XF)
-  CALL DUANZ(T,P,ZATP,VATP,INTATP)
-  CALL EQUA9(T,VATP,ZATP,PHI1,PHI2)
+  call MixRulesHP(T,P,      XF)
+  call DuanZ     (T,P,      NP,NSTAB,ZATP,VATP,INTATP)!,Error_DuanZ)
+  !if(Error_DuanZ) then
+  !  Error= .true.  
+  !  return
+  !end if
+  call EQUA9(VATP,ZATP,     lnPhi1,lnPhi2)
   
   VAT=VATP
-  ACH=DEXP(PHI1)
-  ACC=DEXP(PHI2)
+  ACH=exp(lnPhi1)
+  ACC=exp(lnPhi2)
   
-  AH2O=ACH*XF(1)/FUGH2O
-  ACO2=ACC*XF(2)/FUGCO2
+  AH2O=ACH*XF(1)/FugH2O
+  ACO2=ACC*XF(2)/FugCO2
   
-  AC1=AH2O
-  AC2=ACO2
-  
-  RETURN
-END SUBROUTINE DUAN06EQLO
+  return
+end subroutine DUAN06EQHI
 
-SUBROUTINE DUAN06H2OHI(T,P,G,VOLUM,FUGCF)
-  IMPLICIT NONE
-      
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
+subroutine DUAN06EQLO( &
+& T,P,XF, &
+& VAT,AH2O,ACO2, &
+& FugH2O,FugCO2, &
+& ACH,ACC)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by EoS_H2O_CO2_Duan06
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in)    :: T,P,XF(2)
+  real(dp),intent(inout) :: FugH2O,FugCO2
+  real(dp),intent(out)   :: VAT,AH2O,ACO2,ACH,ACC
+  !---------------------------------------------------------------------
+  real(dp):: VATP,INTATP,ZATP,lnPHI1,lnPHI2,G
+  real(dp):: V01,V02
+  integer :: NP,NSTAB
+  !---------------------------------------------------------------------
+  if (FugH2O==0.0D0 .and. FugCO2==0.0D0) then
+    call EoS_H2O_Duan06_LP(T,P,G,V01,FugH2O)    
+    call EoS_CO2_Duan06_LP(T,P,G,V02,FugCO2)    
+  end if
   
-  REAL(dp):: T,P,G,VOLUM,FUGCF
+  call MixRulesLP(T,P,           XF)
+  call DuanZ     (T,P,           NP,NSTAB,ZATP,VATP,INTATP)
+  call EQUA9     (VATP,ZATP,     lnPHI1,lnPHI2)
+  
+  VAT=VATP
+  ACH=exp(lnPHI1)
+  ACC=exp(lnPHI2)
+  
+  AH2O=ACH*XF(1)/FugH2O
+  ACO2=ACC*XF(2)/FugCO2
+  
+  return
+end subroutine DUAN06EQLO
+
+subroutine EoS_H2O_Duan06_HP( &
+& T,P, &
+& G,VOLUM,FUGCF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
+  
+  real(dp):: T,P
+  real(dp):: G,VOLUM,FUGCF
   !
-  REAL(dp):: PR,TR,TR2,TR3
-  REAL(dp):: VC,VC2,VC4,VC5,EU3,Z,V,INTE
-  REAL(dp):: V2,V4,V5,EXPON,PHI1,H0,S0
-  REAL(dp):: K1,K2,K3,K4,K6
-  REAL(dp):: CPDT,CPTDT,T0,TT,TT0,SQT,SQT0
+  real(dp):: TR,TR2,TR3
+  real(dp):: VC,VC2,VC4,VC5,EU3,Z,V,INTE
+  real(dp):: V2,V4,V5,EXPON,PHI1,H0,S0
+  real(dp):: K1,K2,K3,K4,K6
+  real(dp):: CPDT,CPTDT,T0,TT,TT0,SQT,SQT0
+  integer :: NP,NSTAB
   
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
   
   R=0.08314467D0
   RT=R*T
@@ -1388,14 +1429,17 @@ SUBROUTINE DUAN06H2OHI(T,P,G,VOLUM,FUGCF)
   GAMST2=0.0D0
       
   !------------------------------------------------------find the volume
-  CALL DUANZ(T,P,Z,V,INTE)
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
     
   !----------------------------------------------------------EQ9 for H2O
   V2=V*V
   V4=V2*V2
   V5=V4*V
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI1=-DLOG(Z) +BST1/V +CST1/(2.0D0*V2) +DST1/(4.0D0*V4)+EST1/(5.0D0*V5)
+  EXPON=exp(-GAMMAVC2/V2)
+  PHI1=-log(Z) +BST1/V +CST1/(2.0D0*V2) +DST1/(4.0D0*V4)+EST1/(5.0D0*V5)
   PHI1=PHI1+((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
   PHI1=PHI1 &
   &   +((FST1*GAMMAVC2+GAMST1*FVC2-FVC2*BETA1*(GAMST1-GAMMAVC2)) &
@@ -1414,46 +1458,41 @@ SUBROUTINE DUAN06H2OHI(T,P,G,VOLUM,FUGCF)
   K2=-0.002062D0
   CPDT=K1*(T-T0)+K2*(TT-TT0)/2.0D0 &
   &   -K3*(1.0D0/T-1.0D0/T0)+2D0*K4*(SQT-SQT0) &
-  &   +K6*DLOG(T/T0)
-  CPTDT=K1*DLOG(T/T0)+K2*(T-T0) &
+  &   +K6*log(T/T0)
+  CPTDT=K1*log(T/T0)+K2*(T-T0) &
   &    -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
   &    -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
   &    -K6*(1.0D0/T-1.0D0/T0)
   G=H0+CPDT-T*(S0+CPTDT)
       
   !-------------------------------------------------correct for fugacity
-  FUGCF=DEXP(PHI1)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
+  FUGCF=exp(PHI1)
+  G=G + RT*100.0D0 *log(FUGCF*P)
   VOLUM=V*100.0D0
   
-  RETURN
-END SUBROUTINE DUAN06H2OHI
+  return
+end subroutine EoS_H2O_Duan06_HP
 
-SUBROUTINE DUAN06H2OLO(T,P,G,VOLUM,FUGCF)
-  IMPLICIT NONE
+subroutine EoS_H2O_Duan06_LP(T,P,G,VOLUM,FUGCF)
+  implicit none
 
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL(dp):: T,P,G,VOLUM,FUGCF
-  REAL(dp):: &
-  & PR,TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,Z,V,INTE, &
+  real(dp),intent(in) :: T,P
+  real(dp),intent(out):: G,VOLUM,FUGCF
+  !---------------------------------------------------------------------
+  real(dp):: &
+  & TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,Z,V,INTE, &
   & V2,V4,V5,EXPON,PHI1,&
   & H0,S0,K1,K2,K3,K4,K6, &
   & CPDT,CPTDT, &
   & T0,TT,TT0,SQT,SQT0
-
+  integer :: NP,NSTAB
+  !---------------------------------------------------------------------
   EU3=1.0D0/3.0D0
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
   
   R=0.08314467D0
   RT=R*T
@@ -1468,10 +1507,10 @@ SUBROUTINE DUAN06H2OLO(T,P,G,VOLUM,FUGCF)
   VC4=VC2*VC2
   VC5=VC4*VC
   
-  BVC=(4.38269941D-02-1.68244362D-01/TR2-2.36923373D-01/TR3)*VC
-  CVC2=(1.13027462D-02-7.67764181D-02/TR2+9.71820593D-02/TR3)*VC2
-  DVC4=(6.62674916D-05+1.06637349D-03/TR2-1.23265258D-03/TR3)*VC4
-  EVC5=(-8.93953948D-06-3.88124606D-05/TR2+5.61510206D-05/TR3)*VC5
+  BVC= ( 4.38269941D-02 -1.68244362D-01/TR2 -2.36923373D-01/TR3)*VC
+  CVC2=( 1.13027462D-02 -7.67764181D-02/TR2 +9.71820593D-02/TR3)*VC2
+  DVC4=( 6.62674916D-05 +1.06637349D-03/TR2 -1.23265258D-03/TR3)*VC4
+  EVC5=(-8.93953948D-06 -3.88124606D-05/TR2 +5.61510206D-05/TR3)*VC5
   FVC2=(7.51274488D-03/TR3)*VC2
   BETA1=2.51598931D+00
   GAMMAVC2=3.94000000D-02*VC2
@@ -1493,22 +1532,26 @@ SUBROUTINE DUAN06H2OLO(T,P,G,VOLUM,FUGCF)
   GAMST2=0.0D0
 
   !----------------------------------------------------find the volume--
-  CALL DUANZ(T,P,Z,V,INTE)
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
   
   !--------------------------------------------------------EQ9 for H2O--
   V2=V*V
   V4=V2*V2
   V5=V4*V
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI1=-DLOG(Z)+BST1/V+CST1/(2.0D0*V2)+ &
-  DST1/(4.0D0*V4)+EST1/(5.0D0*V5)
-  PHI1=PHI1+((FST1*BETA1+BESTST1*FVC2)/ &
-  (2.0D0*GAMMAVC2))*(1.0D0-EXPON)
-  PHI1=PHI1+((FST1*GAMMAVC2+GAMST1*FVC2- &
-  FVC2*BETA1*(GAMST1-GAMMAVC2))/(2.0D0*GAMMAVC2**2))* &
-  (1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON)-(((GAMST1-GAMMAVC2)* &
-  FVC2)/(2.0D0*GAMMAVC2**2))*(2.-(GAMMAVC2**2/V4+ &
-  2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
+  
+  EXPON=exp(-GAMMAVC2/V2)
+  
+  PHI1=-log(Z)+BST1/V+CST1/(2.0D0*V2)+DST1/(4.0D0*V4)+EST1/(5.0D0*V5)
+  PHI1=PHI1 &
+  &   +((FST1*BETA1+BESTST1*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
+  PHI1=PHI1 &
+  &   +( (FST1*GAMMAVC2+GAMST1*FVC2-FVC2*BETA1*(GAMST1-GAMMAVC2)) &
+  &       /(2.0D0*GAMMAVC2**2) )*(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
+  &   -( ((GAMST1-GAMMAVC2)*FVC2) / (2.0D0*GAMMAVC2**2) ) &
+  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
   
   !----------------------------------------------------G for ideal gas--
   H0=-241816.00D0
@@ -1518,43 +1561,49 @@ SUBROUTINE DUAN06H2OLO(T,P,G,VOLUM,FUGCF)
   K3=-2871300.00D0
   K6=51055.16D0
   K2=-0.002062D0
-  CPDT=K1*(T-T0)+K2*(TT-TT0)/2.0D0 &
-  -K3*(1.0D0/T-1.0D0/T0)+2D0*K4*(SQT-SQT0) &
-  +K6*DLOG(T/T0)
-  CPTDT=K1*DLOG(T/T0)+K2*(T-T0) &
-  -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
-  -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
-  -K6*(1.0D0/T-1.0D0/T0)
+  
+  CPDT=K1*(T-T0) &
+  &   +K2*(TT-TT0)/2.0D0 &
+  &   -K3*(1.0D0/T-1.0D0/T0) &
+  &   +2D0*K4*(SQT-SQT0) &
+  &   +K6*log(T/T0)
+  
+  CPTDT=K1*log(T/T0) &
+  &    +K2*(T-T0) &
+  &    -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
+  &    -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
+  &    -K6*(1.0D0/T-1.0D0/T0)
+  
   G=H0+CPDT-T*(S0+CPTDT)
 
   !-----------------------------------------------correct for fugacity--
-  FUGCF=DEXP(PHI1)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
+  FUGCF=exp(PHI1)
+  G=G+RT*100.0D0*log(FUGCF*P)
   VOLUM=V*100.0D0
 
-  RETURN
-END SUBROUTINE DUAN06H2OLO
+  return
+end subroutine EoS_H2O_Duan06_LP
 
-SUBROUTINE DUAN06CO2HI(T,P,G,VOLUM,FUGCF)
-  IMPLICIT NONE
-  !--
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !---
-  REAL*8 PR,TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,T,P,Z,V,INTE, &
-  V2,V4,V5,EXPON,PHI2,G,H0,S0,K1,K2,K3,K4,K6, &
-  CPDT,CPTDT,T0,TT,TT0,SQT,SQT0,FUGCF,VOLUM
-  !--
+subroutine EoS_CO2_Duan06_HP(T,P,G,VOLUM,FUGCF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp),intent(in) :: T,P 
+  real(dp),intent(out):: G,VOLUM,FUGCF
+  real(dp):: &
+  TR,TR2,TR3,VC,VC2,VC4,VC5,EU3, &
+  & Z,V,INTE, &
+  V2,V4,V5,EXPON,PHI2,H0,S0,K1,K2,K3,K4,K6, &
+  CPDT,CPTDT,T0,TT,TT0,SQT,SQT0
+  integer :: NP,NSTAB
+  !---------------------------------------------------------------------
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
   !---
   R=0.08314467D0
   RT=R*T
@@ -1563,15 +1612,18 @@ SUBROUTINE DUAN06CO2HI(T,P,G,VOLUM,FUGCF)
   TR=T/304.1282D0
   TR2=TR*TR
   TR3=TR2*TR
+  
   VC=R*304.1282D0/73.773D0
   VC2=VC*VC
   VC4=VC2*VC2
   VC5=VC4*VC
+  
   BVC=(5.72573440D-03+7.94836769D+00/TR2-3.84236281D+01/TR3)*VC
   CVC2=(3.71600369D-02-1.92888994D+00/TR2+6.64254770D+00/TR3)*VC2
   DVC4=(-7.02203950D-06+1.77093234D-02/TR2-4.81892026D-02/TR3)*VC4
   EVC5=(3.88344869D-06-5.54833167D-04/TR2+1.70489748D-03/TR3)*VC5
   FVC2=(-4.13039220D-01/TR3)*VC2
+  
   BETA1=-8.47988634D+00
   GAMMAVC2=2.80000000D-02*VC2
   MWT=0.0440098D0
@@ -1591,22 +1643,24 @@ SUBROUTINE DUAN06CO2HI(T,P,G,VOLUM,FUGCF)
   GAMST1=0.0D0
   
   !---- find the volume
-  CALL DUANZ(T,P,Z,V,INTE)
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
   
   !---- EQ9 for CO2
   V2=V*V
   V4=V2*V2
   V5=V4*V
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI2=-DLOG(Z)+BST2/V+CST2/(2.0D0*V2)+ &
-  DST2/(4.0D0*V4)+EST2/(5.0D0*V5)
-  PHI2=PHI2+((FST2*BETA1+BESTST2*FVC2)/ &
-  (2.0D0*GAMMAVC2))*(1.0D0-EXPON)
-  PHI2=PHI2+((FST2*GAMMAVC2+GAMST2*FVC2- &
-  FVC2*BETA1*(GAMST2-GAMMAVC2))/(2.0D0*GAMMAVC2**2))* &
-  (1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON)-(((GAMST2-GAMMAVC2)* &
-  FVC2)/(2.0D0*GAMMAVC2**2))*(2.-(GAMMAVC2**2/V4+ &
-  2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
+  EXPON=exp(-GAMMAVC2/V2)
+  PHI2=-log(Z)+BST2/V+CST2/(2.0D0*V2)+DST2/(4.0D0*V4)+EST2/(5.0D0*V5)
+  PHI2=PHI2 &
+  &   +((FST2*BETA1+BESTST2*FVC2)/(2.0D0*GAMMAVC2))*(1.0D0-EXPON)
+  PHI2=PHI2 &
+  &   +((FST2*GAMMAVC2+GAMST2*FVC2-FVC2*BETA1*(GAMST2-GAMMAVC2))/(2.0D0*GAMMAVC2**2)) &
+  &   *(1.0D0-((GAMMAVC2/V2)+1.0D0)*EXPON) &
+  &   -(((GAMST2-GAMMAVC2)*FVC2)/(2.0D0*GAMMAVC2**2)) &
+  &    *(2.-(GAMMAVC2**2/V4+2.0D0*GAMMAVC2/V2+2.0D0)*EXPON)
   
   !---- G for ideal gas
   H0=-393510.010
@@ -1616,43 +1670,46 @@ SUBROUTINE DUAN06CO2HI(T,P,G,VOLUM,FUGCF)
   K3=123800.000D0
   K6=6336.20D0
   K2=-0.002876D0
-  CPDT=K1*(T-T0)+K2*(TT-TT0)/2.0D0 &
-  -K3*(1.0D0/T-1.0D0/T0)+2D0*K4*(SQT-SQT0) &
-  +K6*DLOG(T/T0)
-  CPTDT=K1*DLOG(T/T0)+K2*(T-T0) &
-  -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
-  -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
-  -K6*(1.0D0/T-1.0D0/T0)
+  
+  CPDT=K1*(T-T0) &
+  &   +K2*(TT-TT0)/2.0D0 &
+  &   -K3*(1.0D0/T-1.0D0/T0) &
+  &   +2D0*K4*(SQT-SQT0) &
+  &   +K6*log(T/T0)
+  
+  CPTDT=K1*log(T/T0) &
+  &    +K2*(T-T0) &
+  &    -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
+  &    -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
+  &    -K6*(1.0D0/T-1.0D0/T0)
+  
   G=H0+CPDT-T*(S0+CPTDT)
   
   !---- correct for fugacity
-  FUGCF=DEXP(PHI2)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
+  FUGCF=exp(PHI2)
+  G=G+RT*100.0D0*log(FUGCF*P)
   VOLUM=V*100.0D0
   
-  RETURN
-END SUBROUTINE DUAN06CO2HI
+  return
+end subroutine EoS_CO2_Duan06_HP
 
-SUBROUTINE DUAN06CO2LO(T,P,G,VOLUM,FUGCF)
-  IMPLICIT NONE
-  
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  
-  REAL*8 PR,TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,T,P,Z,V,INTE, &
+subroutine EoS_CO2_Duan06_LP(T,P,G,VOLUM,FUGCF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
+  implicit none
+  !---------------------------------------------------------------------
+  real(dp):: &
+  TR,TR2,TR3,VC,VC2,VC4,VC5,EU3,T,P,Z,V,INTE, &
   V2,V4,V5,EXPON,PHI2,G,H0,S0,K1,K2,K3,K4,K6, &
   CPDT,CPTDT,T0,TT,TT0,SQT,SQT0,FUGCF,VOLUM
-  
+  integer :: NP,NSTAB
+  !---------------------------------------------------------------------
   T0=298.15D0
   TT=T*T
   TT0=T0*T0
-  SQT=DSQRT(T)
-  SQT0=DSQRT(T0)
+  SQT=sqrt(T)
+  SQT0=sqrt(T0)
   
   R=0.08314467D0
   RT=R*T
@@ -1689,14 +1746,17 @@ SUBROUTINE DUAN06CO2LO(T,P,G,VOLUM,FUGCF)
   GAMST1=0.0D0
   
   !---- find the volume
-  CALL DUANZ(T,P,Z,V,INTE)
+  call DuanZ( &
+  & T,P,      &
+  & NP,NSTAB, &
+  & Z,V,INTE)
   
   !---- EQ9 for CO2
   V2=V*V
   V4=V2*V2
   V5=V4*V
-  EXPON=DEXP(-GAMMAVC2/V2)
-  PHI2=-DLOG(Z)+BST2/V+CST2/(2.0D0*V2)+ &
+  EXPON=exp(-GAMMAVC2/V2)
+  PHI2=-log(Z)+BST2/V+CST2/(2.0D0*V2)+ &
   DST2/(4.0D0*V4)+EST2/(5.0D0*V5)
   PHI2=PHI2+((FST2*BETA1+BESTST2*FVC2)/ &
   (2.0D0*GAMMAVC2))*(1.0D0-EXPON)
@@ -1715,75 +1775,78 @@ SUBROUTINE DUAN06CO2LO(T,P,G,VOLUM,FUGCF)
   K6=6336.20D0
   K2=-0.002876D0
   CPDT=K1*(T-T0)+K2*(TT-TT0)/2.0D0 &
-  -K3*(1.0D0/T-1.0D0/T0)+2D0*K4*(SQT-SQT0) &
-  +K6*DLOG(T/T0)
-  CPTDT=K1*DLOG(T/T0)+K2*(T-T0) &
-  -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
-  -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
-  -K6*(1.0D0/T-1.0D0/T0)
+  &   -K3*(1.0D0/T-1.0D0/T0) &
+  &   +2D0*K4*(SQT-SQT0) &
+  &   +K6*log(T/T0)
+  CPTDT=K1*log(T/T0) &
+  &    +K2*(T-T0) &
+  &    -K3*(1.0D0/(TT)-1.0D0/(TT0))/2.0D0 &
+  &    -2D0*K4*(1.0D0/SQT-1.0D0/SQT0) &
+  &    -K6*(1.0D0/T-1.0D0/T0)
   G=H0+CPDT-T*(S0+CPTDT)
   
   !---- correct for fugacity
-  FUGCF=DEXP(PHI2)
-  G=G+RT*100.0D0*DLOG(FUGCF*P)
+  FUGCF=exp(PHI2)
+  G=G+RT*100.0D0*log(FUGCF*P)
   VOLUM=V*100.0D0
   
-  RETURN
-END SUBROUTINE DUAN06CO2LO
+  return
+end subroutine EoS_CO2_Duan06_LP
 
-SUBROUTINE MIXRULESHI(T,P,XF)
-  IMPLICIT NONE
-  
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
-  !! MWT, &
-  !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
-  !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
+subroutine MixRulesHP(T,P,XF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by DUAN06EQHI
+!--
+  implicit none
   
   !---- 1=H2O, 2=CO2, 3=CH4
-  REAL*8 A1(2),A2(2),A3(2),A4(2),A5(2),A6(2),A7(2),A8(2),A9(2), &
-  A10(2),A11(2),A12(2),ALPHA(2),BETA(2),GAMMA(2),TC(2),PC(2), &
+  real(dp):: &
+  A1(2),A2(2),A3(2),A4(2),A5(2),A6(2), &
+  A7(2),A8(2),A9(2),A10(2),A11(2),A12(2), &
+  ALPHA(2),BETA(2),GAMMA(2), &
+  TC(2),PC(2), &
   BB(2),CC(2),DD(2),EE(2),FF(2), &
   BS(2),CS(2),DS(2),ES(2),FS(2), &
   PM(2), &
   VC(2),VC2(2),VC4(2),VC5(2), &
   TR(2),TR2(2),TR3(2),PR(2),P,T,XF(2),EU3
-  INTEGER*4 I,J,K,II,L,M,N
-  REAL*8 K1(2,2),K2(2,2,2),K3(2,2,2), &
+  integer:: I,J,K,II,L,M,N
+  real(dp):: &
+  K1(2,2),K2(2,2,2),K3(2,2,2), &
   BIJ(2,2),VCIJ(2,2),CIJK(2,2,2),VCIJK(2,2,2), &
   DIJKLM(2,2,2,2,2),VCIJKLM(2,2,2,2,2), &
   EIJKLMN(2,2,2,2,2,2),VCIJKLMN(2,2,2,2,2,2), &
   FIJ(2,2),GAMIJK(2,2,2)
   
-  DATA A1  / 4.68071541D-02, 5.72573440D-03/
-  DATA A2  /-2.81275941D-01, 7.94836769D+00/
-  DATA A3  /-2.43926365D-01,-3.84236281D+01/
-  DATA A4  / 1.10016958D-02, 3.71600369D-02/
-  DATA A5  /-3.86603525D-02,-1.92888994D+00/
-  DATA A6  / 9.30095461D-02, 6.64254770D+00/
-  DATA A7  /-1.15747171D-05,-7.02203950D-06/
-  DATA A8  / 4.19873848D-04, 1.77093234D-02/
-  DATA A9  /-5.82739501D-04,-4.81892026D-02/
-  DATA A10 / 1.00936000D-06, 3.88344869D-06/
-  DATA A11 /-1.01713593D-05,-5.54833167D-04/
-  DATA A12 / 1.63934213D-05, 1.70489748D-03/
+  data A1  / 4.68071541D-02, 5.72573440D-03/
+  data A2  /-2.81275941D-01, 7.94836769D+00/
+  data A3  /-2.43926365D-01,-3.84236281D+01/
+  data A4  / 1.10016958D-02, 3.71600369D-02/
+  data A5  /-3.86603525D-02,-1.92888994D+00/
+  data A6  / 9.30095461D-02, 6.64254770D+00/
+  data A7  /-1.15747171D-05,-7.02203950D-06/
+  data A8  / 4.19873848D-04, 1.77093234D-02/
+  data A9  /-5.82739501D-04,-4.81892026D-02/
+  data A10 / 1.00936000D-06, 3.88344869D-06/
+  data A11 /-1.01713593D-05,-5.54833167D-04/
+  data A12 / 1.63934213D-05, 1.70489748D-03/
   
-  DATA ALPHA /-4.49505919D-02,-4.13039220D-01/
-  DATA BETA  /-3.15028174D-01,-8.47988634D+00/
-  DATA GAMMA / 1.25000000D-02, 2.80000000D-02/
+  data ALPHA /-4.49505919D-02,-4.13039220D-01/
+  data BETA  /-3.15028174D-01,-8.47988634D+00/
+  data GAMMA / 1.25000000D-02, 2.80000000D-02/
   
-  DATA TC /647.25D0,304.1282D0/
-  DATA PC /221.19D0,73.773D0/
-  DATA PM /0.0180154D0,0.0440098D0/
+  data TC /647.25D0,304.1282D0/
+  data PC /221.19D0,73.773D0/
+  data PM /0.0180154D0,0.0440098D0/
   
   R=0.08314467D0
   RT=R*T
   EU3=1.0D0/3.0D0
   II=1
       
-  DO I=1,2
+  do I=1,2
+
     PR(I)=P/PC(I)
     TR(I)=T/TC(I)
     TR2(I)=TR(I)*TR(I)
@@ -1799,144 +1862,153 @@ SUBROUTINE MIXRULESHI(T,P,XF)
     EE(I)=A10(I)+A11(I)/TR2(I)+A12(I)/TR3(I)
     FF(I)=ALPHA(I)/TR3(I)
        
-    IF (BB(I)<0.0D0) THEN
+    if (BB(I)<0.0D0) then
       BB(I)=-BB(I)
       BS(I)=-1.0D0
-    ELSE
+    else
       BS(I)=1.0D0
-    END IF
+    end if
     
-    IF (CC(I)<0.0D0) THEN
+    if (CC(I)<0.0D0) then
       CC(I)=-CC(I)
       CS(I)=-1.0D0
-    ELSE
+    else
       CS(I)=1.0D0
-    END IF
+    end if
     
-    IF (DD(I)<0.0D0) THEN
+    if (DD(I)<0.0D0) then
       DD(I)=-DD(I)
       DS(I)=-1.0D0
-    ELSE
+    else
       DS(I)=1.0D0
-    END IF
+    end if
     
-    IF (EE(I)<0.0D0) THEN
+    if (EE(I)<0.0D0) then
       EE(I)=-EE(I)
       ES(I)=-1.0D0
-    ELSE
+    else
       ES(I)=1.0D0
-    END IF
+    end if
     
-    IF (FF(I)<0.0D0) THEN
+    if (FF(I)<0.0D0) then
       FF(I)=-FF(I)
       FS(I)=-1.0D0
-    ELSE
+    else
       FS(I)=1.0D0
-    END IF
+    end if
     
-  END DO
+  end do
 
-  CALL MAKEK1_HI(T,K1,K2,K3)
+  call MAKEK1_HI(T,K1,K2,K3)
 
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       BIJ(I,J)=(((BS(I)*BB(I)**EU3+BS(J)*BB(J)**EU3) &
            /2.0D0)**3)*K1(I,J)
       VCIJ(I,J)=((VC(I)**EU3+VC(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   
   BVC=0.0D0
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       BVC=BVC+XF(I)*XF(J)*BIJ(I,J)*VCIJ(I,J)
-    END DO
-  END DO
+    end do
+  end do
   
   BST1=0.0D0
   BST2=0.0D0
-  DO J=1,2
+  do J=1,2
     BST1=BST1+2.0D0*XF(J)*BIJ(1,J)*VCIJ(1,J)
     BST2=BST2+2.0D0*XF(J)*BIJ(J,2)*VCIJ(J,2)
-  END DO
+  end do
 
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
         CIJK(I,J,K)=(((CS(I)*CC(I)**EU3+CS(J)*CC(J)**EU3+CC(K)**EU3) &
               /3.0D0)**3)*K2(I,J,K)
         VCIJK(I,J,K)=((VC(I)**EU3+VC(J)**EU3+VC(K)**EU3)/3.0D0)**3
-      END DO
-    END DO
-  END DO
+      end do
+    end do
+  end do
   
   CVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
         CVC2=CVC2+XF(I)*XF(J)*XF(K)*CIJK(I,J,K)*VCIJK(I,J,K)**2
-      END DO
-    END DO
-  END DO
+      end do
+    end do
+  end do
   
   CST1=0.0D0
   CST2=0.0D0
-  DO J=1,2
-    DO K=1,2
+  do J=1,2
+    do K=1,2
       CST1=CST1+3.0D0*XF(J)*XF(K)*CIJK(1,J,K)*VCIJK(1,J,K)**2
       CST2=CST2+3.0D0*XF(J)*XF(K)*CIJK(J,2,K)*VCIJK(J,2,K)**2
-    END DO
-  END DO
+    end do
+  end do
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-  DIJKLM(I,J,K,L,M)=((DS(I)*DD(I)**EU3+DS(J)*DD(J)**EU3+ &
-                      DS(K)*DD(K)**EU3+DS(L)*DD(L)**EU3+ &
-                      DS(M)*DD(M)**EU3)/5.0D0)**3
-  VCIJKLM(I,J,K,L,M)=((VC(I)**EU3+VC(J)**EU3+VC(K)**EU3+ &
-                     VC(L)**EU3+VC(M)**EU3)/5.0D0)**3
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+        DIJKLM(I,J,K,L,M)= &
+          ((DS(I)*DD(I)**EU3 &
+          + DS(J)*DD(J)**EU3 &
+          + DS(K)*DD(K)**EU3 &
+          + DS(L)*DD(L)**EU3 &
+          + DS(M)*DD(M)**EU3) /5.0D0)**3
+        VCIJKLM(I,J,K,L,M)= &
+          ((VC(I)**EU3      &
+          + VC(J)**EU3      &
+          + VC(K)**EU3      &
+          + VC(L)**EU3      &
+          + VC(M)**EU3)/5.0D0)**3
+      end do
+     end do
+    end do
+   end do
+  end do
+  
   DVC4=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-  DVC4=DVC4+XF(I)*XF(J)*XF(K)*XF(L)*XF(M)*DIJKLM(I,J,K,L,M)* &
-       VCIJKLM(I,J,K,L,M)**4
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+        DVC4= DVC4 &
+        &   + XF(I)*XF(J)*XF(K)*XF(L)*XF(M) &
+        &     *DIJKLM(I,J,K,L,M)*VCIJKLM(I,J,K,L,M)**4
+      end do
+     end do
+    end do
+   end do
+  end do
   DST1=0.0D0
   DST2=0.0D0
-  DO J=1,2
-   DO K=1,2
-    DO L=1,2
-     DO M=1,2
+  do J=1,2
+   do K=1,2
+    do L=1,2
+     do M=1,2
   DST1=DST1+5.0D0*XF(J)*XF(K)*XF(L)*XF(M)*DIJKLM(1,J,K,L,M)* &
       VCIJKLM(1,J,K,L,M)**4
   DST2=DST2+5.0D0*XF(J)*XF(K)*XF(L)*XF(M)*DIJKLM(J,2,K,L,M)* &
       VCIJKLM(J,2,K,L,M)**4
-     END DO
-    END DO
-   END DO
-  END DO
+     end do
+    end do
+   end do
+  end do
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-       DO N=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+       do N=1,2
   EIJKLMN(I,J,K,L,M,N)=((ES(I)*EE(I)**EU3+ES(J)*EE(J)**EU3+ &
                          ES(K)*EE(K)**EU3+ES(L)*EE(L)**EU3+ &
                          ES(M)*EE(M)**EU3+ &
@@ -1944,111 +2016,116 @@ SUBROUTINE MIXRULESHI(T,P,XF)
   VCIJKLMN(I,J,K,L,M,N)=((VC(I)**EU3+VC(J)**EU3+ &
                           VC(K)**EU3+VC(L)**EU3+ &
                           VC(M)**EU3+VC(N)**EU3)/6.0D0)**3
-       END DO
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+       end do
+      end do
+     end do
+    end do
+   end do
+  end do
   EVC5=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-       DO N=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+       do N=1,2
         EVC5=EVC5+XF(I)*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
         EIJKLMN(I,J,K,L,M,N)*VCIJKLMN(I,J,K,L,M,N)**5
-       END DO
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+       end do
+      end do
+     end do
+    end do
+   end do
+  end do
+  
   EST1=0.0D0
   EST2=0.0D0
-  DO J=1,2
-   DO K=1,2
-    DO L=1,2
-     DO M=1,2
-      DO N=1,2
+  do J=1,2
+   do K=1,2
+    do L=1,2
+     do M=1,2
+      do N=1,2
        EST1=EST1+6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
        EIJKLMN(1,J,K,L,M,N)*VCIJKLMN(1,J,K,L,M,N)**5
        EST2=EST2+6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
        EIJKLMN(J,2,K,L,M,N)*VCIJKLMN(J,2,K,L,M,N)**5
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+      end do
+     end do
+    end do
+   end do
+  end do
       
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FIJ(I,J)=((FS(I)*FF(I)**EU3+FS(J)*FF(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   
   FVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FVC2=FVC2+XF(I)*XF(J)*FIJ(I,J)*VCIJ(I,J)**2
-    END DO
-  END DO
+    end do
+  end do
   
   FST1=0.0D0
   FST2=0.0D0
-  DO J=1,2
+  do J=1,2
     FST1=FST1+2.0D0*XF(J)*FIJ(1,J)*VCIJ(1,J)**2
     FST2=FST2+2.0D0*XF(J)*FIJ(J,2)*VCIJ(J,2)**2
-  END DO
+  end do
       
   BETA1=0.0D0
-  DO I=1,2
+  do I=1,2
     BETA1=BETA1+XF(I)*BETA(I)
-  END DO
+  end do
   BESTST1=BETA(1)
   BESTST2=BETA(2)
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-  GAMIJK(I,J,K)=(((GAMMA(I)**EU3+GAMMA(J)**EU3+ &
-  GAMMA(K)**EU3)/3.0D0)**3)*K3(I,J,K)
-    END DO
-   END DO
-  END DO
+  do I=1,2
+   do J=1,2
+    do K=1,2
+      GAMIJK(I,J,K)=(((GAMMA(I)**EU3+GAMMA(J)**EU3+ &
+      GAMMA(K)**EU3)/3.0D0)**3)*K3(I,J,K)
+    end do
+   end do
+  end do
   
   GAMMAVC2=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-    GAMMAVC2=GAMMAVC2+XF(I)*XF(J)*XF(K)*GAMIJK(I,J,K)* &
-    VCIJK(I,J,K)**2
-    END DO
-   END DO
-  END DO
+  do I=1,2
+   do J=1,2
+    do K=1,2
+      GAMMAVC2=GAMMAVC2+XF(I)*XF(J)*XF(K)*GAMIJK(I,J,K)* &
+      VCIJK(I,J,K)**2
+    end do
+   end do
+  end do
   
   GAMST1=0.0D0
   GAMST2=0.0D0
-  DO J=1,2
-  DO K=1,2
-   GAMST1=GAMST1+3.0D0*XF(J)*XF(K)*GAMIJK(1,J,K)* &
-   VCIJK(1,J,K)**2
-   GAMST2=GAMST2+3.0D0*XF(J)*XF(K)*GAMIJK(J,2,K)* &
-   VCIJK(J,2,K)**2
-   END DO
-  END DO
+  do J=1,2
+    do K=1,2
+      GAMST1=GAMST1+3.0D0*XF(J)*XF(K)*GAMIJK(1,J,K)* &
+      VCIJK(1,J,K)**2
+      GAMST2=GAMST2+3.0D0*XF(J)*XF(K)*GAMIJK(J,2,K)* &
+      VCIJK(J,2,K)**2
+    end do
+  end do
   
   MWT=XF(1)*PM(1)+XF(2)*PM(2)
   
-  RETURN
-END SUBROUTINE MIXRULESHI
+  return
+end subroutine MixRulesHP
 
-SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
-  IMPLICIT NONE
+subroutine MAKEK1_HI(T,K1,K2,K3)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by MixRulesHP
+!--
+  implicit none
   
-  REAL*8 T,K1(2,2),K2(2,2,2),K3(2,2,2),T2
-  INTEGER*4 I,J,K
+  real(dp):: T,T2
+  real(dp):: K1(2,2),K2(2,2,2),K3(2,2,2)
   
   !--- bis jetzt nur index 1 und 2
   !---- 1=H2O, 2=CO2, 3=CH4
@@ -2067,7 +2144,7 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
   K3(2,2,2)=1.0D0
 
   !----- binary H2O-CO2
-  IF (T<=373.15) THEN
+  if (T<=373.15) then
     K1(1,2)=0.20611+0.0006*T
     K1(2,1)=K1(1,2)
     
@@ -2084,11 +2161,11 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
 
-  IF (T>373.15.AND.T<=495.15) THEN
-    K1(1,2)=-10084.5042-4.27134485*T+256477.783/T+ &
-          0.00166997474*T2+1816.78*DLOG(T)
+  if (T>373.15.and.T<=495.15) then
+    K1(1,2)=-10084.5042-4.27134485*T &
+    &       +256477.783/T+0.00166997474*T2+1816.78*log(T)
     K1(2,1)=K1(1,2)
     
     K2(1,1,2)=9.000263-0.00623494*T-2307.7125/T
@@ -2098,16 +2175,15 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
     
-    K3(1,1,2)=-74.1163+0.1800496*T-1.40904946E-04*T2+ &
-          10130.5246/T
+    K3(1,1,2)=-74.1163+0.1800496*T-1.40904946E-04*T2+10130.5246/T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  IF (T>495.15.AND.T<=623.15) THEN
+  if (T>495.15.and.T<=623.15) then
     K1(1,2)=-0.3568+7.8888E-04*T+333.399/T
     K1(2,1)=K1(1,2)
     
@@ -2124,14 +2200,13 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  IF (T>623.15 .AND. T<=672.15) THEN
+  if (T>623.15 .and. T<=672.15) then
     K1(1,2)=-4.53122+0.0042113*T+1619.7/T
     K1(2,1)=K1(1,2)
     
-    K2(1,1,2)=-163.4855+0.190552*T-7.228514E-05*T2+ &
-          46082.885/T
+    K2(1,1,2)=-163.4855+0.190552*T-7.228514E-05*T2+46082.885/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
@@ -2144,9 +2219,9 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  !!!!      IF (T>672.15) THEN
+  !!!!      if (T>672.15) then
     K1(1,2)=9.034D0-7.9212D-3*T+2.3285D-6*T2-2.4221D+03/T
     K1(2,1)=K1(1,2)
     
@@ -2163,64 +2238,73 @@ SUBROUTINE MAKEK1_HI(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  !!!!      END IF
+  !!!!      end if
   
-  RETURN
-END SUBROUTINE MAKEK1_HI
+  return
+end subroutine MAKEK1_HI
 
-SUBROUTINE MIXRULESLO(T,P,XF)
-  IMPLICIT NONE
+subroutine MixRulesLP(T,P,XF)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!-- called by DUAN06EQLO
+!--
+  implicit none
   
-  !! REAL*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
+  !! real*8 BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT,MWT, &
   !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
-  !! COMMON /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
+  !! common /DTHINGS/ BVC,CVC2,DVC4,EVC5,FVC2,BETA1,GAMMAVC2,R,RT, &
   !! MWT, &
   !! BST1,CST1,DST1,EST1,FST1,BESTST1,GAMST1, &
   !! BST2,CST2,DST2,EST2,FST2,BESTST2,GAMST2
       
   !---- 1=H2O, 2=CO2, 3=CH4
-  REAL*8 A1(2),A2(2),A3(2),A4(2),A5(2),A6(2),A7(2),A8(2),A9(2), &
-  A10(2),A11(2),A12(2),ALPHA(2),BETA(2),GAMMA(2),TC(2),PC(2), &
+  real(dp):: &
+  A1(2),A2(2),A3(2),A4(2),A5(2),A6(2), &
+  A7(2),A8(2),A9(2),A10(2),A11(2),A12(2), &
+  ALPHA(2),BETA(2),GAMMA(2), &
+  TC(2),PC(2), &
   BB(2),CC(2),DD(2),EE(2),FF(2), &
   BS(2),CS(2),DS(2),ES(2),FS(2), &
   PM(2), &
   VC(2),VC2(2),VC4(2),VC5(2), &
   TR(2),TR2(2),TR3(2),PR(2),P,T,XF(2),EU3
-  INTEGER*4 I,J,K,II,L,M,N
-  REAL*8 K1(2,2),K2(2,2,2),K3(2,2,2), &
-  BIJ(2,2),VCIJ(2,2),CIJK(2,2,2),VCIJK(2,2,2), &
+  integer:: I,J,K,II,L,M,N
+  real(dp):: &
+  K1(2,2),K2(2,2,2),K3(2,2,2), &
+  BIJ(2,2),VCIJ(2,2), &
+  CIJK(2,2,2),VCIJK(2,2,2), &
   DIJKLM(2,2,2,2,2),VCIJKLM(2,2,2,2,2), &
   EIJKLMN(2,2,2,2,2,2),VCIJKLMN(2,2,2,2,2,2), &
   FIJ(2,2),GAMIJK(2,2,2)
   
-  DATA A1  / 4.38269941D-02, 1.14400435D-01/
-  DATA A2  /-1.68244362D-01,-9.38526684D-01/
-  DATA A3  /-2.36923373D-01, 7.21857006D-01/
-  DATA A4  / 1.13027462D-02, 8.81072902D-03/
-  DATA A5  /-7.67764181D-02, 6.36473911D-02/
-  DATA A6  / 9.71820593D-02,-7.70822213D-02/
-  DATA A7  / 6.62674916D-05, 9.01506064D-04/
-  DATA A8  / 1.06637349D-03,-6.81834166D-03/
-  DATA A9  /-1.23265258D-03, 7.32364258D-03/
-  DATA A10 /-8.93953948D-06,-1.10288237D-04/
-  DATA A11 /-3.88124606D-05, 1.26524193D-03/
-  DATA A12 / 5.61510206D-05,-1.49730823D-03/
+  data A1  / 4.38269941D-02, 1.14400435D-01/
+  data A2  /-1.68244362D-01,-9.38526684D-01/
+  data A3  /-2.36923373D-01, 7.21857006D-01/
+  data A4  / 1.13027462D-02, 8.81072902D-03/
+  data A5  /-7.67764181D-02, 6.36473911D-02/
+  data A6  / 9.71820593D-02,-7.70822213D-02/
+  data A7  / 6.62674916D-05, 9.01506064D-04/
+  data A8  / 1.06637349D-03,-6.81834166D-03/
+  data A9  /-1.23265258D-03, 7.32364258D-03/
+  data A10 /-8.93953948D-06,-1.10288237D-04/
+  data A11 /-3.88124606D-05, 1.26524193D-03/
+  data A12 / 5.61510206D-05,-1.49730823D-03/
   
-  DATA ALPHA / 7.51274488D-03, 7.81940730D-03/
-  DATA BETA  / 2.51598931D+00,-4.22918013D+00/
-  DATA GAMMA / 3.94000000D-02, 1.58500000D-01/
+  data ALPHA / 7.51274488D-03, 7.81940730D-03/
+  data BETA  / 2.51598931D+00,-4.22918013D+00/
+  data GAMMA / 3.94000000D-02, 1.58500000D-01/
   
-  DATA TC /647.25D0,304.1282D0/
-  DATA PC /221.19D0,73.773D0/
-  DATA PM /0.0180154D0,0.0440098D0/
+  data TC /647.25D0,304.1282D0/
+  data PC /221.19D0,73.773D0/
+  data PM /0.0180154D0,0.0440098D0/
   
   R=0.08314467D0
   RT=R*T
   EU3=1.0D0/3.0D0
   II=1
       
-  DO I=1,2
+  do I=1,2
     PR(I)=P/PC(I)
     TR(I)=T/TC(I)
     TR2(I)=TR(I)*TR(I)
@@ -2236,91 +2320,91 @@ SUBROUTINE MIXRULESLO(T,P,XF)
     EE(I)=A10(I)+A11(I)/TR2(I)+A12(I)/TR3(I)
     FF(I)=ALPHA(I)/TR3(I)
     
-    IF (BB(I).LT.0.0D0) THEN
-     BB(I)=-BB(I)
-     BS(I)=-1.0D0
-    ELSE
-     BS(I)=1.0D0
-    END IF
-    IF (CC(I).LT.0.0D0) THEN
-     CC(I)=-CC(I)
-     CS(I)=-1.0D0
-    ELSE
-     CS(I)=1.0D0
-    END IF
-    IF (DD(I).LT.0.0D0) THEN
-     DD(I)=-DD(I)
-     DS(I)=-1.0D0
-    ELSE
-     DS(I)=1.0D0
-    END IF
-    IF (EE(I).LT.0.0D0) THEN
-     EE(I)=-EE(I)
-     ES(I)=-1.0D0
-    ELSE
-     ES(I)=1.0D0
-    END IF
-    IF (FF(I).LT.0.0D0) THEN
+    if (BB(I).LT.0.0D0) then
+      BB(I)=-BB(I)
+      BS(I)=-1.0D0
+    else
+      BS(I)=1.0D0
+    end if
+    if (CC(I).LT.0.0D0) then
+      CC(I)=-CC(I)
+      CS(I)=-1.0D0
+    else
+      CS(I)=1.0D0
+    end if
+    if (DD(I).LT.0.0D0) then
+      DD(I)=-DD(I)
+      DS(I)=-1.0D0
+    else
+      DS(I)=1.0D0
+    end if
+    if (EE(I).LT.0.0D0) then
+      EE(I)=-EE(I)
+      ES(I)=-1.0D0
+    else
+      ES(I)=1.0D0
+    end if
+    if (FF(I).LT.0.0D0) then
      FF(I)=-FF(I)
      FS(I)=-1.0D0
-    ELSE
+    else
      FS(I)=1.0D0
-    END IF
+    end if
     
-  END DO
+  end do
       
-  CALL MAKEK1_LO(T,K1,K2,K3)
+  call MAKEK1_LO(T,K1,K2,K3)
       
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       BIJ(I,J)=(((BS(I)*BB(I)**EU3+BS(J)*BB(J)**EU3)/2.0D0)**3)*K1(I,J)
       VCIJ(I,J)=((VC(I)**EU3+VC(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   BVC=0.0D0
-  DO I=1,2
-   DO J=1,2
+  do I=1,2
+   do J=1,2
   BVC=BVC+XF(I)*XF(J)*BIJ(I,J)*VCIJ(I,J)
-   END DO
-  END DO
+   end do
+  end do
   BST1=0.0D0
   BST2=0.0D0
-  DO J=1,2
+  do J=1,2
    BST1=BST1+2.0D0*XF(J)*BIJ(1,J)*VCIJ(1,J)
    BST2=BST2+2.0D0*XF(J)*BIJ(J,2)*VCIJ(J,2)
-  END DO
+  end do
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
   CIJK(I,J,K)=(((CS(I)*CC(I)**EU3+CS(J)*CC(J)**EU3+CC(K)**EU3) &
               /3.0D0)**3)*K2(I,J,K)
   VCIJK(I,J,K)=((VC(I)**EU3+VC(J)**EU3+VC(K)**EU3)/3.0D0)**3
-    END DO
-   END DO
-  END DO
+    end do
+   end do
+  end do
   CVC2=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
   CVC2=CVC2+XF(I)*XF(J)*XF(K)*CIJK(I,J,K)*VCIJK(I,J,K)**2
-    END DO
-   END DO
-  END DO
+    end do
+   end do
+  end do
   CST1=0.0D0
   CST2=0.0D0
-  DO J=1,2
-   DO K=1,2
+  do J=1,2
+   do K=1,2
     CST1=CST1+3.0D0*XF(J)*XF(K)*CIJK(1,J,K)*VCIJK(1,J,K)**2
     CST2=CST2+3.0D0*XF(J)*XF(K)*CIJK(J,2,K)*VCIJK(J,2,K)**2
-   END DO
-  END DO
+   end do
+  end do
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
         DIJKLM(I,J,K,L,M)= &
         & ((DS(I)*DD(I)**EU3+DS(J)*DD(J)**EU3+ &
             DS(K)*DD(K)**EU3+DS(L)*DD(L)**EU3+ &
@@ -2328,48 +2412,48 @@ SUBROUTINE MIXRULESLO(T,P,XF)
         VCIJKLM(I,J,K,L,M)= &
         & ((VC(I)**EU3+VC(J)**EU3+VC(K)**EU3+ &
             VC(L)**EU3+VC(M)**EU3)/5.0D0)**3
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+      end do
+     end do
+    end do
+   end do
+  end do
   
   DVC4=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
        DVC4=DVC4 &
        &   + XF(I)*XF(J)*XF(K)*XF(L)*XF(M) &
        &    *DIJKLM(I,J,K,L,M)*VCIJKLM(I,J,K,L,M)**4
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+      end do
+     end do
+    end do
+   end do
+  end do
   
   DST1=0.0D0
   DST2=0.0D0
-  DO J=1,2
-   DO K=1,2
-    DO L=1,2
-     DO M=1,2
+  do J=1,2
+   do K=1,2
+    do L=1,2
+     do M=1,2
       DST1=DST1+5.0D0*XF(J)*XF(K)*XF(L)*XF(M)*DIJKLM(1,J,K,L,M)* &
       VCIJKLM(1,J,K,L,M)**4
       DST2=DST2+5.0D0*XF(J)*XF(K)*XF(L)*XF(M)*DIJKLM(J,2,K,L,M)* &
       VCIJKLM(J,2,K,L,M)**4
-     END DO
-    END DO
-   END DO
-  END DO
+     end do
+    end do
+   end do
+  end do
       
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-       DO N=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+       do N=1,2
         EIJKLMN(I,J,K,L,M,N)= &
         & ((ES(I)*EE(I)**EU3 +ES(J)*EE(J)**EU3 &
         & + ES(K)*EE(K)**EU3 +ES(L)*EE(L)**EU3 &
@@ -2378,113 +2462,116 @@ SUBROUTINE MIXRULESLO(T,P,XF)
         & ((VC(I)**EU3+VC(J)**EU3 &
         & + VC(K)**EU3+VC(L)**EU3 &
         & + VC(M)**EU3+VC(N)**EU3)/6.0D0)**3
-       END DO
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+       end do
+      end do
+     end do
+    end do
+   end do
+  end do
   EVC5=0.0D0
-  DO I=1,2
-   DO J=1,2
-    DO K=1,2
-     DO L=1,2
-      DO M=1,2
-       DO N=1,2
+  do I=1,2
+   do J=1,2
+    do K=1,2
+     do L=1,2
+      do M=1,2
+       do N=1,2
   EVC5=EVC5+XF(I)*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
   EIJKLMN(I,J,K,L,M,N)*VCIJKLMN(I,J,K,L,M,N)**5
-       END DO
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+       end do
+      end do
+     end do
+    end do
+   end do
+  end do
   EST1=0.0D0
   EST2=0.0D0
-  DO J=1,2
-   DO K=1,2
-    DO L=1,2
-     DO M=1,2
-      DO N=1,2
+  do J=1,2
+   do K=1,2
+    do L=1,2
+     do M=1,2
+      do N=1,2
  EST1=EST1+6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
  EIJKLMN(1,J,K,L,M,N)*VCIJKLMN(1,J,K,L,M,N)**5
  EST2=EST2+6.0D0*XF(J)*XF(K)*XF(L)*XF(M)*XF(N)* &
  EIJKLMN(J,2,K,L,M,N)*VCIJKLMN(J,2,K,L,M,N)**5
-      END DO
-     END DO
-    END DO
-   END DO
-  END DO
+      end do
+     end do
+    end do
+   end do
+  end do
       
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FIJ(I,J)=((FS(I)*FF(I)**EU3+FS(J)*FF(J)**EU3)/2.0D0)**3
-    END DO
-  END DO
+    end do
+  end do
   FVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
+  do I=1,2
+    do J=1,2
       FVC2=FVC2+XF(I)*XF(J)*FIJ(I,J)*VCIJ(I,J)**2
-    END DO
-  END DO
+    end do
+  end do
   
   FST1=0.0D0
   FST2=0.0D0
-  DO J=1,2
+  do J=1,2
     FST1=FST1+2.0D0*XF(J)*FIJ(1,J)*VCIJ(1,J)**2
     FST2=FST2+2.0D0*XF(J)*FIJ(J,2)*VCIJ(J,2)**2
-  END DO
+  end do
   
   BETA1=0.0D0
-  DO I=1,2
+  do I=1,2
     BETA1=BETA1+XF(I)*BETA(I)
-  END DO
+  end do
   BESTST1=BETA(1)
   BESTST2=BETA(2)
       
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
         GAMIJK(I,J,K)=(((GAMMA(I)**EU3+GAMMA(J)**EU3+ &
         GAMMA(K)**EU3)/3.0D0)**3)*K3(I,J,K)
-      END DO
-    END DO
-  END DO
+      end do
+    end do
+  end do
   
   GAMMAVC2=0.0D0
-  DO I=1,2
-    DO J=1,2
-      DO K=1,2
+  do I=1,2
+    do J=1,2
+      do K=1,2
         GAMMAVC2=GAMMAVC2+XF(I)*XF(J)*XF(K)*GAMIJK(I,J,K)* &
         VCIJK(I,J,K)**2
-      END DO
-    END DO
-  END DO
+      end do
+    end do
+  end do
   
   GAMST1=0.0D0
   GAMST2=0.0D0
-  DO J=1,2
-    DO K=1,2
+  do J=1,2
+    do K=1,2
       GAMST1=GAMST1+3.0D0*XF(J)*XF(K)*GAMIJK(1,J,K)* &
       VCIJK(1,J,K)**2
       GAMST2=GAMST2+3.0D0*XF(J)*XF(K)*GAMIJK(J,2,K)* &
       VCIJK(J,2,K)**2
-    END DO
-  END DO
+    end do
+  end do
   
   MWT=XF(1)*PM(1)+XF(2)*PM(2)
   
-  RETURN
-END SUBROUTINE MIXRULESLO
+  return
+end subroutine MixRulesLP
 
-SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
+subroutine MAKEK1_LO(T,K1,K2,K3)
+!--
+!-- code (MODIFIED) from THERIAK / C DeCapitani
+!--
 
-  IMPLICIT NONE
+  implicit none
   
-  REAL(dp),INTENT(IN) :: T
-  REAL(dp),INTENT(OUT):: K1(2,2),K2(2,2,2),K3(2,2,2)
+  real(dp),intent(in) :: T
+  real(dp),intent(out):: K1(2,2),K2(2,2,2),K3(2,2,2)
   
-  REAL(dp):: T2
+  real(dp):: T2
   
   !--- bis jetzt nur index 1 und 2
   !---- 1=H2O, 2=CO2, 3=CH4
@@ -2502,7 +2589,7 @@ SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
   K3(2,2,2)=1.0D0
   
   !----- binary H2O-CO2
-  IF (T<=373.15) THEN
+  if (T<=373.15) then
     K1(1,2)=0.20611+0.0006*T
     K1(2,1)=K1(1,2)
     K2(1,1,2)=0.8023278-0.0022206*T+184.76824/T
@@ -2517,11 +2604,11 @@ SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  IF (T > 373.15.AND.T<=495.15) THEN
-    K1(1,2)=-10084.5042-4.27134485*T+256477.783/T+ &
-    0.00166997474*T2+1816.78*DLOG(T)
+  if (T > 373.15.and.T<=495.15) then
+    K1(1,2)=-10084.5042-4.27134485*T+256477.783/T &
+    &       +0.00166997474*T2+1816.78*log(T)
     K1(2,1)=K1(1,2)
     K2(1,1,2)=9.000263-0.00623494*T-2307.7125/T
     K2(1,2,1)=K2(1,1,2)
@@ -2529,16 +2616,15 @@ SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
     K2(1,2,2)=K2(1,1,2)
     K2(2,1,2)=K2(1,1,2)
     K2(2,2,1)=K2(1,1,2)
-    K3(1,1,2)=-74.1163+0.1800496*T-1.40904946E-04*T2+ &
-    10130.5246/T
+    K3(1,1,2)=-74.1163+0.1800496*T-1.40904946E-04*T2+10130.5246/T
     K3(1,2,1)=K3(1,1,2)
     K3(2,1,1)=K3(1,1,2)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  IF (T > 495.15.AND.T<=623.15) THEN
+  if (T > 495.15.and.T<=623.15) then
     K1(1,2)=-0.3568+7.8888E-04*T+333.399/T
     K1(2,1)=K1(1,2)
     K2(1,1,2)=-19.97444+0.0192515*T+5707.4229/T
@@ -2553,13 +2639,12 @@ SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   !--
-  IF (T > 623.15.AND.T<=672.15) THEN
+  if (T > 623.15.and.T<=672.15) then
     K1(1,2)=-4.53122+0.0042113*T+1619.7/T
     K1(2,1)=K1(1,2)
-    K2(1,1,2)=-163.4855+0.190552*T-7.228514E-05*T2+ &
-    46082.885/T
+    K2(1,1,2)=-163.4855+0.190552*T-7.228514E-05*T2+46082.885/T
     K2(1,2,1)=K2(1,1,2)
     K2(2,1,1)=K2(1,1,2)
     K2(1,2,2)=K2(1,1,2)
@@ -2571,26 +2656,26 @@ SUBROUTINE MAKEK1_LO(T,K1,K2,K3)
     K3(1,2,2)=K3(1,1,2)
     K3(2,1,2)=K3(1,1,2)
     K3(2,2,1)=K3(1,1,2)
-  END IF
+  end if
   
-  IF (T > 672.15) THEN
-  K1(1,2)=3.131D0-5.0624D-3*T+1.8641D-6*T2-31.409D0/T
-  K1(2,1)=K1(1,2)
-  K2(1,1,2)=-46.646D0+4.2877D-2*T-1.0892D-5*T2+1.5782D4/T
-  K2(1,2,1)=K2(1,1,2)
-  K2(2,1,1)=K2(1,1,2)
-  K2(1,2,2)=K2(1,1,2)
-  K2(2,1,2)=K2(1,1,2)
-  K2(2,2,1)=K2(1,1,2)
-  K3(1,1,2)=0.9D0
-  K3(1,2,1)=K3(1,1,2)
-  K3(2,1,1)=K3(1,1,2)
-  K3(1,2,2)=K3(1,1,2)
-  K3(2,1,2)=K3(1,1,2)
-  K3(2,2,1)=K3(1,1,2)
-  END IF
+  if (T > 672.15) then
+    K1(1,2)=3.131D0-5.0624D-3*T+1.8641D-6*T2-31.409D0/T
+    K1(2,1)=K1(1,2)
+    K2(1,1,2)=-46.646D0+4.2877D-2*T-1.0892D-5*T2+1.5782D4/T
+    K2(1,2,1)=K2(1,1,2)
+    K2(2,1,1)=K2(1,1,2)
+    K2(1,2,2)=K2(1,1,2)
+    K2(2,1,2)=K2(1,1,2)
+    K2(2,2,1)=K2(1,1,2)
+    K3(1,1,2)=0.9D0
+    K3(1,2,1)=K3(1,1,2)
+    K3(2,1,1)=K3(1,1,2)
+    K3(1,2,2)=K3(1,1,2)
+    K3(2,1,2)=K3(1,1,2)
+    K3(2,2,1)=K3(1,1,2)
+  end if
   
-  RETURN
-END SUBROUTINE MAKEK1_LO
+  return
+end subroutine MAKEK1_LO
 
-END MODULE M_Mixmodel_Duan
+end module M_Mixmodel_Duan

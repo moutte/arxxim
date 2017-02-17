@@ -1,87 +1,88 @@
-MODULE M_MixModel_Special
-  USE M_Kinds
-  USE M_Dtb_Const, ONLY: R_jk
-  USE M_Trace,ONLY: Stop_
-  IMPLICIT NONE
+module M_MixModel_Special
+  use M_Kinds
+  use M_Dtb_Const, only: R_jk
+  use M_Trace,only: Stop_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: MixModel_Special_Activities
+  public:: MixModel_Special_Activities
 
-CONTAINS
+contains
 
-SUBROUTINE MixModel_Special_Activities( &
-& sKey,   &
+subroutine MixModel_Special_Activities( &
+& sKey,       &
 & TdgK, Pbar, &
-& vX,     &
-& vLPole, &
-& vLActIdl,  &
+& vX,         &
+& vLPole,     &
+& vLActIdl,   &
 & vLGam)
-  CHARACTER(LEN=*),INTENT(IN) :: sKey
-  REAL(dp),INTENT(IN) :: TdgK, Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  LOGICAL, INTENT(IN) :: vLPole(:)
-  REAL(dp),INTENT(OUT):: vLActIdl(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  character(len=*),intent(in) :: sKey
+  real(dp),intent(in) :: TdgK, Pbar
+  real(dp),intent(in) :: vX(:)
+  logical, intent(in) :: vLPole(:)
+  real(dp),intent(out):: vLActIdl(:)
+  real(dp),intent(out):: vLGam(:)
   !
-  INTEGER:: N
-  REAL(dp),ALLOCATABLE:: vActId(:)
+  integer:: N
+  real(dp),allocatable:: vActId(:)
   !
-  N= SIZE(vX)
-  ALLOCATE(vActId(N))
+  N= size(vX)
+  allocate(vActId(N))
   !
-  SELECT CASE(TRIM(sKey))
+  select case(trim(sKey))
 
-    CASE("SPECIAL_2")        ;  CALL Special_2(TdgK,vX,vActId,vLGam)
-    CASE("SPECIAL_3")        ;  CALL Special_3(TdgK,vX,vActId,vLGam)
+  case("SPECIAL_2")        ;  call Special_2(TdgK,vX,vActId,vLGam)
+  case("SPECIAL_3")        ;  call Special_3(TdgK,vX,vActId,vLGam)
 
-    CASE("FLUID_KERJAC")     ;  CALL Fluid_KerJac(TdgK,Pbar,vX,vActId,vLGam)
+  case("FLUID_KERJAC")     ;  call Fluid_KerJac(TdgK,Pbar,vX,vActId,vLGam)
+  case("FLUID_DUAN92")     ;  call Fluid_Duan92(TdgK,Pbar,vX,vActId,vLGam)
 
-    CASE("FELSPAR_GH84")     ;  CALL Felspar_Gh84(TdgK,vX,vActId,vLGam)
-    CASE("FELSPAR_HP03A")    ;  CALL Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("FELSPAR_HP03B")    ;  CALL Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("FELSPAR_HP03C")    ;  CALL Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
+  case("FELSPAR_GH84")     ;  call Felspar_Gh84(TdgK,vX,vActId,vLGam)
+  case("FELSPAR_HP03A")    ;  call Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
+  case("FELSPAR_HP03B")    ;  call Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
+  case("FELSPAR_HP03C")    ;  call Felspar_HP03(TdgK,Pbar,vX,vActId,vLGam)
 
-    CASE("CORDIERITE_HP05")  ;  CALL Cordierite_HP05(TdgK,vX,vActId,vLGam)
-    CASE("CORDIERITE_HPWEB") ;  CALL Cordierite_HPWeb(TdgK,vX,vActId,vLGam)
+  case("CORDIERITE_HP05")  ;  call Cordierite_HP05(TdgK,vX,vActId,vLGam)
+  case("CORDIERITE_HPWEB") ;  call Cordierite_HPWeb(TdgK,vX,vActId,vLGam)
 
-    CASE("BIOTITE_HP05")     ;  CALL Biotite_HP05(TdgK,vX,vActId,vLGam)
-    CASE("BIOTITE_HP98")     ;  CALL Biotite_HP98(TdgK,vX,vActId,vLGam)
-    CASE("BIOTITE_HPWEB")    ;  CALL Biotite_HPWeb(TdgK,vX,vActId,vLGam)
-    CASE("MUSCOVITE_HP05")   ;  CALL Muscovite_HPWeb(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("MICA_VIDAL")       ;  CALL Mica_Vidal(TdgK,Pbar,vX,vActId,vLGam)
+  case("BIOTITE_HP05")     ;  call Biotite_HP05(TdgK,vX,vActId,vLGam)
+  case("BIOTITE_HP98")     ;  call Biotite_HP98(TdgK,vX,vActId,vLGam)
+  case("BIOTITE_HPWEB")    ;  call Biotite_HPWeb(TdgK,vX,vActId,vLGam)
+  case("MUSCOVITE_HP05")   ;  call Muscovite_HPWeb(TdgK,Pbar,vX,vActId,vLGam)
+  case("MICA_VIDAL")       ;  call Mica_Vidal(TdgK,Pbar,vX,vActId,vLGam)
 
-    CASE("OPX_HP05")         ;  CALL Opx_HP05(TdgK,vX,vActId,vLGam)
-    CASE("CHLORITE_VIDAL")   ;  CALL Chlorite_Vidal(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("CHLORITE_VIDAL2")  ;  CALL Chlorite_Vidal_Ideal(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("CHLORITE_FE")      ;  CALL Chlorite_Fe(TdgK,vX,vActId,vLGam)
-    CASE("CHLORITE_HP05")    ;  CALL Chlorite_HPWeb(TdgK,vX,vActId,vLGam)
+  case("OPX_HP05")         ;  call Opx_HP05(TdgK,vX,vActId,vLGam)
+  case("CHLORITE_VIDAL")   ;  call Chlorite_Vidal(TdgK,Pbar,vX,vActId,vLGam)
+  case("CHLORITE_VIDAL2")  ;  call Chlorite_Vidal_Ideal(TdgK,Pbar,vX,vActId,vLGam)
+  case("CHLORITE_FE")      ;  call Chlorite_Fe(TdgK,vX,vActId,vLGam)
+  case("CHLORITE_HP05")    ;  call Chlorite_HPWeb(TdgK,vX,vActId,vLGam)
 
-    !--- AVCHENKO MODELS
-    CASE("BIOTITE_AVCH")     ;  CALL Biotite_Avchenko(TdgK,vX,vActId,vLGam)
-    CASE("CORDIERITE_AVCH")  ;  CALL Cordierite_Avchenko(TdgK,vX,vActId,vLGam)
-    CASE("OPX_AVCH")         ;  CALL Opx_Avchenko(TdgK,vX,vActId,vLGam)
-    CASE("TALC_AVCH")        ;  CALL Talc_Avchenko(TdgK,vX,vActId,vLGam)
-    CASE("EPIDOTE_AVCH")     ;  CALL Epidote_Avchenko(TdgK,vX,vActId,vLGam)
-    CASE("ALKSPAR_AVCH")     ;  CALL Alkspar_Avchenko(TdgK,Pbar,vX,vActId,vLGam)
-    CASE("PLAGIO_AVCH")      ;  CALL Plagio_Avchenko(TdgK,vX,vActId,vLGam)
-    !---/AVCHENKO MODELS
+  !--- AVCHENKO MODELS
+  case("BIOTITE_AVCH")     ;  call Biotite_Avchenko(TdgK,vX,vActId,vLGam)
+  case("CORDIERITE_AVCH")  ;  call Cordierite_Avchenko(TdgK,vX,vActId,vLGam)
+  case("OPX_AVCH")         ;  call Opx_Avchenko(TdgK,vX,vActId,vLGam)
+  case("TALC_AVCH")        ;  call Talc_Avchenko(TdgK,vX,vActId,vLGam)
+  case("EPIDOTE_AVCH")     ;  call Epidote_Avchenko(TdgK,vX,vActId,vLGam)
+  case("ALKSPAR_AVCH")     ;  call Alkspar_Avchenko(TdgK,Pbar,vX,vActId,vLGam)
+  case("PLAGIO_AVCH")      ;  call Plagio_Avchenko(TdgK,vX,vActId,vLGam)
+  !---/AVCHENKO MODELS
 
-    CASE DEFAULT
-      CALL Stop_(TRIM(sKey)//" is NOT A SPECIAL MODEL")
+  case default
+    call Stop_(trim(sKey)//" is NOT A SPECIAL MODEL")
 
-  END SELECT
+  end select
   !
-  WHERE(vLPole(:))  ;  vLActIdl(:)= LOG(vActId(:))
-  ELSEWHERE         ;  vLActIdl(:)= Zero
-  END WHERE
+  where(vLPole(:))  ;  vLActIdl(:)= log(vActId(:))
+  elsewhere         ;  vLActIdl(:)= Zero
+  end where
   !
-  DEALLOCATE(vActId)
+  deallocate(vActId)
   !
-  RETURN
-END SUBROUTINE MixModel_Special_Activities
+  return
+end subroutine MixModel_Special_Activities
 
-SUBROUTINE Special_2( &
+subroutine Special_2( &
 & TdgK,               &
 & X,                  &
 & vActId,vLGam)
@@ -90,15 +91,15 @@ SUBROUTINE Special_2( &
   !  POLE
   !    AA_M1
   !    AB_M1
-  !  END
-  !END
+  !  end
+  !end
   !---------------------------------------------------------------------
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !---------------------------------------------------------------------
-  REAL(dp):: W12
+  real(dp):: W12
   !---------------------------------------------------------------------
   W12= 3.D4
   !
@@ -109,9 +110,9 @@ SUBROUTINE Special_2( &
   vLGam(2)= X(1)*(One-X(2))*W12
   vLGam(:)= vLGam(:) /R_jk/TdgK
   !
-END SUBROUTINE Special_2
+end subroutine Special_2
 
-SUBROUTINE Special_3( &
+subroutine Special_3( &
 & TdgK, &
 & X,    &
 & vActId,vLGam)
@@ -121,14 +122,14 @@ SUBROUTINE Special_3( &
   !    MIN1
   !    MIN2
   !    MIN3
-  !  END
-  !END
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  !  end
+  !end
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
-  REAL(dp):: W12,W23,W31
+  real(dp):: W12,W23,W31
   !---------------------------------------------------------------------
   W12= 3.D4  ;  W23= 3.D4  ;  W31= 3.D4
   !
@@ -142,65 +143,124 @@ SUBROUTINE Special_3( &
   vLGam(3)= (One-X(3)) *( X(1)*W31 + X(2)*W23 ) - X(1)*X(2)*W12
   vLGam(:)= vLGam(:) /R_jk/TdgK
   !
-END SUBROUTINE Special_3
+end subroutine Special_3
 
-SUBROUTINE Fluid_KerJac(TdgK,Pbar,vX,vActId,vLGam)
-  USE M_Eos_KerJac
+subroutine Fluid_KerJac(TdgK,Pbar,vX,vActId,vLGam)
+  use M_Eos_KerJac
   !
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
-
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
+  !
+  real(dp):: XCO2
+  real(dp):: LnPhiH2O_Pur,LnPhiCO2_Pur
+  real(dp):: LnPhiH2O_Mix,LnPhiCO2_Mix
+  real(dp):: LnActH2O,    LnActCO2
+  real(dp):: V_H2O_Pur,   V_CO2_Pur
+  real(dp):: V_m3
+  logical :: Update_Pure
+  !---------------------------------------------------------------------
   vActId(:)= vX(:)
   vLGam(:)=  Zero !vLGam(:) /R_jk/TdgK
+  !
+  XCO2= vX(2)
+  !
+  Update_Pure= .true.
+  !
+  call EoS_H2O_CO2_KerJac( & !
+  & TdgK,Pbar,XCO2,              & !in
+  & Update_Pure,                 & !in
+  & LnPhiH2O_Pur,LnPhiCO2_Pur,   & !inout
+  & V_H2O_Pur,V_CO2_Pur,         & !inout !volumes in cm3 !!!
+  & LnPhiH2O_Mix,LnPhiCO2_Mix,   & !out
+  & LnActH2O,    LnActCO2,       & !out
+  & V_m3)
+  !
+  vLGam(1)= LnActH2O - log(vX(1))
+  vLGam(2)= LnActCO2 - log(vX(2))
+  !
+  return
+end subroutine Fluid_KerJac
 
-  RETURN
-END SUBROUTINE
+subroutine Fluid_Duan92(TdgK,Pbar,vX,vActId,vLGam)
+  use M_Mixmodel_Duan
+  !
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
+  !
+  real(dp):: LnPhiH2O_Pur,LnPhiCO2_Pur
+  real(dp):: V_H2O_Pur,   V_CO2_Pur
+  real(dp):: LnActH2O,    LnActCO2
+  real(dp):: V_m3
+  logical :: Update_Pure
+  !---------------------------------------------------------------------
+  vActId(:)= vX(:)
+  vLGam(:)=  Zero !vLGam(:) /R_jk/TdgK
+  !
+  Update_Pure= .true.
+  LnPhiH2O_Pur= 0.D0
+  LnPhiCO2_Pur= 0.D0
+  !
+  call EoS_H2O_CO2_Duan92(     & !
+  & TdgK,Pbar,vX,              & !in
+  & Update_Pure,               & !in
+  & LnPhiH2O_Pur,LnPhiCO2_Pur, & !inout
+  & V_H2O_Pur,   V_CO2_Pur,    & ! inout
+  & V_m3,LnActH2O,LnActCO2)      ! OUT
+  !
+  vLGam(1)= LnActH2O -log(vX(1))
+  vLGam(2)= LnActCO2 -log(vX(2))
+  !
+  return
+end subroutine Fluid_Duan92
 
-SUBROUTINE Plagio_Wrk( &
+subroutine Plagio_Wrk( &
 & TdgK, &
 & X,    &
 & vActId,vLGam)
 !--
 !-- G-FSP- Ghiorso, 1984
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL FELSPAR_WORK
   !  MODEL SPECIAL
   !  POLE
   !    ALBITE
   !    ANORTHITE
-  !  END
-  !END
+  !  end
+  !end
 
   vActId(1)= X(1) *( One -X(2)**2)       ! albite
   vActId(2)= X(2) *((One +X(2))/2.0D0)**2 ! anorthite
 
+  !-- G-FSP- Ghiorso, 1984
   vLGam(1)= X(2)**2 *( 28211.0974D0 -39485.4998D0*X(1) )
   vLGam(2)= X(1)**2 *( 8468.3475D0  +39485.4998D0*X(2) )
   vLGam(3)= Zero
   !
   vLGam(:)= vLGam(:) /R_jk/TdgK
 
-  RETURN
-END SUBROUTINE Plagio_Wrk
+  return
+end subroutine Plagio_Wrk
 
-SUBROUTINE Felspar_Gh84( &
+subroutine Felspar_Gh84( &
 & TdgK, &
 & X,    &
 & vActId,vLGam)
 !--
 !-- G-FSP- Ghiorso, 1984
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL FELSPAR_GH84
   !  MODEL SPECIAL
@@ -208,33 +268,34 @@ SUBROUTINE Felspar_Gh84( &
   !    ALBITE
   !    ANORTHITE
   !    SANIDINE
-  !  END
-  !END
+  !  end
+  !end
   !
   vActId(1)= X(1) *(Two -X(1))
   vActId(2)= X(2) *(One +X(2)) /4.0D0
   vActId(3)= X(3)
   !
+  !-- G-FSP- Ghiorso, 1984
   vLGam(1)= X(2)**2 *( 28211.0974D0 -39485.4998D0*X(1) )
   vLGam(2)= X(1)**2 *( 8468.3475D0  +39485.4998D0*X(2) )
   vLGam(3)= Zero
   !
   vLGam(:)= vLGam(:) /R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Felspar_Gh84
+  return
+end subroutine Felspar_Gh84
 
-SUBROUTINE Felspar_HP03( &
+subroutine Felspar_HP03( &
 & TdgK, Pbar, &
 & X, &
 & vActId,vLG)
 !--
 !-- (Holland and Powell (2003)) -- David Dolejs, 13-March-05
 !--
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL FELSPAR_HP03A
   !  MODEL SPECIAL
@@ -242,28 +303,28 @@ SUBROUTINE Felspar_HP03( &
   !    MICROCLINE
   !    ALBITE
   !    ANORTHITE-C1
-  !  END
-  !END
-  !! ..OR..
+  !  end
+  !end
+  !! ..or..
   !MIXTURE.MODEL FELSPAR_HP03B
   !  MODEL SPECIAL
   !  POLE
   !    SANIDINE
   !    ALBITE
   !    ANORTHITE-C1
-  !  END
-  !END
-  !! ..OR..
+  !  end
+  !end
+  !! ..or..
   !MIXTURE.MODEL FELSPAR_HP03C
   !  MODEL SPECIAL
   !  POLE
   !    SANIDINE
   !    HIGH-ALBITE
   !    ANORTHITE-C1
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: V1,V2,V3,F1,F2,F3,P
+  real(dp):: V1,V2,V3,F1,F2,F3,P
   !
   P=  Pbar *1.0D-3 ! P in kbar !!
   !
@@ -287,33 +348,33 @@ SUBROUTINE Felspar_HP03( &
   &     + (One-F3)*F2 *Two *V3/(V2+V3) *3.1D3  &
   &     -       F1*F2 *Two *V3/(V2+V1) *(25.1D3 -10.8D0*TdgK+0.343D0*P)
   !
-  !LG(1)=X(1)*DEXP(A1/(R*T))
-  !LG(2)=X(2)*DEXP(A2/(R*T))
-  !LG(3)=X(3)*DEXP(A3/(R*T))
+  !LG(1)=X(1)*Dexp(A1/(R*T))
+  !LG(2)=X(2)*Dexp(A2/(R*T))
+  !LG(3)=X(3)*Dexp(A3/(R*T))
   !
   vActId(:)= X(:)
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-END SUBROUTINE Felspar_HP03
+end subroutine Felspar_HP03
 
-SUBROUTINE Plagio_Avchenko( &
+subroutine Plagio_Avchenko( &
 & TdgK, &
 & vX,   &
 & vActId,vLG)
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: Xb,WI,WC,Iab,Ian
+  real(dp):: Xb,WI,WC,Iab,Ian
   
   !MIXTURE.MODEL PLAGIO_AVCH
   !  MODEL SPECIAL
   !  POLE
   !    ALBITE-LOW
   !    ANORTHITE
-  !  END
-  !END
+  !  end
+  !end
   
   vActId(:)= vX(:)
   
@@ -323,37 +384,37 @@ SUBROUTINE Plagio_Avchenko( &
   Ian= (WI-WC) *(One-Xb)**2
   Iab= (WC-WI) *Xb**2
   
-  IF(vX(2) > Xb) THEN
+  if(vX(2) > Xb) then
     vLG(1)= WI *vX(2)**2 +Iab
     vLG(2)= WI *vX(1)**2
-  ELSE
+  else
     vLG(1)= WC *vX(2)**2
     vLG(2)= WC *vX(1)**2 +Ian
-  ENDIF
+  end if
   
   vLG(:)= vLG(:)/R_jk/TdgK
   
-  RETURN
-END SUBROUTINE Plagio_Avchenko
+  return
+end subroutine Plagio_Avchenko
 
-SUBROUTINE Alkspar_Avchenko( &
+subroutine Alkspar_Avchenko( &
 & TdgK,Pbar, &
 & vX,   &
 & vActId,vLG)
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: W_Na,W_K
+  real(dp):: W_Na,W_K
   !
   !MIXTURE.MODEL ALKSPAR_AVCH
   !  MODEL SPECIAL
   !  POLE
   !    ALBITE-LOW
   !    MICROCLINE
-  !  END
-  !END
+  !  end
+  !end
   !
   vActId(:)= vX(:)
   !
@@ -365,10 +426,10 @@ SUBROUTINE Alkspar_Avchenko( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Alkspar_Avchenko
+  return
+end subroutine Alkspar_Avchenko
 
-SUBROUTINE Cordierite_HPWeb( &
+subroutine Cordierite_HPWeb( &
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
@@ -376,10 +437,10 @@ SUBROUTINE Cordierite_HPWeb( &
 !-- http://wserv2.esc.cam.ac.uk/research/research-groups/holland/ &
 !-- & thermocalc/thermocalc-cordierites
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL CORDIERITE_HPWEB
   !  MODEL SPECIAL
@@ -387,8 +448,8 @@ SUBROUTINE Cordierite_HPWeb( &
   !    CORDIERITE
   !    FE-CORDIERITE
   !    HYDR.CORDIERITE
-  !  END
-  !END
+  !  end
+  !end
   !
   vActId(1)= ( vX(1)+vX(3) )**2 *( vX(1)+vX(2) ) ! X_Mg**2 *(1-X_H2O)
   vActId(2)=   vX(2)        **2 *( vX(1)+vX(2) ) ! X_Fe**2 *(1-X_H2O)
@@ -396,9 +457,9 @@ SUBROUTINE Cordierite_HPWeb( &
   !
   vLGam(:)= Zero
   !
-END SUBROUTINE Cordierite_HPWeb
+end subroutine Cordierite_HPWeb
 
-SUBROUTINE Cordierite_HP05( &
+subroutine Cordierite_HP05( &
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
@@ -406,10 +467,10 @@ SUBROUTINE Cordierite_HP05( &
 !-- CORDIERITE, IDEAL RECIPROCAL -- David Dolejs, 13-March-05
 !-- code derived from THERIAK/fsol.f90
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL CORDIERITE_HP05
   !  MODEL SPECIAL
@@ -418,8 +479,8 @@ SUBROUTINE Cordierite_HP05( &
   !    FE-CORDIERITE
   !    HYDR.CORDIERITE
   !    H.FE-CORDIERITE
-  !  END
-  !END
+  !  end
+  !end
   !
   vActId(1)= ( vX(1)+vX(3) )**2 *( vX(1)+vX(2) )
   vActId(2)= ( vX(2)+vX(4) )**2 *( vX(1)+vX(2) )
@@ -428,21 +489,21 @@ SUBROUTINE Cordierite_HP05( &
   !
   vLGam= Zero
   !
-END SUBROUTINE Cordierite_HP05
+end subroutine Cordierite_HP05
 
-SUBROUTINE Cordierite_Avchenko( &
+subroutine Cordierite_Avchenko( &
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
 !--
 !--
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
-  REAL(dp):: W_CrdFcrd
+  real(dp):: W_CrdFcrd
   !
   !MIXTURE.MODEL CORDIERITE_AVCH
   !  MODEL SPECIAL
@@ -450,8 +511,8 @@ SUBROUTINE Cordierite_Avchenko( &
   !    CORDIERITE
   !    FE-CORDIERITE
   !    HYDR.CORDIERITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !-- crd    Mg2  Al4Si5O18         (crd + hcrd)**2 *(1-hcrd)
   !-- fcrd   Fe2  Al4Si5O18          fcrd**2        *(1-hcrd)
@@ -470,9 +531,9 @@ SUBROUTINE Cordierite_Avchenko( &
   !
   vLGam(:)= vLGam(:) /TdgK/R_jk
   !
-END SUBROUTINE Cordierite_Avchenko
+end subroutine Cordierite_Avchenko
 
-SUBROUTINE BiotiteMgAl_HPWeb( &
+subroutine BiotiteMgAl_HPWeb( &
 & TdgK, &
 & vX,   &
 & vActId,vLG)
@@ -514,18 +575,18 @@ SUBROUTINE BiotiteMgAl_HPWeb( &
 !  phl      4  3    x(Mg,M1) 1    x(Al,T1) 1   x(Si,T1) 1
 !  east     1  2    x(Al,M1) 1    x(Al,T1) 2
 !  %
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL BIOTITE_HP05
   !  MODEL SPECIAL
   !  POLE
   !    PHLOGOPITE
   !    EASTONITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !--- ideal site mixing activities
   !-- a_Phl- K_A *Mg_M3 *Al_T1 *Si_T1 *4
@@ -540,10 +601,10 @@ SUBROUTINE BiotiteMgAl_HPWeb( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE BiotiteMgAl_HPWeb
+  return
+end subroutine BiotiteMgAl_HPWeb
 
-SUBROUTINE Biotite_HPWeb( &
+subroutine Biotite_HPWeb( &
 & TdgK, &
 & X,    &
 & vActId,vLG)
@@ -551,10 +612,10 @@ SUBROUTINE Biotite_HPWeb( &
 !-- http://wserv2.esc.cam.ac.uk/research/research-groups/holland/ &
 !-- & thermocalc/biotite
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL BIOTITE_HPWEB
   !  MODEL SPECIAL
@@ -563,11 +624,11 @@ SUBROUTINE Biotite_HPWeb( &
   !    ANNITE
   !    EASTONITE
   !    OBIOTITE
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: Phl,Ann,Eas,Obi
-  REAL(dp):: W_PhlAnn,W_PhlObi,W_PhlEas,W_AnnEas,W_EasObi,W_AnnObi
+  real(dp):: Phl,Ann,Eas,Obi
+  real(dp):: W_PhlAnn,W_PhlObi,W_PhlEas,W_AnnEas,W_EasObi,W_AnnObi
   !
   W_PhlAnn=  9.0D3
   W_PhlObi=  3.0D3
@@ -618,20 +679,20 @@ SUBROUTINE Biotite_HPWeb( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE Biotite_HPWeb
+  return
+end subroutine Biotite_HPWeb
 
-SUBROUTINE Biotite_Avchenko( &
+subroutine Biotite_Avchenko( &
 & TdgK, &
 & vX,    &
 & vActId,vLG)
 !--
 !--
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL BIOTITE_AVCH
   !  MODEL SPECIAL
@@ -639,11 +700,11 @@ SUBROUTINE Biotite_Avchenko( &
   !    PHLOGOPITE
   !    ANNITE
   !    EASTONITE
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: Phl,Ann,Eas
-  REAL(dp):: W_PhlAnn,W_PhlEas,W_AnnEas
+  real(dp):: Phl,Ann,Eas
+  real(dp):: W_PhlAnn,W_PhlEas,W_AnnEas
   !
   W_PhlAnn=  9.0D3
   W_PhlEas=  10.0D3
@@ -678,10 +739,10 @@ SUBROUTINE Biotite_Avchenko( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE Biotite_Avchenko
+  return
+end subroutine Biotite_Avchenko
 
-SUBROUTINE Muscovite_HPWeb( &
+subroutine Muscovite_HPWeb( &
 & TdgK,Pbar, &
 & vX,   &
 & vActId,vLG)
@@ -689,24 +750,24 @@ SUBROUTINE Muscovite_HPWeb( &
 !-- http://wserv2.esc.cam.ac.uk/research/research-groups/holland/ &
 !-- & thermocalc/muscovite
 !--
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: X,Y,Z
-  REAL(dp):: Mus,Par,Cel,Fcl
-  REAL(dp):: W_MusPar, W_CelPar, W_ParFcl, I_Par
+  real(dp):: X,Y,Z
+  real(dp):: Mus,Par,Cel,Fcl
+  real(dp):: W_MusPar, W_CelPar, W_ParFcl, I_Par
   !
   !MIXTURE.MODEL MUSCOVITE_HPWEB
   !  MODEL SPECIAL
   !  POLE
   !    MUSCOVITE
   !    PARAGONITE
-  !    CELADONITE
-  !    FE-CELADONITE
-  !  END
-  !END
+  !    CELAdoNITE
+  !    FE-CELAdoNITE
+  !  end
+  !end
   !
   Mus= vX(1)
   Par= vX(2)
@@ -748,10 +809,10 @@ SUBROUTINE Muscovite_HPWeb( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Muscovite_HPWeb
+  return
+end subroutine Muscovite_HPWeb
 
-SUBROUTINE Talc_HPWeb( & !
+subroutine Talc_HPWeb( & !
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
@@ -763,10 +824,10 @@ SUBROUTINE Talc_HPWeb( & !
 !-- 2- fta  ferrotalc      Fe  Fe2  Si2  Si2 O10(OH)2
 !-- 3- tats tschermak-talc Al  Mg2  AlSi Si2 O10(OH)2
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL TALC_HP
   !  MODEL SPECIAL
@@ -774,10 +835,10 @@ SUBROUTINE Talc_HPWeb( & !
   !    TALC
   !    FE-TALC
   !    TSCHERMAK-TALC
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: X,Y
+  real(dp):: X,Y
   !
   X= vX(2) /(One -vX(3)/3.0D0) !X =Fe/(Fe+Mg) =3.P2/(3.P1+2.P3+3.P2)
   Y= vX(3) != X_Al_M2
@@ -789,10 +850,10 @@ SUBROUTINE Talc_HPWeb( & !
   !
   vLGam(:)= Zero
   !
-  RETURN
-END SUBROUTINE Talc_HPWeb
+  return
+end subroutine Talc_HPWeb
 
-SUBROUTINE Talc_Avchenko( & !
+subroutine Talc_Avchenko( & !
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
@@ -803,12 +864,12 @@ SUBROUTINE Talc_Avchenko( & !
 !-- 2- tats tschermak-talc Al  Mg2  AlSi Si2 O10(OH)2
 !-- 3- fta  ferrotalc      Fe  Fe2  Si2  Si2 O10(OH)2
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
-  REAL(dp):: ta,fta,tats
+  real(dp):: ta,fta,tats
   !
   !MIXTURE.MODEL TALC_AVCH
   !  MODEL SPECIAL
@@ -816,8 +877,8 @@ SUBROUTINE Talc_Avchenko( & !
   !    TALC
   !    FE-TALC
   !    TSCHERMAK-TALC
-  !  END
-  !END
+  !  end
+  !end
   !
   ta=   vX(1)
   fta=  vX(2)
@@ -830,10 +891,10 @@ SUBROUTINE Talc_Avchenko( & !
   !
   vLGam(:)= Zero
   !
-  RETURN
-END SUBROUTINE Talc_Avchenko
+  return
+end subroutine Talc_Avchenko
 
-SUBROUTINE Epidote_Avchenko( & !
+subroutine Epidote_Avchenko( & !
 & TdgK, &
 & vX,   &
 & vActId,vLG)
@@ -845,22 +906,22 @@ SUBROUTINE Epidote_Avchenko( & !
 !-- 3- fep   Ca2  Fe  Fe  AlSi3O12(OH)
 !--
   !
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: Epi,Clz,Fep
-  REAL(dp):: W_EpiFep,W_ClzFep
+  real(dp):: Epi,Clz,Fep
+  real(dp):: W_EpiFep,W_ClzFep
   !
-  !MIXTURE.MODEL EPIDOTE_AVCH
+  !MIXTURE.MODEL EPIdoTE_AVCH
   !  MODEL SPECIAL
   !  POLE
-  !    EPIDOTE
+  !    EPIdoTE
   !    CLINOZOISITE
-  !    FE-EPIDOTE
-  !  END
-  !END
+  !    FE-EPIdoTE
+  !  end
+  !end
   !
   Epi=  vX(1)
   Clz=  vX(2)
@@ -880,10 +941,10 @@ SUBROUTINE Epidote_Avchenko( & !
   !
   vLG(:)= vLG(:) /TdgK/R_jk
   !
-  RETURN
-END SUBROUTINE Epidote_Avchenko
+  return
+end subroutine Epidote_Avchenko
 
-SUBROUTINE Chlorite_HPWeb( & !
+subroutine Chlorite_HPWeb( & !
 & TdgK, &
 & vX,   &
 & vActId,vLG)
@@ -891,10 +952,10 @@ SUBROUTINE Chlorite_HPWeb( & !
 !-- http://wserv2.esc.cam.ac.uk/research/research-groups/holland/ &
 !-- & thermocalc/chlorite
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL CHLORITE_HP98
   !  MODEL SPECIAL
@@ -903,8 +964,8 @@ SUBROUTINE Chlorite_HPWeb( & !
   !    CLINOCHLORE  
   !    AMESITE      
   !    DAPHNITE     
-  !  END
-  !END
+  !  end
+  !end
   !
   !MODEL CHLORITE_HP98 !SITE
   !SITE
@@ -912,16 +973,16 @@ SUBROUTINE Chlorite_HPWeb( & !
   !  M1 1 MG_FE_AL_
   !  M4 1 MG_AL_
   !  T2 2 AL_SI_ 
-  !ENDSITE
+  !endSITE
   !POLE
   !  !            M2             M1    M4    T2
   !  CHLORITE-AF  MG_MG_MG_MG_   MG_   MG_   SI_SI_ !Al-free-chlorite 
   !  CLINOCHLORE  MG_MG_MG_MG_   MG_   AL_   SI_AL_
   !  AMESITE      MG_MG_MG_MG_   AL_   AL_   AL_AL_
   !  DAPHNITE     FE_FE_FE_FE_   FE_   AL_   SI_AL_
-  !ENDPOLE
+  !endPOLE
   !
-  !HP PARAMETERs X,Y,N=
+  !HP parameters X,Y,N=
   !X= X_Fe_M2  = Fe/(Fe+Mg)
   !Y= X_Al_T2_ = 
   !N=(X_Al_M4_ - X_Al_M1_)/2
@@ -935,12 +996,12 @@ SUBROUTINE Chlorite_HPWeb( & !
   !P3= Y   -N
   !P4= 2*vX*(3-Y_)/5
   !
-  REAL(dp):: X,Y,N
-  REAL(dp):: P1,P2,P3,P4
-  REAL(dp):: W12,W13,W14,W23,W24,W34
+  real(dp):: X,Y,N
+  real(dp):: P1,P2,P3,P4
+  real(dp):: W12,W13,W14,W23,W24,W34
   !
-  !! INTEGER :: I,J,K
-  !! REAL(dp):: tW(4,4),G
+  !! integer :: I,J,K
+  !! real(dp):: tW(4,4),G
   !! !
   !! tW(:,:)= Zero
   !! tW(1,2)= 18.0D3  ! Afch-Clin
@@ -950,19 +1011,19 @@ SUBROUTINE Chlorite_HPWeb( & !
   !! tW(2,4)= 2.50D3  ! Clin-Daph
   !! tW(3,4)= 13.5D3  ! Ames-Daph
   !! !
-  !! DO I=1,4
+  !! do I=1,4
   !!   G= Zero
-  !!   DO J=1,4
-  !!     IF(J/=I) G= G + vX(J)*tW(I,J)
-  !!   ENDDO
+  !!   do J=1,4
+  !!     if(J/=I) G= G + vX(J)*tW(I,J)
+  !!   end do
   !!   G= G *(One-vX(I))
-  !!   DO J=1,4
-  !!     DO K=1,4
-  !!       IF(J/=I .AND. K/=I) G= G - vX(J)*vX(K)*tW(J,K)
-  !!     ENDDO
-  !!   ENDDO
+  !!   do J=1,4
+  !!     do K=1,4
+  !!       if(J/=I .and. K/=I) G= G - vX(J)*vX(K)*tW(J,K)
+  !!     end do
+  !!   end do
   !!   vLG(I)= G
-  !! ENDDO
+  !! end do
   !
   W12= 18.0D3  ! Afch-Clin
   W13= 20.0D3  ! Afch-Ames
@@ -1015,10 +1076,10 @@ SUBROUTINE Chlorite_HPWeb( & !
   !
   vLG(:)= vLG(:) /R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE Chlorite_HPWeb
+  return
+end subroutine Chlorite_HPWeb
 
-SUBROUTINE Chlorite_HPWeb_( & !
+subroutine Chlorite_HPWeb_( & !
 & TdgK, &
 & vX,   &
 & vActId,vLG)
@@ -1026,10 +1087,10 @@ SUBROUTINE Chlorite_HPWeb_( & !
 !-- http://wserv2.esc.cam.ac.uk/research/research-groups/holland/ &
 !-- & thermocalc/chlorite
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL CHLORITE_HP98
   !  MODEL SPECIAL
@@ -1038,8 +1099,8 @@ SUBROUTINE Chlorite_HPWeb_( & !
   !    CLINOCHLORE
   !    AMESITE
   !    DAPHNITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !MODEL CHLORITE_HP98 !SITE
   !SITE
@@ -1047,14 +1108,14 @@ SUBROUTINE Chlorite_HPWeb_( & !
   !  M1 1 MG_FE_AL_
   !  M4 1 MG_AL_
   !  T2 2 AL_SI_
-  !END
+  !end
   !POLE
   !  !            M2             M1    M4    T2
   !  CHLORITE-AF  MG_MG_MG_MG_   MG_   MG_   SI_SI_ !Al-free-chlorite
   !  CLINOCHLORE  MG_MG_MG_MG_   MG_   AL_   SI_AL_
   !  AMESITE      MG_MG_MG_MG_   AL_   AL_   AL_AL_
   !  DAPHNITE     FE_FE_FE_FE_   FE_   AL_   SI_AL_
-  !END
+  !end
   !
   !HP parameters X,Y,N=
   !X= Fe_M2  = Fe/(Fe+Mg)
@@ -1070,13 +1131,13 @@ SUBROUTINE Chlorite_HPWeb_( & !
   !P3= Y -N
   !P4= 2*X*(3-Y)/5
   !
-  ! INTEGER :: i,j
-  ! REAL(dp):: W(4,4)
+  ! integer :: i,j
+  ! real(dp):: W(4,4)
   
-  REAL(dp):: X,Y,N
-  REAL(dp):: P1,P2,P3,P4
-  REAL(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,MgM4,FeM4,AlM4,SiT2,AlT2
-  REAL(dp):: W12,W13,W14,W23,W24,W34
+  real(dp):: X,Y,N
+  real(dp):: P1,P2,P3,P4
+  real(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,MgM4,FeM4,AlM4,SiT2,AlT2
+  real(dp):: W12,W13,W14,W23,W24,W34
   !
   W12= 18.0D3  ! Afch-Clin
   W13= 20.0D3  ! Afch-Ames
@@ -1134,33 +1195,33 @@ SUBROUTINE Chlorite_HPWeb_( & !
   &     - P2 * P3 *W23
   
   ! vLG(:)= Zero
-  ! DO i=1,4
+  ! do i=1,4
   !   X= Zero
-  !   DO j= 1,4
-  !     IF(j/=i) THEN
+  !   do j= 1,4
+  !     if(j/=i) then
   !       X= X + vX(j) *W(i,j)
-  !     END IF
-  !   END DO
+  !     end if
+  !   end do
   !   vLG(I)= (One -vX(i)) *X
   !   vLG(I)= vLG(I) -X
-  ! END DO
+  ! end do
   !
   vLG(:)= vLG(:) /R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE Chlorite_HPWeb_
+  return
+end subroutine Chlorite_HPWeb_
 
-SUBROUTINE Chlorite_HP_Ideal( & !
+subroutine Chlorite_HP_Ideal( & !
 & TdgK, &
 & vX,   &
 & vActId,vLG)
 !--
 !--
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL CHLORITE_HP98
   !  MODEL SPECIAL
@@ -1169,8 +1230,8 @@ SUBROUTINE Chlorite_HP_Ideal( & !
   !    CLINOCHLORE
   !    DAPHNITE
   !    AMESITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !MODEL CHLORITE_HP98 !SITE
   !SITE
@@ -1178,16 +1239,16 @@ SUBROUTINE Chlorite_HP_Ideal( & !
   !  M1 1 MG_FE_AL_
   !  M4 1 MG_AL_
   !  T2 2 AL_SI_
-  !ENDSITE
+  !endSITE
   !POLE
   !  !            M2             M1    M4    T2
   !  CHLORITE-AF  MG_MG_MG_MG_   MG_   MG_   SI_SI_ !Al-free-chlorite
   !  CLINOCHLORE  MG_MG_MG_MG_   MG_   AL_   SI_AL_
   !  DAPHNITE     FE_FE_FE_FE_   FE_   AL_   SI_AL_
   !  AMESITE      MG_MG_MG_MG_   AL_   AL_   AL_AL_
-  !ENDPOLE
+  !endPOLE
   !
-  !HP PARAMETERs X,Y,N=
+  !HP parameters X,Y,N=
   !X= X_Fe_M2  = Fe/(Fe+Mg)
   !Y= X_Al_T2_ =
   !N=(X_Al_M4_ - X_Al_M1_)/2
@@ -1201,8 +1262,8 @@ SUBROUTINE Chlorite_HP_Ideal( & !
   !P3= Y   -N
   !P4= 2*vX*(3-Y_)/5
   !
-  REAL(dp):: X,Y,Q
-  REAL(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,MgM4,FeM4,AlM4,SiT2,AlT2
+  real(dp):: X,Y,Q
+  real(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,MgM4,FeM4,AlM4,SiT2,AlT2
   
   X=  vX(3)
   Y= (vX(2)+vX(3))/2.0D0 +vX(4)
@@ -1227,32 +1288,32 @@ SUBROUTINE Chlorite_HP_Ideal( & !
   
   vLG(:)= Zero
   
-  RETURN
-ENDSUBROUTINE Chlorite_HP_Ideal
+  return
+end subroutine Chlorite_HP_Ideal
 
-SUBROUTINE Epidote_HP_Work( &
+subroutine Epidote_HP_Work( &
 & TdgK, &
 & vX,   &
 & vActId,vLG)
 !--
 !-- from Tables of Holland - Powell 2011, JMG
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: f,Q
-  REAL(dp):: FeM1,AlM1,FeM3,AlM3
+  real(dp):: f,Q
+  real(dp):: FeM1,AlM1,FeM3,AlM3
   
-  !MIXTURE.MODEL EPIDOTE_WORK !Fe-free
+  !MIXTURE.MODEL EPIdoTE_WORK !Fe-free
   !  MODEL SPECIAL
   !  POLE
   !    cz
   !    ep
   !    fep
-  !  END
-  !END
+  !  end
+  !end
   
   ! variables
   !   f(ep) = Fe3/(Fe3 + Al)
@@ -1291,23 +1352,23 @@ SUBROUTINE Epidote_HP_Work( &
   
   vLG(:)= Zero
   
-  RETURN
-END SUBROUTINE Epidote_HP_Work
+  return
+end subroutine Epidote_HP_Work
 
-SUBROUTINE Chlorite_HP_Work( &
+subroutine Chlorite_HP_Work( &
 & TdgK, &
 & vX,   &
 & vActId,vLG)
 !--
 !-- from Tables of Holland - Powell 2011, JMG
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: Q,Y
-  REAL(dp):: MgM1,AlM1,MgM4,AlM4,SiT2,AlT2
+  real(dp):: Q,Y
+  real(dp):: MgM1,AlM1,MgM4,AlM4,SiT2,AlT2
   !
   !MIXTURE.MODEL CHLORITE_WORK !Fe-free
   !  MODEL SPECIAL
@@ -1315,8 +1376,8 @@ SUBROUTINE Chlorite_HP_Work( &
   !    CHLORITE-AF !Al-free-chlorite
   !    CLINOCHLORE
   !    AMESITE
-  !  END
-  !END
+  !  end
+  !end
   
   ! chlorite
   !
@@ -1365,21 +1426,21 @@ SUBROUTINE Chlorite_HP_Work( &
   
   vLG(:)= Zero
   
-  RETURN
-END SUBROUTINE Chlorite_HP_Work
+  return
+end subroutine Chlorite_HP_Work
 
-SUBROUTINE Biotite_HP05( &
+subroutine Biotite_HP05( &
 & TdgK, &
 & vX,   &
 & vActId,vLG)
 !--
 !-- BIO-HP- BIOTITE, Holland & Powell, David Dolejs 13-Mar-05
-!-- from THERIAK-DOMINO
+!-- from THERIAK-doMINO
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL BIOTITE_HP05
   !  MODEL SPECIAL
@@ -1389,11 +1450,11 @@ SUBROUTINE Biotite_HP05( &
   !    EASTONITE
   !    OBIOTITE
   !    SIDEROPHYLLITE
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: X,Y,N
-  REAL(dp):: P1,P2,P3,P4
+  real(dp):: X,Y,N
+  real(dp):: P1,P2,P3,P4
   !
   !--- compositional variables
   !-- X- bulk Fe/(Fe+Mg)
@@ -1483,20 +1544,20 @@ SUBROUTINE Biotite_HP05( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-ENDSUBROUTINE Biotite_HP05
+  return
+end subroutine Biotite_HP05
 
-SUBROUTINE Opx_HP05( &
+subroutine Opx_HP05( &
 & TdgK, &
 & X,    &
 & vActId,vLG)
 !--
 !-- OPX-HP- ORTHOPYROXENE, Holland & Powell -- David Dolejs, 13-March-05
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL OPX_HP05
   !  MODEL SPECIAL
@@ -1506,11 +1567,11 @@ SUBROUTINE Opx_HP05( &
   !    FM.PYX
   !    MG-TSCHER.PYX
   !    FE-TSCHER.PYX
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: XHP,YHP,QHP
-  REAL(dp):: P1,P2,P3,P4
+  real(dp):: XHP,YHP,QHP
+  real(dp):: P1,P2,P3,P4
   !
   !--- compositional variables
   YHP= X(4)+X(5)
@@ -1563,20 +1624,20 @@ SUBROUTINE Opx_HP05( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Opx_HP05
+  return
+end subroutine Opx_HP05
 
-SUBROUTINE Opx_HP11( &
+subroutine Opx_HP11( &
 & TdgK, &
 & X,    &
 & vActId,vLG)
 !--
 !-- OPX-HP- ORTHOPYROXENE, Holland & Powell, 2011
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL OPX_HP11
   !  MODEL SPECIAL
@@ -1585,11 +1646,11 @@ SUBROUTINE Opx_HP11( &
   !    FERROSILITE
   !    MG-TSCHER.PYX
   !    FM.PYX
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,SiT1,AlT1
-  ! REAL(dp):: P1,P2,P3,P4
+  real(dp):: MgM1,FeM1,AlM1,MgM2,FeM2,SiT1,AlT1
+  ! real(dp):: P1,P2,P3,P4
   !
   !--- site occupancy
   MgM1= X(1) +X(4)
@@ -1610,22 +1671,22 @@ SUBROUTINE Opx_HP11( &
       
   vLG(:)= Zero
   !
-  RETURN
-END SUBROUTINE Opx_HP11
+  return
+end subroutine Opx_HP11
 
-SUBROUTINE Opx_Avchenko( &
+subroutine Opx_Avchenko( &
 & TdgK, &
 & vX,    &
 & vActId,vLG)
 !--
 !--
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
-  REAL(dp):: W_EnFs,W_FsMgts
+  real(dp):: W_EnFs,W_FsMgts
   !
   !MIXTURE.MODEL OPX_AVCH
   !  MODEL SPECIAL
@@ -1633,8 +1694,8 @@ SUBROUTINE Opx_Avchenko( &
   !    ENSTATITE
   !    FERROSILITE
   !    MG-TSCHER.PYX
-  !  END
-  !END
+  !  end
+  !end
   !
   !-- en   Mg Mg Si2  O6
   !-- fs   Fe Fe Si2  O6
@@ -1654,33 +1715,33 @@ SUBROUTINE Opx_Avchenko( &
   !
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Opx_Avchenko
+  return
+end subroutine Opx_Avchenko
 
-SUBROUTINE Mica_Vidal( &
+subroutine Mica_Vidal( &
 & TdgK,Pbar, &
 & vX,    &
 & vActId,vLG)
 !--
 !-- MICA4- Vidal
 !--
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL MICA_VIDAL
   !  MODEL SPECIAL
   !  POLE
-  !    CELADONITE      !KMgAlSi4O10(OH)2
+  !    CELAdoNITE      !KMgAlSi4O10(OH)2
   !    MUSCOVITE       !KAl3Si3O10(OH)2
   !    PYROPHYLLITE    !Al2Si4O10(OH)2
-  !  END
-  !END
+  !  end
+  !end
   !
-  REAL(dp):: Si_T,Al_T,Al_O,Mg_O,K_A,VaA
-  REAL(dp):: gamAl,gamMg,gamAlc,gamv,gamK,gamMgc
-  REAL(dp):: W_AlMg,W_KKv,W_Kvv
+  real(dp):: Si_T,Al_T,Al_O,Mg_O,K_A,VaA
+  real(dp):: gamAl,gamMg,gamAlc,gamv,gamK,gamMgc
+  real(dp):: W_AlMg,W_KKv,W_Kvv
   !
   !-- site     A  O     T
   !--             M2    T2
@@ -1700,7 +1761,7 @@ SUBROUTINE Mica_Vidal( &
   !---/
 
   !--- ideal activities --
-  vActId(1)= Si_T**2         *Al_O     *Mg_O  *K_A *4.0D0 ! CELADONITE
+  vActId(1)= Si_T**2         *Al_O     *Mg_O  *K_A *4.0D0 ! CELAdoNITE
   vActId(2)= Si_T      *Al_T *Al_O**2         *K_A *4.0D0 ! MUSCOVITE
   vActId(3)= Si_T**2         *Al_O**2         *VaA        ! PYROPHYLLITE
   !---/
@@ -1727,20 +1788,20 @@ SUBROUTINE Mica_Vidal( &
   !
   vLG(:)= vLG(:) /R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Mica_Vidal
+  return
+end subroutine Mica_Vidal
 
-SUBROUTINE Chlorite_Vidal( &
+subroutine Chlorite_Vidal( &
 & TdgK,Pbar, &
 & vX,    &
 & vActId,vLG)
 !--
 !-- CHLVIDAL- CHLORITE Vidal, AJS301, 2001
 !--
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL CHLORITE_VIDAL
   !  MODEL SPECIAL
@@ -1748,18 +1809,18 @@ SUBROUTINE Chlorite_Vidal( &
   !    CLINOCHLORE   !Mg5Al2Si3O10(OH)8
   !    DAPHNITE      !Fe5Al2Si3O10(OH)8
   !    AMESITE       !Mg4Al4Si2O10(OH)8  ! = AM-VID
-  !    SUDOITE       !Mg2Al4Si3O10(OH)8
-  !  END
-  !END
+  !    SUdoITE       !Mg2Al4Si3O10(OH)8
+  !  end
+  !end
   !
-  REAL(dp):: SiT2,AlT2,AlM1,MgM1,FeM1,VaM1,AlM2,MgM2,FeM2
-  REAL(dp):: W_AlMg, W_AlFe, W_VaMg, W_VaAl, W_VaFe
+  real(dp):: SiT2,AlT2,AlM1,MgM1,FeM1,VaM1,AlM2,MgM2,FeM2
+  real(dp):: W_AlMg, W_AlFe, W_VaMg, W_VaAl, W_VaFe
   !
   !            T1     T2     M1   M2+M3     M4
   ! 1=CLIN     Si,Si  Si,Al  Mg   Mg4       Al   !Mg5Al2Si3O10(OH)8
   ! 2=DAPH     Si,Si  Si,Al  Fe   Fe4       Al   !Fe5Al2Si3O10(OH)8
   ! 3=AMESITE  Si,Si  Al,Al  Al   Mg4       Al   !Mg4Al4Si2O10(OH)8
-  ! 4=SUDOITE  Si,Si  Si,Al  Va   Al2,Mg2   Al   !Mg2Al4Si3O10(OH)8
+  ! 4=SUdoITE  Si,Si  Si,Al  Va   Al2,Mg2   Al   !Mg2Al4Si3O10(OH)8
   !
   !--- site occupancy --
   SiT2= ( vX(1)+vX(2)+vX(4) )/Two
@@ -1780,7 +1841,7 @@ SUBROUTINE Chlorite_Vidal( &
   vActId(1)= SiT2 *AlT2    *MgM1 *MgM2**4 *4.0D0           ! CLINOCHLORE
   vActId(2)= SiT2 *AlT2    *FeM1 *FeM2**4 *4.0D0           ! DAPHNITE
   vActId(3)=       AlT2**2 *AlM1 *MgM2**4                  ! AM-VID
-  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUDOITE
+  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUdoITE
   !---/
 
   !--- interaction param's, table 2, Vidal,2001 --
@@ -1817,20 +1878,20 @@ SUBROUTINE Chlorite_Vidal( &
 
   vLG(:)= vLG(:)/R_jk/TdgK
   !
-  RETURN
-END SUBROUTINE Chlorite_Vidal
+  return
+end subroutine Chlorite_Vidal
 
-SUBROUTINE Chlorite_Vidal_Ideal( &
+subroutine Chlorite_Vidal_Ideal( &
 & TdgK,Pbar, &
 & vX,    &
 & vActId,vLG)
 !--
 !-- CHLVIDAL- CHLORITE Vidal, AJS301, 2001
 !--
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLG(:)
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLG(:)
   !
   !MIXTURE.MODEL CHLORITE_VIDAL
   !  MODEL SPECIAL
@@ -1838,18 +1899,18 @@ SUBROUTINE Chlorite_Vidal_Ideal( &
   !    CLINOCHLORE   !Mg5Al2Si3O10(OH)8
   !    DAPHNITE      !Fe5Al2Si3O10(OH)8
   !    AMESITE       !Mg4Al4Si2O10(OH)8  ! = AM-VID
-  !    SUDOITE       !Mg2Al4Si3O10(OH)8
-  !  END
-  !END
+  !    SUdoITE       !Mg2Al4Si3O10(OH)8
+  !  end
+  !end
   !
-  REAL(dp):: SiT2,AlT2,AlM1,MgM1,FeM1,VaM1,AlM2,MgM2,FeM2
-  ! REAL(dp):: W_AlMg, W_AlFe, W_VaMg, W_VaAl, W_VaFe
+  real(dp):: SiT2,AlT2,AlM1,MgM1,FeM1,VaM1,AlM2,MgM2,FeM2
+  ! real(dp):: W_AlMg, W_AlFe, W_VaMg, W_VaAl, W_VaFe
   !
   !            T1     T2     M1   M2+M3     M4
   ! 1=CLIN     Si,Si  Si,Al  Mg   Mg4       Al   !Mg5Al2Si3O10(OH)8
   ! 2=DAPH     Si,Si  Si,Al  Fe   Fe4       Al   !Fe5Al2Si3O10(OH)8
   ! 3=AMESITE  Si,Si  Al,Al  Al   Mg4       Al   !Mg4Al4Si2O10(OH)8
-  ! 4=SUDOITE  Si,Si  Si,Al  Va   Al2,Mg2   Al   !Mg2Al4Si3O10(OH)8
+  ! 4=SUdoITE  Si,Si  Si,Al  Va   Al2,Mg2   Al   !Mg2Al4Si3O10(OH)8
   !
   !--- site occupancy --
   SiT2= ( vX(1)+vX(2)+vX(4) )/Two
@@ -1870,25 +1931,25 @@ SUBROUTINE Chlorite_Vidal_Ideal( &
   vActId(1)= SiT2 *AlT2    *MgM1 *MgM2**4 *4.0D0           ! CLINOCHLORE
   vActId(2)= SiT2 *AlT2    *FeM1 *FeM2**4 *4.0D0           ! DAPHNITE
   vActId(3)=       AlT2**2 *AlM1 *MgM2**4                  ! AM-VID
-  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUDOITE
+  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUdoITE
   !---/
 
   vLG(:)= Zero
   
-  RETURN
-END SUBROUTINE Chlorite_Vidal_Ideal
+  return
+end subroutine Chlorite_Vidal_Ideal
 
-SUBROUTINE Chlorite_Fe( &
+subroutine Chlorite_Fe( &
 & TdgK,  &
 & vX,    &
 & vActId,vLGam)
 !--
 !-- CHLFe- Vidal
 !--
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL CHLORITE_FE
   !  MODEL SPECIAL
@@ -1896,9 +1957,9 @@ SUBROUTINE Chlorite_Fe( &
   !    CLINOCHLORE
   !    DAPHNITE
   !    FE-AMESITE
-  !    SUDOITE
-  !  END
-  !END
+  !    SUdoITE
+  !  end
+  !end
   !
   !           T1     T2     M1   M2+M3     M4
   ! 1=CLIN    Si,Si  Si,Al  Mg   Mg4       Al
@@ -1906,10 +1967,10 @@ SUBROUTINE Chlorite_Fe( &
   ! 3=FE-AM   Si,Si  Al,Al  Al   Fe4       Al
   ! 4=MG-SUD  Si,Si  Si,Al  Va   Al2,Mg2   Al
   !
-  REAL(dp):: SiT2,AlT2
-  REAL(dp):: AlM1,MgM1,FeM1,VaM1
-  REAL(dp):: AlM2,MgM2,FeM2
-  ! REAL(dp):: SiC,AltC,AlM1C,MgM1C,FeM1C,vM1C,AlM2C,MgM2C,FeM2C
+  real(dp):: SiT2,AlT2
+  real(dp):: AlM1,MgM1,FeM1,VaM1
+  real(dp):: AlM2,MgM2,FeM2
+  ! real(dp):: SiC,AltC,AlM1C,MgM1C,FeM1C,vM1C,AlM2C,MgM2C,FeM2C
   !
   !--- site occupancy --
   SiT2= ( vX(1)+vX(2)+vX(4) )/Two
@@ -1929,21 +1990,21 @@ SUBROUTINE Chlorite_Fe( &
   vActId(1)= SiT2 *AlT2    *MgM1 *MgM2**4 *4.0D0           ! CLINOCHLORE
   vActId(2)= SiT2 *AlT2    *FeM1 *FeM2**4 *4.0D0           ! DAPHNITE
   vActId(3)=       AlT2**2 *AlM1 *FeM2**4                  ! FE-AMESITE
-  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUDOITE
+  vActId(4)= SiT2 *AlT2    *VaM1 *MgM2**2 *AlM2**2 *64.0D0 ! SUdoITE
   !
   vLGam(:)= Zero
   !
-  RETURN
-END SUBROUTINE Chlorite_Fe
+  return
+end subroutine Chlorite_Fe
 
-SUBROUTINE Chlorite_HP98( & !
+subroutine Chlorite_HP98( & !
 & TdgK, &
 & vX,   &
 & vActId,vLGam)
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL CHLORITE_HP98
   !  MODEL SPECIAL
@@ -1952,8 +2013,8 @@ SUBROUTINE Chlorite_HP98( & !
   !    CLINOCHLORE
   !    AMESITE
   !    DAPHNITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !MODEL CHLORITE_HP98 !SITE
   !SITE
@@ -1961,16 +2022,16 @@ SUBROUTINE Chlorite_HP98( & !
   !  M1 1 MG_FE_AL_
   !  M4 1 MG_AL_
   !  T2 2 AL_SI_
-  !ENDSITE
+  !endSITE
   !POLE
   !  !            M2             M1    M4    T2
   !  CHLORITE-AF  MG_MG_MG_MG_   MG_   MG_   SI_SI_ !Al-free-chlorite
   !  CLINOCHLORE  MG_MG_MG_MG_   MG_   AL_   SI_AL_
   !  AMESITE      MG_MG_MG_MG_   AL_   AL_   AL_AL_
   !  DAPHNITE     FE_FE_FE_FE_   FE_   AL_   SI_AL_
-  !ENDPOLE
+  !endPOLE
   !
-  !HP PARAMETERs X,Y,N=
+  !HP parameters X,Y,N=
   !X= X_Fe_M2  = Fe/(Fe+Mg)
   !Y= X_Al_T2_ =
   !N=(X_Al_M4_ - X_Al_M1_)/2
@@ -1984,10 +2045,10 @@ SUBROUTINE Chlorite_HP98( & !
   !vX(3)= Y   -N
   !vX(4)= 2*vX*(3-Y_)/5
   !
-  REAL(dp):: X,Y,N
-  !REAL(dp):: G(4)
-  !REAL(dp):: W(4,4)
-  !INTEGER :: I,J,K
+  real(dp):: X,Y,N
+  !real(dp):: G(4)
+  !real(dp):: W(4,4)
+  !integer :: I,J,K
   !W daph ames
   !clin 2.5 18
   !daph 20.5
@@ -2008,44 +2069,44 @@ SUBROUTINE Chlorite_HP98( & !
   !
   !RTLnGam(i)= sum( xj.(1-xi).tDtbMltWij ) - sum( xj.xk .Wjk )
   !            j/=i                   j/=i & k/=i
+  !!
+  !! if(S%NMarg>0) then
+  !!   W=Zero
+  !!   ! retrieve values of W(I,J) from DeCapitani formattted coeffs
+  !!   ! this code restricted to binary 12 margules coeffs,
+  !!   ! which is general case in HP98 models
+  !!   !
+  !!   do I=1,S%NMarg
+  !!     M= S%vMarg(I)
+  !!     !! W(M%vIPole(1),M%vIPole(2))= M%WG
+  !!   end do
+  !!   !
+  !!   do I=1,4
+  !!     G(I)=Zero
+  !!     do J=1,4
+  !!       if(J/=I) G(I)=G(I) + X(J)*(One-X(I))*W(I,J)
+  !!     end do
+  !!     do J=1,4
+  !!       do K=1,4
+  !!         if(J/=I .and. K/=I) G(I)=G(I) - X(J)*X(K)*W(J,K)
+  !!       end do
+  !!     end do
+  !!     F%vLMarg(I)= G(I)/R_jk/TdgK
+  !!     F%vLGam(I)=  F%vLGam(I)+F%vLMarg(I)
+  !!   end do
+  !! end if
   !
-  !~ IF(S%NMarg>0) THEN
-    !~ W=Zero
-    !~ ! retrieve values of W(I,J) from DeCapitani formattted coeffs
-    !~ ! this code restricted to binary 12 margules coeffs,
-    !~ ! which is general case in HP98 models
-    !~ !
-    !~ DO I=1,S%NMarg
-      !~ M= S%vMarg(I)
-      !~ !! W(M%vIPole(1),M%vIPole(2))= M%WG
-    !~ ENDDO
-    !~ !
-    !~ DO I=1,4
-      !~ G(I)=Zero
-      !~ DO J=1,4
-        !~ IF(J/=I) G(I)=G(I) + X(J)*(One-X(I))*W(I,J)
-      !~ ENDDO
-      !~ DO J=1,4
-        !~ DO K=1,4
-          !~ IF(J/=I .AND. K/=I) G(I)=G(I) - X(J)*X(K)*W(J,K)
-        !~ ENDDO
-      !~ ENDDO
-      !~ F%vLMarg(I)= G(I)/R_jk/TdgK
-      !~ F%vLGam(I)=  F%vLGam(I)+F%vLMarg(I)
-    !~ ENDDO
-  !~ ENDIF
-  !
-  RETURN
-ENDSUBROUTINE Chlorite_HP98
+  return
+end subroutine Chlorite_HP98
 
-SUBROUTINE Biotite_HP98( &
+subroutine Biotite_HP98( &
 & TdgK, &
 & X,    &
 & vActId,vLGam)
-  REAL(dp),INTENT(IN) :: TdgK
-  REAL(dp),INTENT(IN) :: X(:)
-  REAL(dp),INTENT(OUT):: vActId(:)
-  REAL(dp),INTENT(OUT):: vLGam(:)
+  real(dp),intent(in) :: TdgK
+  real(dp),intent(in) :: X(:)
+  real(dp),intent(out):: vActId(:)
+  real(dp),intent(out):: vLGam(:)
   !
   !MIXTURE.MODEL BIOTITE_HP98
   !  MODEL SPECIAL
@@ -2054,8 +2115,8 @@ SUBROUTINE Biotite_HP98( &
   !    ANNITE
   !    EASTONITE
   !    OBIOTITE
-  !  END
-  !END
+  !  end
+  !end
   !
   !biotite, KFMASH
   !Fe-Mg ordering -> M1 the Fe-loving site, M2 the other
@@ -2064,17 +2125,17 @@ SUBROUTINE Biotite_HP98( &
   !  M1 1 MG_FE_AL_
   !  M2 2 MG_FE_
   !  T1 2 SI_AL_
-  !ENDSITE
+  !endSITE
   !POLE
   !   PHLOGOPITE     MG_   MG_MG_  AL_SI_
   !   ANNITE         FE_   FE_FE_  AL_SI_
   !   EASTONITE      AL_   MG_MG_  AL_AL_
   !   OBIOTITE       FE_   MG_MG_  AL_SI_
-  !ENDPOLE
+  !endPOLE
   !
-  REAL(dp):: X1,X2,Y
-  !REAL(dp):: W(4,4)
-  !INTEGER :: I,J,K
+  real(dp):: X1,X2,Y
+  !real(dp):: W(4,4)
+  !integer :: I,J,K
   !
   !IN=X1,X2,Y -> OUT= site distribution
   !X_Mg_M1_=(One-Y)*X1;   X_Fe_M1_=(One-Y)*(One-X1);  X_Al_M1_=Y
@@ -2092,34 +2153,34 @@ SUBROUTINE Biotite_HP98( &
   !
   vLGam(:)= Zero
   !
-  !! IF(S%NMarg>0) THEN
+  !! if(S%NMarg>0) then
   !!   W=Zero
   !!   !retrieve values of W(I,J) from DeCapitani formattted coeffs
   !!   !this code restricted to binary 12 margules coeffs,
-  !!   !which is general CASE in HP98 models
-  !!   DO I=1,S%NMarg
+  !!   !which is general case in HP98 models
+  !!   do I=1,S%NMarg
   !!     M=S%vMarg(I)
   !!     ! W(M%vIPole(1),M%vIPole(2))=M%WG
-  !!   ENDDO
+  !!   end do
   !!   !RTLnGam(i)= sum( xj.(1-xi).tDtbMltWij ) - sum( xj.xk .Wjk )
   !!   !            j/=i                   j/=i & k/=i
-  !!   DO I=1,4
+  !!   do I=1,4
   !!     G=Zero
-  !!     DO J=1,4
-  !!       IF(J/=I) G= G + X(J)*(One-X(I))*W(I,J)
-  !!     ENDDO
-  !!     DO J=1,4
-  !!       DO K=1,4
-  !!         IF(J/=I .AND. K/=I) G= G - X(J)*X(K)*W(J,K)
-  !!       ENDDO
-  !!     ENDDO
+  !!     do J=1,4
+  !!       if(J/=I) G= G + X(J)*(One-X(I))*W(I,J)
+  !!     end do
+  !!     do J=1,4
+  !!       do K=1,4
+  !!         if(J/=I .and. K/=I) G= G - X(J)*X(K)*W(J,K)
+  !!       end do
+  !!     end do
   !!     F%vLMarg(I)= G /R_jk/TdgK
   !!     F%vLGam(I)=  F%vLGam(I)+F%vLMarg(I)
-  !!   ENDDO
-  !! ENDIF
+  !!   end do
+  !! end if
   !
-  RETURN
-ENDSUBROUTINE Biotite_HP98
+  return
+end subroutine Biotite_HP98
 
-END MODULE M_MixModel_Special
+end module M_MixModel_Special
 

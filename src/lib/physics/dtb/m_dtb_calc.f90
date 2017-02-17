@@ -1,86 +1,87 @@
-MODULE M_Dtb_Calc
+module M_Dtb_Calc
 !--
 !-- routines to compute species properties from databases
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,Stop_,T_,Pause_
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,Stop_,T_,Pause_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Species_TP_Update_fromDtb
-  PUBLIC:: SpeciesMin_TP_Update_fromDtb
-  PUBLIC:: Dtb_TP_Check
-  PUBLIC:: DtbSpc_GrtTable_Build
-  PUBLIC:: SpeciesDtb_ToSpecies
+  public:: Species_TP_Update_fromDtb
+  public:: SpeciesMin_TP_Update_fromDtb
+  public:: Dtb_TP_Check
+  public:: DtbSpc_Table_Build
+  public:: SpeciesDtb_ToSpecies
   !
-CONTAINS
+contains
 
-SUBROUTINE SpeciesDtb_ToSpecies( &
+subroutine SpeciesDtb_ToSpecies( &
 & vSpcDtb, & ! IN
 & vSpc)      ! OUT
 
-  USE M_T_Species,ONLY: T_Species,T_SpeciesDtb,Species_Index
+  use M_T_Species,only: T_Species,T_SpeciesDtb,Species_Index
   !
-  USE M_Dtb_Vars, ONLY: &
+  use M_Dtb_Vars, only: &
   & vDtbMinHkf,vDtbMinThr,vDtbAquHkf,vDtbLogKtbl,vDtblogKanl
   !
-  TYPE(T_SpeciesDtb),INTENT(IN)   :: vSpcDtb(:)
-  TYPE(T_Species),   INTENT(INOUT):: vSpc(:)
+  type(T_SpeciesDtb),intent(in)   :: vSpcDtb(:)
+  type(T_Species),   intent(inout):: vSpc(:)
   !
-  TYPE(T_Species):: S
-  INTEGER:: I,J,N
+  type(T_Species):: S
+  integer:: I,J,N
   !
-  N= SIZE(vSpcDtb)
+  N= size(vSpcDtb)
   !
-  DO J= 1,N
+  do J= 1,N
 
     I= vSpcDtb(J)%Indx
 
-    SELECT CASE(vSpcDtb(J)%DtbModel)
+    select case(vSpcDtb(J)%DtbModel)
 
-    CASE("H2O_HGK")  ! HGK= Haar-Gallagher-Kell
+    case("H2O_HGK")  ! HGK= Haar-Gallagher-Kell
       S%NamSp=    "H2O"
       S%WeitKg=   0.0180152D0
       S%Formula=  "H(2)O(1)"
       S%Typ=      "AQU"
+      S%AquSize=  0.D0
 
-    CASE("AQU_HKF")
-      S%NamSp=    TRIM(vDtbAquHkf(I)%Name)
-      S%Formula=  TRIM(vDtbAquHkf(I)%Formula)
+    case("AQU_HKF")
+      S%NamSp=    trim(vDtbAquHkf(I)%Name)
+      S%Formula=  trim(vDtbAquHkf(I)%Formula)
       S%WeitKg=   vDtbAquHkf(I)%WeitKg
       !S%AquSize=  vDtbAquHkf(I)%AquSize
       S%Typ=      "AQU"
 
-    !! CASE("AQU_THR")
+    !! case("AQU_THR")
 
-    CASE("MIN_HKF","GAS_HKF")
-      S%NamSp=    TRIM(vDtbMinHkf(I)%Name)
-      S%Formula=  TRIM(vDtbMinHkf(I)%Formula)
+    case("MIN_HKF","GAS_HKF")
+      S%NamSp=    trim(vDtbMinHkf(I)%Name)
+      S%Formula=  trim(vDtbMinHkf(I)%Formula)
       S%WeitKg=   vDtbMinHkf(I)%WeitKg
       S%Typ=      vDtbMinHkf(I)%Typ
 
-    CASE("MIN_THR","GAS_THR")
-      S%NamSp=    TRIM(vDtbMinThr(I)%Name)
-      S%Formula=  TRIM(vDtbMinThr(I)%Formula)
+    case("MIN_THR","GAS_THR")
+      S%NamSp=    trim(vDtbMinThr(I)%Name)
+      S%Formula=  trim(vDtbMinThr(I)%Formula)
       S%WeitKg=   vDtbMinThr(I)%WeitKg
       S%Typ=      vDtbMinThr(I)%Typ
 
-    CASE("LOGKTBL")
-      S%NamSp=    TRIM(vDtbLogKtbl(I)%Name)
-      S%Formula=  TRIM(vDtbLogKtbl(I)%Formula)
+    case("LOGKTBL")
+      S%NamSp=    trim(vDtbLogKtbl(I)%Name)
+      S%Formula=  trim(vDtbLogKtbl(I)%Formula)
       S%WeitKg=   vDtbLogKtbl(I)%WeitKg
       S%AquSize=  vDtbLogKtbl(I)%AquSize
       S%Typ=      vDtbLogKtbl(I)%Typ
 
-    CASE("LOGKANL")
-      S%NamSp=    TRIM(vDtbLogKanl(I)%Name)
-      S%Formula=  TRIM(vDtblogKanl(I)%Formula)
+    case("LOGKANL")
+      S%NamSp=    trim(vDtbLogKanl(I)%Name)
+      S%Formula=  trim(vDtblogKanl(I)%Formula)
       S%WeitKg=   vDtbLogKanl(I)%WeitKg
       S%AquSize=  vDtbLogKanl(I)%AquSize
       S%Typ=      vDtbLogKanl(I)%Typ
 
-    ENDSELECT
+    end select
 
     S%iDiscret= 0
     S%iDtb=     J
@@ -88,274 +89,294 @@ SUBROUTINE SpeciesDtb_ToSpecies( &
 
     ! print *,S%NamSp
     
-  ENDDO
+  end do
 
   ! pause_
   
   !to prevent some bugs,
   !put solvent species H2O as species 1 in vSpc
   N= Species_Index("H2O",vSpc)
-  IF(N/=0 .AND. N/=1) THEN
+  if(N/=0 .and. N/=1) then
     S=       vSpc(1)
     vSpc(1)= vSpc(N)
     vSpc(N)= S
-  ENDIF
+  end if
 
-  IF(iDebug<4) RETURN
+  if(iDebug<4) return
 
-  PRINT *,"SpeciesDtb_ToSpecies"
-  DO i=1,N
-    PRINT *,vSpc(i)%NamSp,vSpc(i)%Typ,"=",vSpcDtb(vSpc(i)%iDtb)%DtbModel
-  ENDDO
+  print *,"SpeciesDtb_ToSpecies"
+  do i=1,N
+    print *,vSpc(i)%NamSp,vSpc(i)%Typ,"=",vSpcDtb(vSpc(i)%iDtb)%DtbModel
+  end do
 
-  RETURN
-ENDSUBROUTINE SpeciesDtb_ToSpecies
+  return
+end subroutine SpeciesDtb_ToSpecies
 
-SUBROUTINE Species_TP_Update_fromDtb( &
+subroutine Species_TP_Update_fromDtb( &
 & TdgK,Pbar,PropsH2O,vSpcDtb, &
 & S)
 !--
 !-- compute thermodyn.prop's of species S at TdgK,Pbar,PropsH2O
 !-- according to S%Model and S%iDtb
-!-- should be called only when S%iDtb/-0
+!-- should be called only when S%iDtb/=0
 !--
-  USE M_T_Species,  ONLY: T_Species,T_SpeciesDtb
+  use M_T_Species,  only: T_Species,T_SpeciesDtb
   !
-  USE M_T_DtbH2OHkf, ONLY: T_DtbH2OHkf
-  USE M_T_DtbAquHkf, ONLY: DtbAquHkf_Calc,DtbAquHkf_CalcThr
-  USE M_T_DtbMinHkf, ONLY: DtbMinHkf_Calc
-  USE M_T_DtbMinThr, ONLY: DtbMinThr_Calc
-  USE M_T_DtbLogKtbl,ONLY: DtbLogKtbl_Calc
-  USE M_T_DtbLogKanl,ONLY: DtbLogKanl_Calc
+  use M_T_DtbH2OHkf, only: T_DtbH2OHkf
+  use M_T_DtbAquHkf, only: DtbAquHkf_Calc,DtbAquHkf_CalcThr
+  use M_T_DtbMinHkf, only: DtbMinHkf_Calc
+  use M_T_DtbMinThr, only: DtbMinThr_Calc
+  use M_T_DtbLogKtbl,only: DtbLogKtbl_Calc
+  use M_T_DtbLogKanl,only: DtbLogKanl_Calc
   !
-  USE M_Dtb_Vars,   ONLY: vDtbAquHkf,vDtbMinHkf,vDtbMinThr  ! data-
-  USE M_Dtb_Vars,   ONLY: vDtbLogKtbl,vDtbLogKanl           ! bases
+  use M_Dtb_Vars,   only: vDtbAquHkf,vDtbMinHkf,vDtbMinThr  ! data-
+  use M_Dtb_Vars,   only: vDtbLogKtbl,vDtbLogKanl           ! bases
   !
-  USE M_Fluid_Calc, ONLY: Eos_H2O_Haar_Ghiorso
-  !!USE M_Fluid_Calc, ONLY: CalcGH2O_Supcrt !,Eos_H2O_Haar
+  use M_Fluid_Calc, only: EosFluid_Calc
+  !!use M_Fluid_Calc, only: CalcGH2O_Supcrt !,Eos_H2O_Haar
   
   !---------------------------------------------------------------------
-  REAL(dp),          INTENT(IN) :: TdgK,Pbar
-  TYPE(T_DtbH2OHkf), INTENT(IN) :: PropsH2O
-  TYPE(T_SpeciesDtb),INTENT(IN) :: vSpcDtb(:)
+  real(dp),          intent(in) :: TdgK,Pbar
+  type(T_DtbH2OHkf), intent(in) :: PropsH2O
+  type(T_SpeciesDtb),intent(in) :: vSpcDtb(:)
   !
-  TYPE(T_Species),   INTENT(INOUT):: S
+  type(T_Species),   intent(inout):: S
   !---------------------------------------------------------------------
-  INTEGER:: i,j
+  integer :: i,j
+  real(dp):: LnFug
+  logical :: Ok
   !---------------------------------------------------------------------
   
   i= S%iDtb
-  IF(i==0) RETURN
+  if(i==0) return
   !
   j= vSpcDtb(i)%Indx
   !
-  SELECT CASE(TRIM(vSpcDtb(i)%DtbModel))
+  select case(trim(vSpcDtb(i)%DtbModel))
 
-  CASE("H2O_HGK"); CALL Eos_H2O_Haar_Ghiorso(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
-  ! CASE("H2O_HGK") ; CALL CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
+  case("H2O_HGK")
+    call EosFluid_Calc("H2O","HAAR.GHIORSO",TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0,LnFug,Ok)
+  ! case("H2O_HGK") ; call CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
+  !                                    !IN                         OUT
+  case("AQU_HKF") ; call DtbAquHkf_Calc(vDtbAquHkf(j),PropsH2O,    S)
+  case("AQU_THR") ; call DtbAquHkf_CalcThr(vDtbAquHkf(j),PropsH2O, S)
 
-  CASE("AQU_HKF") ; CALL DtbAquHkf_Calc(vDtbAquHkf(j),PropsH2O,S)
-  CASE("AQU_THR") ; CALL DtbAquHkf_CalcThr(vDtbAquHkf(j),PropsH2O,S)
+  case("MIN_HKF") ; call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,   S)
+  case("GAS_HKF") ; call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,   S)
 
-  CASE("MIN_HKF") ; CALL DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
-  CASE("GAS_HKF") ; CALL DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
+  case("MIN_THR") ; call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,   S)
+  case("GAS_THR") ; call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,   S)
 
-  CASE("MIN_THR") ; CALL DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
-  CASE("GAS_THR") ; CALL DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
+  case("LOGKTBL") ; call DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar, S)
+  case("LOGKANL") ; call DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar, S)
 
-  CASE("LOGKTBL") ; CALL DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar,S)
-  CASE("LOGKANL") ; CALL DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar,S)
-
-  END SELECT
+  end select
   
-  RETURN
-ENDSUBROUTINE Species_TP_Update_fromDtb
+  ! if(trim(S%NamSp)=="WATER") &
+  ! & write(94,'(A,3(G15.6,1X))') "T,P,V_H2O_cm3=",TdgK,Pbar,S%V0*1.0D6
 
-SUBROUTINE SpeciesMin_TP_Update_fromDtb(TdgK,Pbar,vSpcDtb, S)
+  !if(trim(S%Typ)=="MIN") then
+  !  print *,"S%Name,S%V0= ",S%NamSp,S%V0
+  !  call pause_
+  !end if
+ 
+  return
+end subroutine Species_TP_Update_fromDtb
+
+subroutine SpeciesMin_TP_Update_fromDtb(TdgK,Pbar,vSpcDtb, S)
 !--
 !-- calculate thermodyn.properties of species S at TdgK,Pbar
-!-- same as DtbSpc_TP_Update, for non'aqu'species ONLY -> no need for PropsH2O
-!-- should be called ONLY when S%iDtb/-0
+!-- same as DtbSpc_TP_Update, for non'aqu'species only -> no need for PropsH2O
+!-- should be called only when S%iDtb/-0
 !--
-  USE M_T_Species,  ONLY: T_Species,T_SpeciesDtb
+  use M_T_Species,  only: T_Species,T_SpeciesDtb
   !
-  USE M_T_DtbH2OHkf, ONLY: T_DtbH2OHkf
-  USE M_T_DtbMinHkf, ONLY: DtbMinHkf_Calc
-  USE M_T_DtbMinThr, ONLY: DtbMinThr_Calc
-  USE M_T_DtbLogKtbl,ONLY: DtbLogKtbl_Calc
-  USE M_T_DtbLogKanl,ONLY: DtbLogKanl_Calc
+  use M_T_DtbH2OHkf, only: T_DtbH2OHkf
+  use M_T_DtbMinHkf, only: DtbMinHkf_Calc
+  use M_T_DtbMinThr, only: DtbMinThr_Calc
+  use M_T_DtbLogKtbl,only: DtbLogKtbl_Calc
+  use M_T_DtbLogKanl,only: DtbLogKanl_Calc
   !
-  USE M_Dtb_Vars,   ONLY: &
+  use M_Dtb_Vars,   only: &
   & vDtbAquHkf,vDtbMinHkf,vDtbMinThr,vDtbLogKtbl, vDtbLogKanl !-> the databases
   !
-  USE M_Fluid_Calc, ONLY: Eos_H2O_Haar_Ghiorso
-  !!USE M_Fluid_Calc, ONLY: CalcGH2O_Supcrt !,Eos_H2O_Haar
+  use M_Fluid_Calc, only: EosFluid_Calc
+  !!use M_Fluid_Calc, only: CalcGH2O_Supcrt !,Eos_H2O_Haar
   !---------------------------------------------------------------------
-  REAL(dp),          INTENT(IN) :: TdgK,Pbar
-  TYPE(T_SpeciesDtb),INTENT(IN) :: vSpcDtb(:)
+  real(dp),          intent(in) :: TdgK,Pbar
+  type(T_SpeciesDtb),intent(in) :: vSpcDtb(:)
   !
-  TYPE(T_Species),   INTENT(INOUT):: S
+  type(T_Species),   intent(inout):: S
   !---------------------------------------------------------------------
-  INTEGER:: i,j
+  real(dp):: LnFug
+  integer :: i,j
+  logical :: Ok
   !---------------------------------------------------------------------
   i= S%iDtb
   !
-  IF(i==0) RETURN
+  if(i==0) return
   !
   j= vSpcDtb(i)%Indx
   !
-  SELECT CASE(vSpcDtb(i)%DtbModel)
-    CASE("H2O_HGK"); CALL Eos_H2O_Haar_Ghiorso(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
-    ! CASE("H2O_HGK"); CALL CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
-    CASE("MIN_HKF"); CALL DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
-    CASE("MIN_THR"); CALL DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
-    CASE("GAS_HKF"); CALL DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
-    CASE("GAS_THR"); CALL DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
-    CASE("LOGKTBL"); CALL DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar,S)
-    CASE("LOGKANL"); CALL DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar,S)
-  END SELECT
+  select case(vSpcDtb(i)%DtbModel)
+    case("H2O_HGK")
+      call EosFluid_Calc( &
+      & "H2O","HAAR.GHIORSO",TdgK,Pbar, &
+      & S%G0rt,S%H0,S%S0,S%V0,LnFug,Ok)    
+      ! case("H2O_HGK"); call CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
+    case("MIN_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
+    case("MIN_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
+    case("GAS_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
+    case("GAS_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
+    case("LOGKTBL")  ;  call DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar,S)
+    case("LOGKANL")  ;  call DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar,S)
+  end select
   !
-  RETURN
-ENDSUBROUTINE SpeciesMin_TP_Update_fromDtb
+  return
+end subroutine SpeciesMin_TP_Update_fromDtb
 
-SUBROUTINE Dtb_TP_Check( &
+subroutine Dtb_TP_Check( &
 & DtbFormat,DtbLogK_vTPCond,Psat_Auto, &
 & TdgK,Pbar,Ok,Msg)
 !--
 !-- check that TdgK is in the validity range of the database,
 !-- and (in case of logK database) compute corresponding pressure
 !--
-  USE M_T_Tpcond,  ONLY: T_TPCond
-  USE M_Dtb_Const, ONLY: T_CK, PminHSV, PmaxHSV, TCminHSV, TCmaxHSV, Pref
-  USE M_Fluid_Calc,ONLY: Eos_H2O_Psat
+  use M_T_Tpcond,  only: T_TPCond
+  use M_Dtb_Const, only: T_CK, PminHSV, PmaxHSV, TCminHSV, TCmaxHSV, Pref
+  use M_Fluid_Calc,only: Eos_H2O_Psat
   !
-  CHARACTER(LEN=*),INTENT(IN)   :: DtbFormat
-  TYPE(T_TPCond),  INTENT(IN)   :: DtbLogK_vTPCond(:)
-  LOGICAL,         INTENT(IN)   :: Psat_Auto
-  REAL(dp),        INTENT(INOUT):: TdgK,Pbar
-  LOGICAL,         INTENT(OUT)  :: Ok
-  CHARACTER(LEN=*),INTENT(OUT)  :: Msg
+  character(len=*),intent(in)   :: DtbFormat
+  type(T_TPCond),  intent(in)   :: DtbLogK_vTPCond(:)
+  logical,         intent(in)   :: Psat_Auto
+  real(dp),        intent(in)   :: TdgK
+  real(dp),        intent(inout):: Pbar
+  logical,         intent(out)  :: Ok
+  character(len=*),intent(out)  :: Msg
   !
-  REAL(dp):: Tmin,Tmax,Psat !,Pmin,Pmax
+  real(dp):: Tmin,Tmax,Psat !,Pmin,Pmax
   !
   Ok=  .true.
   Msg= "OK"
   !
-  !------------------------------------------------ check Temperature --
-  SELECT CASE(DtbFormat)
+  !----------------------------------------------------check Temperature
+  select case(DtbFormat)
 
-  CASE("LOGKTBL")
+  case("LOGKTBL")
     Tmin= DtbLogK_vTPCond(1)%TdgC +T_CK
-    Tmax= DtbLogK_vTPCond(SIZE(DtbLogK_vTPCond))%TdgC +T_CK
+    Tmax= DtbLogK_vTPCond(size(DtbLogK_vTPCond))%TdgC +T_CK
 
-  CASE DEFAULT
+  case default
     Tmin= TCminHSV + T_CK
     Tmax= TCmaxHSV + T_CK
 
-  END SELECT
+  end select
   !
-  IF(TdgK <Tmin .or. TdgK>Tmax) THEN
+  if(TdgK <Tmin .or. TdgK>Tmax) then
     Ok= .false.
+    if(iDebug>2) print *,"TdgK,Tmin,Tmax",TdgK,Tmin,Tmax
     Msg= "Temperature outside validity range of the database"
-    RETURN !==================================================< error ==
-  ENDIF
-  !-----------------------------------------------/ check Temperature --
+    return !-------------------------------------------------------error
+  end if
+  !--------------------------------------------------/ check Temperature 
   !
-  !--------------------------------------------------- check Pressure --
-  SELECT CASE(DtbFormat)
-  !--------------------------------------------------- logK databases --
-  CASE("LOGKTBL","LOGKANL")
-    IF(TdgK <= 100.0D0+T_CK) THEN
-      IF(Pbar<Pref) THEN
-        IF(Psat_Auto) THEN
+  !------------------------------------------------------ check Pressure 
+  select case(DtbFormat)
+  !-------------------------------------------------------logK databases
+  case("LOGKTBL","LOGKANL")
+    if(TdgK <= 100.0D0+T_CK) then
+      if(Pbar<Pref) then
+        if(Psat_Auto) then
           Pbar= Pref
-        ELSE
+        else
           Ok= .false.
           Msg= "Pressure < Psat(T) = not valid for HKF model"
-          RETURN !============================================= error ==
-        ENDIF
-      ENDIF
-    ELSE
-      CALL Eos_H2O_Psat(TdgK,Psat)
-      IF(Pbar<Psat) THEN
-        IF(Psat_Auto) THEN
+          return !-------------------------------------------------error
+        end if
+      end if
+    else
+      call Eos_H2O_Psat(TdgK,Psat)
+      if(Pbar<Psat) then
+        if(Psat_Auto) then
           Pbar= Psat
-        ELSE
+        else
           Ok= .false.
           Msg= "Pressure < Psat(T) = not valid for HKF model"
-          RETURN
-        ENDIF
-      ENDIF
-    ENDIF
-  !-------------------------------------------------- other databases --
-  CASE DEFAULT
-    IF(Pbar <PminHSV .or. Pbar>PmaxHSV) THEN
+          return
+        end if
+      end if
+    end if
+  !------------------------------------------------------/logK databases
+  !------------------------------------------------------other databases
+  case default
+    if(Pbar <PminHSV .or. Pbar>PmaxHSV) then
       Ok= .false.
       Msg= "Pressure outside validity range of the database"
-      RETURN !================================================= error ==
-    ENDIF
+      return !-----------------------------------------------------error
+    end if
     !
-    !------------------------------------- if P-PsatH2O(T) then error --
-    CALL Eos_H2O_Psat(TdgK,Psat)
+    !---------------------------------------- if P-PsatH2O(T) then error
+    call Eos_H2O_Psat(TdgK,Psat)
     !! Pbar= max(Pbar,Psat)
-    IF(Pbar < Psat) THEN
-      IF(Psat_Auto) THEN
+    if(Pbar < Psat) then
+      if(Psat_Auto) then
         Pbar= Psat
-      ELSE
+      else
         Ok= .false.
         Msg= "Pressure < Psat(T) = not valid for HKF model"
-        RETURN !=============================================== error ==
-      ENDIF
-    ENDIF
-    !
-  END SELECT
-  !--------------------------------------------------/ check Pressure --
+        return !---------------------------------------------------error
+      end if
+    end if
+  !-----------------------------------------------------/other databases
+  end select
+  !------------------------------------------------------/check Pressure
   !
-ENDSUBROUTINE Dtb_TP_Check
+end subroutine Dtb_TP_Check
 
-SUBROUTINE DtbSpc_GrtTable_Build( &
+subroutine DtbSpc_Table_Build( &
 & vTPCond,vSpcDtb,vSpc, &
-& tGrt)
-
-  USE M_T_Species,ONLY: T_Species,T_SpeciesDtb
-  USE M_T_Tpcond, ONLY: T_TPCond
-  USE M_Dtb_Const,ONLY: T_CK
-  USE M_T_DtbH2OHkf,ONLY: DtbH2OHkf_Calc,T_DtbH2OHkf
+& tGrt,tVol)
+  use M_T_Species,only: T_Species,T_SpeciesDtb
+  use M_T_Tpcond, only: T_TPCond
+  use M_Dtb_Const,only: T_CK
+  use M_T_DtbH2OHkf,only: DtbH2OHkf_Calc,T_DtbH2OHkf
   
-  TYPE(T_TPCond),    INTENT(IN) :: vTPCond(:)
-  TYPE(T_SpeciesDtb),INTENT(IN) :: vSpcDtb(:)
-  TYPE(T_Species),   INTENT(IN) :: vSpc(:)
-  REAL(dp),          INTENT(OUT):: tGrt(:,:)
+  type(T_TPCond),    intent(in) :: vTPCond(:)
+  type(T_SpeciesDtb),intent(in) :: vSpcDtb(:)
+  type(T_Species),   intent(in) :: vSpc(:)
+  real(dp),          intent(out):: tGrt(:,:)
+  real(dp),          intent(out):: tVol(:,:)
   
-  INTEGER :: iTP,jSp
-  REAL(dp):: TdgK,Pbar
-  TYPE(T_DtbH2OHkf)::PropsH2O
-  TYPE(T_Species):: S
+  integer :: iTP,jSp
+  real(dp):: TdgK,Pbar
+  type(T_DtbH2OHkf)::PropsH2O
+  type(T_Species):: S
   
-  DO iTP=1,SIZE(vTPCond)
+  do iTP=1,size(vTPCond)
     !
     TdgK= vTPcond(iTP)%TdgC + T_CK
     Pbar= vTPcond(iTP)%Pbar
     !--- solvent properties, for aqu'species
-    CALL DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
+    call DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
     !---
     !
-    DO jSp=1,SIZE(vSpc)
+    do jSp=1,size(vSpc)
       !
       S= vSpc(jSp)
       !
-      IF(S%iDtb>0) THEN
-        CALL Species_TP_Update_fromDtb(TdgK,Pbar,PropsH2O,vSpcDtb,S)
+      if(S%iDtb>0) then
+        call Species_TP_Update_fromDtb(TdgK,Pbar,PropsH2O,vSpcDtb,S)
         !-> update vSpc(jSp)%G0rt !-> =G/RT
         tGrt(jSp,iTP)= S%G0rt
-      !ELSEIF(vSpc(jSp)%iDtb>0) THEN
-      ENDIF
+        tVol(jSp,iTP)= S%V0
+      !elseif(vSpc(jSp)%iDtb>0) then
+      end if
       !
-    ENDDO
+    end do
     !
-  ENDDO
+  end do
   
-ENDSUBROUTINE DtbSpc_GrtTable_Build
+end subroutine DtbSpc_Table_Build
 
-ENDMODULE M_Dtb_Calc
+end module M_Dtb_Calc
 

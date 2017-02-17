@@ -1,76 +1,75 @@
-MODULE M_T_SolModel
+module M_T_SolModel
 !--implementation of asymmetric mixing models,
 !--water-like, with a solvent and solutes, 
 !--and molality-based concentrations
 !--(as opposed to symmetric mixing models, implemented with a T_MixModel)
 
-  USE M_Kinds
-  IMPLICIT NONE
+  use M_Kinds
+  implicit none
 
-  PRIVATE
+  private
   
-  PUBLIC:: T_SolModel
-  PUBLIC:: T_SolModelDat
-  PUBLIC:: vSolModelAct
+  public:: T_SolModel
+  public:: T_SolModelDat
+  public:: vSolModelAct
   
-  PUBLIC:: SolModel_Spc_Init
+  public:: SolModel_Spc_Init
   
-  TYPE:: T_SolModelDat
+  type:: T_SolModelDat
     ! container for current values of some properties of a solution phase
     ! density, dielectric, parameters for the activity model
     ! here, Rho is the density of pure solvent, not the solution !!
-    REAL(dp):: Rho, Eps, dhA, dhB, Bdot
-  ENDTYPE T_SolModelDat
+    real(dp):: Rho, Eps, dhA, dhB, Bdot
+  end type T_SolModelDat
   
-  TYPE:: T_SolModel  
+  type:: T_SolModel  
     !--- describes an assymetric mixing model (SOLUTION model),
     !--- with a solvent and solutes
     !--- (for symmetric mixing models (MIXTURE model), use a T_MixModel)
     !
     ! CAVEAT PROGRAMMATOR:
     ! whereas T_MixModel is currently a fixed size structure,
-    ! with fixed maximum numbers of end members, margules, etc
+    ! with fixed maximum numbers of end members, margules, etc,
     ! T_SolModel is a 'dynamic' structure, with the number of solute 
     ! species determined at run time
     !
-    CHARACTER(LEN=23):: Name  !
-    CHARACTER(LEN=3) :: Typ   !"LIQ"|"MIN"|"GAS"|...
+    character(len=23):: Name  !
+    character(len=3) :: Typ   !"LIQ"|"MIN"|"GAS"|...
     !
-    INTEGER:: iActModel
+    integer:: iActModel
     != index of the activity model in vSolModelAct
     !
-    INTEGER :: iSolvent
+    integer :: iSolvent
     != index of the solvent species in current species list
-    REAL(dp):: MolWeitSv
-    !
-    INTEGER:: nSpecies
+    real(dp):: MolWeitSv
+    != molar weight solvent
+    integer:: nSpecies
     != number of species, including solvent = dim' of vISpecies
-    INTEGER,POINTER:: vISpecies(:)
+    integer,pointer:: vISpecies(:)
     != indices of species involved,
     ! vISpecies(i) is index of species i in current species list
-    ! (= vSpc in M_Global_Vars)
-    
-    LOGICAL,POINTER:: vIsNonPolar(:)
+    ! (= vSpc in M_Global_Vars)    
+    logical,pointer:: vIsNonPolar(:)
     ! for EQ3 option: apply activ'coeff' on neutral species
     ! cf EQ36, v7.0, user's manual (Wolery, 1992)
     ! activ'coeff' of CO2(aq) in a (otherwise pure) NaCl solution
     ! as a function of ionic strength
     ! uses an expression proposed by Drummond, 1981
-    ! this should be applied ONLY to non-polar species
+    ! this should be applied only to non-polar species
     ! (O2(aq), H2(aq), N2(aq), ...),
     ! for which a salting out effect is expected
     !
-    TYPE(T_SolModelDat):: Dat
+    type(T_SolModelDat):: Dat
     ! current values of some properties of the solution phase,
     ! density, dielectric, DH parameters ...
     
-  ENDTYPE T_SolModel
+  end type T_SolModel
   
   ! vSolModelAct= 
   ! list of name codes for the different activity models
   ! implemented for assymetric (molality-based) solutions
-  INTEGER,PARAMETER:: nSolModelAct= 12
-  CHARACTER(7),PARAMETER:: vSolModelAct(1:nSolModelAct) = &
+  integer,parameter:: nSolModelAct= 12
+  character(7),parameter:: vSolModelAct(1:nSolModelAct) = &
   & (/ &
   & "IDEAL  ",   & ! 1
   & "DH1    ",   & ! 2
@@ -86,64 +85,64 @@ MODULE M_T_SolModel
   & "name12 "    & ! 12
   & /)
   
-CONTAINS
+contains
 
-SUBROUTINE SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
+subroutine SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
 !-- initialize S%iSolvent, S%nSpecies, S%vISpecies, S%MolWeitSv
 !-- according to a species database vSpc,
 !-- and given the name, Str, of the solvent species
 
-  USE M_Trace
-  USE M_T_Species,ONLY: T_Species
+  use M_Trace
+  use M_T_Species,only: T_Species
 
-  CHARACTER(*),    INTENT(IN)   :: Str !name of solvent species
-  TYPE(T_Species), INTENT(IN)   :: vSpc(:)
-  TYPE(T_SolModel),INTENT(OUT)  :: S
-  LOGICAL,         INTENT(OUT)  :: Ok
-  CHARACTER(*),    INTENT(OUT)  :: OkMsg
+  character(*),    intent(in)   :: Str !name of solvent species
+  type(T_Species), intent(in)   :: vSpc(:)
+  type(T_SolModel),intent(out)  :: S
+  logical,         intent(out)  :: Ok
+  character(*),    intent(out)  :: OkMsg
 
-  INTEGER:: N,I
+  integer:: N,I
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< SolModel_Spc_Init"
+  if(iDebug>0) write(fTrc,'(/,A)') "< SolModel_Spc_Init"
 
-  Ok= .TRUE.
+  Ok= .true.
   OkMsg= ""
   S%iSolvent= 0
 
   N= 0
-  DO I=1,SIZE(vSpc)
-    IF(TRIM(Str)==TRIM(vSpc(I)%NamSp)) THEN
+  do I=1,size(vSpc)
+    if(trim(Str)==trim(vSpc(I)%NamSp)) then
       ! solvent
       S%iSolvent=  I
       S%MolWeitSv= vSpc(S%iSolvent)%WeitKg
-    ELSE
+    else
       ! solutes
-      IF(vSpc(I)%Typ=="AQU") N= N+1
-    ENDIF
-  ENDDO
+      if(vSpc(I)%Typ=="AQU") N= N+1
+    end if
+  end do
 
-  IF(N==0) THEN
-    Ok= .FALSE.
+  if(N==0) then
+    Ok= .false.
     OkMsg=                              "!! Solute species not found !!"
-    RETURN !------------------------------------------------------------
-  ENDIF
+    return !------------------------------------------------------------
+  end if
   !
-  IF(S%iSolvent==0) THEN
-    Ok= .FALSE.
+  if(S%iSolvent==0) then
+    Ok= .false.
     OkMsg=                             "!! Solvent species not found !!"
-    RETURN !------------------------------------------------------------
-  ENDIF
+    return !------------------------------------------------------------
+  end if
   !
   S%nSpecies= N
-  ALLOCATE(S%vISpecies(N))
+  allocate(S%vISpecies(N))
   !
   N= 0
-  DO I=1,SIZE(vSpc)
-    IF(vSpc(I)%Typ=="AQU" .AND. TRIM(Str)/=TRIM(vSpc(I)%NamSp)) THEN
+  do I=1,size(vSpc)
+    if(vSpc(I)%Typ=="AQU" .and. trim(Str)/=trim(vSpc(I)%NamSp)) then
       N= N+1
       S%vISpecies(N)= I
-    ENDIF
-  ENDDO
+    end if
+  end do
   !
   ! print *,"<SolModel_Spc_Init"
   ! print *,S%iSolvent,vSpc(S%iSolvent)%Name
@@ -151,8 +150,8 @@ SUBROUTINE SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
   ! print *,"</SolModel_Spc_Init"
   ! pause
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ SolModel_Spc_Init"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ SolModel_Spc_Init"
   !
-END SUBROUTINE SolModel_Spc_Init
+end subroutine SolModel_Spc_Init
 
-ENDMODULE M_T_SolModel
+end module M_T_SolModel

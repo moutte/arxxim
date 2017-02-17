@@ -1,60 +1,60 @@
-MODULE M_Dtb_Read_Vars
+module M_Dtb_Read_Vars
 !--
 !-- variables for routines reading databases
 !--
-  USE M_T_DtbAquHkf, ONLY: T_DtbAquHkf
-  USE M_T_DtbMinHkf, ONLY: T_DtbMinHkf
-  USE M_T_DtbMinThr, ONLY: T_DtbMinThr
-  USE M_T_DtbLogKTbl,ONLY: T_DtbLogKTbl
-  USE M_T_DtbLogKAnl,ONLY: T_DtbLogKAnl
-  !! USE M_T_DtbHSV,    ONLY: T_DtbHSV
+  use M_T_DtbAquHkf, only: T_DtbAquHkf
+  use M_T_DtbMinHkf, only: T_DtbMinHkf
+  use M_T_DtbMinThr, only: T_DtbMinThr
+  use M_T_DtbLogKTbl,only: T_DtbLogKTbl
+  use M_T_DtbLogKAnl,only: T_DtbLogKAnl
+  !! use M_T_DtbHSV,    only: T_DtbHSV
   !
-  IMPLICIT NONE
+  implicit none
   !
-  TYPE:: T_LisAquHkf !linked list for "dynamic reading"
-    TYPE(T_DtbAquHkf)::Value
-    TYPE(T_LisAquHkf),POINTER::Next
-  ENDTYPE T_LisAquHkf
-  TYPE(T_LisAquHkf),POINTER:: LisAquHkf
-  INTEGER:: nAquHkf
+  type:: T_LisAquHkf !linked list for "dynamic reading"
+    type(T_DtbAquHkf)::Value
+    type(T_LisAquHkf),pointer::Next
+  end type T_LisAquHkf
+  type(T_LisAquHkf),pointer:: LisAquHkf
+  integer:: nAquHkf
   !
-  TYPE:: T_LisMinHkf !linked list for "dynamic reading"
-    TYPE(T_DtbMinHkf)::Value
-    TYPE(T_LisMinHkf),POINTER::Next
-  ENDTYPE T_LisMinHkf
-  TYPE(T_LisMinHkf),POINTER:: LisMinHkf
-  INTEGER:: nMinHkf
+  type:: T_LisMinHkf !linked list for "dynamic reading"
+    type(T_DtbMinHkf)::Value
+    type(T_LisMinHkf),pointer::Next
+  end type T_LisMinHkf
+  type(T_LisMinHkf),pointer:: LisMinHkf
+  integer:: nMinHkf
   !
-  TYPE:: T_LisMinThr
-    TYPE(T_DtbMinThr)::Value
-    TYPE(T_LisMinThr),POINTER::Next
-  ENDTYPE T_LisMinThr
-  TYPE(T_LisMinThr),POINTER:: LisMinThr
-  INTEGER:: nMinThr
+  type:: T_LisMinThr
+    type(T_DtbMinThr)::Value
+    type(T_LisMinThr),pointer::Next
+  end type T_LisMinThr
+  type(T_LisMinThr),pointer:: LisMinThr
+  integer:: nMinThr
   !
-  !~ TYPE:: T_LisHSV
-    !~ TYPE(T_DtbHSV)::Value
-    !~ TYPE(T_LisHSV),POINTER::Next
-  !~ ENDTYPE T_LisHSV
-  !~ TYPE(T_LisHSV),POINTER:: LisHSV
-  !~ INTEGER:: nHSV
+  !! type:: T_LisHSV
+  !!   type(T_DtbHSV)::Value
+  !!   type(T_LisHSV),pointer::Next
+  !! end type T_LisHSV
+  !! type(T_LisHSV),pointer:: LisHSV
+  !!   integer:: nHSV
   !
-  TYPE:: T_LisLogKTbl
-    TYPE(T_DtbLogKTbl)::Value
-    TYPE(T_LisLogKTbl),POINTER::Next
-  ENDTYPE T_LisLogKTbl
-  TYPE(T_LisLogKTbl),POINTER:: LisLogKTbl
-  INTEGER:: nLogKTbl
+  type:: T_LisLogKTbl
+    type(T_DtbLogKTbl)::Value
+    type(T_LisLogKTbl),pointer::Next
+  end type T_LisLogKTbl
+  type(T_LisLogKTbl),pointer:: LisLogKTbl
+  integer:: nLogKTbl
   !
-  TYPE:: T_LisLogKAnl
-    TYPE(T_DtbLogKAnl)::Value
-    TYPE(T_LisLogKAnl),POINTER::Next
-  ENDTYPE T_LisLogKAnl
-  TYPE(T_LisLogKAnl),POINTER:: LisLogKAnl
-  INTEGER:: nLogKAnl
+  type:: T_LisLogKAnl
+    type(T_DtbLogKAnl)::Value
+    type(T_LisLogKAnl),pointer::Next
+  end type T_LisLogKAnl
+  type(T_LisLogKAnl),pointer:: LisLogKAnl
+  integer:: nLogKAnl
   !
-  CHARACTER(LEN=10):: FilCode
+  character(len=10):: FilCode
   !
-  INTEGER:: fLin=0
+  integer:: fLin=0
   !
-ENDMODULE M_Dtb_Read_Vars
+end module M_Dtb_Read_Vars

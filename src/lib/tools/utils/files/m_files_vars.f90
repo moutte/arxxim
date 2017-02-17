@@ -1,15 +1,15 @@
-MODULE M_FILES_VARS
-  IMPLICIT NONE
-  PRIVATE
+module M_FILES_VARS
+  implicit none
+  private
 
-  CHARACTER(LEN=80),PUBLIC:: cTitle
+  character(len=80),public:: cTitle
   
   ! Input File Name
-  CHARACTER(LEN=80),PUBLIC:: NamFInn
-  CHARACTER(LEN=80),PUBLIC:: NamFLogK,NamFEle,NamFKin,NamFSol,NamFPtz
-  CHARACTER(LEN=80),PUBLIC:: NamDtbAqu,NamDtbMin,NamDtbMlt
+  character(len=80),public:: NamFInn
+  character(len=80),public:: NamFLogK,NamFEle,NamFKin,NamFSol,NamFPtz
+  character(len=80),public:: NamDtbAqu,NamDtbMin,NamDtbMlt
 
-  CHARACTER(LEN=80),PUBLIC:: DirOut,DirLog
-  CHARACTER(LEN=80),PUBLIC:: DirDtbOut,DirDtbLog 
+  character(len=80),public:: DirOut,DirLog
+  character(len=80),public:: DirDtbOut,DirDtbLog 
 
-END MODULE M_FILES_VARS
+end module M_FILES_VARS

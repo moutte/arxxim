@@ -1,170 +1,174 @@
-MODULE M_Global_Alloc
-  USE M_Kinds
-  USE M_Trace,  ONLY: fTrc,T_,Stop_,iDebug
-  IMPLICIT NONE
+module M_Global_Alloc
+  use M_Kinds
+  use M_Trace,  only: fTrc,T_,Stop_,iDebug
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Elements_Alloc_forDtb
-  PUBLIC:: SpeciesDtb_Alloc
-  PUBLIC:: MixModels_Alloc
-  PUBLIC:: MixPhases_Alloc
-  PUBLIC:: Phases_Alloc
-  PUBLIC:: Phases_Alloc_New
-  PUBLIC:: DiscretParam_Alloc
+  public:: Elements_Alloc_forDtb
+  public:: SpeciesDtb_Alloc
+  public:: MixModels_Alloc
+  public:: MixPhases_Alloc
+  public:: Phases_Alloc
+  public:: Phases_Alloc_New
+  public:: DiscretParam_Alloc
   !
-CONTAINS
+contains
 
-SUBROUTINE Elements_Alloc_forDtb
+subroutine Elements_Alloc_forDtb(vEle,nEle)
 !--
 !-- read all elements (name,valency, weight) from database -> builds vEle
 !--
-  USE M_T_Element,   ONLY: Element_Index
-  USE M_Global_Vars, ONLY: vEle
-  USE M_Element_Read,ONLY: T_LnkEle,Elements_BuildLnk,Elements_LnkToVec
+  use M_T_Element,   only: T_Element,Element_Index
+  use M_Element_Read,only: T_LnkEle,Elements_BuildLnk,Elements_LnkToVec
   !
-  TYPE(T_LnkEle),POINTER::LnkEle
-  INTEGER:: nEle
+  type(T_Element),allocatable,intent(out):: vEle(:)
+  integer,                    intent(out):: nEle
   !
-  IF(iDebug>0) WRITE(fTrc,"(/,A)") "< Elements_Alloc_forDtb"
+  type(T_LnkEle),pointer:: LnkEle
   !
-  CALL Elements_BuildLnk(LnkEle,nEle)
+  if(iDebug>0) write(fTrc,"(/,A)") "< Elements_Alloc_forDtb"
   !
-  IF(nEle>0) THEN
+  call Elements_BuildLnk(LnkEle,nEle)
+  !
+  if(nEle>0) then
     !
-    IF(ALLOCATED(vEle)) DEALLOCATE(vEle)
-    ALLOCATE(vEle(1:nEle))
+    if(allocated(vEle)) deallocate(vEle)
+    allocate(vEle(1:nEle))
     !
-    CALL Elements_LnkToVec(LnkEle,vEle)
+    call Elements_LnkToVec(LnkEle,vEle)
     !
-    IF(Element_Index("O__",vEle)==0) CALL Stop_("Oxygen not Found ???") !________STOP 
-    IF(Element_Index("H__",vEle)==0) CALL Stop_("Hydrogen not Found ???") !______STOP 
+    if(Element_Index("O__",vEle)==0) call Stop_("Oxygen not Found ???") !________stop 
+    if(Element_Index("H__",vEle)==0) call Stop_("Hydrogen not Found ???") !______stop 
     !
-  ENDIF
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,"(A,/)") "</ Elements_Alloc_forDtb"
-ENDSUBROUTINE Elements_Alloc_forDtb
+  if(iDebug>0) write(fTrc,"(A,/)") "</ Elements_Alloc_forDtb"
+end subroutine Elements_Alloc_forDtb
 
-SUBROUTINE SpeciesDtb_Alloc !-> build vSpcDtb
-  USE M_SpeciesDtb_Read,ONLY: T_LnkSpc,SpeciesDtb_LnkToVec,SpeciesDtb_BuildLnk
+subroutine SpeciesDtb_Alloc(vSpcDtb,N) !-> build vSpcDtb
+  use M_T_Species,      only: T_SpeciesDtb
+  use M_SpeciesDtb_Read,only: T_LnkSpc,SpeciesDtb_LnkToVec,SpeciesDtb_BuildLnk
   !
-  USE M_Global_Vars, ONLY: vSpcDtb
+  type(T_SpeciesDtb),allocatable,intent(out):: vSpcDtb(:)
+  integer,                       intent(out):: N
   !
-  TYPE(T_LnkSpc), POINTER:: LnkSpc
-  INTEGER:: N
+  type(T_LnkSpc), pointer:: LnkSpc
   !
-  CALL SpeciesDtb_BuildLnk(LnkSpc,N)
-  !-> must come after Dtb_Read_HSV, which builds all vDtbXxx from HSV DATAbases
+  call SpeciesDtb_BuildLnk(LnkSpc,N)
+  !-> must come after Dtb_Read_HSV, which builds all vDtbXxx from HSV databases
   !-> from vDtbXxxXxx tables, build linked list LnkSpc
   !
-  IF(N>0) THEN !transfer LnkSpc to vSpcDtb
-    IF(ALLOCATED(vSpcDtb)) DEALLOCATE(vSpcDtb)
-    ALLOCATE(vSpcDtb(1:N))
-    CALL SpeciesDtb_LnkToVec(LnkSpc,vSpcDtb)
-  ENDIF
+  if(N>0) then !transfer LnkSpc to vSpcDtb
+    if(allocated(vSpcDtb)) deallocate(vSpcDtb)
+    allocate(vSpcDtb(1:N))
+    call SpeciesDtb_LnkToVec(LnkSpc,vSpcDtb)
+  end if
   !
-  !~ IF(iDebug>3) THEN 
-    !~ ALLOCATE(tFormul(1:SIZE(vEle),1:SIZE(vSpc)))
-    !~ CALL FormulaTable_Calc(vEle,vSpc,tFormul)
-    !~ CALL FormulaTable_Sho(vEle,vSpc,tFormul)
-    !~ DEALLOCATE(tFormul)
-  !~ ENDIF
+  !! if(iDebug>3) then 
+  !!   allocate(tFormul(1:size(vEle),1:size(vSpc)))
+  !!   call FormulaTable_Calc(vEle,vSpc,tFormul)
+  !!   call FormulaTable_Sho(vEle,vSpc,tFormul)
+  !!   deallocate(tFormul)
+  !! end if
   !
-ENDSUBROUTINE SpeciesDtb_Alloc
+end subroutine SpeciesDtb_Alloc
 
-SUBROUTINE MixModels_Alloc(vSpc) !-> build vMixModel
-  USE M_T_Species,    ONLY: T_Species
-  USE M_Global_Vars,  ONLY: vMixModel
-  USE M_MixModel_Read,ONLY: T_LnkMixModel,MixModel_BuildLnk,MixModel_LnkToVec
+subroutine MixModels_Alloc(vSpc,    vMixModel) !-> build vMixModel
+  use M_T_Species,    only: T_Species
+  use M_T_MixModel,   only: T_MixModel
+  use M_MixModel_Read,only: T_LnkMixModel,MixModel_BuildLnk,MixModel_LnkToVec
   !
-  TYPE(T_Species),DIMENSION(:),INTENT(IN)::vSpc
+  type(T_Species), dimension(:),            intent(in) :: vSpc
+  type(T_MixModel),dimension(:),allocatable,intent(out):: vMixModel
   !
-  TYPE(T_LnkMixModel),POINTER:: LnkSol
-  INTEGER::N
-  LOGICAL:: Ok
-  CHARACTER(LEN=80):: MsgError
+  type(T_LnkMixModel),pointer:: LnkSol
+  integer::N
+  logical:: Ok
+  character(len=80):: MsgError
   !
-  CALL MixModel_BuildLnk(vSpc,LnkSol,N,Ok,MsgError)
+  call MixModel_BuildLnk(vSpc,LnkSol,N,Ok,MsgError)
   !
-  IF(.NOT.Ok) THEN
-    CALL Stop_("Error reading MIXTURE.MODEL: "//TRIM(MsgError))
-  ENDIF
+  if(.not.Ok) then
+    call Stop_("Error reading MIXTURE.MODEL: "//trim(MsgError))
+  end if
   !
-  IF(N>0) THEN
-    IF(ALLOCATED(vMixModel)) DEALLOCATE(vMixModel)
-    ALLOCATE(vMixModel(1:N))
-    CALL MixModel_LnkToVec(LnkSol,vMixModel)
-  ENDIF
+  if(N>0) then
+    if(allocated(vMixModel)) deallocate(vMixModel)
+    allocate(vMixModel(1:N))
+    call MixModel_LnkToVec(LnkSol,vMixModel)
+  end if
   !
-ENDSUBROUTINE MixModels_Alloc
+end subroutine MixModels_Alloc
 
-SUBROUTINE MixPhases_Alloc(vSpc,vMixModel) !-> build vMixFas
-  USE M_T_Species,    ONLY: T_Species
-  USE M_T_MixModel,   ONLY: T_MixModel
-  USE M_T_MixPhase,   ONLY: MixPhase_Zero
-  USE M_MixPhase_Read,ONLY: T_LnkFas,MixPhase_BuildLnk,MixPhase_LnkToVec
+subroutine MixPhases_Alloc(vSpc,vMixModel, vMixFas)
+  use M_T_Species,    only: T_Species
+  use M_T_MixModel,   only: T_MixModel
+  use M_T_MixPhase,   only: T_MixPhase
+  use M_T_MixPhase,   only: MixPhase_Zero
+  use M_MixPhase_Read,only: T_LnkFas,MixPhase_BuildLnk,MixPhase_LnkToVec
   !
-  USE M_Global_Vars,  ONLY: vMixFas
+  type(T_Species),             dimension(:),intent(in)   :: vSpc
+  type(T_MixModel),            dimension(:),intent(in)   :: vMixModel
+  type(T_MixPhase),allocatable,dimension(:),intent(inout):: vMixFas
   !
-  TYPE(T_Species), DIMENSION(:),INTENT(IN) :: vSpc
-  TYPE(T_MixModel),DIMENSION(:),INTENT(IN) :: vMixModel
+  type(T_LnkFas),pointer:: Lnk
+  integer::I,nMixFas
+  logical:: Ok
+  character(len=80):: MsgError
   !
-  TYPE(T_LnkFas),POINTER:: Lnk
-  INTEGER::I,nMixFas
-  LOGICAL:: Ok
-  CHARACTER(LEN=80):: MsgError
+  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhases_Alloc"
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< MixPhases_Alloc"
+  call MixPhase_BuildLnk(vSpc,vMixModel,nMixFas,Lnk,Ok,MsgError)
   !
-  CALL MixPhase_BuildLnk(vSpc,vMixModel,nMixFas,Lnk,Ok,MsgError)
+  if(.not.Ok) then
+    call Stop_("Error reading MIXTURE block, "//trim(MsgError))
+  end if
   !
-  IF(.NOT.Ok) THEN
-    CALL Stop_("Error reading MIXTURE block, "//TRIM(MsgError))
-  ENDIF
-  !
-  IF(nMixFas>0) THEN
+  if(nMixFas>0) then
     !
-    IF(ALLOCATED(vMixFas)) DEALLOCATE(vMixFas)
-    ALLOCATE(vMixFas(1:nMixFas))
+    if(allocated(vMixFas)) deallocate(vMixFas)
+    allocate(vMixFas(1:nMixFas))
     !
-    DO I=1,nMixFas; CALL MixPhase_Zero(vMixFas(I)); ENDDO
+    do I=1,nMixFas; call MixPhase_Zero(vMixFas(I)); end do
     !
-    CALL MixPhase_LnkToVec(Lnk,vMixFas)
+    call MixPhase_LnkToVec(Lnk,vMixFas)
     !
-  ENDIF
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ MixPhases_Alloc"
-ENDSUBROUTINE MixPhases_Alloc
+  if(iDebug>0) write(fTrc,'(A,/)') "</ MixPhases_Alloc"
+end subroutine MixPhases_Alloc
 
-SUBROUTINE Phases_Alloc(vSpc,vMixFas)
+subroutine Phases_Alloc(vSpc,vMixFas, vFas)
 !--
 !-- -> build vFas
 !-- vFas- (H2O) U (non-aqueous pure species) U (solution phases)
 !--
-  USE M_T_Species,  ONLY: T_Species,Species_Index
-  USE M_T_MixPhase, ONLY: T_MixPhase
-  USE M_Global_Vars,ONLY: vFas
-  USE M_T_Phase,    ONLY: Phase_Zero
+  use M_T_Phase,    only: T_Phase
+  use M_T_Species,  only: T_Species,Species_Index
+  use M_T_MixPhase, only: T_MixPhase
+  use M_T_Phase,    only: Phase_Zero
   !
-  TYPE(T_Species), DIMENSION(:),INTENT(IN):: vSpc
-  TYPE(T_MixPhase),DIMENSION(:),INTENT(IN):: vMixFas
+  type(T_Species),          dimension(:),intent(in) :: vSpc
+  type(T_MixPhase),         dimension(:),intent(in) :: vMixFas
+  type(T_Phase),allocatable,dimension(:),intent(out):: vFas
   !
-  INTEGER:: I,N
+  integer:: I,N
   !
   ! calculate number of non-aqueous species -> included as "PURE" phase
   N=0
-  IF(Species_Index("H2O",vSpc)/=0) N=N+1
+  if(Species_Index("H2O",vSpc)/=0) N=N+1
   ! "H2O" is "AQU" but it should be included here as pure
   N= N &
-  & + COUNT(vSpc(:)%Typ/="AQU") !& !skip the solute species
-  !& + SIZE(vMixFas)
+  & + count(vSpc(:)%Typ/="AQU") !& !skip the solute species
+  !& + size(vMixFas)
   !
-  IF(ALLOCATED(vFas)) DEALLOCATE(vFas)
-  ALLOCATE(vFas(1:N)); vFas(:)=Phase_Zero
+  if(allocated(vFas)) deallocate(vFas)
+  allocate(vFas(1:N)); vFas(:)=Phase_Zero
   !
   N=0
   !
-  IF(Species_Index("H2O",vSpc)/=0) THEN
+  if(Species_Index("H2O",vSpc)/=0) then
     ! include H2O species as pure phase in phase table
     N=N+1
     vFas(N)%NamFs= "H2O"
@@ -172,30 +176,30 @@ SUBROUTINE Phases_Alloc(vSpc,vMixFas)
     vFas(N)%iSpc=  Species_Index("H2O",vSpc)
     vFas(N)%iMix=  0
     vFas(N)%iSol=  0
-  ENDIF
+  end if
   !
-  DO I=1,SIZE(vSpc)
+  do I=1,size(vSpc)
     ! include all non'aqu thermodyn'species and discretized species
     ! as pure phases in phase table
-    IF(vSpc(I)%Typ/="AQU") THEN
+    if(vSpc(I)%Typ/="AQU") then
       N=N+1
-      vFas(N)%NamFs= TRIM(vSpc(I)%NamSp)
+      vFas(N)%NamFs= trim(vSpc(I)%NamSp)
       !! vFas(N)%Typ=  "PURE"
-      !! IF(vSpc(I)%iDiscret>0) vFas(N)%Typ= "DISCRET"
+      !! if(vSpc(I)%iDiscret>0) vFas(N)%Typ= "DISCRET"
       vFas(N)%iSpc= I
       vFas(N)%iSol= 0
       vFas(N)%iMix= 0
-    ENDIF
-  ENDDO
+    end if
+  end do
   !
-  ! DO I=1,SIZE(vMixFas)
+  ! do I=1,size(vMixFas)
   !   ! include all non'aqu solution phases in phase table
-  !   vFas(N+I)%NamFs= TRIM(vMixFas(I)%Name)
+  !   vFas(N+I)%NamFs= trim(vMixFas(I)%Name)
   !   vFas(N+I)%Typ=   "MIXT"
   !   vFas(N+I)%iSol=  0
   !   vFas(N+I)%iSpc=  0
   !   vFas(N+I)%iMix=  I
-  ! ENDDO
+  ! end do
   
   ! write(11,'(A)') "<==Phases_Alloc====="
   ! do i=1,size(vFas)
@@ -203,86 +207,86 @@ SUBROUTINE Phases_Alloc(vSpc,vMixFas)
   ! end do
   ! write(11,'(A)') "===================>"
   
-  RETURN
-END SUBROUTINE Phases_Alloc
+  return
+end subroutine Phases_Alloc
 
-SUBROUTINE Phases_Alloc_New(vSpc,vMixFas,vSolFas)
+subroutine Phases_Alloc_New(vSpc,vMixFas,vSolFas,    vFas)
 !--
 !-- -> build vFas
 !-- vFas- (non-aqueous pure species) U (mixture phases) U (solution phases)
 !--
-  USE M_T_Species,  ONLY: T_Species,Species_Index
-  USE M_T_SolPhase, ONLY: T_SolPhase
-  USE M_T_MixPhase, ONLY: T_MixPhase
-  USE M_Global_Vars,ONLY: vFas
-  USE M_T_Phase,    ONLY: Phase_Zero
+  use M_T_Species,  only: T_Species,Species_Index
+  use M_T_SolPhase, only: T_SolPhase
+  use M_T_MixPhase, only: T_MixPhase
+  use M_T_Phase,    only: Phase_Zero,T_Phase
   !
-  TYPE(T_Species), INTENT(IN):: vSpc(:)
-  TYPE(T_MixPhase),INTENT(IN):: vMixFas(:)
-  TYPE(T_SolPhase),INTENT(IN):: vSolFas(:)
+  type(T_Species),          intent(in) :: vSpc(:)
+  type(T_MixPhase),         intent(in) :: vMixFas(:)
+  type(T_SolPhase),         intent(in) :: vSolFas(:)
+  type(T_Phase),allocatable,intent(out):: vFas(:)
   !
-  INTEGER:: I,N
+  integer:: I,N
   !
   ! calculate number of non-aqueous species -> included as "PURE" phase
-  N= COUNT(vSpc(:)%Typ/="AQU") &
-  &  + SIZE(vMixFas) &
-  &  + SIZE(vSolFas)
+  N= count(vSpc(:)%Typ/="AQU") &
+  &  + size(vMixFas) &
+  &  + size(vSolFas)
   !
-  !~ ! calculate number of non-aqueous species -> included as "PURE" phase
-  !~ N=0
-  !~ IF(Species_Index("H2O",vSpc)/=0) N=N+1
-  !~ ! "H2O" is "AQU" but it should be included here as pure
-  !~ N= N &
-  !~ & + COUNT(vSpc(:)%Typ/="AQU") & !skip the solute species
-  !~ & + SIZE(vMixFas)
+  !! ! calculate number of non-aqueous species -> included as "PURE" phase
+  !! N=0
+  !! if(Species_Index("H2O",vSpc)/=0) N=N+1
+  !! ! "H2O" is "AQU" but it should be included here as pure
+  !! N= N &
+  !! & + count(vSpc(:)%Typ/="AQU") & !skip the solute species
+  !! & + size(vMixFas)
   !
-  IF(ALLOCATED(vFas)) DEALLOCATE(vFas)
-  ALLOCATE(vFas(1:N)); vFas(:)=Phase_Zero
+  if(allocated(vFas)) deallocate(vFas)
+  allocate(vFas(1:N)); vFas(:)=Phase_Zero
   !
   N=0
   !
-  !~ IF(Species_Index("H2O",vSpc)/=0) THEN
-    !~ ! include H2O species as pure phase in phase table
-    !~ N=N+1
-    !~ vFas(N)%NamFs= "H2O"
-    !~ vFas(N)%Typ=   "PURE"
-    !~ vFas(N)%iSpc=  Species_Index("H2O",vSpc)
-  !~ ENDIF
+  !! if(Species_Index("H2O",vSpc)/=0) then
+  !! ! include H2O species as pure phase in phase table
+  !!   N=N+1
+  !!   vFas(N)%NamFs= "H2O"
+  !!   vFas(N)%Typ=   "PURE"
+  !!   vFas(N)%iSpc=  Species_Index("H2O",vSpc)
+  !! end if
   !
-  DO I=1,SIZE(vSpc)
+  do I=1,size(vSpc)
     ! include all non'aqu thermodyn'species (and discretized species)
     ! as pure phases in phase table
-    IF(vSpc(I)%Typ/="AQU") THEN
+    if(vSpc(I)%Typ/="AQU") then
       N= N+1
-      vFas(N)%NamFs= TRIM(vSpc(I)%NamSp)
+      vFas(N)%NamFs= trim(vSpc(I)%NamSp)
       !! vFas(N)%Typ=  "PURE"
       ! nota:
       !   discretized phases are comprised within the "pure phases"
       vFas(N)%iSpc= I
       vFas(N)%iSol= 0
       vFas(N)%iMix= 0
-    ENDIF
-  ENDDO
+    end if
+  end do
   !
-  DO I=1,SIZE(vSolFas)
+  do I=1,size(vSolFas)
     ! include all non'aqu solution phases in phase table
     N= N+1
-    vFas(N)%NamFs= TRIM(vSolFas(I)%Name)
+    vFas(N)%NamFs= trim(vSolFas(I)%Name)
     !! vFas(N)%Typ=  "SOLU"
     vFas(N)%iSol= I
     vFas(N)%iSpc= 0
     vFas(N)%iMix= 0
-  ENDDO
+  end do
   !
-  DO I=1,SIZE(vMixFas)
+  do I=1,size(vMixFas)
     ! include all non'aqu solution phases in phase table
     N= N+1
-    vFas(N)%NamFs= TRIM(vMixFas(I)%Name)
+    vFas(N)%NamFs= trim(vMixFas(I)%Name)
     !! vFas(N)%Typ=  "MIXT"
     vFas(N)%iSol= 0
     vFas(N)%iSpc= 0
     vFas(N)%iMix= I
-  ENDDO
+  end do
   
   ! write(11,'(A)') "<==Phases_Alloc_New=="
   ! do i=1,size(vFas)
@@ -290,35 +294,34 @@ SUBROUTINE Phases_Alloc_New(vSpc,vMixFas,vSolFas)
   ! end do
   ! write(11,'(A)') "====================>"
   
-  RETURN
-END SUBROUTINE Phases_Alloc_New
+  return
+end subroutine Phases_Alloc_New
 
-SUBROUTINE DiscretParam_Alloc(vDiscretModel)
+subroutine DiscretParam_Alloc(vDiscretModel, vDiscretParam)
 !--
 !-- build vDiscretParam, array of T_DiscretParam
 !-- that will be used to build pseudo-species derived from discretized mixtures(s)
 !--
-  USE M_T_MixModel,ONLY: T_MixModel
-  USE M_T_DiscretModel
+  use M_T_MixModel,only: T_MixModel
+  use M_T_DiscretModel !T_DiscretModel,T_DiscretParam
   !
-  USE M_Global_Vars, ONLY: vDiscretParam
+  type(T_DiscretModel),            intent(in)  :: vDiscretModel(:)
+  type(T_DiscretParam),allocatable,intent(inout):: vDiscretParam(:)
   !
-  TYPE(T_DiscretModel),INTENT(IN):: vDiscretModel(:)
+  integer:: N,iM
   !
-  INTEGER:: N,iM
-  !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretParam_Alloc"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretParam_Alloc"
   !
   N= 0
-  DO iM= 1, SIZE(vDiscretModel)
+  do iM= 1, size(vDiscretModel)
     N= N + vDiscretModel(iM)%DimTot
-  ENDDO
-  DEALLOCATE(vDiscretParam)
-  ALLOCATE(vDiscretParam(N))
+  end do
+  deallocate(vDiscretParam)
+  allocate(vDiscretParam(N))
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ DiscretParam_Alloc"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretParam_Alloc"
   !
-ENDSUBROUTINE DiscretParam_Alloc
+end subroutine DiscretParam_Alloc
 
-ENDMODULE M_Global_Alloc
+end module M_Global_Alloc
 

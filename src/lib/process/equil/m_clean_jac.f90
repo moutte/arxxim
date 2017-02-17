@@ -1,92 +1,92 @@
-MODULE M_Clean_Jac
+module M_Clean_Jac
   !-----------------------------------------------------------
   ! Clean Jacobian Matrix from Small Coupling terms
   ! Cleaning operation based on max absolute value term
   !-----------------------------------------------------------
-  USE M_Kinds
-  USE M_Trace
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  use M_Trace
+  implicit none
+  private
 
-  REAL(kind=8), PARAMETER :: xeps = 1D-10
+  real(dp), parameter :: xeps = 1D-10
   
-  PUBLIC :: Clean_Jac_All
-  PUBLIC :: Clean_Jac_Index
-  PUBLIC :: Clean_Jac_Section
+  public :: Clean_Jac_All
+  public :: Clean_Jac_Index
+  public :: Clean_Jac_Section
   
-CONTAINS 
+contains 
 
-  SUBROUTINE Clean_Jac_All(tJac)
+  subroutine Clean_Jac_All(tJac)
     !-------------------------------------------------
     ! Clean All Equations
     !-------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp) :: tJac(:,:)
-    INTEGER :: nEq 
+    implicit none
+    real(dp) :: tJac(:,:)
+    integer :: nEq 
     !--
-    !CALL Info_( "Clean_Jac_All" )
-    nEq = SIZE(tJac,1)
-    CALL Clean_Jac_Section(tJac, 1, nEq)
+    !call Info_( "Clean_Jac_All" )
+    nEq = size(tJac,1)
+    call Clean_Jac_Section(tJac, 1, nEq)
    
-  END SUBROUTINE Clean_Jac_All
+  end subroutine Clean_Jac_All
 
   !---
   
-  SUBROUTINE Clean_Jac_Section(tJac, nA, nB)
+  subroutine Clean_Jac_Section(tJac, nA, nB)
     !--------------------------------------------------------
     ! Clean Equations [nA:nB] 
     !--------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp) :: tJac(:,:)
-    INTEGER :: nA, nB
-    REAL(kind=8) :: x, xmax
-    INTEGER :: iEq,j, N
+    implicit none
+    real(dp) :: tJac(:,:)
+    integer :: nA, nB
+    real(dp) :: x, xmax
+    integer :: iEq,j, N
     !
-    !CALL Info_( "Clean_Jac_Section" )
-    N = SIZE(tJac,2)
-    DO iEq=nA,nB
+    !call Info_( "Clean_Jac_Section" )
+    N = size(tJac,2)
+    do iEq=nA,nB
        ! compute maximal species contribution for component iC
        xmax = maxval ( abs( tJac(iEq,1:N)) ) 
-       DO j=1,N
+       do j=1,N
           ! clean small relative contributions of the line
           x = tJac(iEq,j)
-          !WRITE(*,*) "x=", x, xmax
-          IF (abs(x)<xeps*xmax) THEN
-             !WRITE(*,*) "clean value tJac"
+          !write(*,*) "x=", x, xmax
+          if (abs(x)<xeps*xmax) then
+             !write(*,*) "clean value tJac"
              tJac(iEq,j) = Zero
-          END IF
-       END DO
-    END DO
+          end if
+       end do
+    end do
 
-  END SUBROUTINE Clean_Jac_Section
+  end subroutine Clean_Jac_Section
 
   !--
   
-  SUBROUTINE Clean_Jac_Index(tJac, IdxEq)
+  subroutine Clean_Jac_Index(tJac, IdxEq)
     !--------------------------------------------------------
     ! Clean Indexed Equations
     !--------------------------------------------------------
-    IMPLICIT NONE
-    REAL(dp) :: tJac(:,:)
-    INTEGER  :: IdxEq(:)
+    implicit none
+    real(dp) :: tJac(:,:)
+    integer  :: IdxEq(:)
     !---
-    REAL(kind=8) :: x, xmax
-    INTEGER  :: iEq,j
-    INTEGER  :: N, nEq
-    !CALL Info_( "Clean_Jac_Index" )
-    N   = SIZE(tJac,2)
-    nEq = SIZE(IdxEq)
+    real(dp) :: x, xmax
+    integer  :: iEq,j
+    integer  :: N, nEq
+    !call Info_( "Clean_Jac_Index" )
+    N   = size(tJac,2)
+    nEq = size(IdxEq)
     
-    DO iEq = IdxEq(1),IdxEq(nEq)
+    do iEq = IdxEq(1),IdxEq(nEq)
        ! compute maximal species contribution for component iC
        xmax = maxval ( abs( tJac(iEq,1:N)) ) 
-       DO j=1,N
+       do j=1,N
           ! clean small relative contributions of the line
           x = tJac(iEq,j)
-          IF (abs(x)<xeps*xmax) tJac(iEq,j) = Zero
-       END DO
-    END DO
+          if (abs(x)<xeps*xmax) tJac(iEq,j) = Zero
+       end do
+    end do
 
-  END SUBROUTINE Clean_Jac_Index
+  end subroutine Clean_Jac_Index
   
-END MODULE M_Clean_Jac
+end module M_Clean_Jac

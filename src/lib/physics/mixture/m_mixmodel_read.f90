@@ -1,180 +1,195 @@
-MODULE M_MixModel_Read
-  USE M_Kinds
-  USE M_Trace,   ONLY: iDebug,fTrc,T_
-  USE M_T_MixModel,ONLY: T_MixModel
-  IMPLICIT NONE
-  PRIVATE
+module M_MixModel_Read
+  use M_Kinds
+  use M_Trace,   only: iDebug,fTrc,T_
+  use M_T_MixModel,only: T_MixModel
+  implicit none
+  private
   !
-  PUBLIC:: MixModel_BuildLnk
-  PUBLIC:: MixModel_LnkToVec
-  PUBLIC:: MixModel_Check
+  public:: MixModel_BuildLnk
+  public:: MixModel_LnkToVec
+  public:: MixModel_Check
   !
-  PUBLIC:: T_LnkMixModel
+  public:: T_LnkMixModel
   !
-  TYPE:: T_LnkMixModel
-    TYPE(T_MixModel)::Value
-    TYPE(T_LnkMixModel),POINTER::Next
-  ENDTYPE T_LnkMixModel
+  type:: T_LnkMixModel
+    type(T_MixModel)::Value
+    type(T_LnkMixModel),pointer::Next
+  end type T_LnkMixModel
   !
-CONTAINS
+contains
 
-SUBROUTINE MixModel_BuildLnk( &
+subroutine MixModel_BuildLnk( &
 & vSpc, &
 & Lnk,N,Ok,MsgError)
 !--
 !-- reading MIXTURE.MODEL blocks from file
 !-- -> build a linked list of T_MixModel
 !--
-  USE M_IOTools
-  USE M_T_MixModel
-  USE M_Files,    ONLY: NamFSol
-  USE M_T_Species,ONLY: T_Species,Species_Index
+  use M_IOTools
+  use M_T_MixModel
+  use M_Files,    only: NamFSol
+  use M_T_Species,only: T_Species,Species_Index
   !---------------------------------------------------------------------
-  TYPE(T_Species),    INTENT(IN) :: vSpc(:)
-  TYPE(T_LnkMixModel),POINTER    :: Lnk
-  INTEGER,            INTENT(OUT):: N
-  LOGICAL,            INTENT(OUT):: Ok
-  CHARACTER(*),       INTENT(OUT):: MsgError
+  type(T_Species),    intent(in) :: vSpc(:)
+  type(T_LnkMixModel),pointer    :: Lnk
+  integer,            intent(out):: N
+  logical,            intent(out):: Ok
+  character(*),       intent(out):: MsgError
   !---------------------------------------------------------------------
-  TYPE(T_LnkMixModel),POINTER:: pCur
+  type(T_LnkMixModel),pointer:: pCur
   !
-  CHARACTER(LEN=512):: L,W
-  CHARACTER(LEN=3)  :: Str
-  CHARACTER(LEN=80) :: SiteList
-  !CHARACTER(LEN=255):: sFormul
-  LOGICAL            :: sEol
-  LOGICAL            :: MargulTheriak= .FALSE.
-  INTEGER            :: ios,F,K,J,iEl,iS,iP,offset_,iMargIndex !,M1,M2
-  TYPE(T_MixModel)   :: S
-  TYPE(T_Margul)     :: M
-  LOGICAL            :: vHasPole(MaxPole)
-  REAL(dp),DIMENSION(dimV)::vX
-  REAL(dp),ALLOCATABLE:: vXpol(:),vXatom(:)
-  REAL(dp):: Y
+  character(len=512):: L,W
+  character(len=3)  :: Str
+  character(len=80) :: SiteList
+  !character(len=255):: sFormul
+  logical            :: sEol
+  logical            :: MargulTheriak= .false.
+  integer            :: ios,F,K,J,iEl,iS,iP,offset_,iMargIndex !,M1,M2
+  type(T_MixModel)   :: S
+  type(T_Margul)     :: M
+  logical            :: vHasPole(MaxPole)
+  real(dp),dimension(dimV)::vX
+  real(dp),allocatable:: vXpol(:),vXatom(:)
+  real(dp):: Y
   !
   !----------------------------------------------for reading SITE models
-  ! REAL(dp)::NormCoeff
+  ! real(dp)::NormCoeff
   !
-  INTEGER,DIMENSION(0:MaxSite):: vNEle
+  integer,dimension(0:MaxSite):: vNEle
   ! vNEle = nr of possible elements on each site, vNEle<=MaxMulti
   !       -> gives structure of input composition vector
   ! vNEle(0)=0,
   !       -> to enable i=i+vNEle(iSite-1)
   !          for localization of i in composition vector ...
   !
-  CHARACTER(3*MaxMulti):: vSiteString(1:MaxSite)
+  character(3*MaxMulti):: vSiteString(1:MaxSite)
   !--------------------------------------------------------------------/
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "<-----------------MixModel_BuildLnk"
+  if(iDebug>0) write(fTrc,'(/,A)') "<-----------------MixModel_BuildLnk"
   !
-  Ok= .TRUE.
+  Ok= .true.
   MsgError= "Ok"
   !
   N=0
-  NULLIFY(Lnk)
+  nullify(Lnk)
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFSol))
+  call GetUnit(F)
+  open(F,file=trim(NamFSol))
 
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,sEol)
-    IF(W(1:1)=='!')   CYCLE DoFile
-    CALL AppendToEnd(L,W,sEoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,sEol)
+    if(W(1:1)=='!')   cycle DoFile
+    call AppendToEnd(L,W,sEoL)
     !
-    IF(W=="ENDINPUT") EXIT DoFile
+    if(W=="ENDINPUT") exit DoFile
     !
     !-----------------------------------------build a new solution model
-    IF(W=="MIXTURE.MODEL" .OR. W=="SOLUTION.MODEL") THEN
+    if(W=="MIXTURE.MODEL" .or. W=="SOLUTION.MODEL") then
     !
     ! keyword SOLUTION.MODEL should become obsolete for symmetric models
     ! MIXTURE.MODEL is the preferred keyword for symmetric models,
     ! SOLUTION.MODEL should be for assymetric solvent / solute mixtures
     !
-      CALL MixModel_Zero(S)
+      call MixModel_Zero(S)
+      vHasPole(:)= .false.
       !
-      CALL LinToWrd(L,W,sEol) !MIXTURE.MODEL OLIVINE ->S%Name="OLIVINE"
-      S%Name=TRIM(W)
+      call LinToWrd(L,W,sEol) !MIXTURE.MODEL OLIVINE ->S%Name="OLIVINE"
+      S%Name=trim(W)
       !
-      IF(iDebug>0) WRITE(fTrc,'(/,2A)') "MIXTURE=",TRIM(S%Name)
-      IF(iDebug>2) PRINT '(/,A,/)',"Reading mixture model "//TRIM(S%Name)
+      if(iDebug>0) write(fTrc,'(/,2A)') "MIXTURE=",trim(S%Name)
+      if(iDebug>2) print '(/,A,/)',"Reading mixture model "//trim(S%Name)
       !
-      DoSol: DO
+      DoSol: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
         !
-        CALL LinToWrd(L,W,sEol) !; IF(iDebug>2) WRITE(fTrc,'(A2,A)') "W=",TRIM(W)
+        call LinToWrd(L,W,sEol) !; if(iDebug>2) write(fTrc,'(A2,A)') "W=",trim(W)
         !
-        IF(W(1:1)=='!') CYCLE DoSol !skip comment lines
-        CALL AppendToEnd(L,W,sEoL)
+        if(W(1:1)=='!') cycle DoSol !skip comment lines
+        call AppendToEnd(L,W,sEoL)
         !
-        SELECT CASE(W)
+        select case(W)
         !
-        CASE("ENDINPUT"); EXIT DoFile
+        case("ENDINPUT"); exit DoFile
         !
-        CASE("END","ENDMIXTURE.MODEL","ENDSOLUTION.MODEL")
+        case("END","ENDMIXTURE.MODEL","ENDSOLUTION.MODEL")
         !------------------------------------- end of one MIXTURE block,
         !------------------- -> save the T_MixModel value in linked list
-          IF((S%nPole>1) .AND. &
-          &  (COUNT(vHasPole(:) .EQV. .TRUE.)>1)) THEN
-            IF(iDebug>2) PRINT *,"------------------------ACCEPTED"
+          if((S%nPole>1) .and. &
+          &  (count(vHasPole(:) .EQV. .true.)>1)) then
+            if(iDebug>2) print *,"------------------------ACCEPTED"
             !
-            IF(ANY(vHasPole(1:S%nPole) .EQV. .FALSE.)) &
-            & CALL MixModel_Clean(vHasPole, S)
+            if(.not. all(vHasPole(1:S%nPole))) &
+            & call MixModel_Clean(vHasPole, S)
             !
             N=N+1
-            IF(N==1) THEN !--fill the linked list
-              ALLOCATE(Lnk); NULLIFY(Lnk%next)
+            if(N==1) then !--fill the linked list
+              allocate(Lnk); nullify(Lnk%next)
               Lnk%Value=S; pCur=>Lnk
-            ELSE
-              ALLOCATE(pCur%next); NULLIFY(pCur%next%next)
+            else
+              allocate(pCur%next); nullify(pCur%next%next)
               pCur%next%Value=S; pCur=>pCur%next
-            END IF
-          ELSE
-            IF(iDebug>2) PRINT *,"------------------------REJECTED"
-          END IF
+            end if
+          else
+            if(iDebug>2) print *,"------------------------REJECTED"
+          end if
           !
-          EXIT DoSol
+          exit DoSol
         !---------------------/ save the T_MixModel value in linked list
         !
-        CASE("MODEL") !MODEL IDEAL / POLE / SITE / SPECIAL
-        !-----------------------------------------------------read MODEL
-          CALL LinToWrd(L,W,sEol)
-          IF(TRIM(W)=="IDEAL") W="MOLECULAR"
-          IF(TRIM(W)=="POLE") W="MOLECULAR"
-          S%Model=TRIM(W)
+        case("MODEL") !MODEL IDEAL / POLE / SITE / SPECIAL
+        !-----------------------------------------------read MODEL index
+          ! Mix_Molecular= 1, & !
+          ! Mix_Felspar=   2, & !
+          ! Mix_Site=      3, & !
+          ! Mix_Special=   4, & !
           !
-          IF(iDebug>0) WRITE(fTrc,'(2A)') "MODEL=",TRIM(W)
+          call LinToWrd(L,W,sEol)
+          !
+          select case(trim(W))
+          case("MOLECULAR","IDEAL","POLE")  ;  S%Model= Mix_Molecular ! "MOLECULAR"
+          case("FELSPAR")                   ;  S%Model= Mix_Felspar   ! "FELSPAR"
+          case("SITE")                      ;  S%Model= Mix_Site      ! "SITE"
+          case("SPECIAL")                   ;  S%Model= Mix_Special   ! "SPECIAL"
+          case("EXCHANGE")                  ;  S%Model= Mix_Exchange
+          case("SURFACE")                   ;  S%Model= Mix_Surface
+          case default
+            Ok= .false.
+            MsgError=trim(W)//"= Unknown MODEL in MIXTURE.MODEL"
+          end select
+          !
+          if(iDebug>0) write(fTrc,'(2A)') "MODEL=",trim(W)
           !
           S%NSite=1
-          IF(.NOT. sEol) THEN !=former version
-            CALL LinToWrd(L,W,sEol)
-            CALL WrdToInt(W,S%vMulti(1))
-          ENDIF
+          if(.not. sEol) then !=former version, read MULTIplicity
+            call LinToWrd(L,W,sEol)
+            call WrdToInt(W,S%vMulti(1))
+          end if
           !
-          CYCLE DoSol
+          cycle DoSol
           !not really necessary,
           !... unless the current value of W has changed to POLE or MARGULES ...
         !----------------------------------------------------/read MODEL
         !
-        CASE("MULTI") ! needed only for MOLECULAR models with Multi/=1
+        case("MULTI") ! needed only for MOLECULAR models with Multi/=1
         !----------------------------------------------read MULTIPLICITY
-          CALL LinToWrd(L,W,sEol)
-          CALL WrdToInt(W,K)
-          IF(K<0 .or. K>MaxMulti) THEN
-            Ok= .FALSE.
+          call LinToWrd(L,W,sEol)
+          call WrdToInt(W,K)
+          if(K<0 .or. K>MaxMulti) then
+            Ok= .false.
             MsgError=                            "error in MULTIPLICITY"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            return !----------------------------------------------return
+          end if
           !
           S%vMulti(1)= K
           !
-          IF(iDebug>0) WRITE(fTrc,'(A,I3)') "MULTI=",S%vMulti(1)
+          if(iDebug>0) write(fTrc,'(A,I3)') "MULTI=",S%vMulti(1)
           !
         !---------------------------------------------/read MULTIPLICITY
         !
-        CASE("SITE")
+        case("SITE")
         !------------------------------------------------read SITE block
           !
           ! example
@@ -183,7 +198,7 @@ SUBROUTINE MixModel_BuildLnk( &
           !     T   2  SI_AL_
           !     M   1  MG_FE_AL_VAC
           !     VA4 4  MG_FE_AL_
-          !   END SITE
+          !   end SITE
           !
           S%nSite= 0
           vNEle=   0
@@ -191,165 +206,183 @@ SUBROUTINE MixModel_BuildLnk( &
           iEl=     0
           SiteList= ""
           !
-          IF(TRIM(S%Model)/="SITE") THEN
-            Ok= .FALSE.
+          ! if(trim(S%Model)/="SITE") then
+          if(S%Model /= Mix_Site) then
+            Ok= .false.
             MsgError=             "only SITE mixtures have a SITE block"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            return !----------------------------------------------return
+          end if
           !
-          DoSite: DO
+          DoSite: do
             !
-            READ(F,'(A)') L; CALL LinToWrd(L,W,sEol)
-            IF(W(1:1)=='!') CYCLE DoSite
-            CALL AppendToEnd(L,W,sEoL)
-            IF(W=="END") EXIT DoSite
-            IF(W=="ENDSITE") EXIT DoSite
+            read(F,'(A)') L; call LinToWrd(L,W,sEol)
+            if(W(1:1)=='!') cycle DoSite
+            call AppendToEnd(L,W,sEoL)
+            if(W=="END") exit DoSite
+            if(W=="ENDSITE") exit DoSite
             !
             S%nSite=S%nSite+1
             !
-            IF(S%nSite>MaxSite) THEN
-              Ok= .FALSE.
+            if(S%nSite>MaxSite) then
+              Ok= .false.
               MsgError=                  "in SITE block: TOO MANY SITES"
-              RETURN !--------------------------------------------RETURN
-            ENDIF
+              return !--------------------------------------------return
+            end if
             !
             !----------first word of line= name of site, up to 3 lettres
-            CALL Str_Append(W,3)
-            S%vNamSite(S%nSite)=TRIM(W)
-            SiteList= TRIM(SiteList)//TRIM(W)
+            call Str_Append(W,3)
+            S%vNamSite(S%nSite)=trim(W)
+            SiteList= trim(SiteList)//trim(W)
             !
-            IF(iDebug>2) WRITE(fTrc,*) &
-            & "NamSite,SiteList= ",S%vNamSite(S%nSite),TRIM(SiteList)
+            if(iDebug>2) write(fTrc,*) &
+            & "NamSite,SiteList= ",S%vNamSite(S%nSite),trim(SiteList)
             !------------------------------------------------/first word
             !
             !------------second word of line= site multiplicity, integer
-            CALL LinToWrd(L,W,sEol)
-            CALL WrdToInt(W,S%vMulti(S%nSite))
+            call LinToWrd(L,W,sEol)
+            call WrdToInt(W,S%vMulti(S%nSite))
             !
-            IF(S%vMulti(S%nSite)>MaxMulti) THEN
-              Ok= .FALSE.
-              MsgError=TRIM(S%vNamSite(S%nSite))//"= Multiplicity too high"
-              RETURN !--------------------------------------------RETURN
-            ENDIF
+            if(S%vMulti(S%nSite)>MaxMulti) then
+              Ok= .false.
+              MsgError=trim(S%vNamSite(S%nSite))//"= Multiplicity too high"
+              return !--------------------------------------------return
+            end if
             !-----------------------------------------------/second word
             !
             !---------------------- list of elements potentially present
-            IF(TRIM(S%Model)=="SITE") THEN
+            if(S%Model == Mix_Site) then
               !
-              IF(sEol) THEN
-                Ok= .FALSE.
-                MsgError= TRIM(S%vNamSite(S%nSite))//" NO ATOM LIST ???"
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              if(sEol) then
+                Ok= .false.
+                MsgError= trim(S%vNamSite(S%nSite))//" NO ATOM LIST ???"
+                return !------------------------------------------return
+              end if
               !
-              CALL LinToWrd(L,W,sEol)
-              IF(iDebug>2) WRITE(fTrc,*) TRIM(W)
+              call LinToWrd(L,W,sEol)
+              if(iDebug>2) write(fTrc,*) trim(W)
               !
-              vNEle(S%nSite)= LEN_TRIM(W)/3 ! how many elements on the site
-              vSiteString(S%nSite)= TRIM(W)
+              vNEle(S%nSite)= len_trim(W)/3 ! how many elements on the site
+              vSiteString(S%nSite)= trim(W)
               !
-              IF(S%NAtom + vNEle(S%nSite) > MaxAtom) THEN
-                Ok= .FALSE.
-                MsgError=         TRIM(W)//": Too Many Elements in SITE"
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              if(S%NAtom + vNEle(S%nSite) > MaxAtom) then
+                Ok= .false.
+                MsgError=         trim(W)//": Too Many Elements in SITE"
+                return !------------------------------------------return
+              end if
               !
-              DO K=1,vNEle(S%nSite)
+              do K=1,vNEle(S%nSite)
                 !
                 S%vIAtomSite(K+S%NAtom)= S%nSite
                 S%vAtomMulti(K+S%NAtom)= S%vMulti(S%nSite)
                 !
                 !----name of the site fraction
-                S%vNamAtom(K +S%NAtom)= TRIM(W(3*K-2:3*K))//S%vNamSite(S%nSite)
+                S%vNamAtom(K +S%NAtom)= trim(W(3*K-2:3*K))//S%vNamSite(S%nSite)
                 !
-              ENDDO
+              end do
               !
               S%NAtom= S%NAtom + vNEle(S%nSite) ! total nr site fractions
               !
-            ENDIF
+            end if
             !----------------------/list of elements potentially present
             !
-          ENDDO DoSite
+          end do DoSite
           !check that SUM(S%vMulti(1:S%nSite)) <= MaxElPole
         !-----------------------------------------------/read SITE block
         !
         !----------------------------------------------- read POLE block
-        CASE("POLE")
+        case("POLE")
           !
           S%nPole=     0
           S%tPoleAtom= 0
           !
-          IF(iDebug>0) WRITE(fTrc,'(A)') "<<------------Read_POLE_block"
+          if(iDebug>0) write(fTrc,'(A)') "<<------------Read_POLE_block"
           !
-          DoPole: DO
+          DoPole: do
             !
-            READ(F,'(A)') L; CALL LinToWrd(L,W,sEol)
-            IF(W(1:1)=='!') CYCLE DoPole
-            CALL AppendToEnd(L,W,sEoL)
+            read(F,'(A)') L; call LinToWrd(L,W,sEol)
+            if(W(1:1)=='!') cycle DoPole
+            call AppendToEnd(L,W,sEoL)
             !
-            IF(TRIM(W)=="END") EXIT DoPole
-            IF(TRIM(W)=="ENDPOLE") EXIT DoPole
+            if(trim(W)=="END") exit DoPole
+            if(trim(W)=="ENDPOLE") exit DoPole
             !
             K= Species_Index(W,vSpc)
             !
-            !old! IF(K<1) THEN
-            !old!   Ok= .FALSE.
-            !old!   MsgError=        TRIM(W)//" not in base-> model not valid"
-            !old!   RETURN !----------------------------------------RETURN
-            !old! ENDIF
+            !old! if(K<1) then
+            !old!   Ok= .false.
+            !old!   MsgError=        trim(W)//" not in base-> model not valid"
+            !old!   return !----------------------------------------return
+            !old! end if
             !
-            !IF(iDebug>0) &
-            !& WRITE(fTrc,'(A,I3,2A)') "Species_Index=",K," <-POLE= ",TRIM(W)
+            !if(iDebug>0) &
+            !& write(fTrc,'(A,I3,2A)') "Species_Index=",K," <-POLE= ",trim(W)
             !
-            IF(S%nPole<MaxPole) THEN
+            if(S%nPole<MaxPole) then
               S%nPole=S%nPole+1
-            ELSE
-              Ok= .FALSE.
+            else
+              Ok= .false.
               MsgError=                           "TOO MANY end-members"
-              RETURN !--------------------------------------------RETURN
-            ENDIF
+              return !--------------------------------------------return
+            end if
             !
             vHasPole(S%nPole)= K>0
             !
-            IF(vHasPole(S%nPole)) THEN
+            if(vHasPole(S%nPole)) then
               !
-              IF(S%nPole==1) THEN
-                S%Typ= TRIM(vSpc(K)%Typ)
-              ELSE
-                IF(TRIM(vSpc(K)%Typ)/=TRIM(S%Typ)) THEN
-                  Ok= .FALSE.
-                  MsgError= "end-members should be same type, either GAS or MIN"
-                  RETURN !----------------------------------------RETURN
-                ENDIF
-              ENDIF
+              !----------------------------------verify the species type
+              if(S%nPole==1) then
+                S%Typ= trim(vSpc(K)%Typ)
+                !
+                select case(S%Model)
+                case(Mix_Surface)
+                  if(S%Typ/="SUR") then
+                    Ok= .false.
+                    MsgError= "should have a SUR(face) Species"
+                    return !--------------------------------------return
+                  end if
+                case(Mix_Exchange)
+                  if(S%Typ/="EXC") then
+                    Ok= .false.
+                    MsgError= "should have a EXC(hange) Species"
+                    return !--------------------------------------return
+                  end if
+                end select
+              else
+                if(trim(vSpc(K)%Typ)/=trim(S%Typ)) then
+                  Ok= .false.
+                  MsgError= "END-members should be same type, either GAS or MIN"
+                  return !----------------------------------------return
+                end if
+              end if
+              !---------------------------------/verify the species type
               !
               S%vIPole(S%nPole)=K ! index of end-member name in species list
               !
-            ELSE
+            else
               !
               S%vIPole(S%nPole)=0
               !
-            ENDIF
+            end if
             !
-            S%vNamPole(S%nPole)=TRIM(W)
+            S%vNamPole(S%nPole)=trim(W)
             !
-            IF(iDebug>0) WRITE(fTrc,'(A5,I3,A1,I3,A1,A)') &
-            & "POLE=",S%nPole,T_,K,T_,TRIM(W)
+            if(iDebug>0) write(fTrc,'(A5,I3,A1,I3,A1,A)') &
+            & "POLE=",S%nPole,T_,K,T_,trim(W)
             !
             !--------------for SITE models, reading pole / site relation
-            IF(TRIM(S%Model)=="SITE") THEN
+            if(S%Model == Mix_Site) then
               !
               ! scan the rest of the input line
               ! to retrieve the site repartition for the end-member
               !
-              DO iS=1,S%NSite
-                IF(sEol) THEN
-                  Ok= .FALSE.
-                  MsgError=TRIM(S%vNamPole(S%nPole))//" NO ATOM LIST ???"
-                  RETURN !----------------------------------------RETURN
-                ENDIF
+              do iS=1,S%NSite
+                if(sEol) then
+                  Ok= .false.
+                  MsgError=trim(S%vNamPole(S%nPole))//" NO ATOM LIST ???"
+                  return !----------------------------------------return
+                end if
                 !
-                CALL LinToWrd(L,W,sEol)
+                call LinToWrd(L,W,sEol)
                 !!!
                 !!!M2 2 MG_FE_     -> vElSite(1),vElSite(2),            ( NEle(1)=2 )
                 !!!M1 1 MG_FE_AL_  -> vElSite(3),vElSite(4),vElSite(5)  ( NEle(2)=3 )
@@ -359,126 +392,126 @@ SUBROUTINE MixModel_BuildLnk( &
                 !!!
                 !!!SIDEROPHYLLITE FE_FE_ AL_ AL_AL_SI_SI_ K__ OH_OH_ !->
                 !!!
-                IF(iDebug>2) WRITE(fTrc,'(2A)') "Site String= ",TRIM(W)
+                if(iDebug>2) write(fTrc,'(2A)') "Site String= ",trim(W)
                 !
-                IF(LEN_TRIM(W)/=3*S%vMulti(iS)) THEN
-                  Ok= .FALSE.
-                  MsgError=TRIM(W)//" has length not consistent with vMulti"
-                  RETURN !----------------------------------------RETURN
-                ENDIF
+                if(len_trim(W)/=3*S%vMulti(iS)) then
+                  Ok= .false.
+                  MsgError=trim(W)//" has length not consistent with vMulti"
+                  return !----------------------------------------return
+                end if
                 !
-                IF(iS==1) THEN
+                if(iS==1) then
                   offset_= 0
-                ELSE
+                else
                   offset_= offset_ +vNEle(iS-1)
-                ENDIF
+                end if
                 !
-                DO K=1,S%vMulti(iS)
+                do K=1,S%vMulti(iS)
                   !
-                  str=TRIM(W(3*K-2:3*K)) ! extract the element name
+                  str=trim(W(3*K-2:3*K)) ! extract the element name
                   !
-                  iEl= INDEX(vSiteString(iS),str)
-                  IF(iEl<=0) THEN
-                    Ok= .FALSE.
-                    MsgError=       TRIM(str)//" <-Atom not Found   !!!"
-                    RETURN !--------------------------------------RETURN
-                  ENDIF
+                  iEl= index(vSiteString(iS),str)
+                  if(iEl<=0) then
+                    Ok= .false.
+                    MsgError=       trim(str)//" <-Atom not Found   !!!"
+                    return !--------------------------------------return
+                  end if
                   iEl= (iEl+2)/3
                   S%tPoleAtom(S%nPole,iEl+offset_)= S%tPoleAtom(S%nPole,iEl+offset_) +1
                   !
-                ENDDO
+                end do
                 !
-              ENDDO !!DO iS=1,S%NSite
+              end do !!do iS=1,S%NSite
               !
-            ENDIF
+            end if
             !-------------/for SITE models, reading pole / site relation
             !
-          ENDDO DoPole
+          end do DoPole
           !
           !----------------------------------------normalization factors
-          IF(TRIM(S%Model)=="SITE") THEN
-            ALLOCATE(vXpol(S%NPole))
-            ALLOCATE(vXatom(S%NAtom))
-            DO iP=1,S%NPole
+          if(S%Model == Mix_Site) then
+            allocate(vXpol(S%NPole))
+            allocate(vXatom(S%NAtom))
+            do iP=1,S%NPole
               vXpol(:)=  Zero
               vXpol(iP)= One
-              CALL MixModel_XPoleToXSite(S,vXpol(:),vXatom(:))
+              call MixModel_XPoleToXSite(S,vXpol(:),vXatom(:))
               Y= One
-              DO iEl= 1,S%NAtom
-                IF(S%tPoleAtom(iP,iEl)/=0) Y= Y *vXAtom(iEl)**S%vAtomMulti(iEl)
+              do iEl= 1,S%NAtom
+                if(S%tPoleAtom(iP,iEl)/=0) Y= Y *vXAtom(iEl)**S%vAtomMulti(iEl)
                 !S%tPoleAtom(iP,iEl)
-              ENDDO
+              end do
               S%vPoleCoeff(iP)= Y
-            ENDDO
-            DEALLOCATE(vXpol)
-            DEALLOCATE(vXatom)
+            end do
+            deallocate(vXpol)
+            deallocate(vXatom)
             !
-            !! PRINT *,"normalization factors:"
-            DO iP=1,S%NPole
-              IF(S%vPoleCoeff(iP)==Zero) THEN
-                Ok= .FALSE.
+            !! print *,"normalization factors:"
+            do iP=1,S%NPole
+              if(S%vPoleCoeff(iP)==Zero) then
+                Ok= .false.
                 MsgError=        "Problem with normalization factor !!!"
-                RETURN !------------------------------------------RETURN
-              ENDIF
+                return !------------------------------------------return
+              end if
               S%vPoleCoeff(iP)= One /S%vPoleCoeff(iP)
-            ENDDO
-            !! PAUSE
-          ENDIF
+            end do
+            !! pause
+          end if
           !---------------------------------------/normalization factors
           !
-          IF(TRIM(S%Model)/="SITE") S%NAtom= S%nPole
+          if(S%Model /= Mix_Site) S%NAtom= S%nPole
           !
           !--------------------------------------------------------trace
-          IF(iDebug>2 .AND. TRIM(S%Model)=="SITE") THEN
+          if(iDebug>2 .and. S%Model==Mix_Site) then
 
-            WRITE(fTrc,'(/,A)') "tPoleAtom"
-            DO iS=1,S%NPole
-              DO iEl=1,S%NAtom
-                WRITE(fTrc,'(I7,1X)',ADVANCE="NO") S%tPoleAtom(iS,iEl)
-              ENDDO
-              WRITE(fTrc,*)
-            ENDDO
+            write(fTrc,'(/,A)') "tPoleAtom"
+            do iS=1,S%NPole
+              do iEl=1,S%NAtom
+                write(fTrc,'(I7,1X)',advance="NO") S%tPoleAtom(iS,iEl)
+              end do
+              write(fTrc,*)
+            end do
 
-            WRITE(fTrc,'(A)') "vAtomMulti"
-            DO iEl=1,S%NAtom
-              WRITE(fTrc,'(I7,1X)',ADVANCE="NO") S%vAtomMulti(iEl)
-            ENDDO
-            WRITE(fTrc,*)
+            write(fTrc,'(A)') "vAtomMulti"
+            do iEl=1,S%NAtom
+              write(fTrc,'(I7,1X)',advance="NO") S%vAtomMulti(iEl)
+            end do
+            write(fTrc,*)
 
-            WRITE(fTrc,'(A)') "tPoleAtom"
-            DO iS=1,S%NPole
-              DO iEl=1,S%NAtom
-                WRITE(fTrc,'(F7.2,1X)',ADVANCE="NO") &
-                & S%tPoleAtom(iS,iEl) /REAL(S%vAtomMulti(iEl))
-              ENDDO
-              WRITE(fTrc,*)
-            ENDDO
+            write(fTrc,'(A)') "tPoleAtom"
+            do iS=1,S%NPole
+              do iEl=1,S%NAtom
+                write(fTrc,'(F7.2,1X)',advance="NO") &
+                & S%tPoleAtom(iS,iEl) /real(S%vAtomMulti(iEl))
+              end do
+              write(fTrc,*)
+            end do
 
-            WRITE(fTrc,'(/,A)') "Normalization:"
-            DO iP=1,S%NPole
-              WRITE(fTrc,'(A,1X,F7.2)') S%vNamPole(iP), S%vPoleCoeff(iP)
-            ENDDO
+            write(fTrc,'(/,A)') "Normalization:"
+            do iP=1,S%NPole
+              write(fTrc,'(A,1X,F7.2)') S%vNamPole(iP), S%vPoleCoeff(iP)
+            end do
 
-          ENDIF
+          end if
           !-------------------------------------------------------/trace
           !
-          IF(iDebug>0) WRITE(fTrc,'(A)') "<<-----------/Read_POLE_block"
+          if(iDebug>0) write(fTrc,'(A)') "<<-----------/Read_POLE_block"
         !-----------------------------------------------/read POLE block
         !
-        CASE("MARGULES")
+        case("MARGULES")
         !--------------------------------------------read MARGULES block
-          IF(TRIM(S%Model)=="SPECIAL") THEN
-            Ok= .FALSE.
-            MsgError=           "SPECIAL MODEL -> NO MARGULES BLOCK !!!"
-            RETURN !----------------------------------------------RETURN
-          END IF
-          IF(iDebug>0) WRITE(fTrc,'(A)') "<<--------Read_MARGULES_block"
+          if(S%Model == Mix_Special) then
+            Ok= .false.
+            MsgError=           "SPECIAL MODEL -> NO MARGULES block !!!"
+            return !----------------------------------------------return
+          end if
+          if(iDebug>0) write(fTrc,'(A)') "<<--------Read_MARGULES_block"
           !
-          MargulTheriak= .FALSE.
-          IF (.NOT. sEol) THEN
-            CALL LinToWrd(L,W,sEol)
-            IF (TRIM(W)=="THERIAK") MargulTheriak= .TRUE.
-          END IF
+          MargulTheriak= .false.
+          if (.not. sEol) then
+            call LinToWrd(L,W,sEol)
+            if (trim(W)=="THERIAK") MargulTheriak= .true.
+          end if
           !
           !--examples---------------------------------------------------
           !
@@ -492,7 +525,7 @@ SUBROUTINE MixModel_BuildLnk( &
           !    GROSSULAR ALMANDINE
           !    & 112     20320.     5.08    .17
           !    & 122      2620.     5.08    .09
-          !  ENDMARGULES
+          !  endMARGULES
           !
           ! <new format, a la Berman>
           ! <indices used in ijkl codes refer to order in the end-member list>
@@ -501,43 +534,43 @@ SUBROUTINE MixModel_BuildLnk( &
           !    GROSSULAR
           !    PYROPE
           !    ALMANDINE
-          !  END
+          !  end
           !  MARGULES                          !                 vDegree(:)=
           !    112     21560.    18.79    .10  !GROSSULAR PYROPE       2,1,0
           !    122     69200.    18.79    .10  !GROSSULAR PYROPE       1,2,0
           !    113     20320.     5.08    .17  !GROSSULAR ALMANDINE    2,0,1
           !    133      2620.     5.08    .09  !GROSSULAR ALMANDINE    1,0,2
           !    ../..
-          !  END MARGULES
+          !  end MARGULES
           !
           ! <case of 'SITE-mixing' mixture, with Margules param's for each site>
           !  MODEL SITE
           !  SITE
           !    C 2 CA_MG_
-          !  END SITE
+          !  end SITE
           !  MARGULES SITE
           !    C 223     1307.40      0.00      0.01 !G_xs+= W223 *X_MG^2 *X_FE
           !    C 233     2092.40      0.00      0.06 !G_xs+= W233 *X_MG   *X_FE^2
           !    C 112    85529.00     18.79      0.21 !G_xs+= W112 *X_CA^2 *X_MG
           !    C 122    50874.90     18.79      0.02 !G_xs+= W122 *X_CA   *X_MG^2
           !    ../..
-          !  END
+          !  end
           !
-          IF(MargulTheriak) THEN
+          if(MargulTheriak) then
           
-          doMargulTheriak: DO
+          doMargulTheriak: do
           
-            !TYPE tMarg !Margules parameter for up to Ternary mixing
-            !  INTEGER::Dim !2 or 3
-            !  INTEGER,DIMENSION(1:3)::iPole,Power
-            !  REAL::WG,WH,WS,WV,WCp,WK
-            !ENDTYPE tMarg
+            !type tMarg !Margules parameter for up to Ternary mixing
+            !  integer::Dim !2 or 3
+            !  integer,dimension(1:3)::iPole,Power
+            !  real::WG,WH,WS,WV,WCp,WK
+            !end type tMarg
             !
-            READ(F,'(A)') L ; CALL LinToWrd(L,W,sEol)
+            read(F,'(A)') L ; call LinToWrd(L,W,sEol)
             !
-            IF(W(1:1)=="!") CYCLE doMargulTheriak
-            CALL AppendToEnd(L,W,sEoL)
-            IF(W=="END" .OR. W=="ENDMARGULES") EXIT doMargulTheriak
+            if(W(1:1)=="!") cycle doMargulTheriak
+            call AppendToEnd(L,W,sEoL)
+            if(W=="END" .or. W=="ENDMARGULES") exit doMargulTheriak
             !
             !M%nMargul=M%nMargul+1
             !
@@ -549,77 +582,77 @@ SUBROUTINE MixModel_BuildLnk( &
             !    GROSSULAR ALMANDINE
             !    & 112     20320.     5.08    .17
             !    & 122      2620.     5.08    .09
-            !  ENDMARGULES
+            !  endMARGULES
             !
-            ! wrk ! IF(W(1:1)/='&') THEN
+            ! wrk ! if(W(1:1)/='&') then
             ! wrk ! ! scan the GROSSULAR PYROPE line
             ! wrk ! ! -> dimension of M, indices of Poles
             ! wrk !   !
             ! wrk !   M%NPole=0
-            ! wrk !   DO
+            ! wrk !   do
             ! wrk !     K=0
-            ! wrk !     DO 
+            ! wrk !     do 
             ! wrk !       K=K+1 
-            ! wrk !       IF(W==TRIM(S%vNamPole(K))) THEN
+            ! wrk !       if(W==trim(S%vNamPole(K))) then
             ! wrk !         !find occurrence of "GROSSULAR" in end member list
             ! wrk !         M%NPole=M%NPole+1
             ! wrk !         M%iPole(M%NPole)=K
-            ! wrk !       ENDIF
-            ! wrk !       IF(K>S%nPole) EXIT
-            ! wrk !     ENDDO
-            ! wrk !     IF(sEol) EXIT
-            ! wrk !     CALL LinToWrd(L,W,sEol)
-            ! wrk !   ENDDO !end scan the Names
+            ! wrk !       end if
+            ! wrk !       if(K>S%nPole) exit
+            ! wrk !     end do
+            ! wrk !     if(sEol) exit
+            ! wrk !     call LinToWrd(L,W,sEol)
+            ! wrk !   end do !end scan the Names
             ! wrk !   !
-            ! wrk !   IF(M%Npole<2) CALL Stop_(TRIM(W)//" <-ENDMEMBERS NOT FOUND")
-            ! wrk !   CYCLE doMargulTheriak
+            ! wrk !   if(M%Npole<2) call Stop_(trim(W)//" <-endMEMBERS NOT FOUND")
+            ! wrk !   cycle doMargulTheriak
             ! wrk !   !
-            ! wrk ! ENDIF
+            ! wrk ! end if
             ! wrk ! !
-            ! wrk ! IF(W(1:1)=='&') THEN
+            ! wrk ! if(W(1:1)=='&') then
             ! wrk ! !read Margules Parameters
             ! wrk !   !
             ! wrk !   S%nMarg=S%nMarg+1
-            ! wrk !   CALL LinToWrd(L,W,sEol)
+            ! wrk !   call LinToWrd(L,W,sEol)
             ! wrk !   M%Power(1:M%NPole)=0 !initial values
-            ! wrk !   DO K=1,LEN_TRIM(W) !processing the k1k2... string
+            ! wrk !   do K=1,len_trim(W) !processing the k1k2... string
             ! wrk !     J=CarToInt(W(K:K))
-            ! wrk !     IF(J>0.AND.J<=M%NPole) M%Power(J)=M%Power(J)+1
-            ! wrk !   ENDDO
+            ! wrk !     if(J>0.and.J<=M%NPole) M%Power(J)=M%Power(J)+1
+            ! wrk !   end do
             ! wrk !   !1222 1122 1112 1222 1223 1233
-            ! wrk !   CALL ReadRValsV(L,K,vX)
+            ! wrk !   call ReadRValsV(L,K,vX)
             ! wrk !   M%WH= vX(1)  ;  M%WS=vX(2)  ;  M%WV=vX(3)  ;  M%WCp=vX(4)
             ! wrk !   M%Kohler=FLOOR(vX(5))
             ! wrk !   !M%WG= M%WH &
             ! wrk !   !&   + M%WCP*(T-T0) &
-            ! wrk !   !&   -(M%WS +M%WCP*LOG(T/T0))*T &
+            ! wrk !   !&   -(M%WS +M%WCP*log(T/T0))*T &
             ! wrk !   !&   + M%WV *P
             ! wrk !   S%vMarg(S%nMarg)=M
             ! wrk !   !
-            ! wrk ! ENDIF
+            ! wrk ! end if
 
-          ENDDO doMargulTheriak
+          end do doMargulTheriak
           
-          ELSE
+          else
           
-          doMargul: DO
+          doMargul: do
             ! cf M_T_MixModel :
             !
             !<old tMargul type>
-            ! TYPE tMargul !Margules parameter for up to quaternary mixing
-            !   INTEGER::Dim !2 to 4
-            !   INTEGER,DIMENSION(1:4)::iPole,Power
-            !   REAL::WG,WH,WS,WV,WCp,WK
-            ! ENDTYPE tMargul
+            ! type tMargul !Margules parameter for up to quaternary mixing
+            !   integer::Dim !2 to 4
+            !   integer,dimension(1:4)::iPole,Power
+            !   real::WG,WH,WS,WV,WCp,WK
+            ! end type tMargul
             !
             !<new tMargul type>
             !  better for using systematic evaluation & derivation
             !  of monomials & polynomials
             !
-            ! TYPE tMargul !Margules parameter
-            !   INTEGER :: vDegree(1:MaxAtom)
-            !   REAL(dp):: WG,WH,WS,WV,WCp,WK
-            ! ENDTYPE tMargul
+            ! type tMargul !Margules parameter
+            !   integer :: vDegree(1:MaxAtom)
+            !   real(dp):: WG,WH,WS,WV,WCp,WK
+            ! end type tMargul
             !-> max' possible dimension of vDegree is
             !   max number of site fractions (for a site model)
             !   or max number of end-members (for a molecular model)
@@ -630,44 +663,44 @@ SUBROUTINE MixModel_BuildLnk( &
             !   the degree of the site fraction
             !   and also which site is the Margules for
             !
-            READ(F,'(A)') L; CALL LinToWrd(L,W,sEol)
+            read(F,'(A)') L; call LinToWrd(L,W,sEol)
             !
-            IF(W(1:1)=="!") CYCLE doMargul
-            CALL AppendToEnd(L,W,sEoL)
-            IF(W=="END" .OR. W=="ENDMARGULES") EXIT doMargul
+            if(W(1:1)=="!") cycle doMargul
+            call AppendToEnd(L,W,sEoL)
+            if(W=="END" .or. W=="ENDMARGULES") exit doMargul
             !
             iMargIndex= 1
             !
             !--------------------------------------------for SITE models
             !-----------------------find index of string W in S%vNamSite
-            IF(TRIM(S%Model)=="SITE") THEN
+            if(S%Model == Mix_Site) then
               !
-              IF(INDEX(W,"-")==2) THEN
+              if(index(W,"-")==2) then
                 iMargIndex= CarToInt(W(1:1))
-                W= W(3:LEN_TRIM(W))
-                !! print *,"I, W=", iMargIndex,TRIM(W)  ; call pause_
-              ELSE
-                CALL Str_Append(W,3)
-                J= INDEX(SiteList,TRIM(W))
+                W= W(3:len_trim(W))
+                !! print *,"I, W=", iMargIndex,trim(W)  ; call pause_
+              else
+                call Str_Append(W,3)
+                J= index(SiteList,trim(W))
                 !J= 0
-                !DO iS= 1,S%nSite
-                !  IF(TRIM(W) == TRIM(S%vNamSite(iS))) THEN
+                !do iS= 1,S%nSite
+                !  if(trim(W) == trim(S%vNamSite(iS))) then
                 !    J= iS
-                !    EXIT
-                !  ENDIF
-                !ENDDO
-                IF(J==0) THEN
-                  Ok= .FALSE.
-                  MsgError=      TRIM(W)//" is not a site of this model"
-                  RETURN !----------------------------------------RETURN
-                ENDIF
+                !    exit
+                !  end if
+                !end do
+                if(J==0) then
+                  Ok= .false.
+                  MsgError=      trim(W)//" is not a site of this model"
+                  return !----------------------------------------return
+                end if
                 J= (J+2)/3
                 !
                 iMargIndex= J
                 !
-                CALL LinToWrd(L,W,sEol)
-              ENDIF
-            ENDIF
+                call LinToWrd(L,W,sEol)
+              end if
+            end if
             !-------------------------------------------/for SITE models
             !
             !------------- retrieve the power coding string, e.g. 113 --
@@ -692,261 +725,271 @@ SUBROUTINE MixModel_BuildLnk( &
             !     M   13   -> vDegree= 0,0, 1,0,3,0, 0,0,0, 0,0,0,....
             !     VA4 13   -> vDegree= 0,0, 0,0,0,0, 1,0,3, 0,0,0,....
             !
-            IF(iMargIndex==1) THEN
+            if(iMargIndex==1) then
               offset_= 0
-            ELSE
+            else
               offset_= SUM(vNEle(1:iMargIndex-1))
-            ENDIF
+            end if
             !
             M%vDegree(1:MaxAtom)= 0
             !
-            DO K=1,LEN_TRIM(W) !processing the k1k2... string
+            do K=1,len_trim(W) !processing the k1k2... string
               !
               J= CarToInt(W(K:K))
-              IF(J>0 .AND. J<=S%NPole) THEN
+              if(J>0 .and. J<=S%NPole) then
                 M%vDegree(J +offset_)= M%vDegree(J +offset_) +1
-              ELSE
-                Ok= .FALSE.
-                MsgError=   "problem with coding string Wijk= "//TRIM(W)
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              else
+                Ok= .false.
+                MsgError=   "problem with coding string Wijk= "//trim(W)
+                return !------------------------------------------return
+              end if
               !
-            ENDDO
+            end do
             !
             !--------------------------------retrieve values of WH, etc.
-            CALL ReadRValsV(L,K,vX)
+            call ReadRValsV(L,K,vX)
             M%WH=vX(1)  ;  M%WS=vX(2)  ;  M%WV=vX(3)  ;  M%WCp=vX(4)
             M%Kohler=  FLOOR(vX(5))
             !----------------------------------------------------------/
             !M%WG= M%WH &
             !&   + M%WCP*(T-T0) &
-            !&   -(M%WS +M%WCP*LOG(T/T0))*T &
+            !&   -(M%WS +M%WCP*log(T/T0))*T &
             !&   + M%WV *P
             !
-            IF(S%nMarg==MaxMarg) THEN
-              Ok= .FALSE.
+            if(S%nMarg==MaxMarg) then
+              Ok= .false.
               MsgError=                              "TOO MANY Margules"
-              RETURN !--------------------------------------------RETURN
-            ENDIF
+              return !--------------------------------------------return
+            end if
             S%nMarg= S%nMarg+1
             !
-            IF(TRIM(S%Model)=="SITE") THEN
+            if(S%Model == Mix_Site) then
               S%vIMargSite(S%nMarg)= iMargIndex
-            ELSE
+            else
               S%vIMargSite(S%nMarg)= 1
-            ENDIF
+            end if
             S%vMarg(S%nMarg)= M
             !
             !----------------------------------------------------- trace 
-            IF(iDebug>0) THEN
-              WRITE(fTrc,'(A,I2,A)',ADVANCE="NO") "nMarg=",S%nMarg," vDegree="
-              WRITE(fTrc,'(*(I1,1X))') (S%vMarg(S%nMarg)%vDegree(J),J=1,S%NAtom)
-            ENDIF
+            if(iDebug>0) then
+              write(fTrc,'(A,I2,A)',advance="NO") "nMarg=",S%nMarg," vDegree="
+              write(fTrc,'(*(I1,1X))') (S%vMarg(S%nMarg)%vDegree(J),J=1,S%NAtom)
+            end if
             !-----------------------------------------------------/trace 
             !
-          END DO doMargul
+          end do doMargul
           
-          END IF
+          end if
           !
-          IF(iDebug>0) WRITE(fTrc,'(A)') "<<-------/Read_MARGULES_block"
-        !ENDCASE MARGULES
+          if(iDebug>0) write(fTrc,'(A)') "<<-------/Read_MARGULES_block"
+        !endcase MARGULES
         !-------------------------------------------/read MARGULES block
-        END SELECT
+        end select
         !
-      END DO DoSol
+      end do DoSol
       !
-    ENDIF !IF(W=="MIXTURE.MODEL" .OR. W=="SOLUTION.MODEL")
-  END DO DoFile
+    end if !if(W=="MIXTURE.MODEL" .or. W=="SOLUTION.MODEL")
+  end do DoFile
   !
-  CLOSE(F)
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "<----------------/MixModel_BuildLnk"
+  if(iDebug>0) write(fTrc,'(A,/)') "<----------------/MixModel_BuildLnk"
   !
-ENDSUBROUTINE MixModel_BuildLnk
+end subroutine MixModel_BuildLnk
 
-SUBROUTINE MixModel_Clean(vHasPole,MM)
+subroutine MixModel_Clean(vHasPole,MM)
 !-----------------------------------------------------------------------
 !-- for the mixing model MM, remove the end-members that are absent
 !-- in the current species list, 
 !-- and update the list of margules parameters
 !-- CAVEAT: this routine is currently NOT implemented for SITE models !!
 !-----------------------------------------------------------------------
-  USE M_T_MixModel,ONLY: T_MixModel,MaxPole,MaxAtom
+  use M_T_MixModel,only: T_MixModel,MaxPole,MaxAtom
+  use M_T_MixModel,only: Mix_Molecular,Mix_Felspar
   !---------------------------------------------------------------------
-  LOGICAL,         INTENT(IN)   :: vHasPole(:)
-  TYPE(T_MixModel),INTENT(INOUT):: MM
+  logical,         intent(in)   :: vHasPole(:)
+  type(T_MixModel),intent(inout):: MM
   !---------------------------------------------------------------------
-  TYPE(T_MixModel):: MNew
-  INTEGER:: i,j,N
-  INTEGER:: vPermut(MaxPole),vDegree(MaxAtom)
-  LOGICAL:: Keep
+  type(T_MixModel):: MNew
+  integer:: i,j,N
+  integer:: vPermut(MaxPole),vDegree(MaxAtom)
+  logical:: Keep
   !---------------------------------------------------------------------
-  IF(iDebug>0) WRITE(fTrc,'(A)') "<<---------------------MixModel_Clean"
+  if(iDebug>0) write(fTrc,'(A)') "<<---------------------MixModel_Clean"
   !
   MNew= MM
-  SELECT CASE(TRIM(MM%Model))
-  CASE("MOLECULAR","FELSPAR")
+  select case(MM%Model)
+  case(Mix_Molecular,Mix_Felspar) ! ("MOLECULAR","FELSPAR")
     N=0
-    DO i=1,MM%nPole
-      IF(vHasPole(i)) THEN
+    do i=1,MM%nPole
+      if(vHasPole(i)) then
         N=N+1
         MNew%vIPole(N)= MM%vIPole(i)
-        MNew%vNamPole(N)= TRIM(MM%vNamPole(i))
+        MNew%vNamPole(N)= trim(MM%vNamPole(i))
         vPermut(N)= i
-        ! MNew%vHasPole(N)= .TRUE.
-      END IF
-    END DO
+        ! MNew%vHasPole(N)= .true.
+      end if
+    end do
     MNew%nPole= N
     MNew%nSite= 0
     N=0
-    DO i=1,MM%nMarg
+    do i=1,MM%nMarg
       vDegree(:)= 0
       ! vDegree(:) contains all degrees,
       !   listed in the same order as
       !   the e-m list in case of molecular model,
       !   or as the site fractions in case of site model
       ! if a e-m or a site fraction is not involved, its degree is zero
-      Keep= .True.
-      DO j=1,MM%nPole
-        IF(MM%vMarg(i)%vDegree(j)>0) THEN
-          IF(vHasPole(j)) THEN
+      Keep= .true.
+      do j=1,MM%nPole
+        if(MM%vMarg(i)%vDegree(j)>0) then
+          if(vHasPole(j)) then
             vDegree(j)= MM%vMarg(i)%vDegree(vPermut(j))
-          ELSE
-            Keep= .FALSE.
-          END IF
-        END IF
-      END DO
-      IF(Keep) THEN
+          else
+            Keep= .false.
+          end if
+        end if
+      end do
+      if(Keep) then
         N=N+1
         MNew%vMarg(N)= MM%vMarg(i)
         MNew%vMarg(N)%vDegree(:)= vDegree(:)
         !----------------------------------------------------------trace
-        IF(iDebug>0) THEN
-          WRITE(fTrc,'(A,I1,A)',ADVANCE="NO") 'nMarg=',N," vDegree="
-          WRITE(fTrc,'(*(I1,1X))') (MNew%vMarg(N)%vDegree(J),J=1,MNew%nPole)
-        ENDIF
+        if(iDebug>0) then
+          write(fTrc,'(A,I1,A)',advance="NO") 'nMarg=',N," vDegree="
+          write(fTrc,'(*(I1,1X))') (MNew%vMarg(N)%vDegree(J),J=1,MNew%nPole)
+        end if
         !---------------------------------------------------------/trace
-      END IF
+      end if
       MNew%NMarg= N
-    END DO
-  END SELECT
+    end do
+  end select
   MM= MNew
   !
-  IF(iDebug>0) WRITE(fTrc,'(A)') "<<--------------------/MixModel_Clean"
+  if(iDebug>0) write(fTrc,'(A)') "<<--------------------/MixModel_Clean"
   !
-  RETURN
-END SUBROUTINE MixModel_Clean
+  return
+end subroutine MixModel_Clean
 
-SUBROUTINE MixModel_LnkToVec(Lnk,vMixModel)
-  USE M_T_MixModel,ONLY: T_MixModel
+subroutine MixModel_LnkToVec(Lnk,vMixModel)
+  use M_T_MixModel,only: T_MixModel
   !
-  TYPE(T_LnkMixModel),          POINTER    :: Lnk
-  TYPE(T_MixModel),DIMENSION(:),INTENT(OUT):: vMixModel
+  type(T_LnkMixModel),          pointer    :: Lnk
+  type(T_MixModel),dimension(:),intent(out):: vMixModel
   !
-  TYPE(T_LnkMixModel),POINTER:: pCur, pPrev
-  INTEGER:: K
+  type(T_LnkMixModel),pointer:: pCur, pPrev
+  integer:: K
   !
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< MixModel_LnkToVec"
+  if(iDebug>0) write(fTrc,'(/,A)') "< MixModel_LnkToVec"
   !
   pCur=>Lnk
   K=0
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associateD(pCur))
     K=K+1
     vMixModel(K)=pCur%Value
     !
-    IF(iDebug>0) WRITE(fTrc,'(A,I3,3A,I3)') &
+    if(iDebug>0) write(fTrc,'(A,I3,3A,I3)') &
     & "k=",k, &
-    & "  MixModel(k)%Name=",TRIM(vMixModel(K)%Name), &
+    & "  MixModel(k)%Name=",trim(vMixModel(K)%Name), &
     & "  MixModel(k)%nPole=",vMixModel(K)%nPole
     !
     pPrev=>pCur
     pCur=> pCur%next
-    DEALLOCATE(pPrev)
-  ENDDO
+    deallocate(pPrev)
+  end do
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "< MixModel_LnkToVec"
+  if(iDebug>0) write(fTrc,'(A,/)') "< MixModel_LnkToVec"
   !
-ENDSUBROUTINE MixModel_LnkToVec
+end subroutine MixModel_LnkToVec
 
-SUBROUTINE MixModel_Check(vSpc,vMixModel)
-  USE M_Dtb_Const,ONLY: Tref,Pref
-  USE M_T_Species, ONLY: T_Species
-  USE M_T_MixModel,ONLY: T_MixModel, T_Margul, MixModel_Margul_Wg_Calc
+subroutine MixModel_Check(vSpc,vMixModel)
+  use M_Dtb_Const,only: Tref,Pref
+  use M_T_Species, only: T_Species
+  use M_T_MixModel,only: T_MixModel, T_Margul, Mix_Site
+  use M_T_MixModel,only: MixModel_Param_Update, MixModel_Name
   !
-  TYPE(T_Species), DIMENSION(:),INTENT(IN):: vSpc
-  TYPE(T_MixModel),DIMENSION(:),INTENT(IN):: vMixModel
+  type(T_Species), dimension(:),intent(in):: vSpc
+  type(T_MixModel),dimension(:),intent(in):: vMixModel
   !
-  TYPE(T_MixModel)   :: SM
-  TYPE(T_Margul)     :: Marg
-  INTEGER::iEl,I,iPol,K
+  type(T_MixModel)   :: SM
+  type(T_Margul)     :: Marg
+  integer:: iEl,I,iPol,K
+  logical:: Err
+  character(15):: Str
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< MixModel_Check"
+  if(iDebug>0) write(fTrc,'(/,A)') "< MixModel_Check"
   !
-  DO I=1,SIZE(vMixModel)
+  do I=1,size(vMixModel)
 
     SM=vMixModel(I)
 
-    WRITE(fTrc,'(/,A,I3,/)') "Mixture ",I
-    WRITE(fTrc,'(2A)')   "Name=    ",SM%Name
-    WRITE(fTrc,'(2A)')   "Model=   ",SM%Model
+    write(fTrc,'(/,A,I3,/)') "Mixture ",I
+    write(fTrc,'(2A)')   "Name=    ",SM%Name
+    
+    call MixModel_Name(SM,Str,Err)
+    if(.not. Err) then
+      write(fTrc,'(2A)')   "Model=   ",trim(Str)
+    else
+      write(fTrc,'(2A)')   "Model=   ","UNKNOWN !!"
+    end if
 
-    IF(TRIM(SM%Model)=="SITE") THEN
+    if(SM%Model==Mix_Site) then
 
       !iEl=0
-      !DO iSit=1,SM%NSite
-      !  WRITE(fTrc,*) "SITE=",TRIM(SM%vNamSite(iSit))," ,vMulti=",SM%vMulti(iSit)
-      !  WRITE(fTrc,*) "Atoms="
+      !do iSit=1,SM%NSite
+      !  write(fTrc,*) "SITE=",trim(SM%vNamSite(iSit))," ,vMulti=",SM%vMulti(iSit)
+      !  write(fTrc,*) "Atoms="
       !  iEl=iEl+1
-      !  WRITE(fTrc,*) "iEl ", iEl, " ", SM%vNamAtom(iEl)
-      !ENDDO
+      !  write(fTrc,*) "iEl ", iEl, " ", SM%vNamAtom(iEl)
+      !end do
 
-      WRITE(fTrc,'(/,A,/)') "***vNamAtom"
-      DO iEl=1,SM%NAtom
-        WRITE(fTrc,'(A)',ADVANCE="NO") SM%vNamAtom(iEl)
-      ENDDO
+      write(fTrc,'(/,A,/)') "***vNamAtom"
+      do iEl=1,SM%NAtom
+        write(fTrc,'(A)',advance="NO") SM%vNamAtom(iEl)
+      end do
 
-      WRITE(fTrc,'(/,A,/)') "***endmembers"
-      DO iPol=1,SM%NPole
+      write(fTrc,'(/,A,/)') "***endmembers"
+      do iPol=1,SM%NPole
 
-        WRITE(fTrc,'(2A)') "POLE=",TRIM(SM%vNamPole(iPol))
+        write(fTrc,'(2A)') "POLE=",trim(SM%vNamPole(iPol))
 
-      ENDDO
+      end do
 
-    ENDIF !! SITE models
+    end if !! SITE models
     !
     !compute values of SM%vMarg(:)%WG at given P,T
-    CALL MixModel_Margul_Wg_Calc(Tref,Pref,SM)
+    call MixModel_Param_Update(Tref,Pref,SM)
     !
-    WRITE(fTrc,'(/,A,/)') "list of poles and their index in vSpc"
+    write(fTrc,'(/,A,/)') "list of poles and their index in vSpc"
 
-    DO iPol=1,SM%nPole
-      IF(SM%vIPole(iPol)>0) &
-      & WRITE(fTrc,'(2X,A,I3,I3,1X,A23)') &
+    do iPol=1,SM%nPole
+      if(SM%vIPole(iPol)>0) &
+      & write(fTrc,'(2X,A,I3,I3,1X,A23)') &
       & "Pole",          &
       & iPol,            &
       & SM%vIPole(iPol), &
       & vSpc(SM%vIPole(iPol))%NamSp
-    ENDDO
+    end do
 
-    IF(SM%nMarg>0) THEN
-      WRITE(fTrc,'(/,A,/)') "Margules"
-      DO K=1,SM%nMarg
+    if(SM%nMarg>0) then
+      write(fTrc,'(/,A,/)') "Margules"
+      do K=1,SM%nMarg
         Marg=SM%vMarg(K)
-        DO iPol=1,SM%nPole
-          WRITE(fTrc,'(I3,A1)',ADVANCE='NO') Marg%vDegree(iPol),T_
-        ENDDO
-        WRITE(fTrc,'(G15.3,A1,G15.3)') Marg%WH,T_,Marg%WG
-      ENDDO
-      WRITE(fTrc,*)
-    ENDIF
+        do iPol=1,SM%nPole
+          write(fTrc,'(I3,A1)',advance="no") Marg%vDegree(iPol),T_
+        end do
+        write(fTrc,'(G15.3,A1,G15.3)') Marg%WH,T_,Marg%WG
+      end do
+      write(fTrc,*)
+    end if
 
-    WRITE(fTrc,'(/,A,I3,/)') "End Mixture ",I
-  ENDDO
+    write(fTrc,'(/,A,I3,/)') "End Mixture ",I
+  end do
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ MixModel_Check"
-  RETURN
-ENDSUBROUTINE MixModel_Check
+  if(iDebug>0) write(fTrc,'(A,/)') "</ MixModel_Check"
+  return
+end subroutine MixModel_Check
 
-ENDMODULE M_MixModel_Read
+end module M_MixModel_Read
 

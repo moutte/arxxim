@@ -1,18 +1,18 @@
-MODULE M_Equil
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_,Pause_
+module M_Equil
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC:: Equil_Calc
-  PUBLIC:: Equil_Tst
-  PUBLIC:: Equil_Get_VMolF
+  public:: Equil_Calc
+  public:: Equil_Tst
+  public:: Equil_Get_VMolF
 
-CONTAINS
+contains
 
-SUBROUTINE Equil_Calc(Cod)
+subroutine Equil_Calc(Cod)
 !--
 !-- equilibrium calculation,
 !-- switch between the different modes:
@@ -20,167 +20,168 @@ SUBROUTINE Equil_Calc(Cod)
 !--   EQn>-> global equilibrium,
 !--          using either "reaction advancement" or direct strategy, or both
 !--
-  USE M_System_Vars, ONLY: vCpn,TdgK,Pbar
+  use M_System_Vars, only: vCpn,TdgK,Pbar
   !
-  USE M_Basis,       ONLY: Basis_Change
-  USE M_Basis,       ONLY: Basis_Change_Wrk
-  USE M_Equil_Vars,  ONLY: Equil_Vars_Clean,LogForAqu
+  use M_Basis,       only: Basis_Change
+  use M_Basis,       only: Basis_Change_Wrk
+  use M_Equil_Vars,  only: Equil_Vars_Clean,LogForAqu
   !
-  USE M_Equil_Tools
-  USE M_Equil_Write
-  USE M_Equil_Specia
-  USE M_Equil_1
-  USE M_Equil_2
+  use M_Equil_Tools
+  use M_Equil_Write
+  use M_Equil_Specia
+  use M_Equil_1
+  use M_Equil_2
   !
-  CHARACTER(LEN=3),INTENT(IN):: Cod
+  character(len=3),intent(in):: Cod
   !
-  INTEGER:: iErr
-  ! LOGICAL:: Singular
+  integer:: iErr
+  ! logical:: Singular
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Calc"
+  if(iDebug>0) flush(fTrc)
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Calc"
   !
   !Singular= .false.
   !
-  CALL Equil_Write_LogK(vCpn,TdgK,Pbar)
+  call Equil_Write_LogK(vCpn,TdgK,Pbar)
   !
-  CALL Basis_Change("SPC",vCpn)
+  call Basis_Change("SPC",vCpn)
   !
-  CALL Equil_Zero(Cod)
+  call Equil_Zero(Cod)
   !
-  CALL Equil_Trace_Init
+  call Equil_Trace_Init
   !
-  CALL Equil_Restart
+  call Equil_Restart
   !
   iErr= 0
   !
-  SELECT CASE(Cod)
+  select case(Cod)
 
-  CASE("SPC","BOX","INJ")
+  case("SPC","BOX","INJ")
   ! calculate "homogeneous" equilibrium speciation of the aqueous phase
   ! without consideration of satur'state versus other phases
-    CALL Equil_Specia(iErr)
+    call Equil_Specia(iErr)
 
-  CASE("EQM")
+  case("EQM")
     ! calculate "global" equilibrium of (aqueous + rock) system
     ! considering satur'state of aqu'phase versus other phases
     ! using hybrid method 2 and taking mixtures in account
 
     ! first compute with pure phase only
-    CALL Equil_Eq2(.TRUE.,iErr)
+    call Equil_Eq2(.true.,iErr)
     ! then take account of mixtures
-    CALL Equil_Eq2(.FALSE.,iErr)
-    !~ IF(iErr<0) CALL Equil_Eq2(.FALSE.,iErr,"2")
+    call Equil_Eq2(.false.,iErr)
+    !~ if(iErr<0) call Equil_Eq2(.false.,iErr,"2")
 
-  CASE("EQ1")
+  case("EQ1")
     ! calculate "global" equilibrium of (aqueous + rock) system
     ! considering satur'state of aqu'phase versus other phases
     ! using method 1
-    CALL Equil_Eq1(.TRUE.,iErr)
+    call Equil_Eq1(.true.,iErr)
 
-  CASE("EQ2")
+  case("EQ2")
     ! calculate "global" equilibrium of (aqueous + rock) system
     ! considering satur'state of aqu'phase versus other phases
     ! using method 2
-    CALL Equil_Eq2(.TRUE.,iErr)
-    IF(iErr<0) CALL Equil_Eq2(.TRUE.,iErr,"2")
+    call Equil_Eq2(.true.,iErr)
+    if(iErr<0) call Equil_Eq2(.true.,iErr,"2")
 
     ! if error do again with method 1
-    IF(iErr<0) THEN
-      IF(iDebug>2) THEN
-        PRINT *,"EQ2 FAILED, TRY WITH EQ1"
-        CALL Pause_
-      ENDIF
-      CALL Equil_Eq1(.TRUE.,iErr)
-    ENDIF
+    if(iErr<0) then
+      if(iDebug>2) then
+        print *,"EQ2 FAILED, TRY WITH EQ1"
+        call Pause_
+      end if
+      call Equil_Eq1(.true.,iErr)
+    end if
 
-  ENDSELECT
+  end select
   !
-  IF(iErr/=0) CALL Equil_Errors(iErr)
+  if(iErr/=0) call Equil_Errors(iErr)
   !
-  !~ IF(iDebug>2) CALL Basis_Change_Wrk(vCpn)
+  !~ if(iDebug>2) call Basis_Change_Wrk(vCpn)
   !
-  CALL Equil_Trace_Close
+  call Equil_Trace_Close
   !
-  CALL Equil_Save
-  CALL Equil_Vars_Clean
+  call Equil_Save
+  call Equil_Vars_Clean
   !
   !--- screen output
-  IF(iDebug>0) CALL Equil_Write_ShoDetail(Cod,TdgK,Pbar,vCpn)
+  if(iDebug>0) call Equil_Write_ShoDetail(Cod,TdgK,Pbar,vCpn)
   !
   !--- file output
-  CALL Equil_Write_Detail(Cod,TdgK,Pbar,vCpn)
+  call Equil_Write_Detail(Cod,TdgK,Pbar,vCpn)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Calc"
-ENDSUBROUTINE Equil_Calc
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Calc"
+end subroutine Equil_Calc
 
-SUBROUTINE Equil_Spl
+subroutine Equil_Spl
 !calculate stable assemblage excluding solute species
-  !~ USE M_Global_Vars
-  !~ USE M_System_Vars, ONLY: vCpn
-  !~ USE M_Simplex_Vars,ONLY: tStoikSpl,tSimplex,IZROV,iPosV,Simplex_Vars_Alloc,Simplex_Vars_Clean
-  !~ USE M_Numeric_Simplex
+  !~ use M_Global_Vars
+  !~ use M_System_Vars, only: vCpn
+  !~ use M_Simplex_Vars,only: tStoikSpl,tSimplex,IZROV,iPosV,Simplex_Vars_Alloc,Simplex_Vars_Clean
+  !~ use M_Numeric_Simplex
   !~ !
-  !~ INTEGER:: iError,nC,nF
-  !~ INTEGER:: i
+  !~ integer:: iError,nC,nF
+  !~ integer:: i
   !~ !
-  !~ WRITE(fTrc,'(/,A,/)') "Equil_Spl, init"
-  !~ DO i= 1, SIZE(vCpn)
-  !~ !transform the current component set for USE with simplex
-    !~ PRINT *,vCpn(i)%Name
-  !~ ENDDO
-  !~ CALL Pause_
-  !~ RETURN
-  !~ nC= SIZE(vCpn)
-  !~ nF= SIZE(vFas)
+  !~ write(fTrc,'(/,A,/)') "Equil_Spl, init"
+  !~ do i= 1, size(vCpn)
+  !~ !transform the current component set for use with simplex
+    !~ print *,vCpn(i)%Name
+  !~ end do
+  !~ call Pause_
+  !~ return
+  !~ nC= size(vCpn)
+  !~ nF= size(vFas)
   !~ !
-  !~ CALL Simplex_Vars_Alloc(nC,nF)
+  !~ call Simplex_Vars_Alloc(nC,nF)
   !~ !
   !~ tSimplex(1:nC,0   )=  vCpn(1:nC)%Mole !first column= bulk compos'n
-  !~ tSimplex(1:nC,1:nF)= -TRANSPOSE(tStoikSpl(1:nF,1:nC)) !main = stoikiometry matrix
+  !~ tSimplex(1:nC,1:nF)= -transpose(tStoikSpl(1:nF,1:nC)) !main = stoikiometry matrix
   !~ tSimplex(0,   1:nF)= -vFas(1:nF)%Grt  !first row= Gibbs energy of phases 1:nF at 'point' iTP
   !~ !
-  !~ ! CALL Simplex_Calc(iError)
-  !~ CALL Simplex_Calc_( &
+  !~ ! call Simplex_Calc(iError)
+  !~ call Simplex_Calc_( &
   !~ & nC,nF, &
   !~ & tSimplex,IZROV,IPOSV, &
   !~ & iError) !,n1,n2)
   !
-ENDSUBROUTINE Equil_Spl
+end subroutine Equil_Spl
 
-SUBROUTINE Equil_Tst
-  USE M_Basis,       ONLY: Basis_Change
-  USE M_Equil_Vars,  ONLY: Equil_Vars_Clean
-  USE M_System_Vars, ONLY: TdgK,Pbar,vCpn
-  USE M_System_Tools,ONLY: System_TP_Update
+subroutine Equil_Tst
+  use M_Basis,       only: Basis_Change
+  use M_Equil_Vars,  only: Equil_Vars_Clean
+  use M_System_Vars, only: TdgK,Pbar,vCpn
+  use M_System_Tools,only: System_TP_Update
 
   ! update global thermo'parameters (vSpc,vMixModel,vMixFas,vFas)
   ! at (TdgK,Pbar)
-  CALL System_TP_Update(TdgK,Pbar)
+  call System_TP_Update(TdgK,Pbar)
 
-  CALL Basis_Change("SPC",vCpn) ; IF(iDebug==5) CALL Pause_("Basis_Change Done")
+  call Basis_Change("SPC",vCpn) ; if(iDebug==5) call Pause_("Basis_Change Done")
 
-  CALL Equil_Vars_Clean
+  call Equil_Vars_Clean
 
-  RETURN
-ENDSUBROUTINE Equil_Tst
+  return
+end subroutine Equil_Tst
 
-SUBROUTINE Equil_Get_vMolF(vX)
-  USE M_Global_Vars, ONLY : vSpc
-  USE M_Basis_Vars, ONLY : vOrdAq
+subroutine Equil_Get_vMolF(vX)
+  use M_Global_Vars, only : vSpc
+  use M_Basis_Vars, only : vOrdAq
 
-  REAL(dp), INTENT(OUT)::vX(:)
+  real(dp), intent(out)::vX(:)
 
-  INTEGER :: nAq, iAq
+  integer :: nAq, iAq
 
   vX = Zero
-  nAq = SIZE(vOrdAq)
+  nAq = size(vOrdAq)
 
-  DO iAq=1, nAq
+  do iAq=1, nAq
     vX(iAq) =  vSpc(vOrdAq(iAq))%Dat%Mole
-  END DO
+  end do
 
-  RETURN
-END SUBROUTINE Equil_Get_vMolF
+  return
+end subroutine Equil_Get_vMolF
 
-ENDMODULE M_Equil
+end module M_Equil
 

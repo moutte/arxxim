@@ -1,470 +1,470 @@
-MODULE M_Equil_Read
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_,Pause_
-  USE M_Kinds
-  IMPLICIT NONE
+module M_Equil_Read
+  use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
+  use M_Kinds
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Equil_Read_YesList
-  PUBLIC:: Equil_Read_Debug
-  PUBLIC:: Equil_Read_Conditions
-  PUBLIC:: Equil_Read_Numeric
-  PUBLIC:: Equil_Read_PhaseAdd
+  public:: Equil_Read_YesList
+  public:: Equil_Read_Debug
+  public:: Equil_Read_Conditions
+  public:: Equil_Read_Numeric
+  public:: Equil_Read_PhaseAdd
   
-CONTAINS
+contains
 
-SUBROUTINE Equil_Read_PhaseAdd(vFas)
+subroutine Equil_Read_PhaseAdd(vFas)
 !--
 !-- read block SYSTEM.ROCK,
 !-- -> read the non-fluid part of the system,
 !-- -> update vFas%Mole
 !--
-  USE M_IOTools
-  USE M_Files,  ONLY: NamFInn
-  USE M_T_Phase,ONLY: T_Phase,Phase_Index
+  use M_IOTools
+  use M_Files,  only: NamFInn
+  use M_T_Phase,only: T_Phase,Phase_Index
   !
-  TYPE(T_Phase),DIMENSION(:),INTENT(INOUT):: vFas
+  type(T_Phase), intent(inout) :: vFas(:)
   !
-  CHARACTER(LEN=512):: L,W,W1
-  LOGICAL :: EoL
-  INTEGER :: F,ios,I
-  REAL(dp):: X
+  character(len=512):: L,W,W1
+  logical :: EoL
+  integer :: F,ios,I
+  real(dp):: X
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_PhaseAdd"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_PhaseAdd"
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
   !
-  DoFile: DO
+  DoFile: do
     ! 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
       !
-      CASE("ENDINPUT"); EXIT DoFile
+      case("ENDINPUT"); exit DoFile
       !
-      CASE("SYSTEM.ROCK") !
-        DoBlock: DO
+      case("SYSTEM.ROCK") !
+        DoBlock: do
           !
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoBlock !skip comment lines
+          call AppendToEnd(L,W,EoL)
           !
-          SELECT CASE(W)
-          CASE("ENDINPUT")              ;  EXIT DoFile
-          CASE("END","ENDSYSTEM.ROCK")  ;  EXIT DoBlock
-          CASE("MOLE","GRAM")           ;  CALL LinToWrd(L,W1,EoL)
-          CASE DEFAULT
-            CALL Stop_(TRIM(W)//" <- unknown keyword in SYSTEM.ROCK !!!") 
-          ENDSELECT
+          select case(W)
+          case("ENDINPUT")              ;  exit DoFile
+          case("END","ENDSYSTEM.ROCK")  ;  exit DoBlock
+          case("MOLE","GRAM")           ;  call LinToWrd(L,W1,EoL)
+          case default
+            call Stop_(trim(W)//" <- unknown keyword in SYSTEM.ROCK !!!") 
+          end select
           !
           I= Phase_Index(W1,vFas)
           !
-          IF(I==0) &
-          & CALL Stop_(TRIM(W1)//" <-phase unknown (SYSTEM.ROCK)")
+          if(I==0) &
+          & call Stop_(trim(W1)//" <-phase unknown (SYSTEM.ROCK)")
           !
-          IF(vFas(I)%iSpc==0) &
-          & CALL Stop_(TRIM(W1)//" <-not valid, USE ONLY pure non'aqu'phases (SYSTEM.ROCK)")
+          if(vFas(I)%iSpc==0) &
+          & call Stop_(trim(W1)//" <-not valid, use only pure non'aqu'phases (SYSTEM.ROCK)")
           !
-          CALL LinToWrd(L,W1,EoL)
-          CALL WrdToReal(W1,X)
+          call LinToWrd(L,W1,EoL)
+          call WrdToReal(W1,X)
           !
-          IF(X<=Zero) CALL Stop_(TRIM(W1)//" <-not valid as species amount  (SYSTEM.ROCK)")
-          IF(W=="GRAM") X= X /vFas(I)%WeitKg /1.0D3
+          if(X<=Zero) call Stop_(trim(W1)//" <-not valid as species amount  (SYSTEM.ROCK)")
+          if(W=="GRAM") X= X /vFas(I)%WeitKg /1.0D3
           !
-          vFas(I)%Mole= X
+          vFas(I)%MolFs= X
           !
-        ENDDO DoBlock
-      !ENDCASE("SYSTEM.ROCK")
+        end do DoBlock
+      !endcase("SYSTEM.ROCK")
       !
-    ENDSELECT
+    end select
     !
-  ENDDO DoFile
-  CLOSE(F)
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_PhaseAdd"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_PhaseAdd"
   !
-ENDSUBROUTINE Equil_Read_PhaseAdd
+end subroutine Equil_Read_PhaseAdd
 
-SUBROUTINE Equil_Read_YesList(nFas,vFas,vYesList)
+subroutine Equil_Read_YesList(nFas,vFas,vYesList)
 !--
 !-- reads lists of included or excluded phases -> update vYesList
 !--
-  USE M_T_Phase,ONLY: T_Phase
+  use M_T_Phase,only: T_Phase
   !
-  INTEGER,      INTENT(IN) :: nFas
-  TYPE(T_Phase),INTENT(IN) :: vFas(:)
-  LOGICAL,      INTENT(OUT):: vYesList(:)
+  integer,      intent(in) :: nFas
+  type(T_Phase),intent(in) :: vFas(:)
+  logical,      intent(out):: vYesList(:)
   !
-  LOGICAL:: vInclud(nFas),vExclud(nFas)
+  logical:: vInclud(nFas),vExclud(nFas)
   !vInclude= included phases; vExclude= excluded phases
-  INTEGER:: I
+  integer:: I
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_YesList"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_YesList"
   !
   !-------------------------------- read list of "equilibrium phases" --
-  vInclud=.FALSE.
-  vExclud=.FALSE.
+  vInclud=.false.
+  vExclud=.false.
   !
-  CALL Equil_Read_EquilPhase(vFas,vInclud,vExclud) !,InOk,ExOk)
+  call Equil_Read_EquilPhase(vFas,vInclud,vExclud) !,InOk,ExOk)
   !
-  vYesList=.TRUE. !-> default= all phases from DATAbase taken into account
-  IF(COUNT(vInclud)>0) vYesList(:)= vInclud(:) !-> ONLY included phases
-  IF(COUNT(vExclud)>0) vYesList(:)= vYesList(:) .AND. (.NOT. vExclud(:))
+  vYesList=.true. !-> default= all phases from database taken into account
+  if(count(vInclud)>0) vYesList(:)= vInclud(:) !-> only included phases
+  if(count(vExclud)>0) vYesList(:)= vYesList(:) .and. (.not. vExclud(:))
   !
   !-------------------------------/ read list of "equilibrium phases" --
   !
-  !! vYesList(1)=.FALSE. !-> ??? to exclude species H2O as phase ???
+  !! vYesList(1)=.false. !-> ??? to exclude species H2O as phase ???
   !
   !------------------------------------------------------------ trace --
-  IF(iDebug>1) THEN
-    PRINT '(/,A)',"< -- List of Phases --"
-    DO I=1,nFas
-      IF(vYesList(I)) PRINT '(A)',vFas(I)%NamFs
-    ENDDO
-    PRINT '(A,/)',"</-- List of Phases --"
-    IF(iDebug==4) CALL Pause_
-  ENDIF
+  if(iDebug>1) then
+    print '(/,A)',"< -- List of Phases --"
+    do I=1,nFas
+      if(vYesList(I)) print '(A)',vFas(I)%NamFs
+    end do
+    print '(A,/)',"</-- List of Phases --"
+    if(iDebug==4) call Pause_
+  end if
   !
-  IF(iDebug>0) THEN
-    DO I=1,nFas
-      IF(vYesList(I)) WRITE(fTrc,'(A)') vFas(I)%NamFs
-    ENDDO
-  ENDIF
+  if(iDebug>0) then
+    do I=1,nFas
+      if(vYesList(I)) write(fTrc,'(A)') vFas(I)%NamFs
+    end do
+  end if
   !-----------------------------------------------------------/ trace --
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_YesList"
-ENDSUBROUTINE Equil_Read_YesList
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_YesList"
+end subroutine Equil_Read_YesList
   !  
-SUBROUTINE Equil_Read_Debug(DebFormula,DebNewt,DebJacob)
+subroutine Equil_Read_Debug(DebFormula,DebNewt,DebJacob)
 !--
 !-- read block CONDITIONS from arxim.inn to retrive DEBUG options
 !--
-  USE M_Trace,ONLY: LWarning
-  USE M_IoTools
-  USE M_Files,ONLY: NamFInn
+  use M_Trace,only: LWarning
+  use M_IoTools
+  use M_Files,only: NamFInn
   !
-  LOGICAL,INTENT(OUT):: DebFormula,DebNewt,DebJacob
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL           :: EoL,Ok
-  INTEGER           :: f,N,ios
+  logical,intent(out):: DebFormula,DebNewt,DebJacob
+  character(len=255):: L
+  character(len=80) :: W
+  logical           :: EoL,Ok
+  integer           :: f,N,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_Debug"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_Debug"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
-  Ok=.FALSE.
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
+  Ok=.false.
   !
-  DoFile: DO 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+  DoFile: do 
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
     !
-    CASE("ENDINPUT"); EXIT  DoFile 
+    case("ENDINPUT"); exit  DoFile 
     !
-    CASE("CONDITIONS") !LOGICAL global variables
-      Ok=.TRUE.
+    case("CONDITIONS") !logical global variables
+      Ok=.true.
       !
-      DoDebug: DO
+      DoDebug: do
         
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoDebug
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoDebug
+        call AppendToEnd(L,W,EoL)
         
-        SELECT CASE(TRIM(W))
+        select case(trim(W))
           !
-          CASE("ENDINPUT"); EXIT DoFile
+          case("ENDINPUT"); exit DoFile
           
-          CASE("END","ENDCONDITIONS"); EXIT DoDebug
+          case("END","ENDCONDITIONS"); exit DoDebug
           
-          CASE("DEBUG")
-            CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,N)
-            IF(N>0 .AND. iDebug==0) iDebug=N
-            !iDebug is 0 IF it has not been already assigned in command line
+          case("DEBUG")
+            call LinToWrd(L,W,EoL); call WrdToInt(W,N)
+            if(N>0 .and. iDebug==0) iDebug=N
+            !iDebug is 0 if it has not been already assigned in command line
           !
-        ENDSELECT
+        end select
       
-      ENDDO DoDebug
+      end do DoDebug
       !
-    ENDSELECT
-  ENDDO DoFile
-  CLOSE(f)
+    end select
+  end do DoFile
+  close(f)
   !
   LWarning= (iDebug>0)
   !
   DebFormula= (iDebug==4)
   DebJacob=   (iDebug==4)
-  DebNewt=    (iDebug==4 .OR. iDebug==9)
+  DebNewt=    (iDebug==4 .or. iDebug==9)
   !
-  IF(.NOT.Ok) THEN 
-    IF(iDebug>0) WRITE(fTrc,'(A)') &
+  if(.not.Ok) then 
+    if(iDebug>0) write(fTrc,'(A)') &
     & "Block CONDITIONS not Found -> using default values for DEBUG"
-  ENDIF
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_Debug"
-ENDSUBROUTINE Equil_Read_Debug
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_Debug"
+end subroutine Equil_Read_Debug
 
-SUBROUTINE Equil_Read_OutputOptions(OutDistrib)
+subroutine Equil_Read_OutputOptions(OutDistrib)
 !--
 !-- provisional, may be used for other output options ...
 !-- read block CONDITIONS from arxim.inn for OUTPUT options
 !--
-  USE M_IoTools
-  USE M_Files,ONLY: NamFInn
+  use M_IoTools
+  use M_Files,only: NamFInn
   !
-  LOGICAL,INTENT(OUT):: OutDistrib
+  logical,intent(out):: OutDistrib
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL           :: EoL,Ok
-  INTEGER           :: f,ios
+  character(len=255):: L
+  character(len=80) :: W
+  logical           :: EoL,Ok
+  integer           :: f,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_OutputOptions"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_OutputOptions"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
-  Ok=.FALSE.
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
+  Ok=.false.
   !
-  OutDistrib= .FALSE.
+  OutDistrib= .false.
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
       !
-      CASE("ENDINPUT")
-        EXIT  DoFile 
+      case("ENDINPUT")
+        exit  DoFile 
       !
-      CASE("CONDITIONS")
-        Ok=.TRUE.
+      case("CONDITIONS")
+        Ok=.true.
         !
-        DoDebug: DO
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoDebug
-          CALL AppendToEnd(L,W,EoL)
-          SELECT CASE(TRIM(W))
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("END","ENDCONDITIONS"); EXIT DoDebug
+        DoDebug: do
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoDebug
+          call AppendToEnd(L,W,EoL)
+          select case(trim(W))
+            case("ENDINPUT"); exit DoFile
+            case("END","ENDCONDITIONS"); exit DoDebug
             !
-            CASE("OUTPUT.DISTRIB"); OutDistrib=.TRUE. 
+            case("OUTPUT.DISTRIB"); OutDistrib=.true. 
             !
-          ENDSELECT
-        ENDDO DoDebug
+          end select
+        end do DoDebug
         !
-    ENDSELECT
+    end select
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(.NOT.Ok) THEN 
-    IF(iDebug>0) WRITE(fTrc,'(A)') &
+  if(.not.Ok) then 
+    if(iDebug>0) write(fTrc,'(A)') &
     & "Block CONDITIONS not Found -> using default values for OUTPUT options"
-  ENDIF
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_OutputOptions"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_OutputOptions"
   !
-ENDSUBROUTINE Equil_Read_OutputOptions
+end subroutine Equil_Read_OutputOptions
 
-SUBROUTINE Equil_Read_EquilPhase(vFas,vInclude,vExclude) !,InOk,ExOk)
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_Files,ONLY: NamFInn
-  USE M_T_Phase,ONLY: T_Phase,Phase_Index
+subroutine Equil_Read_EquilPhase(vFas,vInclude,vExclude) !,InOk,ExOk)
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_Files,only: NamFInn
+  use M_T_Phase,only: T_Phase,Phase_Index
   !
-  TYPE(T_Phase),INTENT(IN) :: vFas(:)
-  LOGICAL,      INTENT(OUT):: vInclude(:)
-  LOGICAL,      INTENT(OUT):: vExclude(:)
+  type(T_Phase),intent(in) :: vFas(:)
+  logical,      intent(out):: vInclude(:)
+  logical,      intent(out):: vExclude(:)
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,I,ios
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,I,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_EquilPhase"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_EquilPhase"
   !
-  vInclude=.FALSE. !InOk=.FALSE.; 
-  vExclude=.FALSE. !ExOk=.FALSE.; 
+  vInclude=.false. !InOk=.false.; 
+  vExclude=.false. !ExOk=.false.; 
   !
   !!vInclude(:)= vFas(:)%iSpc/=0
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
-  DoFile: DO
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
+  DoFile: do
   
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
-    SELECT CASE(TRIM(W))
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
+    select case(trim(W))
       
-      CASE("ENDINPUT"); EXIT DoFile
+      case("ENDINPUT"); exit DoFile
       
-      CASE("EQUIL.INCLUDE","EQU.INCLUDE")
+      case("EQUIL.include","EQU.include")
         
-        DoInclude: DO
+        DoInclude: do
           
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoInclude !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
-          SELECT CASE(TRIM(W))
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("END","ENDEQU.INCLUDE","ENDEQUIL.INCLUDE"); EXIT DoInclude
-          ENDSELECT
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoInclude !skip comment lines
+          call AppendToEnd(L,W,EoL)
+          select case(trim(W))
+            case("ENDINPUT"); exit DoFile
+            case("END","ENDEQU.include","ENDEQUIL.include"); exit DoInclude
+          end select
           
           I= Phase_Index(W,vFas)
           
-          IF(I>0) THEN
-            IF(vFas(I)%iSpc/=0) THEN !restriction to PURE phases, provisionally
-              vInclude(I)=.TRUE.
-              IF(iDebug>2) PRINT      '(A,A1,G15.6)', vFas(I)%NamFs,T_,vFas(I)%Grt
-              IF(iDebug>0) WRITE(fTrc,'(A,A1,G15.6)') vFas(I)%NamFs,T_,vFas(I)%Grt
-            ELSE
-              !!vInclude(I)=.TRUE.
-              !!IF(iDebug>2) PRINT      '(A,A1,G15.6)', vFas(I)%NamFs,T_,vFas(I)%Grt
-              !!IF(iDebug>0) WRITE(fTrc,'(A,A1,G15.6)') vFas(I)%NamFs,T_,vFas(I)%Grt
-              IF(iDebug>2) PRINT      '(2A)', TRIM(W)," is not PURE -> not included"
-              IF(iDebug>0) WRITE(fTrc,'(2A)') TRIM(W)," is not PURE -> not included"
-            ENDIF
-          ELSE
-            IF(iDebug>2) PRINT '(3A)',"WARNING, ",TRIM(W)," is not in current database"
-            IF(iDebug>0) WRITE(fTrc,'(3A)') "WARNING !!! ",TRIM(W)," is not in current database"
-          ENDIF
+          if(I>0) then
+            if(vFas(I)%iSpc/=0) then !restriction to pure phases, provisionally
+              vInclude(I)=.true.
+              if(iDebug>2) print      '(A,A1,G15.6)', vFas(I)%NamFs,T_,vFas(I)%Grt
+              if(iDebug>0) write(fTrc,'(A,A1,G15.6)') vFas(I)%NamFs,T_,vFas(I)%Grt
+            else
+              !!vInclude(I)=.true.
+              !!if(iDebug>2) print      '(A,A1,G15.6)', vFas(I)%NamFs,T_,vFas(I)%Grt
+              !!if(iDebug>0) write(fTrc,'(A,A1,G15.6)') vFas(I)%NamFs,T_,vFas(I)%Grt
+              if(iDebug>2) print      '(2A)', trim(W)," is not pure -> not included"
+              if(iDebug>0) write(fTrc,'(2A)') trim(W)," is not pure -> not included"
+            end if
+          else
+            if(iDebug>2) print '(3A)',"WARNING, ",trim(W)," is not in current database"
+            if(iDebug>0) write(fTrc,'(3A)') "WARNING !!! ",trim(W)," is not in current database"
+          end if
         
-        ENDDO DoInclude
+        end do DoInclude
         
-        !!InOk= COUNT(vInclude)>0
-      !ENDCASE
+        !!InOk= count(vInclude)>0
+      !endcase
       
-      CASE("EQUIL.EXCLUDE","EQU.EXCLUDE")
+      case("EQUIL.EXCLUDE","EQU.EXCLUDE")
         
-        DoExclude: DO
+        DoExclude: do
           
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoExclude !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
-          SELECT CASE(TRIM(W))
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("END","ENDEQUIL.EXCLUDE","ENDEQU.EXCLUDE"); EXIT DoExclude
-          ENDSELECT
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoExclude !skip comment lines
+          call AppendToEnd(L,W,EoL)
+          select case(trim(W))
+            case("ENDINPUT"); exit DoFile
+            case("END","ENDEQUIL.EXCLUDE","ENDEQU.EXCLUDE"); exit DoExclude
+          end select
           
           I= Phase_Index(W,vFas)
-          IF(I>0) vExclude(I)=.TRUE.
+          if(I>0) vExclude(I)=.true.
           
-          IF(I>0) THEN !======================================< trace ==
-            IF(iDebug>0) &
-            & WRITE(fTrc,'(2A,A1,G15.6)') "EXCLUDED, Grt=",vFas(I)%NamFs,T_,vFas(I)%Grt
-            IF(iDebug>1) &
-            & PRINT '(2A,1X,G15.6)',"EXCLUDED, Grt=",vFas(I)%NamFs,vFas(I)%Grt
-          ENDIF !============================================</ trace ==
+          if(I>0) then !--====================================< trace ==
+            if(iDebug>0) &
+            & write(fTrc,'(2A,A1,G15.6)') "EXCLUDED, Grt=",vFas(I)%NamFs,T_,vFas(I)%Grt
+            if(iDebug>1) &
+            & print '(2A,1X,G15.6)',"EXCLUDED, Grt=",vFas(I)%NamFs,vFas(I)%Grt
+          end if !--==========================================</ trace ==
           
-        ENDDO DoExclude
+        end do DoExclude
         
-        !!ExOk= COUNT(vExclude)>0
-      !ENDCASE
-    ENDSELECT
+        !!ExOk= count(vExclude)>0
+      !endcase
+    end select
     
-  ENDDO DoFile
-  CLOSE(F)
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_EquilPhase"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_EquilPhase"
   !
-ENDSUBROUTINE Equil_Read_EquilPhase
+end subroutine Equil_Read_EquilPhase
 
-SUBROUTINE Equil_Read_Conditions(initMolNu,bOH2)
+subroutine Equil_Read_Conditions(initMolNu,bOH2)
 !--
-!-- READ block CONDITIONS from arxim.inn
+!-- read block CONDITIONS from arxim.inn
 !--
-  USE M_IoTools
-  USE M_Files,ONLY: NamFInn
-  USE M_Equil_Vars,ONLY: LogForAqu,DirectSub
+  use M_IoTools
+  use M_Files,only: NamFInn
+  use M_Equil_Vars,only: LogForAqu,DirectSub
   !
-  REAL(dp), INTENT(OUT)  :: initMolNu
-  LOGICAL,  INTENT(OUT)  :: bOH2
+  real(dp), intent(out)  :: initMolNu
+  logical,  intent(out)  :: bOH2
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL           :: EoL,Ok
-  INTEGER           :: f,ios
+  character(len=255):: L
+  character(len=80) :: W
+  logical           :: EoL,Ok
+  integer           :: f,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_ReadConditions"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_ReadConditions"
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  Ok=.FALSE.
+  Ok=.false.
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
       !
-      CASE("ENDINPUT"); EXIT DoFile 
+      case("ENDINPUT"); exit DoFile 
       !
-      CASE("CONDITIONS")
-        Ok=.TRUE.
-        DoCond: DO
+      case("CONDITIONS")
+        Ok=.true.
+        DoCond: do
           !
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoCond
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoCond
+          call AppendToEnd(L,W,EoL)
           
-          SELECT CASE(W)
+          select case(W)
           
-            CASE("ENDINPUT")             ;  EXIT DoFile
-            CASE("END","ENDCONDITIONS")  ;  EXIT DoCond
+            case("ENDINPUT")             ;  exit DoFile
+            case("END","ENDCONDITIONS")  ;  exit DoCond
             
-            CASE("H2OBALANCE")
-              bOH2=.TRUE.
+            case("H2OBALANCE")
+              bOH2=.true.
             
-            CASE("INITIAL")
-              CALL LinToWrd(L,W,EoL)
-              CALL WrdToReal(W,initMolNu)
+            case("INITIAL")
+              call LinToWrd(L,W,EoL)
+              call WrdToReal(W,initMolNu)
             
-            !CASE("MOLEFORAQU")
-            !  LogForAqu= .FALSE.
-            !CASE("DIRECT")
-            !  DirectSub= .TRUE.
+            !case("MOLEFORAQU")
+            !  LogForAqu= .false.
+            !case("DIRECT")
+            !  DirectSub= .true.
           
-          ENDSELECT
+          end select
           !
-        ENDDO DoCond
-      !ENDCASE("CONDITIONS") 
-    ENDSELECT
+        end do DoCond
+      !endcase("CONDITIONS") 
+    end select
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(.NOT.Ok) THEN 
-    IF(iDebug>0)  WRITE(fTrc,'(A)') "Block CONDITIONS not Found ...!!!"
-    IF(iDebug>0)  PRINT '(A)',"WARNING: Block CONDITIONS not Found, using default values"
-  ENDIF
+  if(.not.Ok) then 
+    if(iDebug>0)  write(fTrc,'(A)') "Block CONDITIONS not Found ...!!!"
+    if(iDebug>0)  print '(A)',"WARNING: Block CONDITIONS not Found, using default values"
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_ReadConditions"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_ReadConditions"
   !
-ENDSUBROUTINE Equil_Read_Conditions
+end subroutine Equil_Read_Conditions
 
-SUBROUTINE Equil_Read_Numeric( &
+subroutine Equil_Read_Numeric( &
 & initMolNu, &
 & bOH2,      &
 & LogForAqu, &
@@ -475,143 +475,143 @@ SUBROUTINE Equil_Read_Numeric( &
 & ErrorMsg   &
 & )
 !--
-!-- READ block EQU.NUMERIC
+!-- read block EQU.NUMERIC
 !--
-  USE M_IoTools
-  USE M_Files,ONLY: NamFInn
+  use M_IoTools
+  use M_Files,only: NamFInn
   !
-  REAL(dp),    INTENT(OUT)  :: initMolNu
-  LOGICAL,     INTENT(INOUT):: bOH2
-  LOGICAL,     INTENT(INOUT):: LogForAqu,DirectSub
-  CHARACTER(*),INTENT(OUT)  :: cMethod
-  LOGICAL,     INTENT(INOUT):: bFinDif
-  LOGICAL,     INTENT(OUT)  :: Error
-  CHARACTER(*),INTENT(OUT)  :: ErrorMsg
+  real(dp),    intent(out)  :: initMolNu
+  logical,     intent(inout):: bOH2
+  logical,     intent(inout):: LogForAqu,DirectSub
+  character(*),intent(out)  :: cMethod
+  logical,     intent(inout):: bFinDif
+  logical,     intent(out)  :: Error
+  character(*),intent(out)  :: ErrorMsg
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL           :: EoL,Ok
-  INTEGER           :: f,ios
+  character(len=255):: L
+  character(len=80) :: W
+  logical           :: EoL,Ok
+  integer           :: f,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Read_Numeric"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Read_Numeric"
   !
-  Error= .FALSE.
+  Error= .false.
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  Ok=.FALSE.
+  Ok=.false.
   
-  DoFile: DO 
+  DoFile: do 
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
-    SELECT CASE(W)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
+    select case(W)
       !
-      CASE("ENDINPUT"); EXIT DoFile 
+      case("ENDINPUT"); exit DoFile 
       !
-      CASE("EQU.NUMERIC")
-        Ok=.TRUE.
-        DoCond: DO
+      case("EQU.NUMERIC")
+        Ok=.true.
+        DoCond: do
         
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoCond
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoCond
+          call AppendToEnd(L,W,EoL)
           
-          SELECT CASE(W)
+          select case(W)
           
-            CASE("ENDINPUT")                ;  EXIT DoFile
-            CASE("END","ENDEQU.NUMERIC")  ;  EXIT DoCond
+            case("ENDINPUT")                ;  exit DoFile
+            case("END","ENDEQU.NUMERIC")  ;  exit DoCond
             
-            CASE("H2OBALANCE")
-              bOH2=.TRUE.
+            case("H2OBALANCE")
+              bOH2=.true.
             
-            CASE("INITIAL")
-              CALL LinToWrd(L,W,EoL)
-              CALL WrdToReal(W,initMolNu)
+            case("INITIAL")
+              call LinToWrd(L,W,EoL)
+              call WrdToReal(W,initMolNu)
             
-            CASE("LOGFORAQU")
-              CALL LinToWrd(L,W,EoL)
-              SELECT CASE(TRIM(W))
-                CASE("TRUE", "T", "YES")  ;  LogForAqu= .TRUE.
-                CASE("FALSE", "F", "NO")  ;  LogForAqu= .FALSE.
-                CASE DEFAULT
-                  Error= .TRUE.
-                  ErrorMsg= TRIM(W)//" is invalid keyword in EQU.NUMERIC"
-              ENDSELECT
+            case("LOGFORAQU")
+              call LinToWrd(L,W,EoL)
+              select case(trim(W))
+                case("TRUE", "T", "YES")  ;  LogForAqu= .true.
+                case("FALSE", "F", "NO")  ;  LogForAqu= .false.
+                case default
+                  Error= .true.
+                  ErrorMsg= trim(W)//" is invalid keyword in EQU.NUMERIC"
+              end select
             
             !! obsolete : replace by LOGFORAQU= YES/NO !!
-            !~ CASE("AQUEOUS")
-              !~ CALL LinToWrd(L,W,EoL)
-              !~ SELECT CASE(TRIM(W))
-                !~ CASE("MOLE")  ;  LogForAqu= .FALSE.
-                !~ CASE("LOG")   ;  LogForAqu= .TRUE.
-                !~ CASE DEFAULT
-                  !~ Error= .TRUE.
-                  !~ ErrorMsg= TRIM(W)//" is invalid keyword in EQU.NUMERIC"
-              !~ ENDSELECT
+            !~ case("AQUEOUS")
+              !~ call LinToWrd(L,W,EoL)
+              !~ select case(trim(W))
+                !~ case("MOLE")  ;  LogForAqu= .false.
+                !~ case("LOG")   ;  LogForAqu= .true.
+                !~ case default
+                  !~ Error= .true.
+                  !~ ErrorMsg= trim(W)//" is invalid keyword in EQU.NUMERIC"
+              !~ end select
               
-            CASE("DIRECT")
-              CALL LinToWrd(L,W,EoL)
-              SELECT CASE(TRIM(W))
-                CASE("TRUE", "T", "YES")  ;  DirectSub= .TRUE.
-                CASE("FALSE", "F", "NO")  ;  DirectSub= .FALSE.
-                CASE DEFAULT
-                  Error= .TRUE.
-                  ErrorMsg= TRIM(W)//" is invalid keyword for DIRECT in EQU.NUMERIC"
-              ENDSELECT
+            case("DIRECT")
+              call LinToWrd(L,W,EoL)
+              select case(trim(W))
+                case("TRUE", "T", "YES")  ;  DirectSub= .true.
+                case("FALSE", "F", "NO")  ;  DirectSub= .false.
+                case default
+                  Error= .true.
+                  ErrorMsg= trim(W)//" is invalid keyword for DIRECT in EQU.NUMERIC"
+              end select
             
-            CASE("JACOBIAN")
-              CALL LinToWrd(L,W,EoL)
-              SELECT CASE(TRIM(W))
-                CASE("NUMERIC")   ;  bFinDif= .TRUE.
-                CASE("ANALYTIC")  ;  bFinDif= .FALSE.
-                CASE DEFAULT
-                  Error= .TRUE.
-                  ErrorMsg= TRIM(W)//" is invalid keyword in EQU.NUMERIC"
-              ENDSELECT
+            case("JACOBIAN")
+              call LinToWrd(L,W,EoL)
+              select case(trim(W))
+                case("NUMERIC")   ;  bFinDif= .true.
+                case("ANALYTIC")  ;  bFinDif= .false.
+                case default
+                  Error= .true.
+                  ErrorMsg= trim(W)//" is invalid keyword in EQU.NUMERIC"
+              end select
             
-            CASE("METHOD")
-              CALL LinToWrd(L,W,EoL)
-              SELECT CASE(TRIM(W))
-                CASE("NEWTON")       ;   cMethod= TRIM(W)
-                CASE("NEWTLNSRCH")   ;   cMethod= TRIM(W)
-                CASE("NEWTONPRESS")  ;   cMethod= TRIM(W)
-                CASE("BROYDEN")      ;   cMethod= TRIM(W)
-                CASE("NEWTONCHESS")  ;   cMethod= TRIM(W)
-                CASE("TENSOLVE_1")   ;   cMethod= TRIM(W)
-                CASE("NEWTONKELLEY") ;   cMethod= TRIM(W)
-                CASE("NEWTONWALKER") ;   cMethod= TRIM(W)
-                CASE DEFAULT
-                  Error= .TRUE.
-                  ErrorMsg= TRIM(W)//" is invalid METHOD in EQU.NUMERIC"
-              END SELECT
+            case("METHOD")
+              call LinToWrd(L,W,EoL)
+              select case(trim(W))
+                case("NEWTON")       ;   cMethod= trim(W)
+                case("NEWTLNSRCH")   ;   cMethod= trim(W)
+                case("NEWTONPRESS")  ;   cMethod= trim(W)
+                case("BROYDEN")      ;   cMethod= trim(W)
+                case("NEWTONCHESS")  ;   cMethod= trim(W)
+                case("TENSOLVE_1")   ;   cMethod= trim(W)
+                case("NEWTONKELLEY") ;   cMethod= trim(W)
+                case("NEWTONWALKER") ;   cMethod= trim(W)
+                case default
+                  Error= .true.
+                  ErrorMsg= trim(W)//" is invalid METHOD in EQU.NUMERIC"
+              end select
             !_
-            CASE DEFAULT
-              Error= .TRUE.
-              ErrorMsg= TRIM(W)//" is invalid keyword in EQU.NUMERIC"
-              !PRINT *,TRIM(W)//" = unknown keyword in EQU.NUMERIC !!"
+            case default
+              Error= .true.
+              ErrorMsg= trim(W)//" is invalid keyword in EQU.NUMERIC"
+              !print *,trim(W)//" = unknown keyword in EQU.NUMERIC !!"
             
-          ENDSELECT
+          end select
         
-        ENDDO DoCond
-      !ENDCASE("CONDITIONS") 
-    ENDSELECT
+        end do DoCond
+      !endcase("CONDITIONS") 
+    end select
     
-  ENDDO DoFile
-  CLOSE(f)
+  end do DoFile
+  close(f)
   !
-  IF(.NOT.Ok) THEN 
-    IF(iDebug>0)  WRITE(fTrc,'(A)') "Block EQU.NUMERIC not Found ...!!!"
-    !IF(iDebug>0)  PRINT '(A)',"WARNING: Block CONDITIONS not Found, using default values"
-  ENDIF
+  if(.not.Ok) then 
+    if(iDebug>0)  write(fTrc,'(A)') "Block EQU.NUMERIC not Found ...!!!"
+    !if(iDebug>0)  print '(A)',"WARNING: Block CONDITIONS not Found, using default values"
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Read_Numeric"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Read_Numeric"
   !
-ENDSUBROUTINE Equil_Read_Numeric
+end subroutine Equil_Read_Numeric
 
-ENDMODULE M_Equil_Read
+end module M_Equil_Read
 

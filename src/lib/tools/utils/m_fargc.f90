@@ -1,4 +1,4 @@
-MODULE M_FArgC
+module M_FArgC
   !=============================================================== 
   ! Fortran Command Arguments Functions
   ! Wrapper to System Functions : IARGC and GETARG
@@ -8,35 +8,35 @@ MODULE M_FArgC
   ! concerning these functions with your compiler
   !
   !===============================================================
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
   !---
-  PUBLIC :: F_IARGC
-  PUBLIC :: F_GETARG
+  public :: F_IARGC
+  public :: F_GETARG
 
-CONTAINS
+contains
 
-  FUNCTION F_IARGC()
+  function F_IARGC()
   
-    INTEGER :: F_IARGC
-    INTEGER IARGC
+    integer :: F_IARGC
+    integer IARGC
     
     F_IARGC = 0
     F_IARGC = IARGC() ! Comment this line if problems
 
-  END FUNCTION F_IARGC
+  end function F_IARGC
 
   !---
   
-  SUBROUTINE F_GETARG(I, STR)
+  subroutine F_GETARG(I, STR)
   
-    INTEGER, INTENT(IN) :: I
-    CHARACTER(LEN=*), INTENT(OUT):: STR
+    integer, intent(in) :: I
+    character(len=*), intent(out):: STR
     
     STR = ""
-    CALL GETARG(I, STR)       ! Comment this line if problems
+    call GETARG(I, STR)       ! Comment this line if problems
     
-  END SUBROUTINE F_GETARG
+  end subroutine F_GETARG
 
 
-END MODULE M_FArgC
+end module M_FArgC

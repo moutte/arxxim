@@ -1,4 +1,4 @@
-MODULE M_Eos_H2O_Holland_Powell
+module M_Eos_H2O_Holland_Powell
 !! was M_Holland_Powell_H2O
 
 !----------------------------------------------------------------------
@@ -17,31 +17,32 @@ MODULE M_Eos_H2O_Holland_Powell
 ! Arxim Integration : J.Moutte
 !------------------------------------------------------------------------
 
-  USE M_Kinds
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  implicit none
+  private
 
-  REAL(dp), PARAMETER :: R_jK= 8.314510D0
+  real(dp), parameter :: R_jK= 8.314510D0
 
   !// Public Functions
-  PUBLIC::  Eos_H2O_HolPow     ! was CalcGH2O_HolPow
-  PUBLIC::  Eos_H2O_HolPow91   ! was CalcGH2O_HP91
+  public::  Eos_H2O_HolPow     ! was CalcGH2O_HolPow
+  public::  Eos_H2O_HolPow91   ! was CalcGH2O_HP91
 
-  PRIVATE:: CalcGT_H2O_HP91
+  private:: CalcGT_H2O_HP91
 
-CONTAINS
+contains
 
 !---
 
-SUBROUTINE Eos_H2O_HolPow(TdgK,Pbar,Grt) 
+subroutine Eos_H2O_HolPow(TdgK,Pbar,Grt,LnFug) 
 !--------------------------------------------------------
 ! Holland and Powell (1990), from older CdeCapitani !
 !--------------------------------------------------------
-  IMPLICIT NONE
+  implicit none
   !
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(OUT):: Grt
-  REAL(dp) &
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(out):: Grt,LnFug
+  !
+  real(dp) &
   & A1,A2,A3,A4,A5,    &
   & B1,B2,B3,B4,B5,B6, &
   & C1,C2,C3,C4,C5,C6, &
@@ -49,17 +50,18 @@ SUBROUTINE Eos_H2O_HolPow(TdgK,Pbar,Grt)
   & RTLNF,             &
   & K1,K2,K3,K4,       &
   & CPRDT,CPRTDT,      &
-  & H0,S0,TT0,SQT0
+  & H0,S0,TT0,SQT0,    &
+  & S0Ele
   !
-  H0=-241.81D0; S0= 188.80D-3
-  K1= 0.0401D0; K2= 0.8656D-5; K3=487.5D0; K4=-0.2512D0
-  T0= 298.15D0; TT0=88893.4225D0
+  H0=-241.81D0  ; S0= 188.80D-3
+  K1= 0.0401D0  ; K2= 0.8656D-5    ; K3=487.5D0  ; K4=-0.2512D0
+  T0= 298.15D0  ; TT0=88893.4225D0
   !
-  DATA A1,A2,A3,A4,A5 &
+  data A1,A2,A3,A4,A5 &
   /-40.338D0,  1.6474D0,   -0.0062115D0, 2.0068D0,      0.0562929D0/
-  DATA B1,B2,B3,B4,B5,B6 &
+  data B1,B2,B3,B4,B5,B6 &
   /0.117372D0, Zero,      Zero,        -0.00046710D0, Zero,      Zero/
-  DATA C1,C2,C3,C4,C5,C6 &
+  data C1,C2,C3,C4,C5,C6 &
   /-7.3681D-6, 1.10295D-7, -9.8774D-7,   -2.4819D-5,    8.2948D-6,  8.33667D-8/
   !
   T=    TdgK
@@ -71,7 +73,7 @@ SUBROUTINE Eos_H2O_HolPow(TdgK,Pbar,Grt)
   &    + K2 *(TT   -TT0   ) /Two &
   &    - K3 *(One/T-One/T0)      &
   &    + K4 *(SQT  -SQT0  ) *Two
-  CPRTDT= K1*LOG(T/T0)                &
+  CPRTDT= K1*log(T/T0)                &
   &     + K2*(T       -T0       )     &
   &     - K3*(One/(TT)-One/(TT0))/Two &
   &     - K4*(One/SQT -One/SQT0 )*Two
@@ -85,39 +87,43 @@ SUBROUTINE Eos_H2O_HolPow(TdgK,Pbar,Grt)
   &    + ( B1 +B2*Pkb         +B3/Pkb +B4/Pk2 +B5/SQP +B6/Pk3 ) *T &
   &    + ( C1 +C2*Pkb         +C5/Pkb +C3/Pk2 +C4/SQP +C6/Pk3 ) *T*T
   !
-  Grt=   (H0 +CPRDT -T*(S0+CPRTDT) +RTLnF) *1.0D3 /R_jk/TdgK
-  
-  RETURN
-ENDSUBROUTINE Eos_H2O_HolPow
+  S0Ele= 102.575D0 + 65.34D0 *2.0D0
+  Grt= (H0 +CPRDT -T*(S0+CPRTDT) +RTLnF)*1.0D3 
+  Grt= Grt + S0Ele*298.15D0 !--------------------------Benson Convention
+  Grt= Grt/R_jk/TdgK
+  LnFug= RTLnF*1.0D3 /R_jk/TdgK
+  !
+  return
+end subroutine Eos_H2O_HolPow
 
 !---
 
-SUBROUTINE Eos_H2O_HolPow91(TdgK,Pbar,Grt,V_H2O_m3)
+subroutine Eos_H2O_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
   !-------------------------------------------------------
   !.Holland and Powell (1991,1998), from CdeCapitani ! 
   !-------------------------------------------------------
-  USE M_Eos_Utils
-  IMPLICIT NONE
+  use M_Eos_Utils
+  implicit none
   !
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(OUT):: Grt,V_H2O_m3
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(out):: Grt,V_m3,LnFug
   !
-  REAL(dp):: &
-    T,SQT,RT,DT,&
-    A,AGas,G,GT,&
-    delP,Pkb,PSA,VMRK,&
-    cubB,cubC,cubD,X1,X2,X2I,X3,&
-    V1,V2,VREF,PREF,AF, & !RTLNP,&
-    V_H2Ocm3, &
-    A1,A2,A3,A4,A5,A6,A7,A8,A9,&
-    dGGas1,dGGas2,dGGas3,dGGas
-    !GA1,GA2,GA3,GF
-  REAL(dp):: &
+  real(dp):: &
+  & T,SQT,RT,DT,&
+  & A,AGas,G,GT,&
+  & delP,Pkb,PSA,VMRK,&
+  & cubB,cubC,cubD,X1,X2,X2I,X3,&
+  & V1,V2,VREF,PREF,AF, & !RTLNP,&
+  & Volum,S0Ele, &
+  & A1,A2,A3,A4,A5,A6,A7,A8,A9,&
+  & dGGas1,dGGas2,dGGas3,dGGas
+  ! GA1,GA2,GA3,GF
+  real(dp):: &
   & AVir=1.9853D-3, BVir=-8.9090D-2, CVir=8.0331D-2, &
   & R=   8.3142D-3, &
   & P0=  Two,       TK=  695.0D0,    TA=  673.0D0, &
   & A0=  1113.4D0,  B=   1.465D0 
-  DATA A1,A2,A3,A4,A5,A6,A7,A8,A9 &
+  data A1,A2,A3,A4,A5,A6,A7,A8,A9 &
    /-0.88517D0,  4.5300D-3, -1.3183D-5, &
     -0.22291D0, -3.8022D-4,  1.7791D-7, &
      5.84870D0, -2.1370D-2,  6.8133D-5/
@@ -129,153 +135,156 @@ SUBROUTINE Eos_H2O_HolPow91(TdgK,Pbar,Grt,V_H2O_m3)
   
   G=     Zero
   delP=  Pkb-P0
-  dGGas= Zero; dGGas1=Zero; dGGas2=Zero; dGGas3=Zero
+  dGGas= Zero
+  dGGas1=Zero; dGGas2=Zero; dGGas3=Zero
   V1=    Zero; V2=    Zero
   
   Pref=  0.001D0 !=0.001 kbar
   
   PSA= - 13.6270D-3        &
-       + 7.29395D-7  *T**2 &
-       - 2.34622D-9  *T**3 &
-       + 4.83607D-15 *T**5
+  &    + 7.29395D-7  *T**2 &
+  &    - 2.34622D-9  *T**3 &
+  &    + 4.83607D-15 *T**5
   
-  IF (T<TA) THEN
+  if (T<TA) then
     DT=  TA-T
     !A=   A0 +A1*(TA-T) +A2*(TA-T)**2 +A3*(TA-T)**3
     !AGas=A0 +A7*(TA-T) +A8*(TA-T)**2 +A9*(TA-T)**3
     A=   A0 + DT*( A1 + DT*(A2 + DT*A3) )
     AGas=A0 + DT*( A7 + DT*(A8 + DT*A9) )
-  ELSE
+  else
     DT=  T-TA
     A=   A0 + DT*( A4 + DT*(A5 + DT*A6) )
     AGas=Zero
-  ENDIF
+  end if
   
   VREF=RT/PREF
   
   !volume at Pkb and T
-  IF (T<TA.AND.Pkb<PSA) THEN; AF=AGas
-  ELSE;                       AF=A
-  ENDIF
+  if (T<TA.and.Pkb<PSA) then; AF=AGas
+  else;                       AF=A
+  end if
   !
   cubB=-RT/Pkb
   cubC=-(B*RT+B*B*Pkb-AF/SQT)/Pkb
   cubD=-AF*B/SQT/Pkb
-  CALL CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
+  call CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
   
-  IF (X2I/=Zero) THEN
+  if (X2I/=Zero) then
     VMRK=X1
-  ELSE
-    IF (Pkb<PSA.AND.T<TK)  THEN
-      VMRK=DMAX1(X1,X2,X3)
-    ELSE
+  else
+    if (Pkb<PSA.and.T<TK)  then
+      VMRK=max(X1,X2,X3)
+    else
       VMRK=DMIN1(X1,X2,X3)
-      IF (VMRK<B) VMRK=DMAX1(X1,X2,X3)
-    ENDIF
-  ENDIF
+      if (VMRK<B) VMRK=max(X1,X2,X3)
+    end if
+  end if
   
-  V_H2Ocm3=VMRK
+  Volum=VMRK
   
-  IF (Pkb>P0) &
-  & V_H2Ocm3=  VMRK       &
+  if (Pkb>P0) &
+  & Volum=  VMRK          &
   &    + AVir *delP       &
-  &    + BVir *SQRT(delP) &
+  &    + BVir *sqrt(delP) &
   &    + CVir *delP**0.25D0
   
-  !CALL GAGA(AF,B,Pkb,VMRK,T,GA3)
+  !call GAGA(AF,B,Pkb,VMRK,T,GA3)
   
-  dGGas3=  &
-  &   VMRK *Pkb &
-  & - VREF *PREF &
-  & - RT           *LOG((VMRK-B)      /(VREF-B)     ) &
-  & + (AF/(SQT*B)) *LOG( VMRK*(VREF+B)/VREF/(VMRK+B))
+  dGGas3= VMRK*Pkb - VREF*PREF &
+  &     - RT           *log((VMRK-B)      /(VREF-B)     ) &
+  &     + (AF/(SQT*B)) *log( VMRK*(VREF+B)/VREF/(VMRK+B))
   
-  IF (Pkb>P0) &
+  if (Pkb>P0) &
   & dGGas3= dGGas3 &
-  &  + AVir/Two       *delP*delP   &
+  &  + AVir/Two       *delP**2     &
   &  + BVir*Two/3.0D0 *delP**1.5D0 &
   &  + CVir*0.8D0     *delP**1.25D0
   
   !volume of gas at T and PSAT
-  IF (T<TK.AND.Pkb>PSA) THEN
+  if (T<TK.and.Pkb>PSA) then
   
-    IF (T>TA) THEN; AF=A
-    ELSE;           AF=AGas
-    ENDIF
+    if (T>TA) then  ; AF=A
+    else            ; AF=AGas
+    end if
     cubB= -   RT                 /PSA
     cubC= -(B*RT+B*B*PSA-AF/SQT) /PSA
     cubD= -              AF*B/SQT/PSA
     !
-    CALL CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
+    call CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
     !
-    IF (X2I/=Zero) THEN; V1=X1
-    ELSE;                V1=MAX(X1,X2,X3)
-    ENDIF
+    if (X2I/=Zero) then  ; V1=X1
+    else                 ; V1=MAX(X1,X2,X3)
+    end if
     
-    !CALL GAGA(AF,B,PSA,V1,T,GA1)
+    !call GAGA(AF,B,PSA,V1,T,GA1)
     dGGas1=  V1*PSA &
     &     -  VREF*PREF &
-    &     -  RT *LOG((V1-B)/(VREF-B)) &
-    &     + (AF/(SQT*B)) *LOG(V1 *(VREF+B)/(VREF*(V1+B)))
+    &     -  RT *log((V1-B)/(VREF-B)) &
+    &     + (AF/(SQT*B)) *log(V1 *(VREF+B)/(VREF*(V1+B)))
     
     !volume of liquid at a T and PSAT
     cubB= -   RT /PSA
     cubC= -(B*RT+B*B*PSA-A/SQT) /PSA
     cubD= -            A*B/SQT  /PSA
     !
-    CALL CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
+    call CUBIC(cubB,cubC,cubD,X1,X2,X2I,X3)
     !
-    IF (X2I/=Zero) THEN; V2=X1
-    ELSE;                V2=DMIN1(X1,X2,X3)
-    ENDIF
+    if (X2I/=Zero) then; V2=X1
+    else;                V2=DMIN1(X1,X2,X3)
+    end if
     
-    !CALL GAGA(A,B,PSA,V2,T,GA2)
+    !call GAGA(A,B,PSA,V2,T,GA2)
     dGGas2=  VMRK*Pkb &
     &      - V2*PSA &
-    &      - RT*LOG((VMRK-B) /(V2-B)) &
-    &      + (A/(SQT*B)) *LOG( VMRK *(V2+B) /(V2*(VMRK+B)) )
-    IF (Pkb>P0) &
+    &      - RT*log((VMRK-B) /(V2-B)) &
+    &      + (A/(SQT*B)) *log( VMRK *(V2+B) /(V2*(VMRK+B)) )
+    if (Pkb>P0) &
     & dGGas2=  dGGas2 &
     &       + AVir /Two       *delP**2     &
     &       + BVir *Two/3.0D0 *delP**1.5D0 &
     &       + CVir *0.8D0     *delP**1.25D0
     !GF=RT*(GA1-GA2+GA3)
-    dGGas=1.0D3*(dGGas2+dGGas1)
+    dGGas= dGGas2+dGGas1 !kiloJoule
   
-  ELSE
+  else
     
     !GF=RT*GA3
-    dGGas=1.0D3*dGGas3
+    dGGas= dGGas3 !kiloJoule
     
-  ENDIF
+  end if
   !
-  CALL CalcGT_H2O_HP91(T,GT)
+  call CalcGT_H2O_HP91(T,GT) ! GT in Joules
   !
-  G=  GT +dGGas
+  G=  GT +dGGas*1.0D3
   !
-  V_H2O_m3= V_H2Ocm3 /1.0D6
-  Grt=      G /RT
-  
-  RETURN
-END SUBROUTINE Eos_H2O_HolPow91
+  V_m3= Volum *1.0D-5
+  !
+  S0Ele= 102.575D0 + 65.34D0 *2.0D0
+  G=     G + S0Ele*298.15D0 !--------------------------Benson Convention
+  Grt=   G /T /R_jK
+  LnFug= dGGas*1.0D3 /T /R_jK
+  !
+  return
+end subroutine Eos_H2O_HolPow91
 
 !---
 
-SUBROUTINE CalcGT_H2O_HP91(Tk,GT)
-!--------------------------------------------------------
+subroutine CalcGT_H2O_HP91(Tk,GT)
+!-----------------------------------------------------------------------
 !.compute G(H2O) at (T,Pref)
 !.Holland and Powell (1991,1998), from CdeCapitani codes
-!--------------------------------------------------------
-  IMPLICIT NONE
-  REAL(dp),INTENT(IN) :: Tk
-  REAL(dp),INTENT(OUT):: GT
+!-----------------------------------------------------------------------
+  implicit none
+  real(dp),intent(in) :: Tk
+  real(dp),intent(out):: GT
   !
-  REAL(dp):: K1,K2,K3,K4
-  REAL(dp):: H0,S0,T0,TT0
-  REAL(dp):: TT,SQT,CPRDT,CPRTDT,SQT0
-  DATA K1,K2,K3,K4 /0.0401D0, 0.8656D-5,  487.5D0, -0.2512D0/
-  DATA H0,S0       /-241.81D0,188.80D-3/
-  DATA T0,TT0      /298.15D0, 88893.4225D0/
+  real(dp):: K1,K2,K3,K4
+  real(dp):: H0,S0,T0,TT0
+  real(dp):: TT,SQT,CPRDT,CPRTDT,SQT0
+  data K1,K2,K3,K4 /0.0401D0, 0.8656D-5,  487.5D0, -0.2512D0/
+  data H0,S0       /-241.81D0,188.80D-3/
+  data T0,TT0      /298.15D0, 88893.4225D0/
   !
   SQT0=  SQRT(T0)
   TT=    Tk*Tk
@@ -285,15 +294,17 @@ SUBROUTINE CalcGT_H2O_HP91(Tk,GT)
   &    + K2*(TT     -TT0)   /Two &
   &    - K3*(One/Tk -One/T0)     &
   &    + K4*(SQT    -SQT0)  *Two
-  CPRTDT=K1 *LOG(Tk   /T0)      &
+  CPRTDT=K1 *log(Tk   /T0)      &
   &    + K2 *(Tk      -T0)      &
   &    - K3 *(One/TT  -One/TT0) /Two &
   &    - K4 *(One/SQT -One/SQT0)*Two
   !
-  GT= ( H0 +CPRDT -Tk*(S0 +CPRTDT) ) *1.0D3
-  RETURN
-ENDSUBROUTINE CalcGT_H2O_HP91
+  GT= H0 +CPRDT -Tk*(S0 +CPRTDT) 
+  GT= GT*1.0D3 !---------------------------------------------------Joule
+  !
+  return
+end subroutine CalcGT_H2O_HP91
 
 !---
 
-END MODULE M_Eos_H2O_Holland_Powell
+end module M_Eos_H2O_Holland_Powell

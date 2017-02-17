@@ -1,706 +1,799 @@
-MODULE M_Dynam_Read
-  USE M_Kinds
-  USE M_Trace
-  IMPLICIT NONE
+module M_Dynam_Read
+  use M_Kinds
+  use M_Trace
+  implicit none
   !
-  PRIVATE
-  PUBLIC:: Dynam_Read
-  PUBLIC:: Dynam_ReadColumn
+  private
+  public:: Dynam_Read
+  public:: Dynam_ReadColumn
 
-CONTAINS
+contains
 
-SUBROUTINE Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
-  USE M_Numeric_Const,ONLY: LN10
-  USE M_KinModel_Read,ONLY: KinModel_Init
-  USE M_Dynam_Tools,  ONLY: Dynam_TimeFactor
+subroutine Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
+  use M_Numeric_Const,only: LN10
+  use M_KinModel_Read,only: KinModel_Init
+  use M_Dynam_Tools,  only: Dynam_TimeFactor
   !
-  USE M_Global_Vars,  ONLY: vSpc,vKinModel
-  USE M_Dynam_Vars,   ONLY: T_DynTime,T_DynBox,TimeFactor,TUnit
-  USE M_Dynam_Vars,   ONLY: sModelSurf,Implicit_Surface,VBox0
-  USE M_Dynam_Vars,   ONLY: LogForAqu,DirectSub,bFinDif
-  USE M_Dynam_Vars,   ONLY: AdjustVolBox
+  use M_Global_Vars,  only: vSpc,vKinModel
+  use M_Dynam_Vars,   only: T_DynTime,T_DynBox,TimeFactor,TUnit
+  use M_Dynam_Vars,   only: sModelSurf,Implicit_Surface,VBox0
+  use M_Dynam_Vars,   only: LogForAqu,DirectSub,bFinDif
+  use M_Dynam_Vars,   only: AdjustVolBox
   !
-  TYPE(T_DynTime),INTENT(INOUT):: DynTime
-  TYPE(T_DynBox), INTENT(INOUT):: DynBox
-  TYPE(T_DynBox), INTENT(OUT)  :: DynBoxUser
-  LOGICAL,        INTENT(OUT)  :: Ok
+  type(T_DynTime),intent(inout):: DynTime
+  type(T_DynBox), intent(inout):: DynBox
+  type(T_DynBox), intent(out)  :: DynBoxUser
+  logical,        intent(out)  :: Ok
   !
-  LOGICAL:: ReadOk
-  CHARACTER(LEN=255):: Msg
-  REAL(dp):: A
+  logical:: ReadOk
+  character(len=255):: Msg
+  real(dp):: A
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dynam_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_Read"
   !
-  Ok=.TRUE.
+  Ok=.true.
   !
   !-----------------------------------------------read time parameters--
-  CALL Dynam_ReadTime(DynTime,ReadOk)
+  call Dynam_ReadTime(DynTime,ReadOk)
   !-> TUnit,TFinal,dTime,dTMin,dTMax,dTSav,TAgain
-  IF (.NOT.ReadOk) THEN
-     CALL Stop_("Block DYNAMIC.TIME not found")
-     Ok = .FALSE.
-     RETURN
-  END IF
+  if (.not.ReadOk) then
+    call Stop_("Block DYNAMIC.TIME not found")
+    Ok = .false.
+    return
+  end if
   DynTime%TimeFactor= Dynam_TimeFactor(DynTime%TUnit)
   !--------------------------------------------------------------------/
   !
   !------------------------------------------------read box parameters--
-  CALL Dynam_ReadBox(DynBox,ReadOk,Msg)
+  call Dynam_ReadBox(DynBox,ReadOk,Msg)
   !-> VBox,dX,etc.
-  IF(.NOT. ReadOk .AND. iDebug>2) PRINT '(A)',TRIM(Msg)
+  if(.not. ReadOk .and. iDebug>2) print '(A)',trim(Msg)
   !
   DynBoxUser= DynBox
   !
-  IF(AdjustVolBox .AND. DynBox%VBox /= VBox0) THEN
+  if(AdjustVolBox .and. DynBox%VBox /= VBox0) then
     A= (DynBox%VBox/VBox0)**(1.0D0/3.0D0)
     DynBox%VBox=   VBox0
     DynBox%DX=     DynBox%DX     /A
     DynBox%UDarcy= DynBox%UDarcy /A
-  ENDIF
+  end if
   !
-  IF(iDebug>2) THEN
-    WRITE(fTrc,'(/,A)')     "<  BOX VOL/DX/UDARCY ADJUSTED==>"
-    WRITE(fTrc,'(A,2G15.6)') "  VBox  =", DynBoxUser%VBox,   DynBox%VBox
-    WRITE(fTrc,'(A,2G15.6)') "  dX    =", DynBoxUser%dX,     DynBox%dX
-    WRITE(fTrc,'(A,2G15.6)') "  UDarcy=", DynBoxUser%UDarcy, DynBox%UDarcy
-    WRITE(fTrc,'(A,/)')     "</ BOX VOL/DX/UDARCY ADJUSTED==>"
-  ENDIF
+  if(iDebug>2) then
+    write(fTrc,'(/,A)')     "<  BOX VOL/DX/UDARCY ADJUSTED==>"
+    write(fTrc,'(A,2G15.6)') "  VBox  =", DynBoxUser%VBox,   DynBox%VBox
+    write(fTrc,'(A,2G15.6)') "  dX    =", DynBoxUser%dX,     DynBox%dX
+    write(fTrc,'(A,2G15.6)') "  UDarcy=", DynBoxUser%UDarcy, DynBox%UDarcy
+    write(fTrc,'(A,/)')     "</ BOX VOL/DX/UDARCY ADJUSTED==>"
+  end if
   !---------------------------------------------------------------------
   !
   !------------------------------------------ read numeric parameters --
-  CALL Dynam_ReadNumeric(ReadOk)
+  call Dynam_ReadNumeric(ReadOk)
   !
-  !IF(.NOT. LogForAqu) DirectSub= .TRUE.
-  !IF(.NOT. LogForAqu) bFinDif=   .TRUE.
-  IF(DirectSub) bFinDif=   .TRUE.
+  !if(.not. LogForAqu) DirectSub= .true.
+  !if(.not. LogForAqu) bFinDif=   .true.
+  if(DirectSub) bFinDif=   .true.
   !
-  IF(sModelSurf=="CRUNCH") Implicit_Surface=.FALSE.
+  if(sModelSurf=="CRUNCH") Implicit_Surface=.false.
   !---------------------------------------------------------------------
   !
   !---------------------------------------------- read kinetic models --
-  CALL KinModel_Init(vSpc)
-  !! ReadOk= SIZE(vKinModel)>0
-  !! IF(.NOT. ReadOk) CALL Stop_("NO Kinetic Data Found") !______STOP
-  IF(SIZE(vKinModel)>0 .AND. iDebug>2) CALL Check_KinRate_CalcQsK
+  call KinModel_Init(vSpc)
+  !! ReadOk= size(vKinModel)>0
+  !! if(.not. ReadOk) call Stop_("NO Kinetic Data Found") !______stop
+  if(size(vKinModel)>0 .and. iDebug>2) call Check_KinRate_CalcQsK
   !---------------------------------------------/ read kinetic models --
   !
   !------------------------------------- read box mineral composition --
-  CALL Dynam_ReadRock(ReadOk)
-  !! IF(.NOT.ReadOk)  CALL Stop_("NO Kinetic Minerals Found")
+  call Dynam_ReadRock(ReadOk)
+  !! if(.not.ReadOk)  call Stop_("NO Kinetic Minerals Found")
   !---------------------------------------------------------------------
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dynam_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_Read"
   !
-  RETURN
-ENDSUBROUTINE Dynam_Read
+  return
+end subroutine Dynam_Read
 
-SUBROUTINE Dynam_ReadTime(T,Ok)
+subroutine Dynam_ReadTime(T,Ok)
 !--
 !-- scan the input file, read block DYNAMIC.TIME
 !-- -> temporal conditions of the run
-!-- TYPE:: T_DynTime
-!--   CHARACTER(LEN-6):: TUnit !-- "DAY","YEAR","HOUR"
-!--   REAL(dp)::  &
+!-- type:: T_DynTime
+!--   character(len-6):: TUnit !-- "DAY","YEAR","HOUR"
+!--   real(dp)::  &
 !--   & Time,     & !-- current time
 !--   & dTime,    & !-- current time step
 !--   & dTmin,    & !-- minimal time step
 !--   & dTMax,    & !-- maximal time step
 !--   & dTSav       !-- time laps between two records on x_time.tab
-!-- END TYPE T_DynTime
+!-- end type T_DynTime
 !--
-  USE M_Files,ONLY: NamFInn
-  USE M_IOTools
-  USE M_Dynam_Vars, ONLY: SteadyState_Stop,TimeIsSeconds
-  USE M_Dynam_Vars, ONLY: T_DynTime,TUnit,TFinal,dTime,dTMin,dTMax,dTSav,TimeFactor
-  USE M_Dynam_Tools,ONLY: Dynam_TimeFactor
+  use M_Files,only: NamFInn
+  use M_IOTools
+  use M_Dynam_Vars, only: SteadyState_Stop,TimeIsSeconds
+  use M_Dynam_Vars, only: T_DynTime,TUnit,TFinal,dTime,dTMin,dTMax,dTSav,TimeFactor
+  use M_Dynam_Tools,only: Dynam_TimeFactor
   !
-  TYPE(T_DynTime),INTENT(INOUT):: T
-  LOGICAL,        INTENT(OUT)  :: Ok
+  type(T_DynTime),intent(inout):: T
+  logical,        intent(out)  :: Ok
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W,W1,W2,WW
-  LOGICAL           :: EoL
-  INTEGER           :: F,ios
+  character(len=255):: L
+  character(len=80) :: W,W1,W2,WW
+  logical           :: EoL
+  integer           :: F,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dynam_ReadTime"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadTime"
   !
-  CALL GetUnit(F)
-  CALL OPENFILE(F,FILE=TRIM(NamFInn))
-  Ok=.FALSE.
+  call GetUnit(F)
+  call OpenFile(F,file=trim(NamFInn))
+  Ok=.false.
   !
-  Do01: DO
+  Do01: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-    CALL LinToWrd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+    call LinToWrd(L,W,EoL)
     !
-    IF(W(1:1)=='!')   CYCLE Do01 !skip comment lines
-    IF(W=="END" .AND. .NOT. Eol ) THEN !when END followed by keyword, appEND
-      CALL LinToWrd(L,WW,EoL); W=TRIM(W)//TRIM(WW)
-    ENDIF
+    if(W(1:1)=='!')   cycle Do01 !skip comment lines
+    if(W=="END" .and. .not. Eol ) then !when end followed by keyword, append
+      call LinToWrd(L,WW,EoL); W=trim(W)//trim(WW)
+    end if
     !
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
     !
-    CASE("ENDINPUT"); EXIT  Do01
+    case("ENDINPUT"); exit  Do01
     !
-    CASE("DYNAMIC.TIME","DYNAMIC")
+    case("DYNAMIC.TIME","DYNAMIC")
       !
-      Ok=.TRUE.
+      Ok=.true.
       !
-      Do02: DO
+      Do02: do
         !
-        READ(F,'(A)',IOSTAT=ios) L  ;  IF(ios/=0) EXIT Do01
-        CALL LinToWrd(L,W1,EoL)     ;  CALL AppendToEnd(L,W1,EoL)
-        IF(W1(1:1)=='!') CYCLE Do02
-        CALL LinToWrd(L,W2,EoL)
+        read(F,'(A)',iostat=ios) L  ;  if(ios/=0) exit Do01
+        call LinToWrd(L,W1,EoL)     ;  call AppendToEnd(L,W1,EoL)
+        if(W1(1:1)=='!') cycle Do02
+        call LinToWrd(L,W2,EoL)
         !-> W2 is second word on line
         !-> either second keyword or numeric' param' (or 'empty', i.e. "!")
         !
-        SELECT CASE(TRIM(W1))
+        select case(trim(W1))
         !
         !----------------------------------------------timing parameters
-        CASE("ENDINPUT")                                    ;  EXIT Do01
-        CASE("END","ENDDYNAMIC.TIME","ENDDYNAMIC")          ;  EXIT Do02
+        case("ENDINPUT")                                    ;  exit Do01
+        case("END","ENDDYNAMIC.TIME","ENDDYNAMIC")          ;  exit Do02
         !
-        CASE("STEADY")
-          SteadyState_Stop= (TRIM(W2)=="STOP")
-        CASE("TUNIT")
-          SELECT CASE(TRIM(W2))
-          CASE("SECOND")  ;  T%TUnit="SECOND"
-          CASE("MINUTE")  ;  T%TUnit="MINUTE"
-          CASE("HOUR")    ;  T%TUnit="HOUR"
-          CASE("DAY" )    ;  T%TUnit="DAY"
-          CASE("YEAR")    ;  T%TUnit="YEAR"
-          CASE DEFAULT
-            Ok= .FALSE.
-            CALL Stop_ &
-            & (TRIM(W1)//" <-unknown TUNIT in DYNAMIC.TIME / DYNAMIC")
-          END SELECT
+        case("STEADY")
+          SteadyState_Stop= (trim(W2)=="stop")
+        case("TUNIT")
+          select case(trim(W2))
+          case("SECOND")  ;  T%TUnit="SECOND"
+          case("MINUTE")  ;  T%TUnit="MINUTE"
+          case("HOUR")    ;  T%TUnit="HOUR"
+          case("DAY" )    ;  T%TUnit="DAY"
+          case("YEAR")    ;  T%TUnit="YEAR"
+          case default
+            Ok= .false.
+            call Stop_ &
+            & (trim(W1)//" <-unknown TUNIT in DYNAMIC.TIME / DYNAMIC")
+          end select
         !
-        CASE("TFIN")   ;  CALL WrdToReal(W2,T%TFinal) !duration of simulation!
-        CASE("TFINAL") ;  CALL WrdToReal(W2,T%TFinal) !duration of simulation!
-        CASE("DTIME")  ;  CALL WrdToReal(W2,T%dTime)  !initial time step     !
-        CASE("DTMIN")  ;  CALL WrdToReal(W2,T%dTMin)  !minimal time step     !
-        CASE("DTMAX")  ;  CALL WrdToReal(W2,T%dTMax)  !maximal time step     !
-        CASE("DTSAV")  ;  CALL WrdToReal(W2,T%dTSav)  !edition time step     !
-        !! CASE DEFAULT
-        !!   Ok= .FALSE.
-        !!   CALL Stop_ &
-        !!   & (TRIM(W1)//" <-unknown KeyWord in DYNAMIC.TIME or DYNAMIC")
+        case("TFIN")   ;  call WrdToReal(W2,T%TFinal) !duration of simulation!
+        case("TFINAL") ;  call WrdToReal(W2,T%TFinal) !duration of simulation!
+        case("DTIME")  ;  call WrdToReal(W2,T%dTime)  !initial time step     !
+        case("DTMIN")  ;  call WrdToReal(W2,T%dTMin)  !minimal time step     !
+        case("DTMAX")  ;  call WrdToReal(W2,T%dTMax)  !maximal time step     !
+        case("DTSAV")  ;  call WrdToReal(W2,T%dTSav)  !edition time step     !
+        !! case default
+        !!   Ok= .false.
+        !!   call Stop_ &
+        !!   & (trim(W1)//" <-unknown KeyWord in DYNAMIC.TIME or DYNAMIC")
         !
         !---------------------------------------------/timing parameters
-        END SELECT
+        end select
         !
-      END DO Do02
-    !_CASE("DYNAMIC")
-    END SELECT
-  END DO Do01
-  CALL CLOSEFILE(F)
+      end do Do02
+    !_case("DYNAMIC")
+    end select
+  end do Do01
+  call closeFILE(F)
   !
-  IF(T%dTSav==Zero) T%dTSav= T%TFinal/2.E3
+  if(T%dTSav==Zero) T%dTSav= T%TFinal/2.E3
   !
   !------------------------ if user given max time step is too small ---
-  IF(T%dTMax>T%TFinal/100._dp) T%dTMax= T%TFinal/100._dp
+  if(T%dTMax>T%TFinal/100._dp) T%dTMax= T%TFinal/100._dp
   !-------------------- max time step set to 1/100 of total duration ---
-  IF(T%dTMax==Zero) T%dTMax= T%TFinal/100._dp
+  if(T%dTMax==Zero) T%dTMax= T%TFinal/100._dp
   !
   T%TimeFactor= Dynam_TimeFactor(T%TUnit)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dynam_ReadTime"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadTime"
   !
-  RETURN
-ENDSUBROUTINE Dynam_ReadTime
+  return
+end subroutine Dynam_ReadTime
 
-SUBROUTINE Dynam_ReadRock(Ok)
+subroutine Dynam_ReadRock_(Ok)
 !--
 !-- read block DYNAMIC.ROCK
 !--
-  USE M_Global_Vars, ONLY: vSpc,vFas,vKinFas,vKinModel
-  USE M_KinFas_Read, ONLY: T_LnkKin,KinFas_BuildLnk,KinFas_LnkToVec
-  USE M_Dynam_Vars,  ONLY: sModelSurf
+  use M_Global_Vars, only: vSpc,vFas,vKinFas,vKinModel
+  use M_KinFas_Read, only: T_LnkKin,KinFas_BuildLnk,KinFas_LnkToVec
+  use M_Dynam_Vars,  only: sModelSurf
   !
-  LOGICAL,INTENT(OUT):: Ok
+  logical,intent(out):: Ok
   !
-  TYPE(T_LnkKin),POINTER:: LnkKin
-  REAL(dp):: x
-  INTEGER :: I,N
+  type(T_LnkKin),pointer:: LnkKin
+  real(dp):: x
+  integer :: I,N
   !
   !------------------------------------------------------read ROCK block
   !
-  CALL KinFas_BuildLnk( &  !
+  !if(allocated(vKinFas)) deallocate(vKinFas)
+  !allocate(vKinFas(100))
+  !
+  call KinFas_BuildLnk( &  !
   & vFas,vKinModel,sModelSurf, & !IN
   & N,LnkKin)                    !OUT
   !
-  IF(N>0) THEN !mod 12/06/2008 18:15
-    Ok=.TRUE.
-    !
-    IF(ALLOCATED(vKinFas)) DEALLOCATE(vKinFas); ALLOCATE(vKinFas(N))
-    !
-    CALL KinFas_LnkToVec(LnkKin,vFas,vKinFas) !IN,OUT
-    !
-  ELSE
-    Ok=.FALSE.
-    RETURN !------------------------------------------------------RETURN
-  ENDIF
+  if(N>0) then !mod 12/06/2008 18:15
+    Ok=.true.
+    if(allocated(vKinFas)) deallocate(vKinFas)
+    allocate(vKinFas(N))
+    call KinFas_LnkToVec(LnkKin,vFas,vKinFas) !IN,OUT
+  else
+    Ok=.false.
+    return !------------------------------------------------------return
+  end if
   !
-  IF(iDebug>2) THEN
+  if(iDebug>2) then
     !
-    PRINT '(/,A)',"Checking input from DYNAMIC.ROCK:"
+    print '(/,A)',"Checking input from DYNAMIC.ROCK:"
     !
-    IF(SIZE(vKinFas)>0) THEN
+    if(size(vKinFas)>0) then
       
-      PRINT '(5A16)', &
+      print '(5A16)', &
       & "Kinetic_Phase___", &
       & "Thermo_Model____", &
       & "Kinetic_Model___", &
       & "__-___Radius/m__", &
       & "________Surf/g__"
       
-      DO I=1,SIZE(vKinFas)
-        ! IF(vKinFas(I)%iFas<1) &
-        ! & CALL Stop_("problem with "//TRIM(vKinFas(I)%Name))
-        IF(vKinFas(I)%iKin>0) THEN
-          PRINT '(3(A15,1X),2(G15.3,1X))', &
+      do I=1,size(vKinFas)
+        ! if(vKinFas(I)%iFas<1) &
+        ! & call Stop_("problem with "//trim(vKinFas(I)%Name))
+        if(vKinFas(I)%iKin>0) then
+          print '(3(A15,1X),2(G15.3,1X))', &
           & vKinFas(I)%NamKF, &
           & vFas(vKinFas(I)%iFas)%NamFs, &
           & vKinModel(vKinFas(I)%iKin)%Name, &
           & vKinFas(I)%Dat%Radius, &
           & vKinFas(I)%Dat%SurfKg
-        ELSE
-          PRINT '(3(A15,1X),2(G15.6,1X))', &
+        else
+          print '(3(A15,1X),2(G15.6,1X))', &
           & vKinFas(I)%NamKF, &
           & vFas(vKinFas(I)%iFas)%NamFs, &
           & "EQUILIBRIUM", &
           & vKinFas(I)%Dat%Radius, &
           & vKinFas(I)%Dat%SurfKg/1.0D3
-        ENDIF
-      ENDDO
+        end if
+      end do
     
-    ELSE
+    else
       
-      PRINT *,"EMPTY BOX ... !!"
+      print *,"EMPTY BOX ... !!"
     
-    ENDIF
+    end if
     !
-    CALL Pause_
-  ENDIF
+    call Pause_
+  end if
   !
   !-----------------------------------------------------/read ROCK block
   !
   !------------------------------- normalize PhiM to SUM(VolFract)-1 ---
   x= SUM(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
-  IF(x>Zero) THEN
-    DO I=1,SIZE(vKinFas)
-      IF(vKinFas(I)%Dat%cSat /= "M") THEN           ! M(INIMAL
+  if(x>Zero) then
+    do I=1,size(vKinFas)
+      if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL
         vKinFas(I)%Dat%PhiM= vKinFas(I)%Dat%PhiM /x
-      ELSE
+      else
         vKinFas(I)%Dat%PhiM= Zero
-      ENDIF
-    ENDDO
-  ELSE
-    CALL Stop_("SUM(vKinFas(1:nMk)%PhiM <0 ???") !------------------STOP
-  ENDIF
+      end if
+    end do
+  else
+    call Stop_("SUM(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
+  end if
   !---------------------------------------------------------------------
   !
-  RETURN
-ENDSUBROUTINE Dynam_ReadRock
+  return
+end subroutine Dynam_ReadRock_
 
-SUBROUTINE Dynam_ReadBox(Box,Ok,Msg)
+subroutine Dynam_ReadRock(Ok)
+!--
+!-- read block DYNAMIC.ROCK
+!--
+  use M_Global_Vars, only: vSpc,vFas,vKinFas,vKinModel
+  use M_KinFas_Read, only: T_LnkKin,KinFas_BuildLnk,KinFas_LnkToVec
+  use M_Dynam_Vars,  only: sModelSurf
+  !
+  logical,intent(out):: Ok
+  !
+  type(T_LnkKin),pointer:: LnkKin
+  real(dp):: x
+  integer :: I,N
+  !
+  !------------------------------------------------------read ROCK block
+  !
+  call KinFas_BuildLnk( &  !
+  & vFas,vKinModel,sModelSurf, & !IN
+  & N,LnkKin)                    !OUT
+  !
+  if(N>0) then !mod 12/06/2008 18:15
+    Ok=.true.
+    if(allocated(vKinFas)) deallocate(vKinFas)
+    allocate(vKinFas(N))
+    call KinFas_LnkToVec(LnkKin,vFas,vKinFas) !IN,OUT
+  else
+    Ok=.false.
+    return !------------------------------------------------------return
+  end if
+  !
+  if(iDebug>2) then
+    !
+    print '(/,A)',"Checking input from DYNAMIC.ROCK:"
+    !
+    if(size(vKinFas)>0) then
+      
+      print '(5A16)', &
+      & "Kinetic_Phase___", &
+      & "Thermo_Model____", &
+      & "Kinetic_Model___", &
+      & "__-___Radius/m__", &
+      & "________Surf/g__"
+      
+      do I=1,size(vKinFas)
+        ! if(vKinFas(I)%iFas<1) &
+        ! & call Stop_("problem with "//trim(vKinFas(I)%Name))
+        if(vKinFas(I)%iKin>0) then
+          print '(3(A15,1X),2(G15.3,1X))', &
+          & vKinFas(I)%NamKF, &
+          & vFas(vKinFas(I)%iFas)%NamFs, &
+          & vKinModel(vKinFas(I)%iKin)%Name, &
+          & vKinFas(I)%Dat%Radius, &
+          & vKinFas(I)%Dat%SurfKg
+        else
+          print '(3(A15,1X),2(G15.6,1X))', &
+          & vKinFas(I)%NamKF, &
+          & vFas(vKinFas(I)%iFas)%NamFs, &
+          & "EQUILIBRIUM", &
+          & vKinFas(I)%Dat%Radius, &
+          & vKinFas(I)%Dat%SurfKg/1.0D3
+        end if
+      end do
+    
+    else
+      
+      print *,"EMPTY BOX ... !!"
+    
+    end if
+    !
+    call Pause_
+  end if
+  !
+  !-----------------------------------------------------/read ROCK block
+  !
+  !------------------------------- normalize PhiM to SUM(VolFract)-1 ---
+  x= SUM(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
+  if(x>Zero) then
+    do I=1,size(vKinFas)
+      if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL
+        vKinFas(I)%Dat%PhiM= vKinFas(I)%Dat%PhiM /x
+      else
+        vKinFas(I)%Dat%PhiM= Zero
+      end if
+    end do
+  else
+    call Stop_("SUM(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
+  end if
+  !---------------------------------------------------------------------
+  !
+  return
+end subroutine Dynam_ReadRock
+
+subroutine Dynam_ReadBox(Box,Ok,Msg)
 !--
 !-- read block DYNAMIC.BOX -> spatial conditions
 !--
-  USE M_Files,ONLY: NamFInn
-  USE M_IOTools
-  USE M_Dynam_Vars,ONLY: T_DynBox,sModelSurf
+  use M_Files,only: NamFInn
+  use M_IOTools
+  use M_Dynam_Vars,only: T_DynBox,sModelSurf
   !
-  TYPE(T_DynBox),INTENT(INOUT):: Box
-  LOGICAL,       INTENT(OUT)  :: Ok
-  CHARACTER(*),  INTENT(OUT)  :: Msg
+  type(T_DynBox),intent(inout):: Box
+  logical,       intent(out)  :: Ok
+  character(*),  intent(out)  :: Msg
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W,W1,W2
-  LOGICAL           :: EoL
-  INTEGER           :: F,ios
+  character(len=255):: L
+  character(len=80) :: W,W1,W2
+  logical           :: EoL
+  integer           :: F,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dynam_ReadBox"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadBox"
   !
-  CALL GetUnit(F)
-  CALL OPENFILE(F,FILE=TRIM(NamFInn))
-  Ok=.FALSE.
+  call GetUnit(F)
+  call OpenFile(F,file=trim(NamFInn))
+  Ok=.false.
   Msg= "Ok"
   !
-  Do01: DO
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-    CALL LinToWrd(L,W,EoL); CALL AppendToEnd(L,W,EoL)
-    IF(W(1:1)=='!')   CYCLE Do01 !skip comment lines
+  Do01: do
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+    call LinToWrd(L,W,EoL); call AppendToEnd(L,W,EoL)
+    if(W(1:1)=='!')   cycle Do01 !skip comment lines
     !
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
     !
-    CASE("ENDINPUT"); EXIT  Do01
+    case("ENDINPUT"); exit  Do01
     !
-    CASE("DYNAMIC.BOX","DYNAMIC")
-      Ok=.TRUE.
-      Do02: DO
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-        CALL LinToWrd(L,W1,EoL); CALL AppENDToEnd(L,W1,EoL)
-        IF(W1(1:1)=='!') CYCLE Do02
-        CALL LinToWrd(L,W2,EoL)
+    case("DYNAMIC.BOX","DYNAMIC")
+      Ok=.true.
+      Do02: do
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+        call LinToWrd(L,W1,EoL); call AppendToEnd(L,W1,EoL)
+        if(W1(1:1)=='!') cycle Do02
+        call LinToWrd(L,W2,EoL)
         !-> W2 is second word on line
         !-> either second keyword or numeric' param' (or 'empty', i.e. "!")
         !
-        SELECT CASE(TRIM(W1))
+        select case(trim(W1))
         !
-        CASE("ENDINPUT"); EXIT Do01
-        CASE("END","ENDDYNAMIC.BOX","ENDDYNAMIC"); EXIT Do02
+        case("ENDINPUT"); exit Do01
+        case("END","ENDDYNAMIC.BOX","ENDDYNAMIC"); exit Do02
         !
-        CASE("MODEL","SURFACE")
-          SELECT CASE(TRIM(W2))
-          CASE("SPHERE") ; sModelSurf= "SPHERE" ! (= the default model)
-          CASE("CRUNCH") ; sModelSurf= "CRUNCH"
-          CASE DEFAULT
-            Ok= .FALSE.
-            Msg="In DYNAMIC / DYNAMIC.BOX, "//TRIM(W2)//" is Unknown Keyword"
-          END SELECT
+        case("MODEL","SURFACE")
+          select case(trim(W2))
+          case("SPHERE") ; sModelSurf= "SPHERE" ! (= the default model)
+          case("CRUNCH") ; sModelSurf= "CRUNCH"
+          case default
+            Ok= .false.
+            Msg="In DYNAMIC / DYNAMIC.BOX, "//trim(W2)//" is Unknown Keyword"
+          end select
           !
-        CASE("VOLUME")
-          SELECT CASE(TRIM(W2))
-            CASE("FREE");  Box%VFixed= .FALSE. !UpdateMassFluid=.FALSE.
-            CASE("FIXED"); Box%VFixed= .TRUE.  !UpdateMassFluid=.TRUE.
-            CASE DEFAULT
-              Ok= .FALSE.
+        case("VOLUME")
+          select case(trim(W2))
+            case("FREE");  Box%VFixed= .false. !UpdateMassFluid=.false.
+            case("FIXED"); Box%VFixed= .true.  !UpdateMassFluid=.true.
+            case default
+              Ok= .false.
               Msg= "In DYNAMIC / DYNAMIC.BOX, VOLUME is either FREE or FIXED"
-          END SELECT
+          end select
         !---------------------------------------------------------------------!
         !--------------------------------------------------spatial parameters.!
-        CASE("DX");       CALL WrdToReal(W2,Box%dX)     !length of box........!
-        CASE("VOLBOX");   CALL WrdToReal(W2,Box%VBox)   !volume of box........!
-        CASE("UDARCY");   CALL WrdToReal(W2,Box%UDarcy) !flux rate,length/time!
-        CASE("POROSITY"); CALL WrdToReal(W2,Box%PhiF)   !initial porosity.....!
-        CASE("CELLS");    CALL WrdToInt (W2,Box%nCell)  !nr of boxes..........!
+        case("DX");       call WrdToReal(W2,Box%dX)     !length of box........!
+        case("VOLBOX");   call WrdToReal(W2,Box%VBox)   !volume of box........!
+        case("UDARCY");   call WrdToReal(W2,Box%UDarcy) !flux rate,length/time!
+        case("POROSITY"); call WrdToReal(W2,Box%PhiF)   !initial porosity.....!
+        case("CELLS");    call WrdToInt (W2,Box%nCell)  !nr of boxes..........!
         !---------------------------------------------------------------------!
         !
-        CASE DEFAULT
-          Ok= .FALSE.
-          Msg= "In DYNAMIC / DYNAMIC.BOX, "//TRIM(W1)//" is unknown KeyWord !!"
+        case default
+          Ok= .false.
+          Msg= "In DYNAMIC / DYNAMIC.BOX, "//trim(W1)//" is unknown KeyWord !!"
         !
-        END SELECT
-      ENDDO Do02
-    !_CASE("DYNAMIC")
-    END SELECT
-  ENDDO Do01
-  CALL CLOSEFILE(F)
+        end select
+      end do Do02
+    !_case("DYNAMIC")
+    end select
+  end do Do01
+  call closeFILE(F)
   !
-  IF(.NOT. Ok) Msg= "Block DYNAMIC.BOX not found, using default values !!!"
+  if(.not. Ok) Msg= "Block DYNAMIC.BOX not found, using default values !!!"
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dynam_ReadBox"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadBox"
   !
-ENDSUBROUTINE Dynam_ReadBox
+end subroutine Dynam_ReadBox
 
-SUBROUTINE Dynam_ReadColumn(Column,Ok,Msg)
+subroutine Dynam_ReadColumn(Column,Ok,Msg)
 !--
 !-- read block DYNAMIC.1D
 !--
-  USE M_Files,ONLY: NamFInn
-  USE M_IOTools
-  USE M_Dynam_Vars,ONLY: T_DynColumn
+  use M_Files,only: NamFInn
+  use M_IOTools
+  use M_Dynam_Vars,only: T_DynColumn
   !
-  TYPE(T_DynColumn),INTENT(INOUT):: Column
-  LOGICAL,          INTENT(OUT)  :: Ok
-  CHARACTER(*),     INTENT(OUT)  :: Msg
+  type(T_DynColumn),intent(inout):: Column
+  logical,          intent(out)  :: Ok
+  character(*),     intent(out)  :: Msg
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W,W1,W2
-  LOGICAL           :: EoL
-  INTEGER           :: F,ios
+  character(len=255):: L
+  character(len=80) :: W,W1,W2
+  logical           :: EoL
+  integer           :: F,ios
   
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dynam_ReadColumn"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadColumn"
   !
-  CALL GetUnit(F)
-  CALL OPENFILE(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  call OpenFile(F,file=trim(NamFInn))
   !
-  Ok=.FALSE.
+  Ok=.false.
   Msg= "Ok"
   !
-  Do01: DO
+  Do01: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-    CALL LinToWrd(L,W,EoL); CALL AppendToEnd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE Do01 !skip comment lines
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+    call LinToWrd(L,W,EoL); call AppendToEnd(L,W,EoL)
+    if(W(1:1)=='!') cycle Do01 !skip comment lines
     !
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
     !
-    CASE("ENDINPUT"); EXIT  Do01
+    case("ENDINPUT"); exit  Do01
     !
-    CASE("DYNAMIC.COLUMN")
-      Ok=.TRUE.
-      Do02: DO
+    case("DYNAMIC.COLUMN")
+      Ok=.true.
+      Do02: do
         !
-        READ(F,'(A)',IOSTAT=ios) L
-        IF(ios/=0) EXIT Do01
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0) exit Do01
         !
-        CALL LinToWrd(L,W1,EoL)
-        CALL AppendToEnd(L,W1,EoL)
+        call LinToWrd(L,W1,EoL)
+        call AppendToEnd(L,W1,EoL)
         !
-        IF(W1(1:1)=='!') CYCLE Do02
+        if(W1(1:1)=='!') cycle Do02
         !
-        CALL LinToWrd(L,W2,EoL)
+        call LinToWrd(L,W2,EoL)
         !-> W2 is second word on line
         !-> either second keyword or numeric' param' (or 'empty', i.e. "!")
         !
-        SELECT CASE(TRIM(W1))
+        select case(trim(W1))
         !
-        CASE("ENDINPUT"); EXIT Do01
-        CASE("END","ENDDYNAMIC.COLUMN"); EXIT Do02
+        case("ENDINPUT"); exit Do01
+        case("END","ENDDYNAMIC.COLUMN"); exit Do02
         !
         !-------------------------------------------spatial parameters--
-        CASE("DX")      ;   CALL WrdToReal(W2,Column%dX)
-        CASE("DT")      ;   CALL WrdToReal(W2,Column%dT)
-        CASE("DISP")    ;   CALL WrdToReal(W2,Column%Disp)
-        CASE("UDARCY")  ;   CALL WrdToReal(W2,Column%UDarcy)
-        CASE("TFIN")    ;   CALL WrdToReal(W2,Column%Duration)
-        CASE("TSAVE")   ;   CALL WrdToReal(W2,Column%Time_Save)
-        CASE("NCELL")   ;   CALL WrdToInt (W2,Column%nCell)
-        CASE("METHOD")  ;   CALL WrdToInt (W2,Column%Method)
+        case("DX")      ;   call WrdToReal(W2,Column%dX)
+        case("DT")      ;   call WrdToReal(W2,Column%dT)
+        case("DISP")    ;   call WrdToReal(W2,Column%Disp)
+        case("UDARCY")  ;   call WrdToReal(W2,Column%UDarcy)
+        case("TFIN")    ;   call WrdToReal(W2,Column%Duration)
+        case("Tsave")   ;   call WrdToReal(W2,Column%Time_Save)
+        case("NCELL")   ;   call WrdToInt (W2,Column%nCell)
+        case("METHOD")  ;   call WrdToInt (W2,Column%Method)
         !---------------------------------------------------------------
         !
-        CASE DEFAULT
-          Ok= .FALSE.
-          Msg= "In DYNAMIC.COLUMN, "//TRIM(W1)//" is unknown KeyWord !!"
+        case default
+          Ok= .false.
+          Msg= "In DYNAMIC.COLUMN, "//trim(W1)//" is unknown KeyWord !!"
         !
-        END SELECT
-      ENDDO Do02
+        end select
+      end do Do02
     !
-    END SELECT
+    end select
     !
-  ENDDO Do01
+  end do Do01
   !
-  CALL CLOSEFILE(F)
+  call closeFILE(F)
   
-  IF(.NOT. Ok) Msg= "Block DYNAMIC.COLUMN not found !!!"
+  if(.not. Ok) Msg= "Block DYNAMIC.COLUMN not found !!!"
   
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dynam_ReadColumn"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadColumn"
   
-  RETURN
-ENDSUBROUTINE Dynam_ReadColumn
+  return
+end subroutine Dynam_ReadColumn
 
-SUBROUTINE Dynam_ReadNumeric(Ok)
+subroutine Dynam_ReadNumeric(Ok)
 !--
 !-- read block DYNAMIC.NUMERIC -> numerical options
 !--
-  USE M_Files,ONLY: NamFInn
-  USE M_IOTools
-  USE M_Dynam_Vars,ONLY: &
+  use M_Files,only: NamFInn
+  use M_IOTools
+  use M_Dynam_Vars,only: &
   & iCtrlTime,cMethod,Implicit_Surface, &
   & LogForMin,LogForAqu,DirectSub, &
-  & bFinDIF,DebNewt,TestJacob,TestMax, &
+  & bFinDif,DebNewt,TestJacob,TestMax, &
   & NewtMaxIts,NewtIterMax,NewtIterMin, &
   & NewtTOLF,NewtTOLX
   !
-  LOGICAL,INTENT(OUT)::Ok
+  logical,intent(out)::Ok
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=255) :: W0,W1,W2
-  LOGICAL           :: EoL
-  INTEGER           :: F,ios
+  character(len=255):: L
+  character(len=255) :: W0,W1,W2
+  logical           :: EoL
+  integer           :: F,ios
   !
-  CALL GetUnit(F)
-  CALL OPENFILE (F,FILE=TRIM(NamFInn))
-  Ok=.FALSE.
+  call GetUnit(F)
+  call OpenFile (F,file=trim(NamFInn))
+  Ok=.false.
   
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Dynam_ReadNumeric"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadNumeric"
     
-  Do01: DO
+  Do01: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-    CALL LinToWrd(L,W0,EoL); CALL AppendToEnd(L,W0,EoL)
-    IF(W0(1:1)=='!')   CYCLE Do01 !skip comment lines
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+    call LinToWrd(L,W0,EoL); call AppendToEnd(L,W0,EoL)
+    if(W0(1:1)=='!')   cycle Do01 !skip comment lines
     !
-    SELECT CASE(TRIM(W0))
+    select case(trim(W0))
     !
-    CASE("ENDINPUT")  ;  EXIT Do01
+    case("ENDINPUT")  ;  exit Do01
     !
     !------------------------------------- param's for numeric method --
-    CASE("DYNAMIC.NUMERIC","DYN.NUMERIC")
+    case("DYNAMIC.NUMERIC","DYN.NUMERIC")
       !
-      Ok=.TRUE.
+      Ok=.true.
       !
-      DoReadNum: DO
+      DoReadNum: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT Do01
-        !READ(F,'(A)') L
-        CALL LinToWrd(L,W1,EoL)
-        IF(W1(1:1)=='!') CYCLE DoReadNum
-        CALL AppendToEnd(L,W1,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit Do01
+        !read(F,'(A)') L
+        call LinToWrd(L,W1,EoL)
+        if(W1(1:1)=='!') cycle DoReadNum
+        call AppendToEnd(L,W1,EoL)
         !
-        ! print *,'Dynam_ReadNumeric,W1=',TRIM(W1)   ;  pause
+        ! print *,'Dynam_ReadNumeric,W1=',trim(W1)   ;  pause
         
-        SELECT CASE(TRIM(W1))
-        CASE("ENDINPUT")
-          EXIT Do01
-        CASE("END","ENDDYNAMIC.NUMERIC","ENDDYN.NUMERIC")
-          EXIT DoReadNum
-        END SELECT
+        select case(trim(W1))
+        case("ENDINPUT")
+          exit Do01
+        case("END","ENDDYNAMIC.NUMERIC","ENDDYN.NUMERIC")
+          exit DoReadNum
+        end select
         !
-        CALL LinToWrd(L,W2,EoL)
+        call LinToWrd(L,W2,EoL)
         !-> W2 is second word on line
         !-> either second keyword or numeric' param' (or 'empty', i.e. "!")
         !
-        ! print *,'Dynam_ReadNumeric,W2=',TRIM(W2)  ;  pause
+        ! print *,'Dynam_ReadNumeric,W2=',trim(W2)  ;  pause
         
-        SELECT CASE(TRIM(W1))
-        !!CASE("STEADY.STOP");
-        CASE("SURFACE")
-          SELECT CASE(TRIM(W2))
-            CASE("IMPLICIT")  ; Implicit_Surface= .TRUE.
-            CASE("EXPLICIT")  ; Implicit_Surface= .FALSE.
-            CASE DEFAULT
-              CALL Stop_(TRIM(W2)//"-> unknown keyword (IMPLICIT,EXPLICIT)")
-          END SELECT
+        select case(trim(W1))
+        !!case("STEADY.stop");
+        case("SURFACE")
+          select case(trim(W2))
+            case("IMPLICIT")  ; Implicit_Surface= .true.
+            case("EXPLICIT")  ; Implicit_Surface= .false.
+            case default
+              call Stop_(trim(W2)//"-> unknown keyword (implicit,EXPLICIT)")
+          end select
         !
-        CASE("MAXITER")  ; CALL WrdToInt(W2,NewtMaxIts)
-        CASE("ITERMAX")  ; CALL WrdToInt(W2,NewtIterMax)
-        CASE("ITERMIN")  ; CALL WrdToInt(W2,NewtIterMin)
+        case("MAXITER")  ; call WrdToInt(W2,NewtMaxIts)
+        case("ITERMAX")  ; call WrdToInt(W2,NewtIterMax)
+        case("ITERMIN")  ; call WrdToInt(W2,NewtIterMin)
         !
-        !IF(iter>NewtIterMax) dT0=dT0/2.0D0
-        !IF(iter>NewtIterMax) dT0=dT0/2.0D0
-        !IF(iter<NewtIterMin) dT0=dT0*2.0D0
+        !if(iter>NewtIterMax) dT0=dT0/2.0D0
+        !if(iter>NewtIterMax) dT0=dT0/2.0D0
+        !if(iter<NewtIterMin) dT0=dT0*2.0D0
         !
-        CASE("CONTROL")  ; CALL WrdToInt(W2,iCtrlTime)   !
+        case("CONTROL")  ; call WrdToInt(W2,iCtrlTime)   !
         !
-        CASE("METHOD")  !!THEN
-          SELECT CASE(TRIM(W2))
-          CASE("NEWTON")       ;   cMethod= TRIM(W2)  ! iMethod= 1
-          CASE("NEWTLNSRCH")   ;   cMethod= TRIM(W2)  ! iMethod= 2
-          CASE("NEWTONPRESS")  ;   cMethod= TRIM(W2)  ! iMethod= 2
-          CASE("BROYDEN")      ;   cMethod= TRIM(W2)  ! iMethod= 3
-          CASE("NEWTONCHESS")  ;   cMethod= TRIM(W2)  ! iMethod= 4
-          CASE("TENSOLVE_1")   ;   cMethod= TRIM(W2)  ! iMethod= 5
-          CASE("NEWTONKELLEY") ;   cMethod= TRIM(W2)  ! iMethod= 6
-          CASE("NEWTONWALKER") ;   cMethod= TRIM(W2)  ! iMethod= 7 !-> default value
-          CASE DEFAULT         ;   CALL Warning(W2)
-          END SELECT
+        case("METHOD")  !!then
+          select case(trim(W2))
+          case("NEWTON")       ;   cMethod= trim(W2)  ! iMethod= 1
+          case("NEWTLNSRCH")   ;   cMethod= trim(W2)  ! iMethod= 2
+          case("NEWTONPRESS")  ;   cMethod= trim(W2)  ! iMethod= 2
+          case("BROYDEN")      ;   cMethod= trim(W2)  ! iMethod= 3
+          case("NEWTONCHESS")  ;   cMethod= trim(W2)  ! iMethod= 4
+          case("TENSOLVE_1")   ;   cMethod= trim(W2)  ! iMethod= 5
+          case("NEWTONKELLEY") ;   cMethod= trim(W2)  ! iMethod= 6
+          case("NEWTONWALKER") ;   cMethod= trim(W2)  ! iMethod= 7 !-> default value
+          case default         ;   call Warning(W2)
+          end select
         !_
-        CASE("NEWTTOLF")
-          !convergence criterion on FUNCTION values
-          CALL WrdToReal(W2,NewtTolF)
-        !CASE("NEWTTOLMIN")
+        case("NEWTTOLF")
+          !convergence criterion on function values
+          call WrdToReal(W2,NewtTolF)
+        !case("NEWTTOLMIN")
         !  !criterion for spurious convergence
-        !  CALL WrdToReal(W2,NewtTolF)
-        !CASE("NEWTTOLX")
+        !  call WrdToReal(W2,NewtTolF)
+        !case("NEWTTOLX")
         !  !convergence criterion on dx
-        !  CALL WrdToReal(W2,NewtTolX)
+        !  call WrdToReal(W2,NewtTolX)
         !
         !------------------------------------------------- obsolete --
-        CASE("NOTLOG")  ;       LogForMin=.FALSE.
-        CASE("LOGMIN")  ;       LogForMin=.TRUE.
-        CASE("FINDIF")  ;       bFinDIF=  .TRUE.
+        case("NOTLOG")  ;       LogForMin=.false.
+        case("LOGMIN")  ;       LogForMin=.true.
+        case("FINDif")  ;       bFinDif=  .true.
         !
-        CASE("TESTMAX")  ;      TestMax=  .TRUE.
+        case("TESTMAX")  ;      TestMax=  .true.
         !------------------------------------------------/ obsolete --
         !
-        CASE("LOGFORAQU")
-          SELECT CASE(TRIM(W2))
-            CASE("TRUE", "T", "YES")  ;  LogForAqu= .TRUE.
-            CASE("FALSE", "F", "NO")  ;  LogForAqu= .FALSE.
-          ENDSELECT
+        case("LOGFORAQU")
+          select case(trim(W2))
+            case("TRUE", "T", "YES")  ;  LogForAqu= .true.
+            case("FALSE", "F", "NO")  ;  LogForAqu= .false.
+          end select
 
-        CASE("LOGFORMIN")
-          SELECT CASE(TRIM(W2))
-          CASE("TRUE", "T", "YES")  ;  LogForMin= .TRUE.
-          CASE("FALSE", "F", "NO")  ;  LogForMin= .FALSE.
-          ENDSELECT
+        case("LOGFORMIN")
+          select case(trim(W2))
+          case("TRUE", "T", "YES")  ;  LogForMin= .true.
+          case("FALSE", "F", "NO")  ;  LogForMin= .false.
+          end select
 
-        CASE("DIRECT")
-          SELECT CASE(TRIM(W2))
-          CASE("TRUE", "T", "YES")  ;  DirectSub= .TRUE.
-          CASE("FALSE", "F", "NO")  ;  DirectSub= .FALSE.
-          ENDSELECT
+        case("DIRECT")
+          select case(trim(W2))
+          case("TRUE", "T", "YES")  ;  DirectSub= .true.
+          case("FALSE", "F", "NO")  ;  DirectSub= .false.
+          end select
 
-        CASE("JACOBIAN")
-          SELECT CASE(TRIM(W2))
-          CASE("NUMERIC")   ;  bFinDif= .TRUE.
-          CASE("ANALYTIC")  ;  bFinDif= .FALSE.
-          ENDSELECT
+        case("JACOBIAN")
+          select case(trim(W2))
+          case("NUMERIC")   ;  bFinDif= .true.
+          case("ANALYTIC")  ;  bFinDif= .false.
+          end select
 
-        CASE DEFAULT
-          CALL Warning(W1)
+        case default
+          call Warning(W1)
 
-        END SELECT
+        end select
         
-        ! print *,"W1=",TRIM(W1)  ;  pause
+        ! print *,"W1=",trim(W1)  ;  pause
 
-      ENDDO DoReadNum
-    !_CASE("DYNAMIC.NUMERIC")
+      end do DoReadNum
+    !_case("DYNAMIC.NUMERIC")
     !---/
-    END SELECT
+    end select
     !
-  ENDDO Do01
+  end do Do01
   !
-  CALL CLOSEFILE(F)
+  call closeFILE(F)
   !
   DebNewt=   (iDebug>2)
   TestJacob= (iDebug>2)
   !
-  IF(.NOT. &
+  if(.not. &
   &       (NewtMaxIts>NewtIterMax &
-  & .AND. NewtIterMax>NewtIterMin)) THEN
-    IF(iDebug>0) WRITE(fTrc,'(A)') &
-    & "Must Have MAXITER>ITERMAX .AND. ITERMAX>ITERMIN"
-    CALL Stop_("Must Have MAXITER>ITERMAX .AND. ITERMAX>ITERMIN")
-  ENDIF
+  & .and. NewtIterMax>NewtIterMin)) then
+    if(iDebug>0) write(fTrc,'(A)') &
+    & "Must Have MAXITER>ITERMAX .and. ITERMAX>ITERMIN"
+    call Stop_("Must Have MAXITER>ITERMAX .and. ITERMAX>ITERMIN")
+  end if
   !
-  IF(iCtrlTime<1 .OR. iCtrlTime>2) iCtrlTime=1
+  if(iCtrlTime<1 .or. iCtrlTime>2) iCtrlTime=1
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Dynam_ReadNumeric"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadNumeric"
   !
-  RETURN
-ENDSUBROUTINE Dynam_ReadNumeric
+  return
+end subroutine Dynam_ReadNumeric
 
-SUBROUTINE Warning(W)
-  CHARACTER(LEN=*),INTENT(IN):: W
-  IF(iDebug>2) &
-  & WRITE(fTrc,'(A)') "!!WARNING!! "//TRIM(W)//" <-unknown KeyWord !!"
-  IF(iDebug>2) THEN
-    PRINT '(A)',"!!WARNING!! "//TRIM(W)//" <-unknown KeyWord !!"
-    CALL Pause_
-  ENDIF
-  RETURN
-ENDSUBROUTINE Warning
+subroutine Warning(W)
+  character(len=*),intent(in):: W
+  if(iDebug>2) &
+  & write(fTrc,'(A)') "!!WARNING!! "//trim(W)//" <-unknown KeyWord !!"
+  if(iDebug>2) then
+    print '(A)',"!!WARNING!! "//trim(W)//" <-unknown KeyWord !!"
+    call Pause_
+  end if
+  return
+end subroutine Warning
 
-SUBROUTINE Check_KinRate_CalcQsK
+subroutine Check_KinRate_CalcQsK
 !--
 !-- check kinetic models
 !--
-  USE M_IoTools,   ONLY: GetUnit, Closefile, OpenFile
-  USE M_Files,     ONLY: DirLog,Files_Index_Write
-  USE M_Global_Vars,ONLY: vKinModel, nAq
-  USE M_KinRate,   ONLY: KinRate_CalcQsKFactor
+  use M_IoTools,   only: GetUnit, Closefile, OpenFile
+  use M_Files,     only: DirLog,Files_Index_Write
+  use M_Global_Vars,only: vKinModel, nAq
+  use M_KinRate,   only: KinRate_CalcQsKFactor
   !
-  REAL(dp):: Aff,Qsk,VmQsk
-  INTEGER :: I,J,F
-  REAL(dp),DIMENSION(1:nAq):: vDX,vX
+  real(dp):: Aff,Qsk,VmQsk
+  integer :: I,J,F
+  real(dp),dimension(1:nAq):: vDX,vX
   !
-  CALL GetUnit(F)
-  CALL OPENFILE(F,FILE=TRIM(DirLog)//"kinrate_vmqsk.log")
+  call GetUnit(F)
+  call OpenFile(F,file=trim(DirLog)//"kinrate_vmqsk.log")
   !
-  CALL Files_Index_Write(fHtm,&
-  & TRIM(DirLog)//"kinrate_vmqsk.log",&
+  call Files_Index_Write(fHtm,&
+  & trim(DirLog)//"kinrate_vmqsk.log",&
   & "DYNAMIC/LOG: check KinModels")
   !
-  WRITE(F,'(2(A,A1))',ADVANCE="NO") "Ord",T_,"Aff",T_
-  DO I=1,SIZE(vKinModel)
-    WRITE(F,'(A,A1)',ADVANCE="NO") vKinModel(I)%Name,T_
-  ENDDO
-  WRITE(F,*)
+  write(F,'(2(A,A1))',advance="NO") "Ord",T_,"Aff",T_
+  do I=1,size(vKinModel)
+    write(F,'(A,A1)',advance="NO") vKinModel(I)%Name,T_
+  end do
+  write(F,*)
   !
   Aff= Zero
   vX=  Zero
   J=1
-  DO
-    WRITE(F,'(I3,A1,G15.6,A1)',ADVANCE="NO") J,T_,Aff,T_
-    QsK=EXP(-Aff)
-    DO I=1,SIZE(vKinModel)
+  do
+    write(F,'(I3,A1,G15.6,A1)',advance="NO") J,T_,Aff,T_
+    QsK=exp(-Aff)
+    do I=1,size(vKinModel)
       !
-      CALL KinRate_CalcQsKFactor(&
+      call KinRate_CalcQsKFactor(&
       & "D",          & !IN was "DISSOLU"
       & vKinModel(I), & !IN: Kinetic model
       & QsK,          & !IN
@@ -708,18 +801,18 @@ SUBROUTINE Check_KinRate_CalcQsK
       & VmQsK,        & !OUT
       & vDX)            !OUT dVmQdLnX_M
       !
-      WRITE(F,'(G15.6,A1)',ADVANCE="NO") VmQsK,T_
-    ENDDO
-    WRITE(F,*)
+      write(F,'(G15.6,A1)',advance="NO") VmQsK,T_
+    end do
+    write(F,*)
     !
     Aff= Aff +0.1_dp; J=J+1
-    IF(Aff>6.0_dp) EXIT
+    if(Aff>6.0_dp) exit
     !
-  ENDDO
+  end do
   !
-  CALL CLOSEFILE(F)
+  call closeFILE(F)
   !
-ENDSUBROUTINE Check_KinRate_CalcQsK
+end subroutine Check_KinRate_CalcQsK
 
-ENDMODULE M_Dynam_Read
+end module M_Dynam_Read
 

@@ -1,393 +1,397 @@
-MODULE M_Global_Tools
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,fHtm,T_,Stop_,Pause_
+module M_Global_Tools
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,fHtm,T_,Stop_,Pause_
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Global_Zero
-  PUBLIC:: Global_Clean
-  PUBLIC:: Global_Species_Select
-  PUBLIC:: Global_TP_Update
-  PUBLIC:: Global_Show
+  public:: Global_Zero
+  public:: Global_Clean
+  public:: Global_Species_Select
+  public:: Global_TP_Update
+  public:: Global_Show
   !
-CONTAINS
+contains
 
-SUBROUTINE Global_Show
+subroutine Global_Show
 !--
 !--
-  USE M_IoTools
-  USE M_T_Phase,ONLY: T_Phase
-  USE M_Global_Vars, ONLY: vSpc,vFas
-  USE M_Global_Vars, ONLY: vMixFas,vMixModel
-  USE M_Global_Vars, ONLY: vSolFas,vSolModel
-  !~ & vEle,vSpc,vSpcDtb,vMixModel,vMixFas,vFas,vDiscretModel,vDiscretParam
+  use M_IoTools
+  use M_T_Phase,only: T_Phase
+  use M_Global_Vars, only: vSpc,vFas
+  use M_Global_Vars, only: vSolModel,vMixModel
+  use M_Global_Vars, only: vSolFas,vMixFas
+  ! vDiscretModel,vDiscretParam
   !
-  INTEGER:: I,J,K
-  INTEGER:: F
-  TYPE(T_Phase):: fs
+  integer:: I,J,K
+  integer:: F
+  type(T_Phase):: fs
   
-  CALL GetUnit(F)
-  OPEN(F,FILE="global_show.txt")
+  call GetUnit(F)
+  open(F,file="global_show.txt")
 
-  WRITE(F,'(A)') "NamFs,iSpc,iMix,iSol"
-  DO I=1,SIZE(vFas)
+  write(F,'(A)') "NamFs,iSpc,iMix,iSol"
+  do I=1,size(vFas)
   
     fs= vFas(I)
     
-    WRITE(F,'(A,3I4,3X)',ADVANCE="NO") &
+    write(F,'(A,3I4,3X)',advance="NO") &
     & fs%NamFs,fs%iSpc,fs%iMix,fs%iSol
     
-    IF(fs%iSpc >0) WRITE(F,'(A)') vSpc(fs%iSpc)%NamSp
+    if(fs%iSpc >0) write(F,'(A)') vSpc(fs%iSpc)%NamSp
     
-    IF(fs%iMix >0) THEN
-      DO J=1,vMixModel(vMixFas(fs%iMix)%iModel)%nPole
+    if(fs%iMix >0) then
+      do J=1,vMixModel(vMixFas(fs%iMix)%iModel)%nPole
         K= vMixModel(vMixFas(fs%iMix)%iModel)%vIPole(J)
-        WRITE(F,'(A,1X)',ADVANCE="NO") TRIM(vSpc(K)%NamSp)
-      ENDDO
-      WRITE(F,*)
-    ENDIF
+        write(F,'(A,1X)',advance="NO") trim(vSpc(K)%NamSp)
+      end do
+      write(F,*)
+    end if
     
-    IF(fs%iSol >0) THEN
+    if(fs%iSol >0) then
       K= vSolModel(vSolFas(fs%iSol)%iModel)%iSolvent
-      WRITE(F,'(A,1X)',ADVANCE="NO") TRIM(vSpc(K)%NamSp)
-      DO J=1,vSolModel(vSolFas(fs%iSol)%iModel)%nSpecies
+      write(F,'(A,1X)',advance="NO") trim(vSpc(K)%NamSp)
+      do J=1,vSolModel(vSolFas(fs%iSol)%iModel)%nSpecies
         K= vSolModel(vSolFas(fs%iSol)%iModel)%vISpecies(J)
-        WRITE(F,'(A,1X)',ADVANCE="NO") TRIM(vSpc(K)%NamSp)
-      ENDDO
-      WRITE(F,*)
-    ENDIF
+        write(F,'(A,1X)',advance="NO") trim(vSpc(K)%NamSp)
+      end do
+      write(F,*)
+    end if
     
-  ENDDO
+  end do
   
-  CLOSE(F)
+  close(F)
   
-  RETURN
-END SUBROUTINE Global_Show
+  return
+end subroutine Global_Show
 
-SUBROUTINE Global_TP_Update( &
+subroutine Global_TP_Update( &
 & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
 & vSpc,vMixModel,vMixFas,vFas) !inout
 !--
 !-- update (T,P) dependent properties of species, sol'models, phases,
 !=  to be called everytime T,P changes
 !--
-  USE M_T_Species,  ONLY: T_Species,T_SpeciesDtb
-  USE M_T_MixModel, ONLY: T_MixModel
-  USE M_T_MixPhase, ONLY: T_MixPhase,MixPhase_CalcActivs
-  USE M_T_MixModel, ONLY: MixModel_Margul_Wg_Calc
-  USE M_T_Phase,    ONLY: T_Phase,Phase_Calc
-  USE M_T_DiscretModel,ONLY: T_DiscretModel,T_DiscretParam
+  use M_T_Species,  only: T_Species,T_SpeciesDtb
+  use M_T_MixModel, only: T_MixModel
+  use M_T_MixPhase, only: T_MixPhase,MixPhase_CalcActivs
+  !use M_T_MixModel, only: MixModel_Param_Update
+  use M_T_Phase,    only: T_Phase,Phase_Calc
+  use M_T_DiscretModel,only: T_DiscretModel,T_DiscretParam
   !
-  REAL(dp),            INTENT(IN):: TdgK,Pbar
-  TYPE(T_SpeciesDtb),  INTENT(IN):: vSpcDtb(:)
-  TYPE(T_DiscretModel),INTENT(IN):: vDiscretModel(:)
-  TYPE(T_DiscretParam),INTENT(IN):: vDiscretParam(:)
+  real(dp),            intent(in):: TdgK,Pbar
+  type(T_SpeciesDtb),  intent(in):: vSpcDtb(:)
+  type(T_DiscretModel),intent(in):: vDiscretModel(:)
+  type(T_DiscretParam),intent(in):: vDiscretParam(:)
   !
-  TYPE(T_Species), INTENT(INOUT):: vSpc(:)
-  TYPE(T_MixModel),INTENT(INOUT):: vMixModel(:)
-  TYPE(T_MixPhase),INTENT(INOUT):: vMixFas(:)
-  TYPE(T_Phase),   INTENT(INOUT):: vFas(:)
+  type(T_Species), intent(inout):: vSpc(:)
+  type(T_MixModel),intent(inout):: vMixModel(:)
+  type(T_MixPhase),intent(inout):: vMixFas(:)
+  type(T_Phase),   intent(inout):: vFas(:)
   !
-  INTEGER :: I
+  integer :: I
   !
-  CALL Species_TP_Update( &
+  call Species_TP_Update( &
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
   & vSpc,vMixModel)
   !
-  !--------------- update activ's of end-members in non-aqu'solutions --
-  DO I=1,SIZE(vMixFas) !
-    CALL MixPhase_CalcActivs( &
+  !-------------------update activ's of end-members in non-aqu'solutions
+  do I=1,size(vMixFas) !
+    call MixPhase_CalcActivs( &
     & TdgK,Pbar,                    & !IN
     & vMixModel(vMixFas(I)%iModel), & !IN
     & vMixFas(I))                     !INOUT
-  ENDDO
+  end do
   !
-  !------------------------------------------------ update all phases --
-  DO I=1,SIZE(vFas)
-    CALL Phase_Calc( &
+  !----------------------------------------------------update all phases
+  do I=1,size(vFas)
+    call Phase_Calc( & 
     & TdgK,Pbar,vSpc,vMixModel,vMixFas, & !IN
     & vFas(I))                            !OUT
-  ENDDO
+  end do
   !
-ENDSUBROUTINE Global_TP_Update
+end subroutine Global_TP_Update
 
-SUBROUTINE Species_TP_Update( &
+subroutine Species_TP_Update( &
 & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
 & vSpc,vMixModel) !inout
 !--
 !-- update (T,P) dependent properties of species, sol'models, phases,
-!=  to be called everytime T,P changes
+!-- to be called everytime T,P changes
 !--
-  USE M_T_DtbH2OHkf,ONLY: DtbH2OHkf_Calc,T_DtbH2OHkf
-  USE M_T_Species,  ONLY: T_Species,T_SpeciesDtb
-  USE M_T_MixModel, ONLY: T_MixModel
-  USE M_T_MixModel, ONLY: MixModel_Margul_Wg_Calc
-  USE M_Dtb_Calc,   ONLY: Species_TP_Update_fromDtb
-  USE M_T_DiscretModel,ONLY: T_DiscretModel,T_DiscretParam
-  USE M_DiscretModel_Tools
+  use M_T_DtbH2OHkf,only: DtbH2OHkf_Calc,T_DtbH2OHkf
+  use M_T_Species,  only: T_Species,T_SpeciesDtb
+  use M_T_MixModel, only: T_MixModel
+  use M_T_MixModel, only: MixModel_Param_Update
+  use M_Dtb_Calc,   only: Species_TP_Update_fromDtb
+  use M_T_DiscretModel,only: T_DiscretModel,T_DiscretParam
+  use M_DiscretModel_Tools
   !
-  REAL(dp),            INTENT(IN):: TdgK,Pbar
-  TYPE(T_SpeciesDtb),  INTENT(IN):: vSpcDtb(:)
-  TYPE(T_DiscretModel),INTENT(IN):: vDiscretModel(:)
-  TYPE(T_DiscretParam),INTENT(IN):: vDiscretParam(:)
+  real(dp),            intent(in):: TdgK,Pbar
+  type(T_SpeciesDtb),  intent(in):: vSpcDtb(:)
+  type(T_DiscretModel),intent(in):: vDiscretModel(:)
+  type(T_DiscretParam),intent(in):: vDiscretParam(:)
   !
-  TYPE(T_Species), INTENT(INOUT):: vSpc(:)
-  TYPE(T_MixModel),INTENT(INOUT):: vMixModel(:)
+  type(T_Species), intent(inout):: vSpc(:)
+  type(T_MixModel),intent(inout):: vMixModel(:)
   !
-  INTEGER :: I,J
-  TYPE(T_DtbH2OHkf):: PropsH2O
+  integer :: I,J
+  type(T_DtbH2OHkf):: PropsH2O
   !
   ! compute solvent properties, needed for aqu'species
-  IF(COUNT(vSpc(:)%Typ=='AQU')>0) &
-  & CALL DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
+  if(count(vSpc(:)%Typ=='AQU')>0) &
+  & call DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
   
-  !-------------------- update T,P dependent param's for pure species --
-  DO J=1,SIZE(vSpc)
-    IF(vSpc(J)%iDtb>0) &
-    CALL Species_TP_Update_fromDtb(TdgK,Pbar,PropsH2O,vSpcDtb,vSpc(J))
+  !----------------------- update T,P dependent param's for pure species
+  do J=1,size(vSpc)
+    if(vSpc(J)%iDtb>0) &
+    call Species_TP_Update_fromDtb(TdgK,Pbar,PropsH2O,vSpcDtb,vSpc(J))
     !-> update vSpc(J)%G0rt !-> =G/RT
-  ENDDO
+  end do
   
-  !----------------- update T,P dependent parameters in mixing models --
-  DO I=1,SIZE(vMixModel)
-    IF(vMixModel(I)%NMarg>0) &
-    & CALL MixModel_Margul_Wg_Calc( &
+  !-------------------- update T,P dependent parameters in mixing models
+  do I=1,size(vMixModel)
+    call MixModel_Param_Update( &
     & TdgK,Pbar, &  !in
     & vMixModel(I)) !out
-  ENDDO
+  end do
   
-  !--------------------------- update species built by discretization --
-  IF(SIZE(vDiscretModel)>0) THEN
-    CALL DiscretSpecies_TP_Update( &
+  !------------------------------ update species built by discretization
+  if(size(vDiscretModel)>0) then
+    call DiscretSpecies_TP_Update( &
     & vMixModel,     & !IN
     & TdgK,Pbar,     & !IN
     & vDiscretModel, & !IN
     & vDiscretParam, & !IN
     & vSpc)            !INOUT
-  ENDIF
+  end if
   
-  RETURN
-END SUBROUTINE Species_TP_Update
+  return
+end subroutine Species_TP_Update
 
-SUBROUTINE Global_Zero
-  USE M_Global_Vars
+subroutine Global_Zero
+  use M_Global_Vars
   
   nAq=0; nMn=0; nGs=0
   !
-  CALL Global_Clean
+  call Global_Clean
   !
-  ALLOCATE(vEle(0))
+  allocate(vEle(0))
   !
-  ALLOCATE(vSpc(0))
-  ALLOCATE(vSpcDtb(0))
+  allocate(vSpc(0))
+  allocate(vSpcDtb(0))
   !
-  ALLOCATE(vFas(0))
+  allocate(vFas(0))
   !
-  ALLOCATE(vDiscretModel(0))
-  ALLOCATE(vDiscretParam(0))
+  allocate(vDiscretModel(0))
+  allocate(vDiscretParam(0))
   !
-  ALLOCATE(vKinModel(0))
-  ALLOCATE(vKinFas(0))
+  allocate(vKinModel(0))
+  allocate(vKinFas(0))
   !
-  ALLOCATE(vMixModel(0))
-  ALLOCATE(vMixFas(0))
+  allocate(vMixModel(0))
+  allocate(vMixFas(0))
   !
-  ALLOCATE(vSolModel(0))
-  ALLOCATE(vSolFas(0))
+  allocate(vSolModel(0))
+  allocate(vSolFas(0))
   !
-  ALLOCATE(tFormula(0,0))
+  allocate(tFormula(0,0))
   !
   !default solvent= water at 25°C/1bar (1 atm ???)
-  !~ Solvent%Name=        "WATER"
-  !~ Solvent%ActModel=    "IDEAL"
+  !! Solvent%Name=        "WATER"
+  !! Solvent%ActModel=    "IDEAL"
   !
-ENDSUBROUTINE Global_Zero
+end subroutine Global_Zero
 
-SUBROUTINE Global_Clean
-  USE M_Global_Vars
-  USE M_Dtb_Vars
+subroutine Global_Clean
+  use M_Global_Vars
+  use M_Dtb_Vars
   !
-  IF(ALLOCATED(vEle))    DEALLOCATE(vEle)
+  if(allocated(vEle))    deallocate(vEle)
   !
-  IF(ALLOCATED(vSpc))    DEALLOCATE(vSpc)
-  IF(ALLOCATED(vSpcDtb)) DEALLOCATE(vSpcDtb)
+  if(allocated(vSpc))    deallocate(vSpc)
+  if(allocated(vSpcDtb)) deallocate(vSpcDtb)
   !
-  IF(ALLOCATED(vFas))    DEALLOCATE(vFas)
+  if(allocated(vFas))    deallocate(vFas)
   !
-  IF(ALLOCATED(vMixModel)) DEALLOCATE(vMixModel)
-  IF(ALLOCATED(vMixFas))   DEALLOCATE(vMixFas)
+  if(allocated(vMixModel)) deallocate(vMixModel)
+  if(allocated(vMixFas))   deallocate(vMixFas)
   !
-  IF(ALLOCATED(vSolModel)) DEALLOCATE(vSolModel)
-  IF(ALLOCATED(vSolFas))   DEALLOCATE(vSolFas)
+  if(allocated(vSolModel)) deallocate(vSolModel)
+  if(allocated(vSolFas))   deallocate(vSolFas)
   !
-  IF(ALLOCATED(vDiscretModel)) DEALLOCATE(vDiscretModel)
-  IF(ALLOCATED(vDiscretParam)) DEALLOCATE(vDiscretParam)
+  if(allocated(vDiscretModel)) deallocate(vDiscretModel)
+  if(allocated(vDiscretParam)) deallocate(vDiscretParam)
   !
-  IF(ALLOCATED(vKinModel)) DEALLOCATE(vKinModel)
-  IF(ALLOCATED(vKinFas))   DEALLOCATE(vKinFas)
+  if(allocated(vKinModel)) deallocate(vKinModel)
+  if(allocated(vKinFas))   deallocate(vKinFas)
   !
-  IF(ALLOCATED(tFormula))  DEALLOCATE(tFormula)
+  if(allocated(tFormula))  deallocate(tFormula)
   !
-  CALL Dtb_Vars_Clean
+  call Dtb_Vars_Clean
   !
-ENDSUBROUTINE Global_Clean
+end subroutine Global_Clean
 
-SUBROUTINE Global_Species_Select
-  USE M_T_Species,  ONLY: T_Species
-  USE M_Global_Vars,ONLY: vSpc
+subroutine Global_Species_Select
+!--
+!--read SPECIES.include and SPECIES.EXCLUDE blocks,
+!--from the vSpc built from database,
+!--retrieve species consistent with vEle & redox & vExclude
+!--
+  use M_T_Species,  only: T_Species
+  use M_Global_Vars,only: vSpc
   !
-  LOGICAL,ALLOCATABLE:: vExclude(:)
-  LOGICAL,ALLOCATABLE:: vInclude(:)
-  INTEGER:: iSp,nSp
+  logical,allocatable:: vExclude(:)
+  logical,allocatable:: vInclude(:)
+  integer:: iSp,nSp
   !
-  TYPE(T_Species),ALLOCATABLE:: vSpcNew(:)
+  type(T_Species),allocatable:: vSpcNew(:)
   !
-  !------------------ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
-  ALLOCATE(vExclude(1:SIZE(vSpc)))  ;  vExclude(:)= .FALSE.
-  ALLOCATE(vInclude(1:SIZE(vSpc)))  ;  vInclude(:)= .TRUE.
-  CALL Species_Read_Excluded(vSpc,vExclude,vInclude)
-  !-----------------/ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
+  !------------------ read SPECIES.include and SPECIES.EXCLUDE blocks --
+  allocate(vExclude(1:size(vSpc)))  ;  vExclude(:)= .false.
+  allocate(vInclude(1:size(vSpc)))  ;  vInclude(:)= .true.
+  call Species_Read_Excluded(vSpc,vExclude,vInclude)
+  !-----------------/ read SPECIES.include and SPECIES.EXCLUDE blocks --
   !
   !------------------------------------------------ species selection --
   !-- from the vSpc built from database,
   !-- retrieve species consistent
   !-- with vEle & redox & vExclude
-  IF(iDebug>0) WRITE(fTrc,'(A)') &
+  if(iDebug>0) write(fTrc,'(A)') &
   & "< Restrict database to species consistent with element list and redox state"
   !
-  ALLOCATE(vSpcNew(SIZE(vSpc)))
+  allocate(vSpcNew(size(vSpc)))
   !
   nSp=0
-  DO iSp=1,SIZE(vSpc)
-    IF( vExclude(iSp) .OR. (.NOT. vInclude(iSp)) ) CYCLE
+  do iSp=1,size(vSpc)
+    if( vExclude(iSp) .or. (.not. vInclude(iSp)) ) cycle
     nSp=  nSp+1
     vSpcNew(nSp)= vSpc(iSp)
-  ENDDO
+  end do
   !
-  DEALLOCATE(vExclude)
-  DEALLOCATE(vInclude)
+  deallocate(vExclude)
+  deallocate(vInclude)
   !-----------------------------------------------/ species selection --
   !
   !-------------------------------------------- build new sorted vSpc --
-  DEALLOCATE(vSpc)
-  ALLOCATE(vSpc(1:nSp))
+  deallocate(vSpc)
+  allocate(vSpc(1:nSp))
   vSpc(1:nSp)= vSpcNew(1:nSp)
   !
-  RETURN
-END SUBROUTINE Global_Species_Select
+  return
+end subroutine Global_Species_Select
 
-SUBROUTINE Species_Read_Excluded(vSpc,vExclude,vInclude)
+subroutine Species_Read_Excluded(vSpc,vExclude,vInclude)
 !--
 !-- process the SPECIES.EXCLUDE block
-!-- and the SPECIES.INCLUDE block
+!-- and the SPECIES.include block
 !--
-  USE M_Files,    ONLY: NamFInn
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_T_Species,ONLY: T_Species,Species_Index,Species_Rename
+  use M_Files,    only: NamFInn
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_T_Species,only: T_Species,Species_Index,Species_Rename
   !
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  LOGICAL,INTENT(OUT):: vExclude(:),vInclude(:)
+  type(T_Species),intent(in) :: vSpc(:)
+  logical,intent(out):: vExclude(:),vInclude(:)
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios,I     
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios,I     
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Species_Read_Excluded"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Read_Excluded"
   !
-  vExclude= .FALSE.
-  vInclude= .TRUE.
+  vExclude= .false.
+  vInclude= .true.
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
   !
-  DoFile: DO
+  DoFile: do
   
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
     
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
     
-    CALL AppendToEnd(L,W,EoL)
-    SELECT CASE(W)
+    call AppendToEnd(L,W,EoL)
+    select case(W)
     
-      CASE("ENDINPUT"); EXIT DoFile
+      case("ENDINPUT"); exit DoFile
       
-      CASE("SPECIES.EXCLUDE")
+      case("SPECIES.EXCLUDE")
         !
-        vExclude(:)= .FALSE.
+        vExclude(:)= .false.
         !
-        DoLine1: DO
+        DoLine1: do
         
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoLine1 !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoLine1 !skip comment lines
+          call AppendToEnd(L,W,EoL)
           
-          SELECT CASE(W)
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("END","ENDSPECIES.EXCLUDE"); EXIT DoLine1
-            !-> reading data from several BLOCK..END blocks 
-            !CASE("END","ENDSPECIES.EXCLUDE"); EXIT DoFile
-            !!-> reading only the first available BLOCK
-          END SELECT
+          select case(W)
+            case("ENDINPUT"); exit DoFile
+            case("END","ENDSPECIES.EXCLUDE"); exit DoLine1
+            !-> reading data from several block..end blocks 
+            !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
+            !!-> reading only the first available block
+          end select
           !
-          CALL Species_Rename(W)
-          I= Species_Index(TRIM(W),vSpc)
+          call Species_Rename(W)
+          I= Species_Index(trim(W),vSpc)
           !
           !---------------------------------------------------- trace --
-          IF(I<1) THEN
-            WRITE(fTrc,'(3A)') "Species ",TRIM(W)," = is not in current vSpc"
-          ELSE
-            WRITE(fTrc,'(3A)') "Species ",TRIM(W)," = is excluded"
+          if(I<1) then
+            write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
+          else
+            write(fTrc,'(3A)') "Species ",trim(W)," = is excluded"
             vExclude(I)=.true.
-          ENDIF
+          end if
           !---------------------------------------------------/ trace --
           !
-        ENDDO DoLine1
-      !ENDCASE("SPECIES.EXCLUDE")
+        end do DoLine1
+      !endcase("SPECIES.EXCLUDE")
       
-      CASE("SPECIES.INCLUDE")
+      case("SPECIES.include")
         !
-        vInclude(:)= .FALSE.
+        vInclude(:)= .false.
         !
-        DoLine2: DO
+        DoLine2: do
         
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoLine2 !skip comment lines
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoLine2 !skip comment lines
+          call AppendToEnd(L,W,EoL)
           
-          SELECT CASE(W)
-            CASE("ENDINPUT"); EXIT DoFile
-            CASE("END","ENDSPECIES.INCLUDE"); EXIT DoLine2
-            !-> reading data from several BLOCK..END blocks 
-            !CASE("END","ENDSPECIES.EXCLUDE"); EXIT DoFile
-            !!-> reading only the first available BLOCK
-          END SELECT
+          select case(W)
+            case("ENDINPUT"); exit DoFile
+            case("END","ENDSPECIES.include"); exit DoLine2
+            !-> reading data from several block..end blocks 
+            !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
+            !!-> reading only the first available block
+          end select
           
-          CALL Species_Rename(W)
-          I= Species_Index(TRIM(W),vSpc)
+          call Species_Rename(W)
+          I= Species_Index(trim(W),vSpc)
           !
           !---------------------------------------------------- trace --
-          IF(I<1) THEN
-            WRITE(fTrc,'(3A)') "Species ",TRIM(W)," = is not in current vSpc"
-          ELSE
-            WRITE(fTrc,'(3A)') "Species ",TRIM(W)," = is included"
+          if(I<1) then
+            write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
+          else
+            write(fTrc,'(3A)') "Species ",trim(W)," = is included"
             vInclude(I)=.true.
-          ENDIF
+          end if
           !---------------------------------------------------/ trace --
           !
-        ENDDO DoLine2
-      !ENDCASE("SPECIES.INCLUDE")
+        end do DoLine2
+      !endcase("SPECIES.include")
       
-    END SELECT
-  ENDDO DoFile
+    end select
+  end do DoFile
   !
-  CLOSE(F)
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Species_Read_Excluded"
-ENDSUBROUTINE Species_Read_Excluded
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Read_Excluded"
+end subroutine Species_Read_Excluded
 
-ENDMODULE M_Global_Tools
+end module M_Global_Tools

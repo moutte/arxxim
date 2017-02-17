@@ -1,54 +1,55 @@
-MODULE M_Simplex_Build
+module M_Simplex_Build
 !--
 !-- io module for simplex calculation
 !-- independant (provisionally) from other io modules
 !--
-  USE M_Kinds
-  USE M_Trace,      ONLY: fTrc,iDebug,T_,Stop_,Pause_,Warning_
-  USE M_T_Component,ONLY: T_Component, Component_Zero
+  use M_Kinds
+  use M_Trace,      only: fTrc,iDebug,T_,Stop_,Pause_,Warning_
+  use M_T_Component,only: T_Component, Component_Zero
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Simplex_Build
-  PUBLIC:: Simplex_CloseFiles
+  public:: Simplex_Build
+  public:: Simplex_CloseFiles
   !
-  INTEGER:: nFasPur,nFasSol
-  INTEGER:: Discret
+  integer:: nFasPur,nFasSol
+  integer:: Discret
   != dimension of discretization (=number of points on each parameter)
   !
-  !! LOGICAL:: Redox
+  !! logical:: Redox
   !
-  INTEGER,PUBLIC:: fSpl1=0, fSpl2=0
+  integer,public:: fSpl1=0, fSpl2=0
   ! files that should remain accessible
   ! by different subroutines throughout program
   !
-CONTAINS
+contains
 
-SUBROUTINE Simplex_Build
+subroutine Simplex_Build
   !
-  USE M_T_Element,   ONLY: Element_Index
-  USE M_T_Species,   ONLY: T_Species,Species_Stoikio_Calc
-  USE M_Dtb_Const,   ONLY: Tref,Pref,T_CK
+  use M_T_Element,   only: Element_Index
+  use M_T_Species,   only: T_Species,Species_Stoikio_Calc,Species_Append
+  use M_Dtb_Const,   only: Tref,Pref,T_CK
   !
-  USE M_Global_Alloc,ONLY: MixModels_Alloc,Phases_Alloc,MixPhases_Alloc
-  USE M_Global_Alloc,ONLY: DiscretParam_Alloc
-  USE M_Global_Tools,ONLY: Global_TP_Update
+  use M_Global_Alloc,only: MixModels_Alloc,Phases_Alloc,MixPhases_Alloc
+  use M_Global_Alloc,only: DiscretParam_Alloc
+  use M_Global_Tools,only: Global_TP_Update
   !
-  USE M_DiscretModel_Read
-  USE M_DiscretModel_Tools !DiscretParam_Init
+  use M_DiscretModel_Read
+  use M_DiscretModel_Tools !DiscretParam_Init
   !
-  USE M_Global_Vars, ONLY: vEle,vSpcDtb,vSpc,vMixModel,vMixFas,vFas
-  USE M_Global_Vars, ONLY: vDiscretModel,vDiscretParam
+  use M_Global_Vars, only: vEle,vSpcDtb,vSpc,vMixModel,vMixFas,vFas
+  use M_Global_Vars, only: vDiscretModel,vDiscretParam
+  use M_Global_Vars, only: tFormula
   !
-  USE M_GEM_Vars, ONLY: TdgK,Pbar,vCpnGEM,tStoikioGEM
+  use M_GEM_Vars,    only: TdgK,Pbar,vCpnGEM,tStoikioGEM
   !---------------------------------------------------------------------
-  LOGICAL:: Ok
-  INTEGER:: N
-  TYPE(T_Species),ALLOCATABLE:: vSpcTmp(:)
+  logical:: Ok
+  integer:: N
+  type(T_Species),allocatable:: vSpcTmp(:)
   !---------------------------------------------------------------------
-  IF(iDebug>2) WRITE(fTrc,'(/,A)') "<---------------------Simplex_Build"
+  if(iDebug>2) write(fTrc,'(/,A)') "<---------------------Simplex_Build"
   !
   nFasPur=0
   nFasSol=0
@@ -56,930 +57,926 @@ SUBROUTINE Simplex_Build
   TdgK= Tref
   Pbar= Pref
   !
-  ! IF(Element_Index("O__",vEle)==0) &
-  ! & CALL Stop_("Element Oxygen not found in vEle")
+  ! if(Element_Index("O__",vEle)==0) &
+  ! & call Stop_("Element Oxygen not found in vEle")
   !
   !--build vCpnGEM
-  CALL Component_Read(vEle)
+  call Component_Read(vEle)
   !
   !--rebuild species array vSpc consistent with vCpnGEM
-  CALL Species_Select(SIZE(vEle),vCpnGEM)
+  call Species_Select(size(vEle),vCpnGEM)
   !
   !--build new vEle
-  CALL Element_Select(vCpnGEM)
+  call Element_Select(vCpnGEM)
   !
-  CALL Element_Sort(vEle)
+  call Element_Sort(vEle)
   !
-  CALL Component_Stoikio_Calc(vEle,vCpnGEM,Ok)
+  call Component_Stoikio_Calc(vEle,vCpnGEM,Ok)
   !
   !--build species array vSpc consistent with vEle
   !--OBSOLETE
-  ! CALL Spl_Species_Alloc(vEle)
+  ! call Spl_Species_Alloc(vEle)
   !
-  CALL Species_Stoikio_Calc(vEle,vSpc,Ok)
+  call Species_Stoikio_Calc(vEle,vSpc,Ok)
   !
   !--build MixModel database -> vMixModel
-  CALL MixModels_Alloc(vSpc)
+  call MixModels_Alloc(vSpc, vMixModel)
   !
   !-------------------------------------------append discretized species
   !--read discretization models, build vDiscretModel
-  CALL DiscretModel_Read(vMixModel)
+  call DiscretModel_Read(vMixModel)
   !
-  N= SIZE(vDiscretModel)
+  N= size(vDiscretModel)
   !
-  IF(N>0) THEN
+  if(N>0) then
     !
-    CALL DiscretParam_Alloc(vDiscretModel) !-> allocate vDiscretParam
+    call DiscretParam_Alloc(vDiscretModel,  vDiscretParam)
     !
-    ALLOCATE(vSpcTmp(SIZE(vDiscretParam)))
+    allocate(vSpcTmp(size(vDiscretParam)))
     !
-    CALL DiscretParam_Init( &
+    call DiscretParam_Init( &
     & vEle,vSpc,vMixModel,vDiscretModel, &
     & vDiscretParam,vSpcTmp) !-> build vSpcDiscret
     !
-    CALL Species_Append(vSpcTmp) !-> new vSpc !!!
+    call Species_Append(vSpcTmp, vSpc) !-> new vSpc !!!
     !
-    DEALLOCATE(vSpcTmp)
+    deallocate(vSpcTmp)
     !
-    CALL DiscretSpecies_Stoikio_Calc( & !
+    call DiscretSpecies_Stoikio_Calc( & !
     & vEle,          & !IN
     & vMixModel,     & !IN
     & vDiscretModel, & !IN
     & vDiscretParam, & !IN
     & vSpc)            !INOUT
     !
-  ENDIF
+  end if
   !------------------------------------------/append discretized species
   !
   !--- read phase compositions, build vMixFas
-  CALL MixPhases_Alloc(vSpc,vMixModel)
+  call MixPhases_Alloc(vSpc,vMixModel,   vMixFas)
   !
   !--- build vFas
-  CALL Phases_Alloc(vSpc,vMixFas)
+  call Phases_Alloc(vSpc,vMixFas,    vFas)
   !
-  IF(iDebug>2) PRINT *,"TdgC/Pbar=", TdgK-T_CK,Pbar  !;  pause
+  if(iDebug>2) print *,"TdgC/Pbar=", TdgK-T_CK,Pbar  !;  pause
   !
-  CALL Global_TP_Update( &
+  call Global_TP_Update( &
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
   & vSpc,vMixModel,vMixFas,vFas)
   !
   !--- compute tFormula
-  CALL Spl_Tables_Build
+  call Spl_Tables_Build(vEle,vSpc,vFas)
   !
   !--- allocate, compute tStoikioGEM
-  IF(ALLOCATED(tStoikioGEM)) DEALLOCATE(tStoikioGEM)
-  ALLOCATE(tStoikioGEM(SIZE(vFas),SIZE(vCpnGEM)))
+  if(allocated(tStoikioGEM)) deallocate(tStoikioGEM)
+  allocate(tStoikioGEM(size(vFas),size(vCpnGEM)))
   !
-  CALL Spl_Stoikio_Calc(vCpnGEM,tStoikioGEM)
+  call Spl_Stoikio_Calc( &
+  & vEle, vFas,          &
+  & tFormula,            &
+  & vCpnGEM,             &
+  & tStoikioGEM)
   !---/
   !
   !--- write system stoikiometry
-  IF(iDebug>2) CALL Spl_WriteSystem(vCpnGEM,tStoikioGEM)
+  if(iDebug>2) call Spl_WriteSystem(vFas,tFormula,vCpnGEM,tStoikioGEM)
   !
-  IF(iDebug>2) WRITE(fTrc,'(A,/)') "</--------------------Simplex_Build"
+  if(iDebug>2) write(fTrc,'(A,/)') "</--------------------Simplex_Build"
   !
-  RETURN
-ENDSUBROUTINE Simplex_Build
+  return
+end subroutine Simplex_Build
 
-SUBROUTINE Species_Select(nEl,vCpn)
+subroutine Species_Select(nEl,vCpn)
 !--
 !-- rebuild species array vSpc consistent with vCpnGEM
 !--
-  USE M_T_Component,ONLY: T_Component
-  USE M_T_Species,  ONLY: T_Species
+  use M_T_Component,only: T_Component
+  use M_T_Species,  only: T_Species
   !
-  USE M_Global_Vars, ONLY: vSpc
+  use M_Global_Vars, only: vSpc
   !
-  INTEGER, INTENT(IN):: nEl
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  integer, intent(in):: nEl
+  type(T_Component),intent(inout):: vCpn(:)
   !
-  TYPE(T_Species),ALLOCATABLE:: vTmp(:)
-  REAL(dp),ALLOCATABLE:: tStoikio(:,:) !tStoikio(:,:),
-  INTEGER :: I,iS,nS,nC,N
-  LOGICAL :: Ok
+  type(T_Species),allocatable:: vTmp(:)
+  real(dp),allocatable:: tStoikio(:,:) !tStoikio(:,:),
+  integer :: I,iS,nS,nC,N
+  logical :: Ok
 
-  IF(iDebug>2) WRITE(fTrc,'(/,A)') "< Species_Select"
+  if(iDebug>2) write(fTrc,'(/,A)') "< Species_Select"
   
-  nC= SIZE(vCpn)
-  nS= SIZE(vSpc)
-  ALLOCATE(vTmp(nS))
+  nC= size(vCpn)
+  nS= size(vSpc)
+  allocate(vTmp(nS))
   vTmp(:)= vSpc(:)
 
-  ALLOCATE(tStoikio(nC+1,nEl))
-  DO I=1,nC
+  allocate(tStoikio(nC+1,nEl))
+  do I=1,nC
     tStoikio(I,1:nEl)= vCpn(I)%vStoikCp(1:nEl)  !tStoikio(I,:)
-  ENDDO
+  end do
 
   n= 0
-  DO iS=1,nS
+  do iS=1,nS
   
-    IF(vSpc(iS)%Typ /= "AQU" .OR. TRIM(vSpc(iS)%NamSp)=="H2O") THEN
+    if(vSpc(iS)%Typ /= "AQU" .or. trim(vSpc(iS)%NamSp)=="H2O") then
     
       tStoikio(nC+1,1:nEl)= vSpc(iS)%vStoikio(1:nEl)
       
-      CALL Check_Independent(tStoikio,Ok)
+      call Check_Independent(tStoikio,Ok)
       
-      IF(.NOT. Ok) THEN
+      if(.not. Ok) then
         ! if species is dependent on basis vCpn(:),
         ! then add to vSpc
         N= N+1
         vTmp(N)= vSpc(iS)
-        !~ WRITE(6,'(2A)') "OK SPECIES= ", TRIM(vSpc(is)%NamSp)
-        IF(iDebug>2) WRITE(fTrc,'(A)') TRIM(vSpc(iS)%NamSp)
-      ENDIF
+        !~ write(6,'(2A)') "OK SPECIES= ", trim(vSpc(is)%NamSp)
+        if(iDebug>2) write(fTrc,'(A)') trim(vSpc(iS)%NamSp)
+      end if
       
-    ENDIF
+    end if
   
-  ENDDO
+  end do
 
-  DEALLOCATE(vSpc)
-  ALLOCATE(vSpc(N))
+  deallocate(vSpc)
+  allocate(vSpc(N))
   vSpc(1:N)= vTmp(1:N)
 
-  DEALLOCATE(vTmp)
-  DEALLOCATE(tStoikio)
+  deallocate(vTmp)
+  deallocate(tStoikio)
 
-  IF(iDebug>2) WRITE(fTrc,'(A,/)') "</ Species_Select"
+  if(iDebug>2) write(fTrc,'(A,/)') "</ Species_Select"
   
-  RETURN
-END SUBROUTINE Species_Select
+  return
+end subroutine Species_Select
 
-SUBROUTINE Check_Independent(tStoikio,Ok)
-  USE M_Numeric_Tools,ONLY: iMinLoc_R,iFirstLoc,iMaxLoc_R
+subroutine Check_Independent(tStoikio,Ok)
+  use M_Numeric_Tools,only: iMinLoc_R,iFirstLoc,iMaxLoc_R
   !
-  REAL(dp),INTENT(IN) :: tStoikio(:,:)
-  LOGICAL, INTENT(OUT):: Ok
+  real(dp),intent(in) :: tStoikio(:,:)
+  logical, intent(out):: Ok
   !
-  REAL(dp),ALLOCATABLE:: tStoikTmp(:,:) !tStoikio(:,:),
-  INTEGER, ALLOCATABLE:: vIPivot(:)
+  real(dp),allocatable:: tStoikTmp(:,:) !tStoikio(:,:),
+  integer, allocatable:: vIPivot(:)
   !
-  INTEGER :: I,J,K
-  INTEGER :: N,nEl
-  REAL(dp):: Y,Pivot
+  integer :: I,J,K
+  integer :: N,nEl
+  real(dp):: Y,Pivot
   
-  N=   SIZE(tStoikio,1)
-  nEl= SIZE(tStoikio,2)
-  ALLOCATE(tStoikTmp(N,nEl))     ;  tStoikTmp(:,:)= Zero
-  ALLOCATE(vIPivot(nEl))         ;  vIPivot(:)= 0
+  N=   size(tStoikio,1)
+  nEl= size(tStoikio,2)
+  allocate(tStoikTmp(N,nEl))     ;  tStoikTmp(:,:)= Zero
+  allocate(vIPivot(nEl))         ;  vIPivot(:)= 0
   !
-  Ok= .TRUE.
+  Ok= .true.
   K= 0
-  DO I=1,N
+  do I=1,N
     !
     K= K+1
     tStoikTmp(K,:)= tStoikio(I,:)
-    DO J=1,K-1
+    do J=1,K-1
       Y= tStoikTmp(K,vIPivot(J))
       tStoikTmp(K,:)= tStoikTmp(K,:)- Y*tStoikTmp(J,:)
-    ENDDO
+    end do
     vIPivot(K)= iMaxLoc_R(ABS(tStoikTmp(K,:)))
     Pivot= tStoikTmp(K,vIPivot(K))
-    IF(ABS(Pivot)<1.D-9) THEN
-      != all coeff's are 0 -> this species is not independent -> EXIT ==
-      Ok= .FALSE.
-      DEALLOCATE(tStoikTmp,vIPivot) !tStoikio,
-      RETURN
-    ENDIF
+    if(ABS(Pivot)<1.D-9) then
+      != all coeff's are 0 -> this species is not independent -> exit ==
+      Ok= .false.
+      deallocate(tStoikTmp,vIPivot) !tStoikio,
+      return
+    end if
     !
     tStoikTmp(K,:)= tStoikTmp(K,:) /Pivot
     !
-  ENDDO
+  end do
   !
-  ! WRITE(sFMT,'(a,i3,a)') '(',nEl,'(G12.3,1X))'
-  ! DO I=1,N
-  !   WRITE(12,sFMT) (tStoikTmp(I,K),K=1,nEl)
-  ! ENDDO
+  ! write(sFMT,'(a,i3,a)') '(',nEl,'(G12.3,1X))'
+  ! do I=1,N
+  !   write(12,sFMT) (tStoikTmp(I,K),K=1,nEl)
+  ! end do
   !
-  DEALLOCATE(tStoikTmp,vIPivot) !tStoikio,
+  deallocate(tStoikTmp,vIPivot) !tStoikio,
   !
-END SUBROUTINE Check_Independent
+end subroutine Check_Independent
 
-SUBROUTINE Species_Append(vSpcAdd)
-!--
-!-- append vSpcAdd to current vSpc
-!-- -> produce a new vSpc
-!--
-  USE M_T_Species, ONLY: T_Species
-  !
-  USE M_Global_Vars, ONLY: vSpc
-  !
-  TYPE(T_Species),INTENT(IN):: vSpcAdd(:)
-  !
-  TYPE(T_Species),ALLOCATABLE:: vSpcAll(:)
-  INTEGER:: M, N
-  !
-  M= SIZE(vSpc)
-  N= SIZE(vSpcAdd)
-  !
-  ALLOCATE(vSpcAll(M+N))
-  vSpcAll(1   :M )= vSpc(1:M)
-  vSpcAll(M+1:M+N)= vSpcAdd(1:N)
-  !
-  DEALLOCATE(vSpc)
-  ALLOCATE(vSpc(N+M)) ; vSpc= vSpcAll
-  !
-  DEALLOCATE(vSpcAll)
-  !
-ENDSUBROUTINE Species_Append
-  !
-SUBROUTINE Simplex_CloseFiles
-  IF(fSpl1>0) CLOSE(fSpl1) ; fSpl1= 0
-  IF(fSpl2>0) CLOSE(fSpl2) ; fSpl2= 0
-ENDSUBROUTINE Simplex_CloseFiles
+subroutine Simplex_CloseFiles
+  if(fSpl1>0) close(fSpl1) ; fSpl1= 0
+  if(fSpl2>0) close(fSpl2) ; fSpl2= 0
+end subroutine Simplex_CloseFiles
 
-SUBROUTINE Component_Read(vEle)
+subroutine Component_Read(vEle)
 !--
 !-- read components from SYSTEM.GEM block -> build vCpnGEM
 !--
-  USE M_IOTools,  ONLY: Str_Append
-  USE M_Files,    ONLY: NamFInn
-  USE M_Dtb_Const,ONLY: T_CK
-  USE M_IoTools,  ONLY: GetUnit,LinToWrd,AppendToEnd,WrdToReal,Str_Upper
-  USE M_T_Element,ONLY: T_Element,Formula_Read,Element_Index,Formula_Build
-  USE M_Dtb_Read_Tools
+  use M_IOTools,  only: Str_Append
+  use M_Files,    only: NamFInn
+  use M_Dtb_Const,only: T_CK
+  use M_IoTools,  only: GetUnit,LinToWrd,AppendToEnd,WrdToReal,Str_Upper
+  use M_T_Element,only: T_Element,Formula_Read,Element_Index,Formula_Build
+  use M_Dtb_Read_Tools
   !
-  USE M_GEM_Vars,ONLY: vCpnGEM,TdgK,Pbar
+  use M_GEM_Vars,only: vCpnGEM,TdgK,Pbar
   !
-  TYPE(T_Element),INTENT(IN):: vEle(:)
+  type(T_Element),intent(in):: vEle(:)
   !
-  CHARACTER(LEN=255)    :: L,W
-  TYPE(T_Component)     :: Cpn
-  LOGICAL :: sOk,fOk,CpnOk
-  INTEGER :: nEl,N,i,iOx
-  INTEGER :: ZSp,nDiv,Ztest
-  INTEGER :: f,ios
-  LOGICAL :: UnitIsMole,UnitIsGram
-  REAL(dp):: X
-  CHARACTER(LEN=4):: Str
+  character(len=255)    :: L,W
+  type(T_Component)     :: Cpn
+  logical :: sOk,fOk,CpnOk
+  integer :: nEl,N,i,iOx
+  integer :: ZSp,nDiv,Ztest
+  integer :: f,ios
+  logical :: UnitIsMole,UnitIsGram
+  real(dp):: X
+  character(len=4):: Str
   !
-  REAL(dp),ALLOCATABLE:: tStoikio(:,:)
-  INTEGER, ALLOCATABLE:: vStoik(:)
-  TYPE(T_Component),ALLOCATABLE:: vC(:)
+  real(dp),allocatable:: tStoikio(:,:)
+  integer, allocatable:: vStoik(:)
+  type(T_Component),allocatable:: vC(:)
   !
-  LOGICAL:: EcformIsOk
-  INTEGER:: fFormula
-  CHARACTER(LEN=2),DIMENSION(:),ALLOCATABLE:: vElement
+  logical:: EcformIsOk
+  integer:: fFormula
+  character(len=2),dimension(:),allocatable:: vElement
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Component_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Component_Read"
   !
   !CodFormula= "ECFORM"
   fFormula= 0
-  ALLOCATE(vElement(SIZE(vEle)+3))
-  CALL DtbRead_Build_vElement(vEle,vElement)
+  allocate(vElement(size(vEle)+3))
+  call DtbRead_Build_vElement(vEle,vElement)
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
   iOx= Element_Index("OX_",vEle)
   !
-  nEl=SIZE(vEle)
-  ALLOCATE(vStoik(1:nEl))
-  ALLOCATE(vC(1:nEl))
+  nEl=size(vEle)
+  allocate(vStoik(1:nEl))
+  allocate(vC(1:nEl))
   !
-  IF(iDebug>2) PRINT *,"Component_Build"
+  if(iDebug>2) print *,"Component_Build"
   !
   N=0
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,sOk)
-    IF(W(1:1)=='!') CYCLE DoFile
-    CALL AppendToEnd(L,W,sOk)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,sOk)
+    if(W(1:1)=='!') cycle DoFile
+    call AppendToEnd(L,W,sOk)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("SYSTEM.SIMPLEX","SYSTEM.GEM")
+    case("SYSTEM.SIMPLEX","SYSTEM.GEM")
       !
-      DoBlock: DO
+      DoBlock: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,sOk)
-        IF(W(1:1)=='!') CYCLE DoBlock
-        CALL AppendToEnd(L,W,sOk)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,sOk)
+        if(W(1:1)=='!') cycle DoBlock
+        call AppendToEnd(L,W,sOk)
         !
-        UnitIsMole= .TRUE.
-        UnitIsGram= .FALSE.
+        UnitIsMole= .true.
+        UnitIsGram= .false.
         !
-        SELECT CASE(W)
+        select case(W)
         
-        CASE("ENDINPUT")                 ;  EXIT DoFile
-        CASE("END","ENDSYSTEM.SIMPLEX")  ;  EXIT DoBlock
-        CASE("ENDSYSTEM.GEM")            ;  EXIT DoBlock
+        case("ENDINPUT")                 ;  exit DoFile
+        case("END","ENDSYSTEM.SIMPLEX")  ;  exit DoBlock
+        case("ENDSYSTEM.GEM")            ;  exit DoBlock
         
-        CASE("TDGC")
-          CALL LinToWrd(L,W,sOk)
-          CALL WrdToReal(W,X)
+        case("TDGC")
+          call LinToWrd(L,W,sOk)
+          call WrdToReal(W,X)
           TdgK= X +T_CK
-          CYCLE DoBlock !----------------------------------cycle DoBlock
+          cycle DoBlock !----------------------------------cycle DoBlock
         
-        CASE("TDGK")
-          CALL LinToWrd(L,W,sOk)
-          CALL WrdToReal(W,X)
+        case("TDGK")
+          call LinToWrd(L,W,sOk)
+          call WrdToReal(W,X)
           TdgK= X
-          CYCLE DoBlock !----------------------------------cycle DoBlock
+          cycle DoBlock !----------------------------------cycle DoBlock
         
-        CASE("PBAR")
-          CALL LinToWrd(L,W,sOk)
-          CALL WrdToReal(W,X)
+        case("PBAR")
+          call LinToWrd(L,W,sOk)
+          call WrdToReal(W,X)
           Pbar= X
-          CYCLE DoBlock !----------------------------------cycle DoBlock
+          cycle DoBlock !----------------------------------cycle DoBlock
         
-        CASE("MOLE")
-          UnitIsMole= .TRUE.
-          CALL LinToWrd(L,W,sOk)
+        case("MOLE")
+          UnitIsMole= .true.
+          call LinToWrd(L,W,sOk)
         
-        CASE("GRAM")
-          UnitIsGram= .TRUE.
-          CALL LinToWrd(L,W,sOk)
+        case("GRAM")
+          UnitIsGram= .true.
+          call LinToWrd(L,W,sOk)
           
-        ENDSELECT
+        end select
         !
-        CALL Component_Zero(Cpn)
+        call Component_Zero(Cpn)
         !
-        CALL Str_Append(W,3)
-        Cpn%NamCp= TRIM(W)
+        call Str_Append(W,3)
+        Cpn%NamCp= trim(W)
         !
-        CALL LinToWrd(L,W,sOk,"NO")
+        call LinToWrd(L,W,sOk,"NO")
         !-> compact formula, character case should be conserved :!!
         !
-        !IF(CodFormula=="SCFORM") THEN
-          CALL DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-          IF(.NOT.EcformIsOk) THEN
-            IF(iDebug>0) PRINT '(3A)',TRIM(W)," =ERROR IN FORMULA, SKIPPED !!"
-            CYCLE DoBlock
-          ENDIF
-        !ENDIF
+        !if(CodFormula=="SCFORM") then
+          call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
+          if(.not.EcformIsOk) then
+            if(iDebug>0) print '(3A)',trim(W)," =ERROR IN FORMULA, SKIPPED !!"
+            cycle DoBlock
+          end if
+        !end if
         !
-        CALL Str_Upper(W)
+        call Str_Upper(W)
         !
-        Cpn%Formula= TRIM(W)
+        Cpn%Formula= trim(W)
         !
         !----------------------------------------------- process formula 
         !--------------------- if formula is Ok, save component in vC(:) 
-        CALL Formula_Read(Cpn%Formula,vEle,ZSp,nDiv,fOk,vStoik)
+        call Formula_Read(Cpn%Formula,vEle,ZSp,nDiv,fOk,vStoik)
         !
-        Ztest= DOT_PRODUCT(vStoik(1:nEl),vEle(1:nEl)%Z)
-        ! IF(fOk .AND. ZSp==Ztest) THEN
-        IF(fOk) THEN
+        Ztest= dot_product(vStoik(1:nEl),vEle(1:nEl)%Z)
+        ! if(fOk .and. ZSp==Ztest) then
+        if(fOk) then
           !
-          ! vStoikio has globally fixed SIZE, nElMax,
-          ! vStoik has local SIZE nEl !!
+          ! vStoikio has globally fixed size, nElMax,
+          ! vStoik has local size nEl !!
           !
           Cpn%Statut= "INERT"
           Cpn%vStoikCp(1:nEl)= vStoik(1:nEl)
           Cpn%vStoikCp(0)=     nDiv
           Cpn%vStoikCp(nEl+1)= ZSp
           !
-          IF(Zsp/=Ztest) THEN
-            IF(iOx/=0) THEN
+          if(Zsp/=Ztest) then
+            if(iOx/=0) then
               Cpn%vStoikCp(iOx)= Zsp - Ztest
-              WRITE(Str,'(I4)') Cpn%vStoikCp(iOx)
-              Cpn%Formula= TRIM(Cpn%Formula)//"OX("//TRIM(ADJUSTL(Str))//")"
-            ELSE
-              PRINT *,"ZSp,Stoikio=",ZSp,Ztest
-              IF(iDebug>0) WRITE(fTrc,'(A,A1,A15,A1,A39)') &
+              write(Str,'(I4)') Cpn%vStoikCp(iOx)
+              Cpn%Formula= trim(Cpn%Formula)//"OX("//trim(adjustl(Str))//")"
+            else
+              print *,"ZSp,Stoikio=",ZSp,Ztest
+              if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
               & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-              IF(iDebug>0) PRINT '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
-              CYCLE
-            END IF
-          END IF
+              if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+              cycle
+            end if
+          end if
           !
-          !CALL Formula_Build(vEle,Cpn%vStoikCp,Zsp,nDiv,Cpn%Formula)
+          !call Formula_Build(vEle,Cpn%vStoikCp,Zsp,nDiv,Cpn%Formula)
           !
           Cpn%iMix= 0
           !
-          IF(iDebug>0) WRITE(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
+          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
           & "ACCEPT",T_,Cpn%NamCp,T_,Cpn%Formula,T_,N
-          IF(iDebug>2) PRINT '(3A)',"accepted: ",Cpn%NamCp,Cpn%Formula
+          if(iDebug>2) print '(3A)',"accepted: ",Cpn%NamCp,Cpn%Formula
           !
-          CALL LinToWrd(L,W,sOk)
-          CALL WrdToReal(W,Cpn%Mole)
-          IF(UnitIsGram) THEN
-            X= DOT_PRODUCT( &
+          call LinToWrd(L,W,sOk)
+          call WrdToReal(W,Cpn%Mole)
+          if(UnitIsGram) then
+            X= dot_product( &
             & Cpn%vStoikCp(1:nEl), &
             & vEle(1:nEl)%WeitKg)/Cpn%vStoikCp(0)
             Cpn%Factor= X *1.0D3
             Cpn%Mole= Cpn%Mole /Cpn%Factor
             !! print *,"Cpn%Factor",Cpn%Factor
-          ENDIF
+          end if
           !
           N=N+1
           vC(N)= Cpn
           !
-        ELSE
+        else
           !
-          PRINT *,"ZSp,Stoikio=",ZSp,Ztest
-          IF(iDebug>0) WRITE(fTrc,'(A,A1,A15,A1,A39)') &
+          print *,"ZSp,Stoikio=",ZSp,Ztest
+          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
           & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-          IF(iDebug>0) PRINT '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+          if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
           !
-        ENDIF
+        end if
         !-------------------------------------------/ process formula --
         !
-      ENDDO DoBlock
+      end do DoBlock
       !
-      IF(N==0) CALL Stop_("< Found No Components...Stop") !===== stop ==
+      if(N==0) call Stop_("< Found No Components...Stop") !--=== stop ==
       !
-    ENDSELECT
+    end select
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  !! IF(iDebug>2) CALL Pause_
-  CLOSE(f)
+  !! if(iDebug>2) call Pause_
+  close(f)
   !
-  IF(ALLOCATED(vCpnGEM)) DEALLOCATE(vCpnGEM)
-  ALLOCATE(vCpnGEM(1:N))
+  if(allocated(vCpnGEM)) deallocate(vCpnGEM)
+  allocate(vCpnGEM(1:N))
   !
   vCpnGEM(1:N)= vC(1:N)
   !
-  DEALLOCATE(vStoik)
-  DEALLOCATE(vC)
+  deallocate(vStoik)
+  deallocate(vC)
   !
   !----------------------------------------------- check independency --
-  ALLOCATE(tStoikio(N,nEl))
-  DO I=1,N
+  allocate(tStoikio(N,nEl))
+  do I=1,N
     tStoikio(I,1:nEl)= vCpnGEM(I)%vStoikCp(1:nEl)  !tStoikio(I,:)
-  ENDDO
-  CALL Check_Independent(tStoikio,CpnOk)
-  IF(.NOT. CpnOk) CALL Stop_("Components Not Independent")
-  DEALLOCATE(tStoikio)
+  end do
+  call Check_Independent(tStoikio,CpnOk)
+  if(.not. CpnOk) call Stop_("Components Not Independent")
+  deallocate(tStoikio)
   !-----------------------------------------------/check independency --
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Component_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Component_Read"
   !
-  RETURN
-ENDSUBROUTINE Component_Read
+  return
+end subroutine Component_Read
 
-SUBROUTINE Element_Select(vCpn)
+subroutine Element_Select(vCpn)
 !--
 !-- reduce element list to those involved in vCpn,
 !-- then re-build vEle
 !--
-  USE M_T_Component,ONLY: T_Component
-  USE M_T_Element,  ONLY: T_Element
+  use M_T_Component,only: T_Component
+  use M_T_Element,  only: T_Element
   !
-  USE M_Global_Vars,ONLY: vEle
+  use M_Global_Vars,only: vEle
   !
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  type(T_Component),intent(inout):: vCpn(:)
   !
-  INTEGER,ALLOCATABLE:: tStoik(:,:)
-  INTEGER:: nEl, i, N
-  TYPE(T_Element),ALLOCATABLE:: vE(:)
+  integer,allocatable:: tStoik(:,:)
+  integer:: nEl, i, N
+  type(T_Element),allocatable:: vE(:)
   !
-  IF(iDebug>2) WRITE(fTrc,'(A)') "<----------------------Element_Select"
-  IF(iDebug>2) WRITE(fTrc,'(A)') "-> New Element List"
+  if(iDebug>2) write(fTrc,'(A)') "<----------------------Element_Select"
+  if(iDebug>2) write(fTrc,'(A)') "-> New Element List"
   !
-  nEl= SIZE(vEle)
+  nEl= size(vEle)
   !
-  ALLOCATE(tStoik(SIZE(vCpn),nEl))
-  DO i=1,SIZE(vCpn)
+  allocate(tStoik(size(vCpn),nEl))
+  do i=1,size(vCpn)
     tStoik(i,1:nEl)= vCpn(i)%vStoikCp(1:nEl)
-  ENDDO
+  end do
   !
-  IF(iDebug>2) THEN
-    WRITE(fTrc,'(*(A,A1))') (vEle(i)%NamEl,t_,i=1,nEl)
-    CALL WriteMat_I(fTrc,tStoik)
-  END IF
+  if(iDebug>2) then
+    write(fTrc,'(*(A,A1))') (vEle(i)%NamEl,t_,i=1,nEl)
+    call WriteMat_I(fTrc,tStoik)
+  end if
   !
-  ALLOCATE(vE(1:nEl))
+  allocate(vE(1:nEl))
   N=0
   !
   !---------------------------select elements involved in the components
-  DO I=1,nEl
-    IF(ANY(tStoik(:,i)/=0)) THEN
+  do I=1,nEl
+    if(ANY(tStoik(:,i)/=0)) then
       N=N+1
       vE(N)= vEle(I) !-> new element list
-      IF(iDebug>2) WRITE(fTrc,'(I3,1X,A)') N,vEle(I)%NamEl
-    ENDIF
-  ENDDO
+      if(iDebug>2) write(fTrc,'(I3,1X,A)') N,vEle(I)%NamEl
+    end if
+  end do
   !---/
   !
-  DEALLOCATE(vEle); ALLOCATE(vEle(1:N))
+  deallocate(vEle); allocate(vEle(1:N))
   vEle(1:N)= vE(1:N)
   !
-  DEALLOCATE(tStoik)
-  DEALLOCATE(vE)
+  deallocate(tStoik)
+  deallocate(vE)
   !
-  IF(iDebug>2) WRITE(fTrc,'(A,/)') "</-------------------Element_Select"
+  if(iDebug>2) write(fTrc,'(A,/)') "</-------------------Element_Select"
   !
-  RETURN
-END SUBROUTINE Element_Select
+  return
+end subroutine Element_Select
 
-SUBROUTINE Element_Sort(vEle)
-  USE M_T_Element,ONLY: T_Element,Element_Index
+subroutine Element_Sort(vEle)
+  use M_T_Element,only: T_Element,Element_Index
   !
-  TYPE(T_Element),INTENT(INOUT):: vEle(:)
+  type(T_Element),intent(inout):: vEle(:)
   !
-  TYPE(T_Element):: E
-  INTEGER:: i
+  type(T_Element):: E
+  integer:: i
   !
   i= Element_Index("O__",vEle)
-  IF(i/=1) THEN
+  if(i/=1) then
     E= vEle(1)
     vEle(1)= vEle(i)
     vEle(i)= E
-  ENDIF
+  end if
   !
-ENDSUBROUTINE Element_Sort
+end subroutine Element_Sort
 
-SUBROUTINE Component_Stoikio_Calc(vEle,vCpn,Ok)
+subroutine Component_Stoikio_Calc(vEle,vCpn,Ok)
 !--
 !-- update vCpn(:)%vStoikCp
 !--
-  USE M_T_Element,  ONLY: T_Element,Element_Index
-  USE M_T_Component,ONLY: T_Component,Component_Stoikio
+  use M_T_Element,  only: T_Element,Element_Index
+  use M_T_Component,only: T_Component,Component_Stoikio
   !
-  TYPE(T_Element),  INTENT(IN)   :: vEle(:)
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:) !modIFs in nDiv,Z,Oxy
-  LOGICAL,          INTENT(OUT)  :: Ok
+  type(T_Element),  intent(in)   :: vEle(:)
+  type(T_Component),intent(inout):: vCpn(:) !modifs in nDiv,Z,Oxy
+  logical,          intent(out)  :: Ok
   !
-  INTEGER:: I,J,ieOx
-  LOGICAL:: fOk
+  integer:: I,J,ieOx
+  logical:: fOk
   !
-  IF(iDebug>2)  WRITE(fTrc,'(A)') "< Component_Stoikio_Calc"
+  if(iDebug>2)  write(fTrc,'(A)') "< Component_Stoikio_Calc"
   !
   ieOx= Element_Index("OX_",vEle)
   !
   Ok= .true.
-  DO I=1,SIZE(vCpn)
-    CALL Component_Stoikio(vEle,ieOx,vCpn(I),fOk)
-    IF(.NOT. fOk) THEN
+  do I=1,size(vCpn)
+    call Component_Stoikio(vEle,ieOx,vCpn(I),fOk)
+    if(.not. fOk) then
       Ok= .false.
-      !! Msg= "Stoikiometry problem in species "//TRIM(vSpc(I)%NamSp)
-      RETURN
-    ENDIF
-  ENDDO
+      !! Msg= "Stoikiometry problem in species "//trim(vSpc(I)%NamSp)
+      return
+    end if
+  end do
   !
   !------------------------------------------------------------ trace --
-  IF(iDebug>2) THEN
-    DO i=1,SIZE(vEle)
-      WRITE(fTrc,'(A,A1)',ADVANCE="no") vEle(i)%NamEl,t_
-    ENDDO
-    WRITE(fTrc,*)
-    DO i=1,SIZE(vCpn)
-      DO j=1,SIZE(vEle)
-        WRITE(fTrc,'(I3,A1)',ADVANCE="no") vCpn(i)%vStoikCp(j),t_
-      ENDDO
-      WRITE(fTrc,*)
-    ENDDO
-  ENDIF
+  if(iDebug>2) then
+    do i=1,size(vEle)
+      write(fTrc,'(A,A1)',advance="no") vEle(i)%NamEl,t_
+    end do
+    write(fTrc,*)
+    do i=1,size(vCpn)
+      do j=1,size(vEle)
+        write(fTrc,'(I3,A1)',advance="no") vCpn(i)%vStoikCp(j),t_
+      end do
+      write(fTrc,*)
+    end do
+  end if
   !-----------------------------------------------------------/ trace --
-  IF(iDebug>2)  WRITE(fTrc,'(A)') "</ Component_Stoikio_Calc"
+  if(iDebug>2)  write(fTrc,'(A)') "</ Component_Stoikio_Calc"
   !
-  RETURN
-ENDSUBROUTINE Component_Stoikio_Calc
+  return
+end subroutine Component_Stoikio_Calc
 
-INTEGER FUNCTION iMaxLoc_I(ARR) !"NR"
-  REAL(dp),INTENT(IN) :: ARR(:)
-  INTEGER:: IMAX(1)
+integer function iMaxLoc_I(ARR) !"NR"
+  real(dp),intent(in) :: ARR(:)
+  integer:: IMAX(1)
   IMAX=MAXLOC(ARR(:))
   iMaxLoc_I=IMAX(1)
-END FUNCTION iMaxLoc_I
+end function iMaxLoc_I
 
-SUBROUTINE Spl_Species_Alloc(vEle)
-!--
-!-- retrieve all species consistent with current vEle
-!-- OBSOLETE: replaced by Species_Select
-!--
-  USE M_T_Element,   ONLY: T_Element,Element_Index
-  USE M_T_Species,   ONLY: T_Species,Species_Stoikio
-  USE M_Global_Vars, ONLY: vSpcDtb,vSpc
-  USE M_Dtb_Calc,    ONLY: DtbSpc_GrtTable_Build
-  !
-  TYPE(T_Element),INTENT(IN):: vEle(:)
-  !
-  TYPE(T_Species),ALLOCATABLE:: vSpc_(:)
-  INTEGER:: nEl,nSp,ieOx,I,N
-  LOGICAL:: fOk
-  !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< SplSpecies_Alloc"
-  !
-  nSp=  SIZE(vSpc)
-  nEl=  SIZE(vEle)
-  ieOx= Element_Index("OX_",vEle)
-  !
-  ALLOCATE(vSpc_(1:nSp))
-  !
-  !--- select species consistent with vEle
-  N=0
-  DO I=1,nSp
-    IF(vSpc(I)%Typ /= "AQU" .OR. TRIM(vSpc(I)%NamSp)=="H2O") THEN
-      CALL Species_Stoikio(vEle,ieOx,vSpc(I),fOk)
-      IF(fOk) THEN
-        N=N+1
-        vSpc_(N)= vSpc(I)
-      ENDIF
-    ENDIF
-  ENDDO
-  !
-  DEALLOCATE(vSpc); ALLOCATE(vSpc(1:N))
-  vSpc(1:N)=   vSpc_(1:N)
-  DEALLOCATE(vSpc_)
-  !
-  !~ nSp=  SIZE(vSpc)
-  !~ CALL Warning_("vTPpath must be ALLOCATED before Spl_Species_Alloc")
-  !~ nTP=  SIZE(vTPpath)
-  !~ IF(ALLOCATED(tGrt)) DEALLOCATE(tGrt); ALLOCATE(tGrt(1:nSp,1:nTP))
-  !~ CALL DtbSpc_GrtTable_Build(vTPpath,vSpcDtb,vSpc,tGrt)
-  !~ !
-  IF(iDebug>0) THEN
-    WRITE(fTrc,'(A)') "-> New Species List"
-    DO i=1,SIZE(vSpc)
-      WRITE(fTrc,'(I3,1X,A)') I,vSpc(I)%NamSp
-    ENDDO
-  ENDIF
-  !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ SplSpecies_Alloc"
-  !
-ENDSUBROUTINE Spl_Species_Alloc
+!old!!-----------------------------------------------------------------------
+!old!!-- retrieve all species consistent with current vEle
+!old!!-- OBSOLETE: replaced by Species_Select
+!old!!-----------------------------------------------------------------------
+!old!subroutine Spl_Species_Alloc(vEle)
+!old!  use M_T_Element,   only: T_Element,Element_Index
+!old!  use M_T_Species,   only: T_Species,Species_Stoikio
+!old!  use M_Global_Vars, only: vSpc !,vSpcDtb
+!old!  use M_Dtb_Calc,    only: DtbSpc_Table_Build
+!old!  !
+!old!  type(T_Element),intent(in):: vEle(:)
+!old!  !
+!old!  type(T_Species),allocatable:: vSpc_(:)
+!old!  integer:: nEl,nSp,ieOx,I,N
+!old!  logical:: fOk
+!old!  !
+!old!  if(iDebug>0) write(fTrc,'(/,A)') "< SplSpecies_Alloc"
+!old!  !
+!old!  nSp=  size(vSpc)
+!old!  nEl=  size(vEle)
+!old!  ieOx= Element_Index("OX_",vEle)
+!old!  !
+!old!  allocate(vSpc_(1:nSp))
+!old!  !
+!old!  !--- select species consistent with vEle
+!old!  N=0
+!old!  do I=1,nSp
+!old!    if(vSpc(I)%Typ /= "AQU" .or. trim(vSpc(I)%NamSp)=="H2O") then
+!old!      call Species_Stoikio(vEle,ieOx,vSpc(I),fOk)
+!old!      if(fOk) then
+!old!        N=N+1
+!old!        vSpc_(N)= vSpc(I)
+!old!      end if
+!old!    end if
+!old!  end do
+!old!  !
+!old!  deallocate(vSpc); allocate(vSpc(1:N))
+!old!  vSpc(1:N)=   vSpc_(1:N)
+!old!  deallocate(vSpc_)
+!old!  !
+!old!  !~ nSp=  size(vSpc)
+!old!  !~ call Warning_("vTPpath must be allocated before Spl_Species_Alloc")
+!old!  !~ nTP=  size(vTPpath)
+!old!  !~ if(allocated(tGrt)) deallocate(tGrt); allocate(tGrt(1:nSp,1:nTP))
+!old!  !~ call DtbSpc_Table_Write(vTPpath,vSpcDtb,vSpc,tGrt)
+!old!  !~ !
+!old!  if(iDebug>0) then
+!old!    write(fTrc,'(A)') "-> New Species List"
+!old!    do i=1,size(vSpc)
+!old!      write(fTrc,'(I3,1X,A)') I,vSpc(I)%NamSp
+!old!    end do
+!old!  end if
+!old!  !
+!old!  if(iDebug>0) write(fTrc,'(A,/)') "</ SplSpecies_Alloc"
+!old!  !
+!old!end subroutine Spl_Species_Alloc
 
-SUBROUTINE Spl_Tables_Build
+subroutine Spl_Tables_Build(vEle,vSpc,vFas)
 !--
 !-- build tFormula(1:nFs,1:nEl): table of species stoikios in lines
 !--
-  USE M_T_Element,   ONLY: Formula_Read
-  USE M_T_Species,   ONLY: T_Species
-  USE M_Global_Vars, ONLY: vEle,vFas,vSpc,tFormula
+  use M_T_Element,   only: T_Element,Formula_Read
+  use M_T_Species,   only: T_Species
+  use M_T_Phase,     only: T_Phase
+  use M_Global_Vars, only: tFormula
   !
-  INTEGER:: nEl,nFs,I
-  INTEGER,DIMENSION(:),ALLOCATABLE:: vStoik
+  type(T_Element), intent(in):: vEle(:)
+  type(T_Species), intent(in):: vSpc(:)
+  type(T_Phase),   intent(in):: vFas(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Spl_BuildTables"
+  integer:: nEl,nFs,I
+  integer,dimension(:),allocatable:: vStoik
   !
-  nEl=SIZE(vEle)
-  nFs=SIZE(vFas)
+  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_BuildTables"
   !
-  DEALLOCATE(tFormula) ;  ALLOCATE(tFormula(1:nFs,1:nEl))
+  nEl=size(vEle)
+  nFs=size(vFas)
   !
-  ALLOCATE(vStoik(0:nEl))
+  deallocate(tFormula)
+  allocate(tFormula(1:nFs,1:nEl))
   !
-  DO I=1,nFs
+  allocate(vStoik(0:nEl))
+  !
+  do I=1,nFs
     vStoik(0:nEl)= vSpc(vFas(I)%iSpc)%vStoikio(0:nEl)
-    tFormula(I,1:nEl)= vStoik(1:nEl) /REAL(vStoik(0))
-  ENDDO
+    tFormula(I,1:nEl)= vStoik(1:nEl) /real(vStoik(0))
+  end do
   !
-  DEALLOCATE(vStoik)
+  deallocate(vStoik)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Spl_BuildTables"
-ENDSUBROUTINE Spl_Tables_Build
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_BuildTables"
+end subroutine Spl_Tables_Build
 
-SUBROUTINE Spl_Stoikio_Calc(vCpn,tStoikio)
+subroutine Spl_Stoikio_Calc( &
+& vEle, vFas,                &
+& tFormula,                  &
+& vCpn,                      &
+& tStoikio)
 !--
 !-- Compute tStoikioCpn from tStoikEle
-!-- tStoikioCpn(1:nFs,1:nCp)- stoikio of phases in terms of components
+!-- tStoikio(1:nFs,1:nCp)- stoikio of phases (line) in terms of components (col)
 !--
-
-  USE M_T_Component,ONLY: T_Component
-  USE M_T_Element,   ONLY: Formula_Read
-  USE M_Numeric_Mat, ONLY: LU_Decomp, LU_BakSub
+  !---------------------------------------------------------------------
+  use M_T_Component, only: T_Component
+  use M_T_Element,   only: T_Element
+  use M_T_Phase,     only: T_Phase
+  use M_T_Element,   only: Formula_Read
   !
-  USE M_Global_Vars, ONLY: tFormula,vFas,vEle
+  use M_Numeric_Mat, only: LU_Decomp, LU_BakSub
+  !---------------------------------------------------------------------
+  type(T_Element),  intent(in) :: vEle(:)
+  type(T_Phase),    intent(in) :: vFas(:)
+  real(dp),         intent(in) :: tFormula(:,:)
+  type(T_Component),intent(in) :: vCpn(:)
+  real(dp),         intent(out):: tStoikio(:,:)
+  !---------------------------------------------------------------------
+  real(dp),allocatable:: A(:,:)
+  integer, allocatable:: Indx(:)
+  real(dp),allocatable:: Y(:)
   !
-  TYPE(T_Component),INTENT(IN) :: vCpn(:)
-  REAL(dp),         INTENT(OUT):: tStoikio(:,:)
-  !
-  REAL(dp),ALLOCATABLE:: A(:,:)
-  INTEGER, ALLOCATABLE:: Indx(:)
-  REAL(dp),ALLOCATABLE:: Y(:)
-
   ! stoikiometry table of the components in terms of the elements
-  REAL(dp),ALLOCATABLE:: tStoik(:,:)
+  real(dp),allocatable:: tStoik(:,:)
   !
-  LOGICAL :: bSingul
-  REAL(dp):: D
-  INTEGER :: I,nEl,nCp,nFs
+  logical :: bSingul
+  real(dp):: D
+  integer :: I,nEl,nCp,nFs
+  !---------------------------------------------------------------------
+  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
+  nFs=size(vFas)
+  nCp=size(vCpn)
+  nEl=size(vEle)
   !
-  nFs=SIZE(vFas)
-  nCp=SIZE(vCpn)
-  nEl=SIZE(vEle)
+  allocate(tStoik(nCp,nEl))
+  do i=1,nCp
+    tStoik(i,1:nEl)= vCpn(i)%vStoikCp(1:nEl) /real(vCpn(i)%vStoikCp(0))
+  end do
   !
-  ALLOCATE(tStoik(nCp,nEl))
-  DO i=1,nCp
-    tStoik(i,1:nEl)= vCpn(i)%vStoikCp(1:nEl) /REAL(vCpn(i)%vStoikCp(0))
-  ENDDO
-  !
-  ALLOCATE(A(1:nCp,1:nCp))
-  A(1:nCp,1:nCp)= TRANSPOSE(tStoik(1:nCp,2:nEl))
+  allocate(A(1:nCp,1:nCp))
+  A(1:nCp,1:nCp)= transpose(tStoik(1:nCp,2:nEl))
   ! column_1=Oxygen, -> already taken in account by Spl_ReadFormula
   ! -> columns 2:nEl of ElementFormula Matrix gives ElementStoikio of components 1:nCp
   !
-  ALLOCATE(Indx(1:nCp))
-  CALL LU_Decomp(A,Indx,D,bSingul)
-  IF(bSingul) CALL Stop_("SINGUL IN Spl_Stoikio_Calc")
+  allocate(Indx(1:nCp))
+  call LU_Decomp(A,Indx,D,bSingul)
+  if(bSingul) call Stop_("SINGUL IN Spl_Stoikio_Calc")
   !-> inverse of A gives Elements 2:nEl in terms of components 1:nCp
   !
   ! obtain Phases 1:nFs expressed in terms of Components 1:nCp
-  ALLOCATE(Y(1:nCp))
-  DO I=1,nFs
+  allocate(Y(1:nCp))
+  do I=1,nFs
     Y= tFormula(I,2:nEl)
-    CALL LU_BakSub(A,Indx,Y)
+    call LU_BakSub(A,Indx,Y)
     tStoikio(I,1:nCp)=Y
-  ENDDO
+  end do
   !
-  DEALLOCATE(A)
-  DEALLOCATE(Indx)
-  DEALLOCATE(Y)
+  deallocate(A)
+  deallocate(Indx)
+  deallocate(Y)
   !
-  IF(iDebug>2) CALL Spl_Stoikio_Show
+  if(iDebug>2) call Spl_Stoikio_Show
   !
-  DEALLOCATE(tStoik)
+  deallocate(tStoik)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
   !
-CONTAINS
+contains
 
-SUBROUTINE Spl_Stoikio_Show
+subroutine Spl_Stoikio_Show
 !--
 !-- write stoikio on stokio "trace file"
 !--
-  USE M_IoTools,ONLY: GetUnit
-  USE M_Files,  ONLY: DirOut,NamFInn
+  use M_IoTools,only: GetUnit
+  use M_Files,  only: DirOut !,NamFInn
   !
-  INTEGER:: I,iEl
-  INTEGER:: FF
+  integer:: I,iEl
+  integer:: FF
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< ShowStoikio"
+  if(iDebug>0) write(fTrc,'(/,A)') "< ShowStoikio"
   !
-  IF(iDebug>0) WRITE(fTrc,'(A)') &
-  & "Spl_Stoikio_Show -> "//TRIM(DirOut)//"_spl_stoikio.log"
+  if(iDebug>0) write(fTrc,'(A)') &
+  & "Spl_Stoikio_Show -> "//trim(DirOut)//"_spl_stoikio.log"
   !
-  CALL GetUnit(FF)
+  call GetUnit(FF)
   !
-  OPEN(FF,FILE=TRIM(DirOut)//"_spl_stoikio.log")
-  WRITE(FF,'(A)') "!! system stoichiometry"
+  open(FF,file=trim(DirOut)//"_spl_stoikio.log")
+  write(FF,'(A)') "!! system stoichiometry"
   !
-  WRITE(FF,'(/,A,/)') "Components in terms of elements"
-  DO iEl=1,nEl
-    WRITE(FF,'(A1,A2,A1)',ADVANCE='NO') " ",vEle(iEl)%NamEl,T_
-  ENDDO
-  WRITE(FF,*)
-  DO I=1,nCp
-    DO iEl=1,nEl; WRITE(FF,'(F7.2,A1)',ADVANCE='NO') tStoik(I,iEl),T_; ENDDO
-    WRITE(FF,'(A,A1,F15.3)') TRIM(vCpn(I)%NamCp),T_,vCpn(I)%Mole
-  ENDDO
+  write(FF,'(/,A,/)') "Components in terms of elements"
+  do iEl=1,nEl
+    write(FF,'(A1,A2,A1)',advance="no") " ",vEle(iEl)%NamEl,T_
+  end do
+  write(FF,*)
+  do I=1,nCp
+    do iEl=1,nEl; write(FF,'(F7.2,A1)',advance="no") tStoik(I,iEl),T_; end do
+    write(FF,'(A,A1,F15.3)') trim(vCpn(I)%NamCp),T_,vCpn(I)%Mole
+  end do
   !
-  WRITE(FF,'(/,A,/)') "Phases in terms of elements"
-  DO I=1,nFs
-    DO iEl=1,nEl
-       WRITE(FF,'(F7.3,A1)',ADVANCE='NO') tFormula(I,iEl),T_
-    ENDDO
-    WRITE(FF,'(A,A1,F15.3)') TRIM(vFas(I)%NamFs),T_,vFas(I)%Grt
-  ENDDO
+  write(FF,'(/,A,/)') "Phases in terms of elements"
+  do I=1,nFs
+    do iEl=1,nEl
+       write(FF,'(F7.3,A1)',advance="no") tFormula(I,iEl),T_
+    end do
+    write(FF,'(A,A1,F15.3)') trim(vFas(I)%NamFs),T_,vFas(I)%Grt
+  end do
   !
-  CLOSE(FF)
+  close(FF)
   !
-  !CALL GetUnit(FF)
-  OPEN(FF,FILE=TRIM(DirOut)//"_spl_stoikio2.log")
-  WRITE(FF,'(2A)') &
+  !call GetUnit(FF)
+  open(FF,file=trim(DirOut)//"_spl_stoikio2.log")
+  write(FF,'(2A)') &
   & "!! Stoikio Table of Fases (line) in terms of Components (column)", &
   & " and vFas(I)%Grt"
   !
-  DO iEl=1,nCp
-    WRITE(FF,'(A,A1)',ADVANCE='NO') TRIM(vCpn(iEl)%NamCp),T_
-  ENDDO
-  WRITE(FF,*)
+  do iEl=1,nCp
+    write(FF,'(A,A1)',advance="no") trim(vCpn(iEl)%NamCp),T_
+  end do
+  write(FF,*)
   
-  DO I=1,nFs
-    DO iEl=1,nCp
-      WRITE(FF,'(F7.3,A1)',ADVANCE='NO') tStoikio(I,iEl),T_
-    ENDDO
-    WRITE(FF,'(A,A1,F15.3)') TRIM(vFas(I)%NamFs),T_,vFas(I)%Grt
-  ENDDO
+  do I=1,nFs
+    do iEl=1,nCp
+      write(FF,'(F7.3,A1)',advance="no") tStoikio(I,iEl),T_
+    end do
+    write(FF,'(A,A1,F15.3)') trim(vFas(I)%NamFs),T_,vFas(I)%Grt
+  end do
   !
-  CLOSE(FF)
+  close(FF)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ ShowStoikio"
-ENDSUBROUTINE Spl_Stoikio_Show
+  if(iDebug>0) write(fTrc,'(A,/)') "</ ShowStoikio"
+end subroutine Spl_Stoikio_Show
 
-ENDSUBROUTINE Spl_Stoikio_Calc
+end subroutine Spl_Stoikio_Calc
 
-SUBROUTINE Table_Transform(tInput,tTransform,tOutput)
+subroutine Table_Transform(tInput,tTransform,tOutput)
 !--
 !-- transform, using tTransform, tInput to tOutput
 !-- tTransform is invertible, (nC,nC)
 !-- tInput and tOutput are matrices of same shape (nC,nS), nS>nC
 !-- tOutput - inv(tTransform) * tInput
 !--
-  USE M_Trace,ONLY: Stop_
-  USE M_Numeric_Mat,ONLY: LU_Decomp, LU_BakSub
-  REAL(dp),INTENT(INOUT) :: tTransform(:,:) !square, non singular, (nC,nC)
-  REAL(dp),INTENT(IN)    :: tInput(:,:)  !(nC,nS)
-  REAL(dp),INTENT(OUT)   :: tOutput(:,:) !(nC,nS)
+  use M_Trace,only: Stop_
+  use M_Numeric_Mat,only: LU_Decomp, LU_BakSub
+  real(dp),intent(inout) :: tTransform(:,:) !square, non singular, (nC,nC)
+  real(dp),intent(in)    :: tInput(:,:)  !(nC,nS)
+  real(dp),intent(out)   :: tOutput(:,:) !(nC,nS)
   !
-  REAL(dp),ALLOCATABLE:: vY(:)
-  INTEGER, ALLOCATABLE:: vIndx(:)
-  LOGICAL :: bSingul
-  REAL(dp):: D
-  INTEGER :: I,nC,nS
+  real(dp),allocatable:: vY(:)
+  integer, allocatable:: vIndx(:)
+  logical :: bSingul
+  real(dp):: D
+  integer :: I,nC,nS
   !
-  nC= SIZE(tInput,1)
-  nS= SIZE(tInput,2)
+  nC= size(tInput,1)
+  nS= size(tInput,2)
   !
-  ALLOCATE(vY(1:nC))
-  ALLOCATE(vIndx(1:nC))
+  allocate(vY(1:nC))
+  allocate(vIndx(1:nC))
   !
   !the transformation matrix, tTransform, must be invertible !!
-  CALL LU_Decomp(tTransform,vIndx,D,bSingul)
-  IF(bSingul) CALL Stop_("SINGUL IN Table_Transform")
-  DO I= 1,nS
+  call LU_Decomp(tTransform,vIndx,D,bSingul)
+  if(bSingul) call Stop_("SINGUL IN Table_Transform")
+  do I= 1,nS
     vY= tInput(:,I)
-    CALL LU_BakSub(tTransform,vIndx,vY)
+    call LU_BakSub(tTransform,vIndx,vY)
     tOutput(:,I)= vY(:)
-  ENDDO
+  end do
   !
-  DEALLOCATE(vY,vIndx)
+  deallocate(vY,vIndx)
   !
-ENDSUBROUTINE Table_Transform
+end subroutine Table_Transform
 
-SUBROUTINE WriteRMat(f,Mat) !,N1,N2,M1,M2)
-  INTEGER, INTENT(IN)::f !=File Index
-  REAL(dp),INTENT(IN)::Mat(:,:)
+subroutine WriteRMat(f,Mat) !,N1,N2,M1,M2)
+  integer, intent(in)::f !=File Index
+  real(dp),intent(in)::Mat(:,:)
   !
-  INTEGER::I,J
+  integer::I,J
   !
-  DO I=1,SIZE(Mat,1)
-    DO J=1,SIZE(Mat,2)
-      WRITE(f,'( F7.1, A1)',ADVANCE='NO') Mat(I,J), T_
-    ENDDO
-    WRITE(f,*)
-  ENDDO
-  WRITE(f,*)
+  do I=1,size(Mat,1)
+    do J=1,size(Mat,2)
+      write(f,'(F7.1, A1)',advance="no") Mat(I,J), T_
+    end do
+    write(f,*)
+  end do
+  write(f,*)
   !
-ENDSUBROUTINE WriteRMat
+end subroutine WriteRMat
 
-SUBROUTINE WriteMat_I(f,Mat)
-  INTEGER, INTENT(IN)::f !=File Index
-  INTEGER,INTENT(IN)::Mat(:,:)
+subroutine WriteMat_I(f,Mat)
+  integer,intent(in)::f !=File Index
+  integer,intent(in)::Mat(:,:)
   !
-  INTEGER::I,J
+  integer::I,J
   !
-  DO I=1,SIZE(Mat,1)
-    DO J=1,SIZE(Mat,2)
-      WRITE(f,'(I3, A1)',ADVANCE='NO') Mat(I,J), T_
-    ENDDO
-    WRITE(f,*)
-  ENDDO
-  WRITE(f,*)
+  do I=1,size(Mat,1)
+    do J=1,size(Mat,2)
+      write(f,'(I3, A1)',advance="no") Mat(I,J), T_
+    end do
+    write(f,*)
+  end do
+  write(f,*)
   !
-ENDSUBROUTINE WriteMat_I
+end subroutine WriteMat_I
 
-SUBROUTINE Spl_WriteSystem(vCpn,tStoikio)
+subroutine Spl_WriteSystem( &
+& vFas,                     &
+& tFormula,                 &
+& vCpn,tStoikio)
 !--
 !-- write system stoikiometry
 !--
-  USE M_IoTools,    ONLY: GetUnit
-  USE M_Files,      ONLY: DirOut,NamFInn
-  USE M_T_Component,ONLY: T_Component
+  use M_IoTools,    only: GetUnit
+  use M_Files,      only: DirOut !,NamFInn
+  use M_T_Component,only: T_Component
+  use M_T_Phase,    only: T_Phase
   !
-  USE M_Global_Vars,ONLY: tFormula,vFas
+  ! use M_Global_Vars,only: tFormula,vFas
   !
-  TYPE(T_Component),INTENT(IN):: vCpn(:)
-  REAL(dp),         INTENT(IN):: tStoikio(:,:)
+  type(T_Phase),    intent(in):: vFas(:)
+  real(dp),         intent(in):: tFormula(:,:)
+  type(T_Component),intent(in):: vCpn(:)
+  real(dp),         intent(in):: tStoikio(:,:)
 
-  INTEGER :: nCp,nFs,iCpn,iFs
-  INTEGER :: FF
-  REAL(dp):: X
+  integer :: nCp,nFs,iCpn,iFs
+  integer :: FF
+  real(dp):: X
   !
-  nCp=SIZE(vCpn)
-  nFs=SIZE(vFas)
+  nCp=size(vCpn)
+  nFs=size(vFas)
   !
-  WRITE(fTrc,'(/,A)') "< WriteSystem"
-  WRITE(fTrc,'(A)') "Spl_WriteSystem -> "//TRIM(DirOut)//"_spl_system.log"
+  write(fTrc,'(/,A)') "< WriteSystem"
+  write(fTrc,'(A)') "Spl_WriteSystem -> "//trim(DirOut)//"_spl_system.log"
 
-  CALL GetUnit(FF)
-  OPEN(FF,FILE=TRIM(DirOut)//"_spl_system.log")
+  call GetUnit(FF)
+  open(FF,file=trim(DirOut)//"_spl_system.log")
 
-  WRITE(FF,'(A,A1)',ADVANCE='NO') "_", T_
-  DO iCpn=1,nCp
-    WRITE(FF,'(A,A1)',ADVANCE='NO') TRIM(vCpn(iCpn)%NamCp), T_
-  ENDDO
-  WRITE(FF,'(A)') "GIBBS"
+  write(FF,'(A,A1)',advance="no") "_", T_
+  do iCpn=1,nCp
+    write(FF,'(A,A1)',advance="no") trim(vCpn(iCpn)%NamCp), T_
+  end do
+  write(FF,'(A)') "GIBBS"
 
-  WRITE(FF,'(A,A1)',ADVANCE='NO') "MOLES", T_
-  DO iCpn=1,nCp
-    WRITE(FF,'(G12.3,A1)',ADVANCE='NO') vCpn(iCpn)%Mole, T_
-  ENDDO
-  WRITE(FF,'(A)') "0.000"
+  write(FF,'(A,A1)',advance="no") "MOLES", T_
+  do iCpn=1,nCp
+    write(FF,'(G12.3,A1)',advance="no") vCpn(iCpn)%Mole, T_
+  end do
+  write(FF,'(A)') "0.000"
 
-  DO iFs=1,nFs
-    WRITE(FF,'(A,A1)',ADVANCE='NO') TRIM(vFas(iFs)%NamFs), T_
-    DO iCpn=1,nCp
-      WRITE(FF,'(F7.2,A1)',ADVANCE='NO') tStoikio(iFs,iCpn), T_
-    ENDDO
+  do iFs=1,nFs
+    write(FF,'(A,A1)',advance="no") trim(vFas(iFs)%NamFs), T_
+    do iCpn=1,nCp
+      write(FF,'(F7.2,A1)',advance="no") tStoikio(iFs,iCpn), T_
+    end do
     X= vFas(iFs)%Grt
-    IF(tFormula(iFs,1)/=0) X= vFas(iFs)%Grt /tFormula(iFs,1)
-    ! WRITE(FF,'(2F15.3)') vFas(iFs)%Grt,X
-    WRITE(FF,'(2F15.3)') vFas(iFs)%Grt
-  ENDDO
+    if(tFormula(iFs,1)/=0) X= vFas(iFs)%Grt /tFormula(iFs,1)
+    ! write(FF,'(2F15.3)') vFas(iFs)%Grt,X
+    write(FF,'(2F15.3)') vFas(iFs)%Grt
+  end do
 
-  WRITE(fTrc,'(/,A,/)') "</ WriteSystem"
+  write(fTrc,'(/,A,/)') "</ WriteSystem"
 
-  CLOSE(FF)
+  close(FF)
 
-  RETURN
-END SUBROUTINE Spl_WriteSystem
+  return
+end subroutine Spl_WriteSystem
 
-ENDMODULE M_Simplex_Build
+end module M_Simplex_Build
 

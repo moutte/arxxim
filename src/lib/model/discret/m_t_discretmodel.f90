@@ -1,29 +1,29 @@
-MODULE M_T_DiscretModel
+module M_T_DiscretModel
   !.structures for describing the "discretization" of a mixture phase
   !.to an array of phases of fixed composition (so-called "pure phase")
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: T_DiscretModel
-  PUBLIC:: T_DiscretParam
+  public:: T_DiscretModel
+  public:: T_DiscretParam
   !
-  INTEGER,PUBLIC:: MaxDiscret= 100
-  INTEGER,PUBLIC:: MinDiscret= 1
+  integer,public:: MaxDiscret= 100
+  integer,public:: MinDiscret= 1
   !
-  TYPE:: T_DiscretModel
-    CHARACTER(LEN=15):: Name
-    INTEGER:: Dim1,Dim2,DimTot
+  type:: T_DiscretModel
+    character(len=15):: Name
+    integer:: Dim1,Dim2,DimTot
     ! for binary discretization: Dim2=0
-    INTEGER:: iMix !-> index in vMixModel
-    INTEGER:: P1,P2,P3 !-> indexes of end members in mixing model
-  ENDTYPE T_DiscretModel
+    integer:: iMix !-> index in vMixModel
+    integer:: P1,P2,P3 !-> indexes of end members in mixing model
+  end type T_DiscretModel
   !
-  TYPE:: T_DiscretParam
-    INTEGER:: iModel !-> points to a model in vDiscretModel
-    INTEGER:: I,J,K  !-> coordinates of discretization point
-    INTEGER:: iSpc   !-> points back to index in current vSpc
-  ENDTYPE T_DiscretParam
+  type:: T_DiscretParam
+    integer:: iModel !-> points to a model in vDiscretModel
+    integer:: I,J,K  !-> coordinates of discretization point
+    integer:: iSpc   !-> points back to index in current vSpc
+  end type T_DiscretParam
   !
-ENDMODULE M_T_DiscretModel
+end module M_T_DiscretModel

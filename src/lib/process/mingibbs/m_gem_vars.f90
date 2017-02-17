@@ -1,21 +1,21 @@
-MODULE M_GEM_Vars
+module M_GEM_Vars
   !--
   !-- common vars for GEM computations
   !--
-  USE M_Kinds
-  USE M_T_Component,ONLY: T_Component
-  USE M_T_MixModel, ONLY: MaxPole
+  use M_Kinds
+  use M_T_Component,only: T_Component
+  use M_T_MixModel, only: MaxPole
   
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC:: GEM_Vars_Clean
-  PUBLIC:: vCpnGEM,tStoikioGEM
-  PUBLIC:: TdgK,Pbar
-  PUBLIC:: T_SavPhase
+  public:: GEM_Vars_Clean
+  public:: vCpnGEM,tStoikioGEM
+  public:: TdgK,Pbar
+  public:: T_SavPhase
   !
-  !--types for GEM computations
+  !-------------------------------------------types for GEM computations
   ! T_SavPhase is designed to contain
   ! the different compositions that may be active
   ! for a same mixing model:
@@ -23,36 +23,37 @@ MODULE M_GEM_Vars
   ! there can be, in the stable assemblage,
   ! up to NPole phases of different compositions.
   ! nFas is the number of active phases for the model iModel
-  TYPE:: T_SavPhase
-    INTEGER :: iModel                      ! -> mixing model
-    INTEGER :: nFas                        ! -> number of phases
-    REAL(dp):: tXPole(1:Maxpole,1:MaxPole) ! table of phase compositions
-    REAL(dp):: vMole(1:MaxPole)            ! mole nr of each end member
-    REAL(dp):: vGrt0(1:MaxPole)            ! Gibbs/RT of each end member
-    REAL(dp):: vVol0(1:MaxPole)            ! Molar Volume of each end member
-  END TYPE T_SavPhase
-  !
-  !-- vars for GEM computations
-  TYPE(T_SavPhase):: SavPhaseZero
-  TYPE(T_Component),ALLOCATABLE:: vCpnGEM(:)
-  REAL(dp),         ALLOCATABLE:: tStoikioGEM(:,:)
-  REAL(dp):: TdgK,Pbar
+  type:: T_SavPhase
+    integer :: iModel                      ! -> mixing model
+    integer :: nFas                        ! -> number of phases
+    real(dp):: tXPole(1:Maxpole,1:MaxPole) ! table of phase compositions
+    real(dp):: vMole(1:MaxPole)            ! mole nr of each end member
+    real(dp):: vGrt0(1:MaxPole)            ! Gibbs/RT of each end member
+    real(dp):: vVol0(1:MaxPole)            ! Molar Volume of each end member
+  end type T_SavPhase
+  !--/
+  !--------------------------------------------vars for GEM computations
+  type(T_SavPhase):: SavPhaseZero
+  type(T_Component),allocatable:: vCpnGEM(:)
+  real(dp),         allocatable:: tStoikioGEM(:,:)
+  real(dp):: TdgK,Pbar
+  !--/
+  
+contains
 
-CONTAINS
-
-SUBROUTINE GEM_Vars_Init
+subroutine GEM_Vars_Init
   SavPhaseZero%iModel=      0
   SavPhaseZero%nFas=        0
   SavPhaseZero%tXPole(:,:)= Zero
   SavPhaseZero%vMole(:)=    Zero
   SavPhaseZero%vGrt0(:)=    Zero
   SavPhaseZero%vVol0(:)=    Zero
-END SUBROUTINE GEM_Vars_Init
+end subroutine GEM_Vars_Init
 
-SUBROUTINE GEM_Vars_Clean
-  IF(ALLOCATED(vCpnGEM))     DEALLOCATE(vCpnGEM)
-  IF(ALLOCATED(tStoikioGEM)) DEALLOCATE(tStoikioGEM)
-ENDSUBROUTINE GEM_Vars_Clean
+subroutine GEM_Vars_Clean
+  if(allocated(vCpnGEM))     deallocate(vCpnGEM)
+  if(allocated(tStoikioGEM)) deallocate(tStoikioGEM)
+end subroutine GEM_Vars_Clean
 
-END MODULE M_GEM_Vars
+end module M_GEM_Vars
 

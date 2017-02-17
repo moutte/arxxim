@@ -1,28 +1,28 @@
-MODULE M_KinRate
+module M_KinRate
 !--
 !-- rate calculations on kinetic species
 !--
 
-  USE M_Kinds
-  USE M_Trace,ONLY: T_,fHtm,Pause_
+  use M_Kinds
+  use M_Trace,only: T_,fHtm,Pause_
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC:: KinRate_CalcActivFactor
-  PUBLIC:: KinRate_CalcQsK
-  PUBLIC:: KinRate_SatState
-  PUBLIC:: KinRate_CalcQsKFactor
+  public:: KinRate_CalcActivFactor
+  public:: KinRate_CalcQsK
+  public:: KinRate_SatState
+  public:: KinRate_CalcQsKFactor
   !
-  PUBLIC:: KinRate_ActivTest
+  public:: KinRate_ActivTest
   
-  REAL(dp),PARAMETER:: QsK_Max=  1.D+12 !
-  LOGICAL, PARAMETER:: LimitQsK= .TRUE.
+  real(dp),parameter:: QsK_Max=  1.D+12 !
+  logical, parameter:: LimitQsK= .true.
   
-CONTAINS
+contains
 
-SUBROUTINE KinRate_CalcActivFactor(&
+subroutine KinRate_CalcActivFactor(&
 !-----------------------------------------------------------------------
 !-- compute VmAct, the factor depending on fluid chemistry only
 !-----------------------------------------------------------------------
@@ -32,59 +32,59 @@ SUBROUTINE KinRate_CalcActivFactor(&
 & VmAct)     !OUT: factor depending on fluid chemistry only
 !! & dVmAdLnX_M) !OUT: its derivative vs ln(X)
   !
-  USE M_T_KinFas,  ONLY: T_KinFas
-  USE M_T_Kinmodel,ONLY: T_KinModel
+  use M_T_KinFas,  only: T_KinFas
+  use M_T_Kinmodel,only: T_KinModel
   !
-  CHARACTER,       INTENT(IN) :: cSatur
-  TYPE(T_KinModel),INTENT(IN) :: M
-  REAL(dp),        INTENT(IN) :: vLnAct(:)
+  character,       intent(in) :: cSatur
+  type(T_KinModel),intent(in) :: M
+  real(dp),        intent(in) :: vLnAct(:)
   !
-  REAL(dp), INTENT(OUT):: VmAct
-  ! REAL(dp), INTENT(OUT):: dVmAdLnX_M(:) !(1:nAq)
+  real(dp), intent(out):: VmAct
+  ! real(dp), intent(out):: dVmAdLnX_M(:) !(1:nAq)
   !
-  INTEGER ::I
-  REAL(dp)::X
+  integer ::I
+  real(dp)::X
   !
   ! dVmAdLnX_M=Zero
   !provisionally, dVmAdLnX_M is not computed in this new version  !!!!!!!!!!!!!
   !-> we assume that this factor will not be implicited           !!!!!!!!!!!!!
   !
-  !! WRITE(51,*) -LnActH_/Ln10, CHAR(9), -LnActOH/Ln10
+  !! write(51,*) -LnActH_/Ln10, char(9), -LnActOH/Ln10
   VmAct=Zero
-  SELECT CASE(cSatur)
+  select case(cSatur)
 
-  CASE("D") !"DISSOLU")
-    DO I=1,M%NTermD
-      X= EXP( M%N_d(I) *vLnAct(M%ISpcDiss(I)) )
-      IF(M%JSpcDiss(I)>0) X= X * EXP( M%NJ_d(I)*vLnAct(M%JSpcDiss(I)) )
+  case("D") !"DISSOLU")
+    do I=1,M%NTermD
+      X= exp( M%N_d(I) *vLnAct(M%ISpcDiss(I)) )
+      if(M%JSpcDiss(I)>0) X= X * exp( M%NJ_d(I)*vLnAct(M%JSpcDiss(I)) )
       VmAct= VmAct + M%Kd(I) * X
-    ENDDO
-    !IF(M%Special/=0) THEN !-> additional terms for carbonates, sulfides ...
-    !  SELECT CASE(M%Special)
-    !    CASE(1) !CALCITE
-    !    CASE(2) !etcetera
+    end do
+    !if(M%Special/=0) then !-> additional terms for carbonates, sulfides ...
+    !  select case(M%Special)
+    !    case(1) !CALCITE
+    !    case(2) !etcetera
     !    .......
-    !  END SELECT
-    !ENDIF
+    !  end select
+    !end if
 
-  CASE("P") !"PRECIPI")
-    DO I=1,M%NTermP
-      X= EXP( M%N_p(I) *vLnAct(M%ISpcPrec(I)) )
-      IF(M%JSpcPrec(I)>0) X= X * EXP( M%NJ_p(I) *vLnAct(M%JSpcPrec(I)) )
+  case("P") !"PRECIPI")
+    do I=1,M%NTermP
+      X= exp( M%N_p(I) *vLnAct(M%ISpcPrec(I)) )
+      if(M%JSpcPrec(I)>0) X= X * exp( M%NJ_p(I) *vLnAct(M%JSpcPrec(I)) )
       VmAct= VmAct + M%Kp(I) * X
-    ENDDO
+    end do
 
-  END SELECT
+  end select
   !
-  RETURN
-ENDSUBROUTINE KinRate_CalcActivFactor
+  return
+end subroutine KinRate_CalcActivFactor
 
 !-----------------------------------------------------------------------
 !-- calc. Q/K and d(Q/K)/dLnX of a phase of properties DG,vNu
 !-- for a fluid composition vLnX
 !-- (composition input in log(mole numbers))
 !-----------------------------------------------------------------------
-SUBROUTINE KinRate_CalcQsK( &
+subroutine KinRate_CalcQsK( &
 & nCi,       & !IN
 & nCx,       & !IN
 & DG0rt,     & !IN
@@ -96,152 +96,152 @@ SUBROUTINE KinRate_CalcQsK( &
 & QsK,       & !OUT
 & dQsKdLnXi)   !OUT
 
-  USE M_Numeric_Const,     ONLY: MinExpDP,MaxExpDP
-  USE M_Basis_Vars,ONLY: isW,MWSv
+  use M_Numeric_Const,     only: MinExpDP,MaxExpDP
+  use M_Basis_Vars,only: isW,MWSv
   !
-  INTEGER, INTENT(IN):: nCi          !nr inert comp'nt
-  INTEGER, INTENT(IN):: nCx          !nr mobile comp'nt
-  REAL(dp),INTENT(IN):: DG0rt        !deltaG/RT of formation reaction
-  REAL(dp),INTENT(IN):: vNu(:)       !stoikio of formation reaction
-  REAL(dp),INTENT(IN):: vLnX(:)      !log(Mole Nrs. Prim.Species)  !1:nCi
-  REAL(dp),INTENT(IN):: vLnGam(:)    !log(Act.Coeff. Prim.Species) !1:nCi
-  REAL(dp),INTENT(IN):: vLnActBuf(:) !log(ActivityBufferSpecies)   !1:nCx
-  REAL(dp),INTENT(IN):: LnActW       !log(Activity Solvent)
+  integer, intent(in):: nCi          !nr inert comp'nt
+  integer, intent(in):: nCx          !nr mobile comp'nt
+  real(dp),intent(in):: DG0rt        !deltaG/RT of formation reaction
+  real(dp),intent(in):: vNu(:)       !stoikio of formation reaction
+  real(dp),intent(in):: vLnX(:)      !log(Mole Nrs. Prim.Species)  !1:nCi
+  real(dp),intent(in):: vLnGam(:)    !log(Act.Coeff. Prim.Species) !1:nCi
+  real(dp),intent(in):: vLnActBuf(:) !log(ActivityBufferSpecies)   !1:nCx
+  real(dp),intent(in):: LnActW       !log(Activity Solvent)
   !
-  REAL(dp),INTENT(OUT):: QsK
-  REAL(dp),INTENT(OUT):: dQsKdLnXi(:) !1:nCi
+  real(dp),intent(out):: QsK
+  real(dp),intent(out):: dQsKdLnXi(:) !1:nCi
   !
-  REAL(dp)::X
+  real(dp)::X
   !
   !lnAct= lnMolal + lnGamma=  lnMol + lnGam - lnMolH2O - lnMWH2O
-  !QsK=EXP(DOT_PRODUCT(tNuMk(iMk,1:nCp),vLnAct(1:nCp)) - vDG_Mk(iMk))
+  !QsK=exp(dot_product(tNuMk(iMk,1:nCp),vLnAct(1:nCp)) - vDG_Mk(iMk))
   !or,directly from G0,
-  !QsK=EXP(DOT_PRODUCT(tNuMk(iMk,1:nCp),vLnAct(1:nCp) +vSpc(1:nCp)%G0) - vKinFas(iMk)%G0)
+  !QsK=exp(dot_product(tNuMk(iMk,1:nCp),vLnAct(1:nCp) +vSpc(1:nCp)%G0) - vKinFas(iMk)%G0)
   !
   !caveat:
   !Solvent should follow mole fraction scale, not molality ...
   !-> here, we assume explicited Solvent activity:
   X=            vNu(isW)  *LnActW &
-  + DOT_PRODUCT(vNu(2:nCi),vLnX(2:nCi)) & !log(mole numbers)
-  + DOT_PRODUCT(vNu(2:nCi),vLnGam(2:nCi)) & !log(gammas)
-  -         SUM(vNu(2:nCi))*(vLnX(isW)+LOG(MWSv)) & !log(mass Solvent)
+  + dot_product(vNu(2:nCi),vLnX(2:nCi)) & !log(mole numbers)
+  + dot_product(vNu(2:nCi),vLnGam(2:nCi)) & !log(gammas)
+  -         SUM(vNu(2:nCi))*(vLnX(isW)+log(MWSv)) & !log(mass Solvent)
   - DG0rt !equiv -logK
   !
-  IF(nCx>0) & != mobile species
+  if(nCx>0) & != mobile species
   & X= X &
-  &  + DOT_PRODUCT(vNu(nCi+1:nCi+nCx),vLnActBuf(1:nCx))
+  &  + dot_product(vNu(nCi+1:nCi+nCx),vLnActBuf(1:nCx))
   !
-  IF(X>MinExpDP .AND. X<MaxExpDP) THEN
-    QsK=EXP(X)
-  ELSE
-    IF(X<=MinExpDP) QsK=EXP(MinExpDP)
-    IF(X>=MaxExpDP) QsK=EXP(MaxExpDP)
-  ENDIF
+  if(X>MinExpDP .and. X<MaxExpDP) then
+    QsK=exp(X)
+  else
+    if(X<=MinExpDP) QsK=exp(MinExpDP)
+    if(X>=MaxExpDP) QsK=exp(MaxExpDP)
+  end if
   !
   !<new 200911>
-  IF(LimitQsK) QsK= MIN(QsK,QsK_Max)
+  if(LimitQsK) QsK= MIN(QsK,QsK_Max)
   !</new>
   !
   dQsKdLnXi(:)=     Zero
   dQsKdLnXi(isW)= - SUM(vNu(2:nCi))*QsK
   dQsKdLnXi(2:nCi)=     vNu(2:nCi) *QsK
   !
-  RETURN
-ENDSUBROUTINE KinRate_CalcQsK
+  return
+end subroutine KinRate_CalcQsK
 
 !-----------------------------------------------------------------------
 != from QsK deduce cSatur, for branching to dissol/precip
 !-----------------------------------------------------------------------
-SUBROUTINE KinRate_SatState( &
+subroutine KinRate_SatState( &
 & M,         & !IN
 & nMol,      & !IN
 & nMolMinim, & !IN
 & QsK,       & !IN
 & Iota,      & !IN !mod 10/06/2008 17:02 added
 & cSatur)      !OUT
-  USE M_T_KinFas,ONLY: T_KinFas
+  use M_T_KinFas,only: T_KinFas
   !
-  TYPE(T_KinFas), INTENT(IN) :: M      !IN
-  REAL(dp),       INTENT(IN) :: nMol   !IN, Nr Moles of mineral M
-  REAL(dp),       INTENT(IN) :: nMolMinim !IN
-  REAL(dp),       INTENT(IN) :: QsK    !IN
-  REAL(dp),       INTENT(IN) :: Iota   !IN
-  CHARACTER,      INTENT(OUT):: cSatur !OUT
+  type(T_KinFas), intent(in) :: M      !IN
+  real(dp),       intent(in) :: nMol   !IN, Nr Moles of mineral M
+  real(dp),       intent(in) :: nMolMinim !IN
+  real(dp),       intent(in) :: QsK    !IN
+  real(dp),       intent(in) :: Iota   !IN
+  character,      intent(out):: cSatur !OUT
   !
   cSatur=M%Dat%cSat != current value, cSatur will be the new value
   !
   cSatur="I" ! INERT, normal assumption by default
-  IF(QsK < One - Iota) THEN
-    IF(nMol<=nMolMinim) THEN  ;  cSatur="M" ! "MINIMAL"
-    ELSE                      ;   cSatur="D"  ! "DISSOLU"
-    ENDIF
-  ELSEIF(QsK >= M%QsKSeuil + Iota) THEN
+  if(QsK < One - Iota) then
+    if(nMol<=nMolMinim) then  ;  cSatur="M" ! "MINIMAL"
+    else                      ;   cSatur="D"  ! "DISSOLU"
+    end if
+  elseif(QsK >= M%QsKSeuil + Iota) then
     cSatur="P" ! PRECIPI
-  ENDIF
+  end if
   !
-ENDSUBROUTINE KinRate_SatState
+end subroutine KinRate_SatState
   !
-  ! IF ( QsK < One - Iota ) THEN
-  ! IF ( nMol > nMolMinim ) THEN
+  ! if ( QsK < One - Iota ) then
+  ! if ( nMol > nMolMinim ) then
   ! cSatur="DISSOLU"
-  ! ELSE
+  ! else
   ! cSatur="MINIMAL"
-  ! END IF
-  ! ELSEIF ( QsK > QsKseuil + Iota ) THEN
+  ! end if
+  ! elseif ( QsK > QsKseuil + Iota ) then
   ! cSatur="PRECIPI"
-  ! ELSE
+  ! else
   ! cSatur="INERT"
-  ! END IF
+  ! end if
 
 
   !one possible sequence:
-  !!!  IF (QsK<One .AND. nMol>nMolMinim .AND. cSatur/="MINIMAL") THEN
+  !!!  if (QsK<One .and. nMol>nMolMinim .and. cSatur/="MINIMAL") then
   !!!    cSatur="DISSOLU"
-  !!!  ELSEIF (QsK<=One.AND.nMol<=nMolMinim) THEN
+  !!!  elseif (QsK<=One.and.nMol<=nMolMinim) then
   !!!    cSatur="MINIMAL" !QsK<1, but amount Too low to dissolve anymore
-  !!!  ELSEIF (QsK>M%Dat%QsKSeuil .OR. (QsK>One .AND. M%Dat%cSat=="PRECIPI")) THEN
-  !!!    cSatur="PRECIPI" !supersaturation or min. alREADy precipitating
-  !!!  ENDIF
+  !!!  elseif (QsK>M%Dat%QsKSeuil .or. (QsK>One .and. M%Dat%cSat=="PRECIPI")) then
+  !!!    cSatur="PRECIPI" !supersaturation or min. already precipitating
+  !!!  end if
   !another possible sequence:
   !
-  !!  !! IF(ABS(Qsk - One) < Iota) THEN
+  !!  !! if(ABS(Qsk - One) < Iota) then
   !!  !!   cSatur="INERT"
-  !!  !! ELSE!
-  !!  !!   SELECT CASE(cSatur)
-  !!  !!     CASE("PRECIPI"); IF(QsK<One)   cSatur="DISSOLU" !ELSE it continues as "PRECIPI"
-  !!  !!     CASE("DISSOLU"); IF(QsK>One)   cSatur="PRECIPI" !ELSE it continues as "DISSOLU"
-  !!  !!     CASE("MINIMAL")
-  !!  !!       IF(QsK > One + Iota)        cSatur="PRECIPI"
-  !!  !!     CASE("INERT")
-  !!  !!       IF(QsK > M%Dat%QsKSeuil + Iota) cSatur="PRECIPI" !ELSE it continues as "INERT_"
-  !!  !!       IF(QsK < One - Iota)        cSatur="DISSOLU" !
-  !!  !!     !!CASE("PRIMARY")
-  !!  !!     !!  IF(QsK > One + Iota)        cSatur="PRECIPI" !
-  !!  !!     !!  IF(QsK < One - Iota)        cSatur="DISSOLU" !
-  !!  !!     !!CASE("SECONDA")
-  !!  !!     !!  IF(QsK > M%Dat%QsKSeuil + Iota) cSatur="PRECIPI"
-  !!  !!   END SELECT
-  !!  !! ENDIF
-  !!  !! IF(cSatur=="DISSOLU" .AND. nMol<nMolMinim) cSatur="MINIMAL"
+  !!  !! else!
+  !!  !!   select case(cSatur)
+  !!  !!     case("PRECIPI"); if(QsK<One)   cSatur="DISSOLU" !else it continues as "PRECIPI"
+  !!  !!     case("DISSOLU"); if(QsK>One)   cSatur="PRECIPI" !else it continues as "DISSOLU"
+  !!  !!     case("MINIMAL")
+  !!  !!       if(QsK > One + Iota)        cSatur="PRECIPI"
+  !!  !!     case("INERT")
+  !!  !!       if(QsK > M%Dat%QsKSeuil + Iota) cSatur="PRECIPI" !else it continues as "INERT_"
+  !!  !!       if(QsK < One - Iota)        cSatur="DISSOLU" !
+  !!  !!     !!case("PRIMARY")
+  !!  !!     !!  if(QsK > One + Iota)        cSatur="PRECIPI" !
+  !!  !!     !!  if(QsK < One - Iota)        cSatur="DISSOLU" !
+  !!  !!     !!case("SECONDA")
+  !!  !!     !!  if(QsK > M%Dat%QsKSeuil + Iota) cSatur="PRECIPI"
+  !!  !!   end select
+  !!  !! end if
+  !!  !! if(cSatur=="DISSOLU" .and. nMol<nMolMinim) cSatur="MINIMAL"
   !
-  !SELECT CASE(cSatur)
-  !CASE("PRECIPI"); IF(QsK<One)   cSatur="DISSOLU" !ELSE it continues as "PRECIPI"
-  !CASE("DISSOLU"); IF(QsK>=One)  cSatur="PRECIPI" !ELSE it continues as "DISSOLU"
-  !CASE("MINIMAL")
-  !  IF(QsK >= One + Iota)        cSatur="PRECIPI"
-  !CASE("INERT")
-    !IF(QsK >= M%QsKSeuil + Iota) cSatur="PRECIPI" !ELSE it continues as "INERT_"
-    !IF(QsK < One - Iota)         cSatur="DISSOLU" !
-  !CASE("PRIMARY")
-  !  IF(QsK >= One + Iota)        cSatur="PRECIPI" !
-  !  IF(QsK < One - Iota)        cSatur="DISSOLU" !
-  !CASE("SECONDA")
-  !  IF(QsK >= M%QsKSeuil + Iota) cSatur="PRECIPI"
-  !END SELECT
-  !! IF(cSatur=="DISSOLU" .AND. nMol<=nMolMinim) cSatur="MINIMAL"
-  !! IF(cSatur=="DISSOLU" .AND. nMol<=1.E-6) cSatur="MINIMAL"
+  !select case(cSatur)
+  !case("PRECIPI"); if(QsK<One)   cSatur="DISSOLU" !else it continues as "PRECIPI"
+  !case("DISSOLU"); if(QsK>=One)  cSatur="PRECIPI" !else it continues as "DISSOLU"
+  !case("MINIMAL")
+  !  if(QsK >= One + Iota)        cSatur="PRECIPI"
+  !case("INERT")
+    !if(QsK >= M%QsKSeuil + Iota) cSatur="PRECIPI" !else it continues as "INERT_"
+    !if(QsK < One - Iota)         cSatur="DISSOLU" !
+  !case("PRIMARY")
+  !  if(QsK >= One + Iota)        cSatur="PRECIPI" !
+  !  if(QsK < One - Iota)        cSatur="DISSOLU" !
+  !case("SECONDA")
+  !  if(QsK >= M%QsKSeuil + Iota) cSatur="PRECIPI"
+  !end select
+  !! if(cSatur=="DISSOLU" .and. nMol<=nMolMinim) cSatur="MINIMAL"
+  !! if(cSatur=="DISSOLU" .and. nMol<=1.E-6) cSatur="MINIMAL"
 
-SUBROUTINE KinRate_CalcQsKFactor(&
+subroutine KinRate_CalcQsKFactor(&
 & cSatur,        & !IN
 & M,             & !IN: Kinetic model
 & QsK,           & !IN
@@ -249,156 +249,156 @@ SUBROUTINE KinRate_CalcQsKFactor(&
 & VmQsK,         & !OUT
 & dVmQdLnX_M)      !OUT
   !
-  USE M_T_Kinmodel,ONLY: T_KinModel
+  use M_T_Kinmodel,only: T_KinModel
   !
-  CHARACTER,       INTENT(IN):: cSatur
-  TYPE(T_KinModel),INTENT(IN):: M
-  REAL(dp),        INTENT(IN):: QsK
-  REAL(dp),        INTENT(IN):: dQsKdLnXi(:) !(1:nCi)
+  character,       intent(in):: cSatur
+  type(T_KinModel),intent(in):: M
+  real(dp),        intent(in):: QsK
+  real(dp),        intent(in):: dQsKdLnXi(:) !(1:nCi)
   !
-  REAL(dp), INTENT(OUT):: VmQsK
-  REAL(dp), INTENT(OUT):: dVmQdLnX_M(:) !(1:nAq)
+  real(dp), intent(out):: VmQsK
+  real(dp), intent(out):: dVmQdLnX_M(:) !(1:nAq)
   !
-  REAL(dp):: dVmQdQsK
-  INTEGER :: nCi_
+  real(dp):: dVmQdQsK
+  integer :: nCi_
   !
-  nCi_= SIZE(dQsKdLnXi)
+  nCi_= size(dQsKdLnXi)
   VmQsK=     Zero !-> values for cSatur=="MINIMAL"
   dVmQdLnX_M=Zero !
   dVmQdQsK=  Zero
   !
-  SELECT CASE(cSatur)
+  select case(cSatur)
 
-  CASE("D") !("DISSOLU")
+  case("D") !("DISSOLU")
   ! QsK<1 -> (One - QsK**M%AlfaD)>0 -> VmQsK<0
-  ! QsK<1 -> -LOG(QsK)>0 -> VmQsK<0
+  ! QsK<1 -> -log(QsK)>0 -> VmQsK<0
     
-    IF(M%BetaD /=Zero) THEN
+    if(M%BetaD /=Zero) then
       VmQsK=    - (One - QsK**M%AlfaD)**M%BetaD
       dVmQdQsK= M%BetaD &
       &         *(One - QsK**M%AlfaD)**(M%BetaD-One) &
       &         *M%AlfaD *QsK**(M%AlfaD-One)
-    ELSE
+    else
     !cf Soler_Lasaga
-      VmQsK=    (-LOG(QsK))**M%AlfaD
-      dVmQdQsK= M%AlfaD *VmQsK /QsK /LOG(QsK)
-    ENDIF
+      VmQsK=    (-log(QsK))**M%AlfaD
+      dVmQdQsK= M%AlfaD *VmQsK /QsK /log(QsK)
+    end if
 
-  CASE("P") !("PRECIPI")
+  case("P") !("PRECIPI")
   ! QsK>1 -> (QsK**M%AlfaD - One)>0 -> VmQsK>0
-  ! QsK>1 -> LOG(QsK)>0 -> VmQsK>0
+  ! QsK>1 -> log(QsK)>0 -> VmQsK>0
     
-    IF(M%BetaP /=Zero) THEN
+    if(M%BetaP /=Zero) then
       VmQsK=(QsK**M%AlfaP - One)**M%BetaP
-      !IF(VmF<0.0) THEN
+      !if(VmF<0.0) then
       !  cSatur="INERT" !"I"nert mineral
       !  VmF=0.0
       !  !test!!!dVSdQsK=0.0
-      !  RETURN
-      !ENDIF
+      !  return
+      !end if
       dVmQdQsK= M%BetaP &
       &       *(QsK**M%AlfaP - One)**(M%BetaP-One) &
       &       *M%AlfaP *QsK**(M%AlfaP-One)
-    ELSE
+    else
     !cf Soler_Lasaga
-      VmQsK=    (LOG(QsK))**M%AlfaD
-      dVmQdQsK= M%AlfaD *VmQsK /QsK /LOG(QsK)
-    ENDIF
+      VmQsK=    (log(QsK))**M%AlfaD
+      dVmQdQsK= M%AlfaD *VmQsK /QsK /log(QsK)
+    end if
 
-  CASE("M") !("MINIMAL")
+  case("M") !("MINIMAL")
     VmQsK=    Zero
     dVmQdQsK= Zero
     
-  END SELECT
+  end select
 
   dVmQdLnX_M(1:nCi_)= dVmQdQsK*dQsKdLnXi(1:nCi_)
 
-  !! WRITE(51,'(A,3A1,3(G15.9,A1))') &
-  !! & TRIM(M%Name),T_,cSatur,T_,LOG(QsK)/Ln10,T_,VmQsK,T_,QsK**M%AlfaD,T_
-  RETURN
-END SUBROUTINE KinRate_CalcQsKFactor
+  !! write(51,'(A,3A1,3(G15.9,A1))') &
+  !! & trim(M%Name),T_,cSatur,T_,log(QsK)/Ln10,T_,VmQsK,T_,QsK**M%AlfaD,T_
+  return
+end subroutine KinRate_CalcQsKFactor
 
-SUBROUTINE KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
+subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
 !-----------------------------------------------------------------------
 != test the "validity" of KinRate_CalcActivFactor
 != of module M_T_KinFas for rate calculations
 != (= the factor depending on species'activities)
 !-----------------------------------------------------------------------
-  USE M_IoTools,  ONLY: GetUnit
-  USE M_Files,    ONLY: DirOut,cTitle,Files_Index_Write !,bOpenMnk
+  use M_IoTools,  only: GetUnit
+  use M_Files,    only: DirOut,cTitle,Files_Index_Write !,bOpenMnk
   !
-  USE M_Numeric_Const,     ONLY: Ln10,TinyDP
-  USE M_Dtb_Const, ONLY: T_CK
+  use M_Numeric_Const,     only: Ln10,TinyDP
+  use M_Dtb_Const, only: T_CK
   !
-  USE M_T_Species,  ONLY: Species_Index
-  USE M_Basis_Vars, ONLY: nMx, isH_
-  USE M_T_Kinmodel, ONLY: T_KinModel,KinModel_CalcCoeffs,KinModel_PrmIndex
+  use M_T_Species,  only: Species_Index
+  use M_Basis_Vars, only: nMx, isH_
+  use M_T_Kinmodel, only: T_KinModel,KinModel_CalcCoeffs,KinModel_PrmIndex
   !
-  USE M_System_Vars,ONLY: TdgK
-  USE M_Global_Vars,ONLY: nAq,vSpc,vKinModel
+  use M_System_Vars,only: TdgK
+  use M_Global_Vars,only: nAq,vSpc,vKinModel
   
-  ! USE M_KinRate,    ONLY: KinRate_CalcActivFactor
+  ! use M_KinRate,    only: KinRate_CalcActivFactor
   
-  INTEGER,INTENT(INOUT):: fMnK
-  INTEGER,INTENT(IN)   :: iCount
+  integer,intent(inout):: fMnK
+  integer,intent(in)   :: iCount
   !
-  TYPE(T_KinModel),ALLOCATABLE::vKinMod(:)
-  TYPE(T_KinModel)::M
-  INTEGER :: I,iKm,nKm
-  REAL(dp):: VmAct,X
-  ! REAL(dp):: dum(1:nAq)
-  REAL(dp):: vLnAct(1:nAq) !for dissolution rates
-  INTEGER :: vPrm(1:nAq)
-  REAL(dp):: pH
+  type(T_KinModel),allocatable::vKinMod(:)
+  type(T_KinModel)::M
+  integer :: I,iKm,nKm
+  real(dp):: VmAct,X
+  ! real(dp):: dum(1:nAq)
+  real(dp):: vLnAct(1:nAq) !for dissolution rates
+  integer :: vPrm(1:nAq)
+  real(dp):: pH
   
-  !! print *,'KinRate_ActivTest'  ;  CALL Pause_
+  !! print *,'KinRate_ActivTest'  ;  call Pause_
   
-  nKm=SIZE(vKinModel)
+  nKm=size(vKinModel)
   !
-  IF(nKm==0) RETURN
+  if(nKm==0) return
   !
-  DO iKm=1,nKm
-    CALL KinModel_CalcCoeffs(vKinModel(iKm),One,TdgK)
-  ENDDO
+  do iKm=1,nKm
+    call KinModel_CalcCoeffs(vKinModel(iKm),One,TdgK)
+  end do
   !
   vLnAct(1:nAq)=vSpc(1:nAq)%Dat%LAct
-  DO I=1,nAq; vPrm(i)=i; ENDDO
+  do I=1,nAq; vPrm(i)=i; end do
   !
-  ALLOCATE(vKinMod(1:SIZE(vKinModel))); vKinMod=vKinModel
+  allocate(vKinMod(1:size(vKinModel))); vKinMod=vKinModel
   !
-  DO iKm=1,nKm
-    CALL KinModel_PrmIndex(vPrm,vKinModel(iKm),vKinMod(iKm))
-  ENDDO
+  do iKm=1,nKm
+    call KinModel_PrmIndex(vPrm,vKinModel(iKm),vKinMod(iKm))
+  end do
   !
   pH=-vLnAct(isH_)/Ln10
   !
-  IF(fMnk==0) THEN
+  if(fMnk==0) then
   
-    CALL GetUnit(fMnk)
+    call GetUnit(fMnk)
     
-    OPEN(fMnk,FILE=TRIM(DirOut)//"_vmact.restab")
+    open(fMnk,file=trim(DirOut)//"_vmact.restab")
     
-    CALL Files_Index_Write(fHtm, &
-    & TRIM(DirOut)//"_vmact.restab", &
+    call Files_Index_Write(fHtm, &
+    & trim(DirOut)//"_vmact.restab", &
     & "dependence of mineral dissolution rates on solution chemistry" )
-    WRITE(fMnk,'(3(A,A1))',ADVANCE= 'NO') "count",T_,"TdgC",T_,"pH",T_ !,"pOH",T_
+    write(fMnk,'(3(A,A1))',advance= 'NO') "count",T_,"TdgC",T_,"pH",T_ !,"pOH",T_
     
-    DO iKm=1,nKm
-      WRITE(fMnk,'(A12,A1)',ADVANCE= 'NO') vKinMod(iKm)%Name,T_
-    ENDDO
-    WRITE(fMnk,*)
+    do iKm=1,nKm
+      write(fMnk,'(A12,A1)',advance= 'NO') vKinMod(iKm)%Name,T_
+    end do
+    write(fMnk,*)
   
-  ENDIF
+  end if
   !
-  WRITE(fMnk,'(I3,A1,2(G15.3,A1))',ADVANCE= 'NO') iCount,T_,TdgK-T_CK,T_,pH,T_
+  write(fMnk,'(I3,A1,2(G15.3,A1))',advance= 'NO') iCount,T_,TdgK-T_CK,T_,pH,T_
   !
-  DO iKm=1,nKm
+  do iKm=1,nKm
     
     M=vKinMod(iKm)
     !iMn=Species_Index(M%Name,vSpc)-nAq-nMx
     
-    !IF(iMn>0) THEN !mineral is not "mobile"
-      CALL KinRate_CalcActivFactor(&
+    !if(iMn>0) then !mineral is not "mobile"
+      call KinRate_CalcActivFactor(&
       & "D",      & !IN: "D"/"P"
       & M,        & !IN: kinetic model of mineral
       & vLnAct,   & !LnActH_,LnActOH,LnActCO2, & !"activators"
@@ -406,19 +406,19 @@ SUBROUTINE KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
       !! & dum) !dVmAdLnX_M) !OUT
       !X=ABS(VmAct)
       X=VmAct
-      IF(X>TinyDP) THEN; X=LOG(X)/Ln10
-      ELSE             ; X=Zero
-      ENDIF
-      WRITE(fMnk,'(G15.6,A1)',ADVANCE='NO') X,T_ !/(QsK-One)
-    !ENDIF
+      if(X>TinyDP) then; X=log(X)/Ln10
+      else             ; X=Zero
+      end if
+      write(fMnk,'(G15.6,A1)',advance="no") X,T_ !/(QsK-One)
+    !end if
     
-  ENDDO
+  end do
   !
-  WRITE(fMnk,*)
+  write(fMnk,*)
   !
-  DEALLOCATE(vKinMod)
+  deallocate(vKinMod)
   
-  RETURN
-END SUBROUTINE KinRate_ActivTest
+  return
+end subroutine KinRate_ActivTest
 
-END MODULE M_KinRate
+end module M_KinRate

@@ -1,222 +1,186 @@
-MODULE M_Solmodel_Calc_Pitzer
+module M_Solmodel_Calc_Pitzer
 !--
 !-- Module routines associées à Pitzer
 !-- Livraison 10/2006: Nicolas Ferrando
 !-- Remoduling : Anthony Michel
-!-- Modified : J.Moutte, 11/2006, 01/2014
-!-- -> M_Solmodel_Pitzer_Dtb-  database reading, build vPitz, vIPitz
-!-- -> M_Solmodel_Pitzer_Calc- calculations
+!-- MODIFIED : J.Moutte, 11/2006
+!-- -> M_Solmodel_Pitzer_Dtb=  database reading, build vPitz, vIPitz
+!-- -> M_Solmodel_Pitzer_Calc= calculations
 !--
 
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc,iDebug,T_
+  use M_Kinds
+  use M_Trace,only: fTrc,iDebug,T_
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   !
-  PUBLIC:: Solmodel_Calc_Pitzer
-  PUBLIC:: EThetaCalc
+  public:: Solmodel_Calc_Pitzer
+  public:: EThetaCalc
   
-  !! PUBLIC:: Pitzer_Calc_APhiMonnin
-  
-  INTEGER:: fTrcPitz
-  
-CONTAINS
+contains
 
-SUBROUTINE Solmodel_Calc_Pitzer( &
+subroutine Solmodel_Calc_Pitzer( &
 & vSpc,                     & !IN
 & MWsv,Rho,Eps,TdgK,vMolal, & !IN
 & vLnGam,LnActSv,Osmo)        !OUT
 
-  USE M_Numeric_Const,ONLY: Pi
-  USE M_T_Species,    ONLY: T_Species
+  use M_Numeric_Const,only: Pi
+  use M_T_Species,    only: T_Species
   !
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  REAL(dp),INTENT(IN) :: MWsv,Rho,Eps,TdgK
-  REAL(dp),INTENT(IN) :: vMolal(:)
+  type(T_Species),intent(in) :: vSpc(:)
+  real(dp),intent(in) :: MWsv,Rho,Eps,TdgK
+  real(dp),intent(in) :: vMolal(:)
   !
-  REAL(dp),INTENT(OUT):: vLnGam(:)
-  REAL(dp),INTENT(OUT):: LnActSv   !solvent activity
-  REAL(dp),INTENT(OUT):: Osmo
+  real(dp),intent(out):: vLnGam(:)
+  real(dp),intent(out):: LnActSv   !solvent activity
+  real(dp),intent(out):: Osmo
   !
-  TYPE(T_Species),ALLOCATABLE:: vSolut(:)
-  REAL(dp),       ALLOCATABLE:: vMolalSolut(:)
-  INTEGER :: I,J,N
-  REAL(dp):: APhi
+  type(T_Species),dimension(:),allocatable:: vSolut
+  real(dp),       dimension(:),allocatable:: vMolalSolut
+  integer :: I,J,N
+  real(dp):: APhi
   
-  CALL Pitzer_Calc_APhi( &
+  call Pitzer_Calc_APhi( &
   & Rho,Eps,TdgK, &
   & APhi)
-  ! result at 25C/1ATM = 0.392521
-  !
-  ! CALL Pitzer_Calc_APhiMonnin(TdgK,1.013D0,Aphi)
-  ! result at 25C/1ATM = 0.3914566
-  !  
-  ! APhi= 2.303D0 *0.5092D0 / 3.D0 !! Aphi
-  ! = 0.380896
-  !
-  !! comparison of values of APhi at 298K/1atm
-  !! 1- according to Pitzer formula    = 0.392521
-  !! 2- according to Monnin regression = 0.391457
-  !! 3- according to Bethke            = 0.380896
   
-  N= COUNT(vSpc(:)%Typ=="AQU") !- 1 !mod 19/06/2008 09:38
-  ALLOCATE(vSolut(N))
-  ALLOCATE(vMolalSolut(N))
-  
+  N= count(vSpc(:)%Typ=="AQU") !- 1 !mod 19/06/2008 09:38
+  allocate(vSolut(N))
+  allocate(vMolalSolut(N))
   J= 0
-  DO I=1,SIZE(vSpc)
-    IF(vSpc(I)%Typ=="AQU" .AND. vSpc(I)%NamSp/="H2O") THEN
+  do I=1,size(vSpc)
+    if(vSpc(I)%Typ=="AQU" .and. vSpc(I)%NamSp/="H2O") then
       J= J+1
       vSolut(J)= vSpc(I)
       vMolalSolut(J)= vMolal(I)
-    ENDIF
-  ENDDO
+    end if
+  end do
   
-  CALL Pitzer_Calc_Gamma( &
+  call Pitzer_Calc_Gamma( &
   & vSolut,Aphi,vMolalSolut, & !IN
   & Osmo,vLnGam) !OUT
   !
   LnActSv= -Osmo *MWsv * (SUM(vMolalSolut))
   
-  DEALLOCATE(vSolut)
-  DEALLOCATE(vMolalSolut)
+  deallocate(vSolut)
+  deallocate(vMolalSolut)
   
-  RETURN
-ENDSUBROUTINE Solmodel_Calc_Pitzer
+  return
+end subroutine Solmodel_Calc_Pitzer
 
-SUBROUTINE Pitzer_Calc_Gamma( &
+subroutine Pitzer_Calc_Gamma( &
 & vSpc,Aphi,vMolal, &
 & Osmo,vLnGam) !,ERR)
 !--
 !-- Calcule les coefficients d'activité des solute's
-!-- et le coefficient osmotique de l'eau par le mod'ele de Pitzer
+!-- et le coefficient osmotique de l'eau par le modele de Pitzer
 !--
-!-- vSpc is the list of solute species only
+!-- vSpc is a list of aqu'species with (kanarazu) solvent as vSpc(1)
+!-- and solutes as vSpc(2:nSp)
 !--
-!--IN
-!--  vSpc:   solute's
-!--  Aphi:   pente du terme de Debye-Huckel
-!--  vMolal: molalite's des solute's
-!--
-!--OUT
-!--  Osmo: Coefficient osmotique 
-!--  vLnGam: log neperien des coefficient d'activite des constituants
-!--  ERR: indicateur d'erreur (non utilise -> a completer si besoin)
-!--
-  USE M_IoTools,ONLY:GetUnit
-  USE M_T_Species,ONLY: T_Species
-  USE M_Solmodel_Pitzer_Dtb,ONLY: tBeta0,tBeta1,tBeta2,tAlfa1,tAlfa2
-  USE M_Solmodel_Pitzer_Dtb,ONLY: tTheta,tPsi,tCPhi,tZeta,tLamda
+  use M_T_Species,only: T_Species
   
-  TYPE(T_Species),INTENT(IN) :: vSpc(:)
-  REAL(dp),       INTENT(IN) :: Aphi
-  REAL(dp),       INTENT(IN) :: vMolal(:)
+  !IN
+  !  vSpc:   solute's
+  !  Aphi:   pente du terme de Debye-Huckel
+  !  vMolal: molalite's des solute's
   !
-  REAL(dp),       INTENT(OUT):: Osmo
-  REAL(dp),       INTENT(OUT):: vLnGam(:)
-  !
-  !------------------------------------------------ Variables locales --
-  INTEGER :: iC,jC,kC,iA,jA,kA,jN,A1,A2,C1,C2,K1,K2
-  INTEGER :: I,J,K,nSp
-  INTEGER :: FF !file index
-  REAL(dp):: Ionic, M, BigZ, BigF
-  REAL(dp):: RI, Fi0, Fi1, fOsmo
-  REAL(dp):: AC, Tmp, X
-  REAL(dp),DIMENSION(1:SIZE(vSpc),1:SIZE(vSpc)):: &
-  & Bmx1, & ! B_MX  of Pitzer equations, p117, Bethke'96
-  & Bmx2, & ! B'_MX of Pitzer equations, p117, Bethke'96
-  & Cmx,  & ! C_MX  of Pitzer equations, p118, Bethke'96
-  & tETheta, tETheta1
-  !
-  INTEGER,ALLOCATABLE:: vCharge(:),vIonType(:)
-  !---------------------------------------------------------------------
+  !  !vCharge: charge des solute's 
+  !  !tBeta0: parametre du modele de Pitzer
+  !  !tBeta1: parametre du modele de Pitzer.
+  !  !tBeta2: parametre du modele de Pitzer
+  !  !tCPhi:  parametre du modele de Pitzer
+  !  !tTheta: parametre du modele de Pitzer
+  !  !tPsi:   parametre du modele de Pitzer
+  !  !tAlfa1: parametre du modele de Pitzer
+  !  !tAlfa2: parametre du modele de Pitzer
+  !OUT
+  !  Osmo: Coefficient osmotique 
+  !  vLnGam: log neperien des coefficient d'activite des constituants
+  !  ERR: indicateur d'erreur (non utilise -> a completer si besoin)
   
-  IF(iDebug>0) WRITE(fTrc,'(A)') "< Pitzer_Calc_Gamma"
+  use M_Solmodel_Pitzer_Dtb,only: tBeta0,tBeta1,tBeta2,tAlfa1,tAlfa2
+  use M_Solmodel_Pitzer_Dtb,only: tTheta,tPsi,tCPhi,tZeta,tLamda
+  use M_IoTools,only:GetUnit
   !
-  nSp= SIZE(vSpc)
+  type(T_Species),dimension(:),intent(in) :: vSpc
+  real(dp),                    intent(in) :: Aphi
+  real(dp),       dimension(:),intent(in) :: vMolal
+  real(dp),                    intent(out):: Osmo
+  real(dp),       dimension(:),intent(out):: vLnGam
   !
-  ALLOCATE(vCharge(1:nSp))
+  !--------------------------------------------------- Variables locales
+  integer :: I,J,K,iC,iA,jC,jA,jN,kC,kA,nSp,A1,A2,C1,C2
+  integer :: zA !, zC
+  integer :: FF !file index
+  real(dp):: Ionic, M, BigZ
+  real(dp):: RI, Fi0, Fi1, fOsmo
+  real(dp):: AC, Tmp
+  real(dp):: ETheta, ETheta1
+  real(dp),dimension(1:size(vSpc),1:size(vSpc)):: &
+  & Bmx1, & !B_MX  of Pitzer equations, p104
+  & Bmx2, & !B'_MX of Pitzer equations, p104
+  & Cmx     !C_MX  of Pitzer equations, p104
+  integer,allocatable:: vCharge(:),vIonType(:)
+  !--------------------------------------------------------------------/
+  !
+  !Fonctions utilitaires
+  !real(dp) FONC1
+  !real(dp) FONC2
+  !integer  IonType
+  !
+  if(iDebug>0) write(fTrc,'(A)') "< Pitzer_Calc_Gamma"
+  !
+  nSp= size(vSpc)
+  !
+  allocate(vCharge(1:nSp))
   vCharge(:)=vSpc(:)%Z
   !
-  ALLOCATE(vIonType(1:nSp))
+  allocate(vIonType(1:nSp))
   vIonType(:)= 0
-  WHERE(vCharge(:)>0) vIonType(:)=  1
-  WHERE(vCharge(:)<0) vIonType(:)= -1
+  where(vCharge(:)>0) vIonType(:)=  1
+  where(vCharge(:)<0) vIonType(:)= -1
   !
-  IF(iDebug>2) THEN
-    !
-    CALL GetUnit(ff)
-    OPEN(ff,FILE="debug_pitzer.log")
-    !
-    WRITE(ff,'(A,/)') "trace of routine Pitzer_Calc_Gamma"
-    !
-    CALL CheckCoeffs
-    !
-  ENDIF
-  
-  !---------------------------------------------------- FORCE IONIQUE --
+  if(iDebug>2) then
+    call GetUnit(ff)
+    open(ff,file="debug_pitzer.log")
+    write(ff,'(A,/)') "trace of routine Pitzer_Calc_Gamma"
+  end if
+  !ERR=0
+  !
+  !--------------------------------------------------------FORCE IONIQUE
   M=    Zero  !! total molality
   BigZ= Zero  !! total molal charge, sum(|z_i|.m_i)
   Ionic=Zero  !! ionic strength
-  DO I=1,nSp
-    !print *,I
+  do I=1,nSp
     M=     M     + vMolal(I)
-    BigZ=  BigZ  + vMolal(I)*vCharge(I)*vIonType(I)
+    BigZ=  BigZ  + vMolal(I)*vCharge(I)*IonType(I,1) !-> sum(|z_i|.m_i)= BigZ
     Ionic= Ionic + vMolal(I)*vCharge(I)*vCharge(I)
-    !print *,Ionic
-  ENDDO
-  !pause
+  end do
   Ionic= Ionic/2.0D0
-  RI=  SQRT(Ionic)
+  if(iDebug>2) write(ff,'(A,G15.6)') "Ionic= ", Ionic
+  !-------------------------------------------------------/FORCE IONIQUE
   !
-  IF(iDebug>2) WRITE(ff,'(A,G15.6)') "Ionic= ", Ionic
-  !---------------------------------------------------/ FORCE IONIQUE --
-  
-  !--------------------------------------- COEFFICIENTS LONGUE PORTEE --
-  Fi0= -4.0d0*Aphi*Ionic/1.2D0*LOG(One + 1.2D0*RI)
-  Fi1= -4.0d0*Aphi      /1.2D0*LOG(One + 1.2D0*RI) &
+  !-------------------------------------------COEFFICIENTS LONGUE PORTEE
+  RI=  SQRT(Ionic)
+  Fi0= -4.0d0*Aphi*Ionic/1.2D0*log(One + 1.2D0*RI)
+  Fi1= -4.0d0*Aphi      /1.2D0*log(One + 1.2D0*RI) &
   &    -2.0d0*Aphi*RI/(One + 1.2D0*RI)
-  IF(iDebug>2) WRITE(ff,'(A,G15.6)') "Fi0=   ", Fi0
-  IF(iDebug>2) WRITE(ff,'(A,G15.6)') "Fi1=   ", Fi1
-  !--------------------------------------/ COEFFICIENTS LONGUE PORTEE --
-  
-  !------------------------------------------------ tETheta, tETheta1 --
-  tETheta(:,:)= Zero
-  tETheta1(:,:)= Zero
-  DO I=1,nSp
-    DO J=1,nSp
-      !
-      IF(I==J) CYCLE
-      IF(vIonType(I)*vIonType(J)==1) THEN ! ions same sign
-        !
-        CALL EThetaCalc( &
-        & vCharge(I),vCharge(J), RI, Aphi, &
-        & tETheta(I,J), tETheta1(I,J))
-        !
-        IF(iDebug>2) WRITE(ff,'(A,2(G15.6,1X),2(A,A1))') &
-        & "ETheta, ETheta1",&
-        & tETheta(I,J), tETheta1(I,J), &
-        & TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_
-        !
-      END IF
-      !
-    END DO
-  END DO
-  !------------------------------------------------/tETheta, tETheta1 --
-  
+  if(iDebug>2) write(ff,'(A,G15.6)') "Fi0=   ", Fi0
+  if(iDebug>2) write(ff,'(A,G15.6)') "Fi1=   ", Fi1
+  !------------------------------------------/COEFFICIENTS LONGUE PORTEE
+  !
   Bmx1= Zero
   Bmx2= Zero
   Cmx=  Zero
   !
-  !-------------------------------------- PARAMETRES DE PITZER B et C --
-  !------------------------------------------------------ B_MX, B'_MX --
-  !------------------------------ using tBeta0, tBeta1, tBeta2, tCPhi --
-  IF (Ionic /= Zero) THEN
-    DO I=1,nSp
-      DO J=1,nSp
-        IF(I==J) CYCLE
+  if (Ionic /= Zero) then
+    !----------------------------------------PARAMETRES DE PITZER B et C
+    !--------------------------------using tBeta0, tBeta1, tBeta2, tCPhi
+    do I=1,nSp
+      do J=1,nSp
+        if(I==J) cycle
         !
         !X1=tAlfa1(I,J)*RI
         !X2=tAlfa2(I,J)*RI
@@ -229,628 +193,468 @@ SUBROUTINE Pitzer_Calc_Gamma( &
         &        + tBeta2(I,J)*FONC2(tAlfa2(I,J)*RI)  ) &
         &        /Ionic
         !
-        IF (vCharge(I)*vCharge(J)/=0) & !C_cation-anion eq24, Moeller'98
-        & Cmx(I,J)=  0.5D0*tCPhi(I,J) / SQRT(ABS(REAL(vCharge(I)*vCharge(J))))
+        if (vCharge(I)*vCharge(J)/=0) then !C_cation-anion eq24, Moeller'98
+          Cmx(I,J)=  0.5d0*tCPhi(I,J) / (ABS(vCharge(I)*vCharge(J)))**0.5
+        else
+          Cmx(I,J)=  Zero
+        end if
         !
-      END DO
-    END DO
+        if(iDebug>2 .and. Bmx1(I,J)/=Zero) write(ff,'(A,3(G15.6,1X),2(A,A1))') &
+        & "Bmx1,Bmx2,Cmx", &
+        & Bmx1(I,J), Bmx2(I,J), Cmx(I,J), &
+        & trim(vSpc(I)%NamSp),t_,trim(vSpc(J)%NamSp),t_
+        !
+      end do
+    end do
+    !---------------------------------------/PARAMETRES DE PITZER B et C
     !
-    !------------------------------------------------------------trace--
-    IF(iDebug>2) THEN
-      DO I=1,nSp
-        DO J=1,nSp
-          IF(I==J) CYCLE
-          IF(Bmx1(I,J)/=Zero) &
-          & WRITE(ff,'(A,3(G15.6,1X),2(A,A1))') &
-          & "Beta-0-1-2   ", &
-          & tBeta0(I,J), tBeta1(I,J), tBeta2(I,J), &
-          & TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_
-          !
-        END DO
-      END DO
-      DO I=1,nSp
-        DO J=1,nSp
-          IF(I==J) CYCLE
-          IF(Bmx1(I,J)/=Zero) &
-          & WRITE(ff,'(A,3(G15.6,1X),2(A,A1))') &
-          & "Bmx1,Bmx2,Cmx", &
-          & Bmx1(I,J), Bmx2(I,J), Cmx(I,J), &
-          & TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_
-        END DO
-      END DO
-    END IF
-  END IF
-  !---/
-  !--------------------------------------/PARAMETRES DE PITZER B et C --
-  
-  !---------------------------------------------------------------------
-  !-------------------------------------------- COEFFICIENT OSMOTIQUE --
-  IF (Ionic>Zero) THEN
-  
-    fOsmo= -Aphi*RI**3 /(One + 1.2D0*RI)
-    
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') I," fOsmo=", fOsmo
-    !fOsmo=  Ionic*Fi1 - Fi0
+    !----------------------------------------------COEFFICIENT OSMOTIQUE
+    fOsmo=  Ionic*Fi1 - Fi0
     !
-    !------------------------------------- somme croisee anion/cation --
-    tmp= Zero
-    DO I=1,nSp
-      DO J=1,nSp
-        IF(I==J) CYCLE
-        IF(vIonType(I)*vIonType(J)==-1) THEN ! anion/cation
-          tmp= tmp &
-          &  + vMolal(I)*vMolal(J) &
-          &    * ( Bmx1(I,J) + Ionic*Bmx2(I,J) + BigZ*Cmx(I,J) )
-        ENDIF
-      ENDDO
-    ENDDO
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') I," fOsmo, anion/cation=", tmp
-    fOsmo= fOsmo + tmp
-    !CALL Pause_
-    
-    !---------------------------------- somme croisee Cation1/Cation2 --
-    !--------------------------------------------- using tPsi, tTheta --
-    tmp= Zero
-    DO C1=1,nSp-1
-      IF(vIonType(C1)/=1) CYCLE     ! C1 is CATION
-      DO C2=C1+1,nSp
-        IF(vIonType(C2)/=1) CYCLE   ! C2 is CATION
-        !
-        ! SUM_ON_ANIONS PSI(C1,C2,ANI) * vMolal(ANI)
-        X=  Zero
-        DO K=1,nSp
-          IF(vIonType(K)==-1) &     !K is ANION
-          & X= X + vMolal(K) *tPsi(C1,C2,K)
-        ENDDO
-        !X=  Zero
-        !
-        tmp= tmp &
-        &  + vMolal(C1)*vMolal(C2) &
-        &    *(tTheta(C1,C2) +tETheta(C1,C2) +RI*RI*tETheta1(C1,C2) +X)
-        !
-      ENDDO
+    !-----------------------------------------somme croisee anion/cation
+    do I=1,nSp
+      do J=1,nSp
+        if(IonType(I,1)*IonType(J,-1)/=0) then !J(+)I(-) or J(-)I(+)
+          fOsmo= fOsmo &
+          &    + 2.0d0*vMolal(I)*vMolal(J) &
+          &      * ( Bmx1(I,J) +Ionic*Bmx2(I,J) + 2.0d0*BigZ*Cmx(I,J) )
+        end if
+      end do
       !
-    ENDDO
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') C1," fOsmo, cation1/cation2=", tmp
-    fOsmo= fOsmo + tmp
-    !-----------------------------------------------/ Cation1/Cation2 --
+      if(iDebug>2) write(ff,'(I3,A,G15.6)') I," fOsmo, anion/cation=", fOsmo
+      !call Pause_
+    end do
+    !--------------------------------------somme croisee Cation1/Cation2
     
-    !------------------------------------ Somme Croisee Anion1/Anion2 --
-    !--------------------------------------------- using tPsi, tTheta --
-    tmp= Zero
-    DO A1=1,nSp-1
-      IF(vIonType(A1)/=-1) CYCLE     ! A1 is ANION
-      DO A2=A1+1,nSp
-        IF(vIonType(A2)/=-1) CYCLE   ! A2 is ANION
-        !
-        ! SUM_ON_CATIONS PSI(A1,A2,CAT) * vMolal(CAT)
-        X=  Zero
-        DO K=1,nSp
-          IF(vIonType(K)==1) & !K is cation
-          & X= X + vMolal(K) *tPsi(A1,A2,K)
-        ENDDO
-        ! X=  Zero
-        !
-        ! BigPhi^phi_ij= theta_ij + ETheta_ij + IStrength * EThetaPrim_ij
-        tmp= tmp &
-        &    + vMolal(A1) *vMolal(A2) &
-        &      *(tTheta(A1,A2) +tETheta(A1,A2) +RI*RI*tETheta1(A1,A2) +X)
-        !
-      ENDDO
+    !-------------------------------------------------using tPsi, tTheta
+    do C1=1,nSp
+      do C2=C1,nSp
+        if(IonType(C1,1)*IonType(C2,1)*(C1-C2)/=0) then
+          Tmp=  Zero
+          do K=1,nSp !if K is anion
+            !N.Ferrando considers K is anion or neutral
+            !Tmp= Tmp + vMolal(K)*tPsi(C1,C2,K) *(MAX(IonType(K,-1),IonType(K,0)))
+            Tmp= Tmp + vMolal(K) *tPsi(C1,C2,K) *IonType(K,-1)
+          end do
+          call EThetaCalc(vCharge(C1),vCharge(C2), RI, Aphi, ETheta, ETheta1)
+          fOsmo= fOsmo &
+          &    + vMolal(C1)*vMolal(C2) &
+          &      *(tTheta(C1,C2) +ETheta +RI*RI*ETheta1 +Tmp)
+        end if
+      end do
       !
-    ENDDO
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') A1," fOsmo, Anion1/Anion2=", tmp
-    fOsmo= fOsmo + tmp
-    !--------------------------------------------------/Anion1/Anion2 --
+      if(iDebug>2) write(ff,'(I3,A,G15.6)') C1," fOsmo, cation1/cation2=", fOsmo
+      !call Pause_
+    end do
     
-    !---------------------------------- Somme Sur Les Especes Neutres --
-    !--------------------------------------------------- using tLamda --
-    tmp= Zero
-    DO jN=1,nSp
-      IF(vIonType(jN)/=0) CYCLE !jN is Neutral
-      DO J=1,nSp
-        !
-        X= Zero
-        DO K=J,nSp
-          X= X +vMolal(K)*tZeta(J,K,jN)
-        ENDDO
-        !
-        tmp= tmp + vMolal(jN)*vMolal(J) *(tLamda(J,jN) +X)
-        !
-      ENDDO
-    END DO
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') jN," fOsmo, Neutres=", tmp
-    fOsmo= fOsmo + tmp
-    !--------------------------------------------------------/neutres --
+    !--=================================< Somme Croisee Anion1/Anion2 ==
+    !--==========================================< using tPsi, tTheta ==
+    do A1=1,nSp
+      do A2=A1,nSp
+        if(IonType(A1,-1)*IonType(A2,-1)*(A1-A2)/=0) then
+          !A1/=A2 & A1(-) & A2(-)
+          Tmp=  Zero
+          do K=1,nSp !if K is cation
+            !N.Ferrando considers K is cation or neutral
+            !Tmp= Tmp + vMolal(K) *tPsi(A1,A2,K) *MAX(IonType(K,1),IonType(K,0))
+            Tmp= Tmp + vMolal(K) *tPsi(A1,A2,K) *IonType(K,1)
+          end do
+          call EThetaCalc(vCharge(A1),vCharge(A2), RI, Aphi, ETheta, ETheta1)
+          fOsmo= fOsmo &
+          &    + vMolal(A1) *vMolal(A2) *(tTheta(A1,A2) +ETheta +RI*RI*ETheta1 +Tmp)
+        end if
+      end do
+      if(iDebug>2) write(ff,'(I3,A,G15.6)') A1," fOsmo, Anion1/Anion2=", fOsmo
+      !call Pause_
+    end do
     !
-    fOsmo= fOsmo *2.0D0
-    IF(iDebug>2) WRITE(ff,'(I3,A,G15.6)') jN," fOsmo=", fOsmo
+    !--===============================< Somme Sur Les Especes Neutres ==
+    !==================================================< using tLamda ==
+    do jN=1,nSp
+      if(IonType(jN,0)/=0) then !jN Is Neutral
+        do J=1,nSp
+          Tmp=Zero
+          do K=J,nSp
+            Tmp= Tmp +vMolal(K)*tZeta(J,K,jN)
+          end do
+          fOsmo= fOsmo + vMolal(jN)*vMolal(J) *(tLamda(J,jN) +Tmp)
+        end do
+      end if
+      if(iDebug>2) write(ff,'(I3,A,G15.6)') jN," fOsmo, Neutres=", fOsmo
+      !call Pause_
+    end do
     !
-    Osmo= One + 2.0D0*fOsmo/M
-    
-  ELSE ! Force ionique=  0
+    Osmo= One + fOsmo/M
+    !
+  else ! Force ionique=  0
   
-    IF (M==Zero) THEN
+    if (M==Zero) then
       Osmo=  One
-    ELSE
+    else
       Osmo=  One + fOsmo/M
-    ENDIF
+    end if
   
-  ENDIF
+  end if
   !
-  !--------------------------------------------/COEFFICIENT OSMOTIQUE --
-  !---------------------------------------------------------------------
-  
-  !---------------------------------------------------------------------
-  !------------------------------------------ COEFFICIENTS D'ACTIVITE --
+  !--=======================================< COEFFICIENTS D'ACTIVITE ==
   !
-  tmp= 2.303D0 *0.5092D0 / 3.D0
-  Fi1= -4.0d0*tmp      /1.2D0*LOG(One + 1.2D0*RI) &
-  &    -2.0d0*tmp*RI/(One + 1.2D0*RI)
-  BigF= 0.5d0 *Fi1
-  ! BigF= BigF
-  ! + SUM( m_c  m_a  B'_ca    ) 
-  ! + SUM( m_c1 m_c2 PHI'_c1c2) 
-  ! + SUM( m_a1 m_a2 PHI'_a1a2) 
-  DO I=1,nSp
-    DO J=1,nSp
-      IF(I==J) CYCLE
-      tmp= vMolal(I)*vMolal(J)
-      IF(vIonType(I)*vIonType(J)== 1) BigF= BigF + Tmp *tETheta1(I,J)
-      IF(vIonType(I)*vIonType(J)==-1) BigF= BigF + Tmp *Bmx2(I,J)
-    END DO
-  END DO
-  IF(iDebug>2) WRITE(ff,'(A,G15.6)') " BigF=", BigF
-  
-  !-------------------------------------------------- CALCUL LN GAMMA --
-  DO iC=1,nSp
-    !
-    !---------------------------------------- CALCUL POUR LES CATIONS --
-    IF(vIonType(iC)==1) THEN
+  !--=======================================< CALCUL POUR LES CATIONS ==
+  do iC=1,nSp
+    if(vCharge(iC)>0) then
+      !
+      if(iDebug>2) write(ff,'(/,A,/)') trim(vSpc(iC)%NamSp)
       !
       AC= 0.5d0 *vCharge(iC)**2 *Fi1
-      AC= vCharge(iC)**2 *BigF
       !
-      IF(iDebug>2) WRITE(ff,'(/,A,/)') TRIM(vSpc(iC)%NamSp)
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " F-term=", AC
+      if(iDebug>2) write(ff,'(A,G15.6)') " LnGamma=", AC
       !
-      !----------------------------------------- Somme Sur Les Anions --
+      !--======================================< Somme Sur Les Anions ==
       Tmp= Zero
-      DO jA=1,nSp
-        IF(vIonType(jA)==-1) THEN !-> anion
-          K1= MIN(iC,jA)
-          K2= MAX(iC,jA)
-          Tmp= Tmp + vMolal(jA) &
-          & *( 2.0d0*Bmx1(K1,K2) +BigZ*Cmx(K1,K2) )
-        END IF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 1=anions_=", Tmp
+      do jA=1,nSp
+        if(vCharge(jA)<0) &
+        !Tmp=  Tmp + vMolal(jA) *(Bmx1(iC,jA) +BigZ*Cmx(iC,jA)) *IonType(jA,-1)
+        Tmp= Tmp + 2.0d0*vMolal(jA) *( Bmx1(iC,jA) +BigZ*Cmx(iC,jA) )
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " anions_=", Tmp
       AC= AC + Tmp
       !
-      !---------------------------------------- Somme Sur Les Cations --
-      Tmp= Zero
-      DO jC=1,nSp
-        IF(iC==jC) CYCLE
-        IF(vIonType(jC)==1) THEN !-> cation
-          !
-          K1= MIN(iC,jC)
-          K2= MAX(iC,jC)
-          !
-          X= Zero
-          DO jA=1,nSp
-            IF(vIonType(jA)==-1) & ! iC-jC-jA
-            & X= X &
-            &  + vMolal(jA) *tPsi(K1,K2,jA)
-          END DO
-          X= Zero
-          !
+      !--=====================================< Somme Sur Les Cations ==
+      Tmp=  Zero
+      do jC=1,nSp
+        if(vCharge(jC)>0) then
+          call EThetaCalc(vCharge(iC),vCharge(jC), RI, Aphi, ETheta, ETheta1)
+          !Tmp= Tmp + vMolal(jC)*( tTheta(MIN(iC,jC),MAX(iC,jC)) + ETheta )
+          Tmp= Tmp + 2.0d0*vMolal(jC)*( tTheta(MIN(iC,jC),MAX(iC,jC)) + ETheta )
+        end if
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " cations=", Tmp
+      AC= AC + Tmp
+      !
+      !--===============< Somme Croisée Sur Les Cations Et Les Anions ==
+      Tmp=  Zero
+      do J=1,nSp
+        do K=1,nSp !when K(-) and J(+)
           Tmp= Tmp &
-          &  + vMolal(jC) &
-          &    *( 2.0D0*tTheta(K1,K2) + 2.0D0*tETheta(K1,K2) + X)
-          
-          IF(iDebug>2) WRITE(FF,'(2A12,G12.3)') &
-          & TRIM(vSpc(K1)%NamSp),TRIM(vSpc(K2)%NamSp), &
-          & tTheta(K1,K2)+tETheta(K1,K2)
-          
-          !! Tmp= Tmp &
-          !! &  + vMolal(jC) &
-          !! &    *( 2.0D0*tTheta(jC,iC) + 2.0D0*tETheta(jC,iC) )
-          !
-        ENDIF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 2=cations=", Tmp
+          &  + vMolal(J)*vMolal(K) &
+          &    * ( vCharge(iC)**2 *Bmx2(J,K)   &
+          &      + vCharge(iC)    *Cmx(J,K)    &
+          &      + tPsi(MIN(iC,J),MAX(iC,J),K) &
+          &      ) &
+          &    * IonType(J,1)*IonType(K,-1)
+        end do
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " ani/cat=", Tmp
       AC= AC + Tmp
       !
-      !------------------------------------------ Somme Anion - Anion --
+      !--=======================================< Somme Anion < Anion ==
       Tmp= Zero
-      DO jA=1,nSp-1
-        IF(vIonType(jA)==-1) THEN !ANI
-          DO kA=jA+1,nSp
-            IF(vIonType(jA)==-1) THEN !ANI
+      do jA=1,nSp-1
+        if(vCharge(jA)<0) then
+          do kA=jA+1,nSp
+            if(vCharge(kA)<0) then
+              call EThetaCalc(vCharge(jA),vCharge(kA), RI, Aphi, ETheta, ETheta1)
               Tmp= Tmp &
-              & + vMolal(jA) *vMolal(kA) *tPsi(jA,kA,iC) !ANI-ANI-CAT
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 3=ani/ani=", Tmp
+              & + vMolal(jA) *vMolal(kA) *( vCharge(iC)**2 *ETheta1 + tPsi(jA,kA,iC) )
+            end if
+          end do
+        end if
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " ani/ani=", Tmp
       AC=  AC + Tmp
       !
-      !------------------ Somme Croisée Sur Les Cations Et Les Anions --
-      Tmp=  Zero
-      DO I=1,nSp
-        DO J=1,nSp
-          IF(vIonType(I)*vIonType(J)==-1) &
-          & Tmp= Tmp &
-          &    + vMolal(I)*vMolal(J) *vCharge(iC) *Cmx(I,J)
-        ENDDO
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 4=ani/cat=", Tmp
-      AC= AC + Tmp
-      !
-      !-------------------------------- Somme Sur Les Especes Neutres --
+      !--< Somme Cations < Cations
       Tmp= Zero
-      DO jN=1,nSp
-        IF(vIonType(jN)==0) &
-        & Tmp= Tmp +2.0d0*vMolal(jN)*tLamda(iC,jN)
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 5=neutral=", Tmp
-      AC= AC +Tmp
-      !---/
+      do jC=1,nSp-1
+        if(vCharge(jC)>0) then
+          !do kC=jC+2,nSp
+          do kC=jC+1,nSp
+            if(vCharge(kC)>0) then
+              call EThetaCalc(vCharge(jC),vCharge(kC), RI, Aphi, ETheta, ETheta1)
+              Tmp= Tmp + vMolal(jC)*vMolal(kC) *ETheta1
+            end if
+          end do
+        end if
+      end do
+      Tmp= Tmp *vCharge(iC)**2
+      if(iDebug>2) write(ff,'(A,G15.6)') " cat/cat=", Tmp
+      AC=  AC + Tmp
       !
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " LnGamma=", AC
+      !--< Somme Sur Les Especes Neutres
+      Tmp= Zero
+      do jN=1,nSp
+        Tmp= Tmp +2.0d0*vMolal(jN)*tLamda(iC,jN)*IonType(jN,0)
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " neutral=", Tmp
+      AC= AC +Tmp
+      !
+      if(iDebug>2) write(ff,'(A,G15.6)') " LnGamma=", AC
       !
       vLnGam(iC)=AC
-    ENDIF
-    !---------------------------------------/ CALCUL POUR LES CATIONS --
-  END DO
+    end if
+  end do
+  !--======================================</ CALCUL POUR LES CATIONS ==
+  
+  !--========================================< CALCUL POUR LES ANIONS ==
+  do iA=1,nSp
     
-  DO iA=1,nSp
-    !
-    !----------------------------------------- CALCUL POUR LES ANIONS --
-    IF(vIonType(iA)==-1) THEN
+    if(vCharge(iA)<0) then
       !
-      IF(iDebug>2) WRITE(ff,'(/,A,/)') TRIM(vSpc(iA)%NamSp)
+      if(iDebug>2) write(ff,'(/,A,/)') trim(vSpc(iA)%NamSp)
       !
-      AC= 0.5d0 *vCharge(iA)**2 *Fi1
-      AC= vCharge(iA)**2 *BigF
+      zA= vCharge(iA)
       !
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " LnGamma=", AC
+      AC= 0.5d0 *zA**2 *Fi1  !*IonType(iA,-1)
       !
-      !-------------------------------------------- somme sur cations --
+      if(iDebug>2) write(ff,'(A,G15.6)') " LnGamma=", AC
+      !
+      !--=========================================< somme sur cations ==
       Tmp= Zero
-      DO jC=1,nSp
-        IF(vIonType(jC)==1) THEN
-          K1= MIN(iA,jC)
-          K2= MAX(iA,jC)
-          Tmp= Tmp + vMolal(jC) &
-          &         *(2.0d0 *Bmx1(K1,K2) &
-          &            + BigZ*Cmx(K1,K2))
-        END IF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 1=cations=", Tmp
+      do jC=1,nSp
+        Tmp= Tmp + 2.0d0 *vMolal(jC) *(Bmx1(jC,iA) + BigZ*Cmx(jC,iA)) *IonType(jC,1)
+      end do
+      AC= AC + Tmp
+      if(iDebug>2) write(ff,'(A,G15.6)') " cations=", Tmp
+      !
+      !--==========================================< somme sur anions ==
+      Tmp= Zero
+      do jA=1,nSp
+        !ZI=  vCharge(iA)
+        !ZJ=  vCharge(jA)
+        if(vCharge(jA)<0) then
+          call EThetaCalc(zA,vCharge(jA), RI, Aphi, ETheta, ETheta1)
+          Tmp=  Tmp + 2.0d0*vMolal(jA)*(tTheta(MIN(iA,jA),MAX(iA,jA)) +ETheta) 
+        endIf
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " anions =", Tmp
       AC= AC + Tmp
       !
-      !--------------------------------------------- somme sur anions --
+      !--===============< somme croisée sur les cations et les anions ==
       Tmp= Zero
-      DO jA=1,nSp
-        IF(iA==jA) CYCLE
-        IF(vIonType(jA)==-1) THEN
-          !
-          K1= MIN(iA,jA)
-          K2= MAX(iA,jA)
-          !
-          X= Zero
-          DO jC=1,nSp
-            IF(vIonType(jC)==1) &
-            & X= X &
-            &  + vMolal(jC) *tPsi(K1,K2,jC)
-          END DO
-          !X= Zero
-          Tmp=  Tmp &
-          &  + 2.0d0*vMolal(jA)*(tTheta(K1,K2) +tETheta(K1,K2)) 
-          !
-          IF(iDebug>2) WRITE(FF,'(2A12,G12.3)') &
-          & TRIM(vSpc(K1)%NamSp),TRIM(vSpc(K2)%NamSp), &
-          & tTheta(K1,K2)+tETheta(K1,K2)
-          !
-        ENDIf
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 2=anions =", Tmp
-      AC= AC + Tmp
-      !
-      !-------------------------------------- somme cations - cations --
-      Tmp= Zero
-      DO I=1,nSp-1
-        IF(vIonType(I)==1) THEN !CAT
-          DO J=I+1,nSp
-            IF(vIonType(J)==1) THEN !CAT
-              !
-              Tmp= Tmp &
-              &  + vMolal(I)*vMolal(J) *tPsi(I,J,iA) !CAT-CAT-ANI
-              !
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 3=cat/cat=", Tmp
-      AC= AC + Tmp
-      !
-      !------------------ somme croisée sur les cations et les anions --
-      Tmp= Zero
-      DO I=1,nSp
-        DO J=1,nSp
-          IF(vIonType(I)*vIonType(J)==-1) &
-          & Tmp= Tmp &
-          &    - vMolal(I)*vMolal(J) *vCharge(iA) *Cmx (I,J)
-        ENDDO
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 4=ani/cat=", Tmp
+      do J=1,nSp
+        do K=1,nSp
+          Tmp= Tmp &
+          &  + vMolal(J)*vMolal(K) &
+          &    * ( zA**2   *Bmx2(J,K)   &
+          &      + ABS(zA) *Cmx (J,K)    &
+          &      + tPsi(MIN(iA,K),MAX(iA,K),J)   &
+          &      ) &
+          &    *IonType(J,1) *IonType(K,-1)
+        end do
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " ani/cat=", Tmp
       AC=  AC + Tmp
       !
-      !------------------------------------------ Somme Anion - Anion --
-      !! Tmp= Zero
-      !! DO jA=1,nSp-1
-      !!   IF(vCharge(jA)<0) THEN
-      !!     !! DO kA=jA+2,nSp
-      !!     DO kA=jA+1,nSp
-      !!       IF(vCharge(kA)<0) &
-      !!       & Tmp= Tmp + vMolal(jA)*vMolal(kA)*tETheta1(jA,kA)
-      !!     ENDDO
-      !!   ENDIF
-      !! ENDDO
-      !! Tmp= Tmp *vCharge(iA)**2
-      !! IF(iDebug>2) WRITE(ff,'(A,G15.6)') " ani/ani=", Tmp
-      !! AC= AC + Tmp
-      
-      !-------------------------------- Somme Sur Les Especes Neutres --
+      !--===================================< somme cations < cations ==
       Tmp= Zero
-      DO jN=1,nSp
-        IF(vIonType(jN)==0) &
-        & Tmp= Tmp +2.0d0*vMolal(jN)*tLamda(iA,jN)
-      ENDDO
-      !! Tmp= SUM(vMolal(:)*tLamda(iA,:),MASK=vIonType(:)==0)
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " 5=neutral=", Tmp
+      do jC=1,nSp-1
+        if(vCharge(jC)>0) then
+          do kC=jC+1,nSp !§§§!kC=jC+2,nSp 
+            if(vCharge(kC)>0) then
+              call EThetaCalc(vCharge(jC),vCharge(kC), RI, Aphi, ETheta, ETheta1)
+              Tmp= Tmp &
+              &  + vMolal(jC)*vMolal(kC) *( zA**2 *ETheta1 + tPsi(jC,kC,iA) )
+            end if
+          end do
+        end if
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " cat/cat=", Tmp
       AC= AC + Tmp
-      !---/
       !
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " LnGamma=", AC
+      !--=======================================< Somme Anion < Anion ==
+      Tmp= Zero
+      do jA=1,nSp-1
+        if(vCharge(jA)<0) then
+          !! do kA=jA+2,nSp
+          do kA=jA+1,nSp
+            !ZJ=  vCharge(jA)
+            !ZK=  vCharge(kA)
+            if(vCharge(kA)<0) then
+              call EThetaCalc(vCharge(jA),vCharge(kA), RI, Aphi, ETheta, ETheta1)
+              Tmp= Tmp + vMolal(jA)*vMolal(kA)*ETheta1
+            end if
+          end do
+        end if
+      end do
+      Tmp= Tmp *vCharge(iA)**2
+      if(iDebug>2) write(ff,'(A,G15.6)') " ani/ani=", Tmp
+      AC= AC + Tmp
+      
+      !--=============================< Somme Sur Les Especes Neutres ==
+      Tmp= Zero
+      do jN=1,nSp
+        !Tmp= Tmp + vMolal(jN)*Bmx1(iC,jN)*IonType(jN,0)
+        Tmp= Tmp +2.0d0*vMolal(jN)*tLamda(iA,jN)*IonType(jN,0)
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " neutral=", Tmp
+      AC= AC + Tmp
+      !Tmp=  Zero
+      !do J=1,nSp
+      !   TMP1=Bmx1(iA,J)       
+      !   Tmp= Tmp + vMolal(J)*TMP1*IonType(J,0)
+      !end do
+      !AC=  AC + 2.0d0*Tmp
+      !
+      if(iDebug>2) write(ff,'(A,G15.6)') " LnGamma=", AC
       !
       vLnGam(iA)=AC
-    ENDIF
-    !----------------------------------------/ CALCUL POUR LES ANIONS --
-  END DO
+    end if
+    
+  end do
+  !--=======================================</ CALCUL POUR LES ANIONS ==
+  !
+  !--===============================< CALCUL POUR LES ESPECES NEUTRES ==
+  do jN=1,nSp
   
-  DO jN=1,nSp
-    !
-    !-------------------------------- CALCUL POUR LES ESPECES NEUTRES --
-    IF(vIonType(jN)==0) THEN
+    if(vCharge(jN)==0) then
       !
-      IF(iDebug>2) WRITE(ff,'(/,A,/)') TRIM(vSpc(jN)%NamSp)
+      if(iDebug>2) write(ff,'(/,A,/)') trim(vSpc(jN)%NamSp)
       !
       AC= Zero
       !
       Tmp= Zero
-      DO J=1,nSp
+      do J=1,nSp
         Tmp= Tmp + 2.0*vMolal(J)*tLamda(J,jN)
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " tLamda_=", Tmp
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " tLamda_=", Tmp
       AC= AC + Tmp
       !
-      !----------------------------------------------- terme ternaire --
+      !--< terme ternaire
       Tmp= Zero
-      DO J=1,nSp
-        IF(vCharge(J)/=0) THEN
-          DO K=J+1,nSp
-            IF(vCharge(K)/=0) THEN
+      do J=1,nSp
+        if(vCharge(J)/=0) then
+          do K=J+1,nSp
+            if(vCharge(K)/=0) then
               Tmp= Tmp + vMolal(J)*vMolal(K)*tZeta(J,K,jN)
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDDO
-      IF(iDebug>2) WRITE(ff,'(A,G15.6)') " ternary=", Tmp
-      !-----------------------------------------------/terme ternaire --
+            end if
+          end do
+        end if
+      end do
+      if(iDebug>2) write(ff,'(A,G15.6)') " ternary=", Tmp
+      !--</ terme ternaire
       !
       AC= AC + Tmp
       !
       vLnGam(jN)=AC
-    ENDIF
-    !-------------------------------/ CALCUL POUR LES ESPECES NEUTRES --
-    !
-  ENDDO
+    end if
+  
+  end do
+  !--==============================</ CALCUL POUR LES ESPECES NEUTRES ==
   !
-  DO I=1,nSp
-    IF(iDebug>2) &
-    & WRITE(ff,'(I3,1X,A15,G15.6)') I,vSpc(I)%NamSp,EXP(vLnGam(I))
-  ENDDO
+  do I=1,nSp
+    if(iDebug>2) &
+    & write(ff,'(I3,1X,A15,G15.6)') I,vSpc(I)%NamSp,exp(vLnGam(I))
+  end do
   !
-  IF(iDebug>2) CLOSE(ff)
+  if(iDebug>2) close(ff)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Pitzer_Calc_Gamma"
-  
-  RETURN
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Pitzer_Calc_Gamma"
+  !
+  return
+    
+contains
 
-CONTAINS
+  integer function IonType(I,ISIGN)
+    integer,intent(in):: I      !species index
+    integer,intent(in):: ISIGN  !iSign in [-1,0,1]
+    
+    integer:: K
+    
+    K= vIonType(I) != -1/0/1 for (-)/(0)/(+) respectively
+    select case(ISIGN) !                !(-)  (0) (+)
+      case(-1)  ; IonType= (K-1) *K/2   ! 1    0   0
+      case( 0)  ; IonType= (1-K) *(1+K) ! 0    1   0
+      case( 1)  ; IonType= (1+K) *K/2   ! 0    0   1
+    end select
+    
+    return
+  end function IonType
 
-SUBROUTINE CheckCoeffs
+end subroutine Pitzer_Calc_Gamma
 
-  WRITE(FF,'(A)') "==Beta0-1-2 Cphi=="
-  DO I=1,nSp
-    DO J=1,nSp
-      IF(J>I) &
-      & WRITE(FF,'(2A12,4G12.3)') &
-      & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp), &
-      & tBeta0(I,J), tBeta1(I,J), tBeta2(I,J), tCPhi(I,J)
-    END DO
-  END DO
-  
-  WRITE(FF,'(A)') "==Psi, CAT-CAT-ANI=="
-  DO K=1,nSp
-    DO I=1,nSp-1
-      DO J=I+1,nSp
-        IF( vIonType(I)== 1 .AND. &
-        &   vIonType(J)== 1 .AND. &
-        &   vIonType(K)==-1 )     &
-        & WRITE(FF,'(3A12,G12.3)') &
-        & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp),TRIM(vSpc(K)%NamSp), &
-        & tPsi(I,J,K)
-      END DO
-    END DO
-  END DO
-  
-  WRITE(FF,'(A)') "==Psi, ANI-ANI-CAT=="
-  DO K=1,nSp
-    DO I=1,nSp-1
-      DO J=I+1,nSp
-        IF( vIonType(I)==-1 .AND. &
-        &   vIonType(J)==-1 .AND. &
-        &   vIonType(K)== 1 )     &
-        & WRITE(FF,'(3A12,G12.3)') &
-        & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp),TRIM(vSpc(K)%NamSp), &
-        & tPsi(I,J,K)
-      END DO
-    END DO
-  END DO
-  
-  WRITE(FF,'(A)') "==Lambda, ION-NEU=="
-  DO J=1,nSp
-    IF( vIonType(J)/=0 ) CYCLE
-    DO I=1,nSp
-      IF( vIonType(I)/=0 )     &
-      & WRITE(FF,'(2A12,G12.3)') &
-      & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp), &
-      & tLamda(I,J)
-    END DO
-  END DO
-  
-  !! WRITE(FF,'(A)') "==Beta0-1-2 Cphi=="
-  !! DO I=1,nSp
-  !!   DO J=1,nSp
-  !!     IF(J<I) &
-  !!     & WRITE(FF,'(2A12,4G12.3)') &
-  !!     & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp), &
-  !!     & tBeta0(I,J), tBeta1(I,J), tBeta2(I,J), tCPhi(I,J)
-  !!   END DO
-  !! END DO
-  !! 
-  !! WRITE(FF,'(A)') "==Psi=="
-  !! DO K=1,nSp
-  !!   DO I=1,nSp
-  !!     DO J=1,nSp
-  !!       IF( J<I &
-  !!       .AND. vIonType(I)== 1  &
-  !!       .AND. vIonType(J)== 1  &
-  !!       .AND. vIonType(K)==-1) &
-  !!       & WRITE(FF,'(3A12,G12.3)') &
-  !!       & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp),TRIM(vSpc(K)%NamSp), &
-  !!       & tPsi(I,J,K)
-  !!     END DO
-  !!   END DO
-  !! END DO
-  !! DO K=1,nSp
-  !!   DO I=1,nSp
-  !!     DO J=1,nSp
-  !!       IF( J<I &
-  !!       .AND. vIonType(I)==-1  &
-  !!       .AND. vIonType(J)==-1  &
-  !!       .AND. vIonType(K)== 1) &
-  !!       & WRITE(FF,'(3A12,G12.3)') &
-  !!       & TRIM(vSpc(I)%NamSp),TRIM(vSpc(J)%NamSp),TRIM(vSpc(K)%NamSp), &
-  !!       & tPsi(I,J,K)
-  !!     END DO
-  !!   END DO
-  !! END DO
-  
-  RETURN
-END SUBROUTINE CheckCoeffs
-
-ENDSUBROUTINE Pitzer_Calc_Gamma
-
-REAL(dp) FUNCTION FONC1(X)
+real(dp) function FONC1(X)
 !--
-!-- function g, used for computing B_MX and B_MX'
-!-- from Beta0, Beta1, Beta2
+!-- Fonction utilisee dans le calcul des coefficients d'activite
+!-- par le modele de Pitzer
 !--
-  REAL(dp)::X
-  IF (X==Zero) THEN  ;  FONC1= Zero
-  ELSE               ;  FONC1= 2.0d0*(One - (One + X)*EXP(-X)) /X/X
-  END IF
-END FUNCTION FONC1
+  real(dp)::X
+  if (X==Zero) then  ;  FONC1= Zero
+  else               ;  FONC1= 2.0d0*(One - (One + X)*exp(-X)) /X/X
+  end if
+end function FONC1
 
-REAL(dp) FUNCTION FONC2(X)
+real(dp) function FONC2(X)
 !--
-!-- function g', used for computing B_MX and B_MX'
-!-- from Beta0, Beta1, Beta2
+!-- Fonction utilisee dans le calcul des coefficients d'activite
+!-- par le modele de Pitzer
 !--
-  REAL(dp)::X
-  IF (X==Zero) THEN  ;  FONC2= Zero
-  ELSE               ;  FONC2=-2.0d0*(One - (One + X + X*X/2.0d0)*EXP(-X)) /X/X
-  END IF
-END FUNCTION FONC2
+  real(dp)::X
+  if (X==Zero) then  ;  FONC2= Zero
+  else               ;  FONC2=-2.0d0*(One - (One + X + X*X/2.0d0)*exp(-X)) /X/X
+  end if
+end function FONC2
 
-SUBROUTINE EThetaCalc ( &
+subroutine EThetaCalc ( &
 & Zi, Zj, SqrtI, Aphi,  &
 & Eth, Eth1)
 !--
-!-- Calcul de la fonction ETheta(I) --
-!-- (effet electrostatique asymetrique) --
-!-- par la theorie de Pitzer (1975) --
-!-- IN --
+!-- Calcul de la fonction ETheta(I) ==
+!-- (effet electrostatique asymetrique) ==
+!-- par la theorie de Pitzer (1975) ==
+!-- IN ==
 !  Zi: charge du premier ion
 !  Zj: charge du deuxieme ion
 !  SqrtI: racine carree de la force ionique
 !  Aphi:  terme de Debye-Huckel
-!-- OUT --
+!-- OUT ==
 !  Eth : effet electrostatique asymetrique
 !  Eth1 : derivee de Eth par rapport a la temperature
 !--
-  INTEGER, INTENT(IN) :: ZI, ZJ
-  REAL(dp),INTENT(IN) :: SqrtI, APHI
-  REAL(dp),INTENT(OUT):: eth, eth1
+  integer, intent(in) :: ZI, ZJ
+  real(dp),intent(in) :: SqrtI, APHI
+  real(dp),intent(out):: eth, eth1
   !
-  REAL(dp):: J0mn,J1mn,J0mm,J1mm,J0nn,J1nn
-  REAL(dp):: XMN,XMM,XNN,RI2
+  real(dp):: J0mn,J1mn,J0mm,J1mm,J0nn,J1nn
+  real(dp):: XMN,XMM,XNN,RI2
   !
   eth=  Zero
   eth1= Zero
   RI2=  SqrtI**2
   
-  IF (SqrtI==Zero .OR. Zi==Zj) RETURN
+  if (SqrtI==Zero .or. Zi==Zj) return
   
   Xmn= 6.0d0 *Zi*Zj *Aphi *SqrtI
   Xmm= 6.0d0 *Zi*Zi *Aphi *SqrtI
   Xnn= 6.0d0 *Zj*Zj *Aphi *SqrtI
   
-  CALL EThetaParam (Xmn, J0mn, J1mn)
-  CALL EThetaParam (Xmm, J0mm, J1mm)
-  CALL EThetaParam (Xnn, J0nn, J1nn)
+  call EThetaParam (Xmn, J0mn, J1mn)
+  call EThetaParam (Xmm, J0mm, J1mm)
+  call EThetaParam (Xnn, J0nn, J1nn)
   
   Eth=  Zi*Zj *(J0mn     - 0.5d0*(    J0mm +     J0nn)) /4.D0/RI2
   Eth1= Zi*Zj *(Xmn*J1mn - 0.5d0*(Xmm*J1mm + Xnn*J1nn)) /8.D0/RI2/RI2 &
   &   - eth/RI2
   
-  RETURN
-END SUBROUTINE EThetaCalc
+  return
+end subroutine EThetaCalc
 
-SUBROUTINE EThetaParam (X, JX, J1X)
-!--
+subroutine EThetaParam (X, JX, J1X)
 !-- Element pour le calcul de la fonction ETheta(I)
 !-- (effet electrostatique asymetrique)
 !-- par la theorie de Pitzer (1975)
-!-- IN-
+!-- IN=
 !--   X : charge de l'ion considere
-!-- OUT-
+!-- OUT=
 !--   JX : intermediaire de calcul
 !--   J1X : intermediaire de calcul
 
-  REAL(dp),INTENT(IN) :: X
-  REAL(dp),INTENT(OUT):: JX, J1X
+  real(dp),intent(in) :: X
+  real(dp),intent(out):: JX, J1X
   
-  REAL(dp):: Z, DZ
-  INTEGER :: I
-  REAL(dp),DIMENSION(0:22):: aik, aiik, bk, dk
+  real(dp):: Z, DZ
+  integer :: I
+  real(dp),dimension(0:22):: aik, aiik, bk, dk
   !
-  DATA (aik(i), aiik(i), i=0,22)                &
+  data (aik(i), aiik(i), i=0,22)                &
   & /1.925154014814667D0,  0.628023320520852D0, &
   & -0.060076477753119D0,  0.462762985338493D0, &
   & -0.029779077456514D0,  0.150044637187895D0, &
@@ -875,117 +679,108 @@ SUBROUTINE EThetaParam (X, JX, J1X)
   &  Zero,                Zero,               &
   &  Zero,                Zero                /
   
-  DO i=20,0,-1
+  do i=20,0,-1
   
-    IF (x <= One) THEN
-      Z=     4.0D0 * x**0.2D0    - 2.0D0
-      dZ=    0.8D0 * x**(-0.8D0)
+    if (x <= One) then
+      Z=     4.0d0 * x**0.2d0    - 2.0d0
+      dZ=    0.8d0 * x**(-0.8d0)
       bk(i)= Z*bk(i+1) - bk(i+2) + aik(i)
-    ELSE
-      Z=     40.0D0/9.0D0 *x**(-0.1D0) - 22.0D0/9.0D0
-      dZ=   -40.0D0/90.0D0*x**(-1.1D0)
+    else
+      Z=     40.0d0/9.0d0 *x**(-0.1d0) - 22.0d0/9.0d0
+      dZ=   -40.0d0/90.0d0*x**(-1.1d0)
       bk(i)= Z*bk(i+1) - bk(i+2) + aiik(i)
-    ENDIF
+    end if
     dk(i)=  bk(i+1) + Z*dk(i+1) - dk(i+2)
   
-  ENDDO
+  end do
   
-  JX=  0.25D0*x - One + 0.5D0*(bk(0) - bk(2))
-  J1X= 0.25D0   +    0.5D0*dZ*(dk(0) - dk(2))
+  JX=  0.25d0*x - One + 0.5d0*(bk(0) - bk(2))
+  J1X= 0.25d0   +    0.5d0*dZ*(dk(0) - dk(2))
   
-  RETURN
-END SUBROUTINE EThetaParam
+  return
+end subroutine EThetaParam
 
-SUBROUTINE Pitzer_Calc_APhi(RhoW,EpsW,TdgK,APhi)
+subroutine Pitzer_Calc_APhi(RhoW,EpsW,TdgK,APhi)
 !--
 !-- Aphi calculation is slightly different from that used in DH
-!-- refs: Anderson-Crerar, p449; or Lin_2003_FPE ...
+!-- refs: Anderson-Crerar, p449; or Lin-Lee,FlPhasEqu-205-p69 ...
 !--
-  ! USE M_Numeric_Const,ONLY: Pi
-  ! USE M_Dtb_Const,ONLY: Electron,Boltzmann,Avogadro,EpsVacuum
+  use M_Numeric_Const,   only: Pi
+  use M_Dtb_Const,only: Electron,Boltzmann,Avogadro,EpsVacuum
   !
-  REAL(dp),INTENT(IN) :: RhoW,EpsW,TdgK
-  REAL(dp),INTENT(OUT):: APhi
+  real(dp),intent(in) :: RhoW,EpsW,TdgK
+  real(dp),intent(out):: APhi
   
-  !! REAL(dp):: X
+  Aphi= SQRT( 2*pi*Avogadro*1.D-3 ) &
+  &   * (Electron/SQRT(Boltzmann) /SQRT(4.0D0*pi*EpsVacuum) )**3 &
+  &   /3.0D0  &
+  &   *SQRT(RhoW) &
+  &   /SQRT((EpsW*TdgK)**3) &
+  &   *1.0D+3
   
-  !! X= SQRT( (2.0D0*pi*Avogadro *1.0D-3)  &
-  !! &          /(4.0D0*pi *EpsVacuum *Boltzmann)**3 ) &
-  !! &   * Electron**3 &
-  !! &   *1.0D+3 /3.0D0
-  !! print '(F24.6)',X
-  !! pause
-  
-  !! Aphi= SQRT( (2.0D0*pi*Avogadro *RhoW*1.0D-3)  &
-  !! &          /(4.0D0*pi *EpsVacuum*EpsW *Boltzmann*TdgK)**3 ) &
-  !! &   * Electron**3 &
-  !! &   *1.0D+3 /3.0D0
-  
-  Aphi= 1400684.314D0 *SQRT( RhoW / (EpsW*TdgK)**3 )
-  
-  !~ APhi_DH= 1.824829238D6 *SQRT( RhoW / (EpsW*TdgK)**3)
+  !~ APhi_DH= 1.824829238D6 *SQRT(RhoW) /SQRT((EpsW*TdgK)**3)
   !~ call Pitzer_Calc_APhiMonnin(TdgK,1.0D0,Aphi_)
   !~ print '(A,3G15.6)',"Aphi, AphiMonnin,APhi_DH:", Aphi,Aphi_,APhi_DH
   !~ pause
   
-  RETURN
-ENDSUBROUTINE Pitzer_Calc_APhi
+  return
+end subroutine Pitzer_Calc_APhi
 
-SUBROUTINE Pitzer_Calc_APhiMonnin(TdgK,Pbar,Aphi_)
+subroutine Pitzer_Calc_APhiMonnin(TdgK,Pbar,Aphi_)
 !--
 !-- Module de calcul du terme APhi de Debye-Huckel
 !-- (version spéciale Pitzer)
 !-- Correlations de Monnin, Chemical Geology, 153(1999) 187-209
 !--
   !
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(OUT):: Aphi_
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(out):: Aphi_
   !
-  REAL(dp)::Psat,T,A0,AV
+  real(dp)::Psat,T,A0,AV
   !
   A0=Zero
   AV=Zero
   APhi_=Zero
   T=TdgK
   !
-  A0=  3.36901531D-1                 &
-  &  - 6.32100430D-4 * T             &
+  A0=  3.36901531d-1                 &
+  &  - 6.32100430d-4 * T             &
   &  + 9.14252359    / T             & 
-  &  - 1.35143986D-2 * LOG(T)        & 
-  &  + 2.26089488D-3 / (T-263.0D0)   &
-  &  + 1.92118597D-6 * T*T           &
-  &  + 4.52586464D1  / (680.D0-T)     
+  &  - 1.35143986d-2 * log(T)        & 
+  &  + 2.26089488d-3 / (T-263.0d0)   &
+  &  + 1.92118597d-6 * T*T           &
+  &  + 4.52586464d1  / (680.d0-T)     
   !
-  IF (T<=373.15D0) THEN
+  if (T<=373.15d0) then
     !
     AV=  8.106377         &
-    & - 1.256008D-1 *T    &
-    & + 7.760276D-4 *T**2 &
-    & - 2.098163D-6 *T**3 &
-    & + 2.25777D-9  *T**4 !cm3.kg^0.5.mol(-1.5), Monnin,1989
+    & - 1.256008d-1 *T    &
+    & + 7.760276d-4 *T**2 &
+    & - 2.098163d-6 *T**3 &
+    & + 2.25777d-9  *T**4 !cm3.kg^0.5.mol(-1.5), Monnin,1989
     !
-    AV=  AV * 1.0D-06 !conversion en m3
+    AV=  AV * 1.0d-06 !conversion en m3
     !
-  ELSE
+  else
     !
-    AV= 3.849971D2          &
-    & - 6.982754     * T    &
-    & + 3.877068D-2  * T**2 &
-    & - 1.11381D-4   * T**3 &
-    & + 1.589736D-7  * T**4 &
-    & - 9.395266D-11 * T**5 &
-    & + 6.469241D4 / (680.D0-T) !cm3.kg^0.5.mol(-1.5), Monnin,1989
+    AV= 3.849971d2               &
+    & - 6.982754     * T         &
+    & + 3.877068d-2  * T*T       &
+    & - 1.11381d-4   * T*T*T     &
+    & + 1.589736d-7  * T*T*T*T   &
+    & - 9.395266d-11 * T*T*T*T*T &
+    & + 6.469241d4 / (680.d0-T) !cm3.kg^0.5.mol(-1.5), Monnin,1989
     !
-    AV=  AV * 1.0D-06 !conversion en m3
+    AV=  AV * 1.0d-06 !conversion en m3
     !
-  ENDIF
+  end if
   !  
-  Psat= EXP( 7.3649D1 -7.2582D3/T -7.3037D0*LOG(T) +4.1653D-6*T*T )
-  ! in Pascal
+  Psat= 7.3649D1 -7.2582D3/T -7.3037D0*log(T) +4.1653D-6*T*T
+  Psat= exp(Psat)
   !
   Aphi_ =  A0 + (Pbar*1.0D+5 - Psat) * (-AV/(4.0*8.314*T))  !Av=-1/4RT * dAphi/dP_, Monnin, 1989
   !  
-  RETURN
-ENDSUBROUTINE Pitzer_Calc_APhiMonnin
+  return
+end subroutine Pitzer_Calc_APhiMonnin
 
-ENDMODULE M_Solmodel_Calc_Pitzer
+end module M_Solmodel_Calc_Pitzer

@@ -1,154 +1,156 @@
-MODULE M_Equil_Tools
+module M_Equil_Tools
 !--
 !-- common tools for equilibrium calculations
 !--
-  USE M_Trace,ONLY: iDebug,fTrc,fHtm,T_,Stop_,Pause_,Warning_
-  USE M_Info_Value
-  USE M_Kinds
+  use M_Trace,only: iDebug,fTrc,fHtm,T_,Stop_,Pause_,Warning_
+  use M_Info_Value
+  use M_Kinds
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  !!PUBLIC:: Equil_Solve
+  !!public:: Equil_Solve
   !
-  PUBLIC:: Equil_Zero      !for a new speciation or equilibrium
-  PUBLIC:: Equil_Restart
-  PUBLIC:: Equil_Save      !store results of Equil_Calc in vCpn, vSpc 
-  PUBLIC:: Equil_Errors
-  PUBLIC:: Equil_Errors_Warning
+  public:: Equil_Zero      !for a new speciation or equilibrium
+  public:: Equil_Restart
+  public:: Equil_Save      !store results of Equil_Calc in vCpn, vSpc 
+  public:: Equil_Errors
+  public:: Equil_Errors_Warning
   !
-  PUBLIC:: Equil_CalcFasAff
+  public:: Equil_CalcFasAff
   !
-  PUBLIC:: Equil_Trace_Init
-  PUBLIC:: Equil_Trace_Close
+  public:: Equil_Trace_Init
+  public:: Equil_Trace_Close
   !
-  PUBLIC:: Equil_FasTrace_EnTete
-  PUBLIC:: Equil_FasTrace_Write
+  public:: Equil_FasTrace_EnTete
+  public:: Equil_FasTrace_Write
   
-CONTAINS
+contains
 
-SUBROUTINE Equil_Errors_Warning(iErr)
-  INTEGER,INTENT(IN):: iErr
+subroutine Equil_Errors_Warning(iErr)
+  integer,intent(in):: iErr
   !
-  IF (iErr>=0) THEN
+  if (iErr>=0) then
   
-    CALL Info_Value("Error Code", iErr)
-    CALL Warning_("Equil_Errors Called with iErr >= 0 !!")
+    call Info_Value("Error Code", iErr)
+    call Warning_("Equil_Errors Called with iErr >= 0 !!")
   
-  ELSE
+  else
     
-    SELECT CASE(iErr)
-    CASE(-1)  ;  CALL Warning_("Equil_Error: NewtMaxIts Exceeded in Newton")
-    CASE(-2)  ;  CALL Warning_("Equil_Error: Singular Matrix in Newton")
-    CASE(-3)  ;  CALL Warning_("Equil_Error: Roundoff Problem in LineSearch")
-    CASE(-4)  ;  CALL Warning_("Equil_Error: No Convergence on Gammas")
-    CASE(-5)  ;  CALL Warning_("Equil_Error: Stationary Point in Newton")
-    CASE(-7)  ;  CALL Warning_("Equil_Error: MaxIter Exceeded in Outer Loop")
-    CASE DEFAULT
-      CALL Info_Value("Error Code", iErr)
-      CALL Warning_("Equil_Error: Unknown Code")
-    ENDSELECT
+    select case(iErr)
+    case(-1)  ;  call Warning_("Equil_Error: NewtMaxIts Exceeded in Newton")
+    case(-2)  ;  call Warning_("Equil_Error: Singular Matrix in Newton")
+    case(-3)  ;  call Warning_("Equil_Error: Roundoff Problem in LineSearch")
+    case(-4)  ;  call Warning_("Equil_Error: No Convergence on Gammas")
+    case(-5)  ;  call Warning_("Equil_Error: Stationary Point in Newton")
+    case(-7)  ;  call Warning_("Equil_Error: MaxIter Exceeded in Outer Loop")
+    case default
+      call Info_Value("Error Code", iErr)
+      call Warning_("Equil_Error: Unknown Code")
+    end select
     
-  END IF
-ENDSUBROUTINE Equil_Errors_Warning
+  end if
+end subroutine Equil_Errors_Warning
 
-SUBROUTINE Equil_Errors(iErr)
-  INTEGER,INTENT(IN):: iErr
+subroutine Equil_Errors(iErr)
+  integer,intent(in):: iErr
   !
-  IF (iErr>=0) THEN
+  if (iErr>=0) then
   
-    CALL Info_Value("Error Code", iErr)
-    CALL Warning_("Equil_Errors Called with iErr >= 0 !!")
+    call Info_Value("Error Code", iErr)
+    call Warning_("Equil_Errors Called with iErr >= 0 !!")
   
-  ELSE
+  else
     
-    SELECT CASE(iErr)
-    CASE(-1)  ;  CALL Stop_("Equil_Error: NewtMaxIts Exceeded in Newton")
-    CASE(-2)  ;  CALL Stop_("Equil_Error: Singular Matrix in Newton")
-    CASE(-3)  ;  CALL Stop_("Equil_Error: Roundoff Problem in LineSearch")
-    CASE(-4)  ;  CALL Stop_("Equil_Error: No Convergence on Gammas")
-    CASE(-5)  ;  CALL Stop_("Equil_Error: Stationary Point in Newton")
-    CASE(-7)  ;  CALL Stop_("Equil_Error: MaxIter Exceeded in Outer Loop")
-    CASE DEFAULT
-      CALL Info_Value("Error Code", iErr)
-      CALL Stop_("Equil_Error: Unknown Code")
-    ENDSELECT
+    select case(iErr)
+    case(-1)  ;  call Stop_("Equil_Error: NewtMaxIts Exceeded in Newton")
+    case(-2)  ;  call Stop_("Equil_Error: Singular Matrix in Newton")
+    case(-3)  ;  call Stop_("Equil_Error: Roundoff Problem in LineSearch")
+    case(-4)  ;  call Stop_("Equil_Error: No Convergence on Gammas")
+    case(-5)  ;  call Stop_("Equil_Error: Stationary Point in Newton")
+    case(-7)  ;  call Stop_("Equil_Error: MaxIter Exceeded in Outer Loop")
+    case default
+      call Info_Value("Error Code", iErr)
+      call Stop_("Equil_Error: Unknown Code")
+    end select
     
-  END IF
-ENDSUBROUTINE Equil_Errors
+  end if
+end subroutine Equil_Errors
 
-SUBROUTINE Equil_Zero(Cod)
+subroutine Equil_Zero(Cod)
 !--
 !-- for "very initial" speciation
 !--
-  USE M_SolModel_Tools,ONLY: Solmodel_Init_TotO_TotH
-  USE M_Equil_Read ! <-equil_Read_Debug,Equil_Read_Conditions,Equil_Read_PhaseAdd,Equil_Read_YesList
-  USE M_Equil_Vars, ONLY: Equil_Vars_Alloc
+  use M_SolModel_Tools,only: Solmodel_Init_TotO_TotH
+  use M_Equil_Read ! <-equil_Read_Debug,Equil_Read_Conditions,Equil_Read_PhaseAdd,Equil_Read_YesList
+  use M_Equil_Vars, only: Equil_Vars_Alloc
   !
-  USE M_Global_Vars,ONLY: vSpc,vEle,vFas,nAq,vMixModel
-  USE M_Global_Vars,ONLY: SolModel
-  USE M_System_Vars,ONLY: vCpn
-  USE M_Basis_Vars, ONLY: iO_,iH_,iBal,isW,MWSv,initMolNu,bOH2
-  USE M_Basis_Vars, ONLY: vLAx,vLCi,nAs,tAlfFs
-  USE M_Equil_Vars, ONLY: DebFormula,DebNewt,DebJacob,vYesList
-  USE M_Equil_Vars, ONLY: LogForAqu,DirectSub,cMethod,bFinDif
-  USE M_Equil_Vars, ONLY: vTotS
-  USE M_Equil_Vars, ONLY: nEquFas
+  use M_Global_Vars,only: vSpc,vEle,vFas,nAq,vMixModel
+  use M_Global_Vars,only: SolModel
+  use M_System_Vars,only: vCpn
+  use M_Basis_Vars, only: iO_,iH_,iBal,isW,MWSv,initMolNu,bOH2
+  use M_Basis_Vars, only: vLAx,vLCi,nAs,tAlfFs
+  use M_Equil_Vars, only: DebFormula,DebNewt,DebJacob,vYesList
+  use M_Equil_Vars, only: LogForAqu,DirectSub,cMethod,bFinDif
+  use M_Equil_Vars, only: vLnAct
+  use M_Equil_Vars, only: vTotS
+  use M_Equil_Vars, only: nEquFas
   !
-  CHARACTER(LEN=3),INTENT(IN):: Cod
-  !!TYPE(T_Component),DIMENSION(:),INTENT(INOUT):: vCpn
+  character(len=3),intent(in):: Cod
+  !!type(T_Component),dimension(:),intent(inout):: vCpn
   !
-  INTEGER,PARAMETER:: AdjustMode= 1
+  integer,parameter:: AdjustMode= 1
   !
-  LOGICAL:: Error
-  CHARACTER(LEN=80):: ErrorMsg
-  INTEGER:: I,iSpc
+  logical:: Error
+  character(len=80):: ErrorMsg
+  integer:: I,iSpc
   !
-  LOGICAL:: test_initmolnu= .FALSE.
+  logical:: test_initmolnu= .false.
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Zero"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Zero"
   !
   !--------------------------------------------------- default values --
-  bFinDif=   .FALSE.
-  LogForAqu= .TRUE.
-  DirectSub= .FALSE.  !! .TRUE.  !! 
-  bOH2=      .FALSE.
+  bFinDif=   .false.
+  LogForAqu= .true.
+  DirectSub= .false.  !! .true.  !! 
+  bOH2=      .false.
   initMolNu= 1.0D-6
   !--------------------------------------------------/ default values --
   !
   !-------------------------------------------------- read CONDITIONS --
-  CALL Equil_Read_Debug(DebFormula,DebNewt,DebJacob) !OUT
-  CALL Equil_Read_Conditions(initMolNu,bOH2)  ! to be replaced by Equil_Read_Numeric !!
-  CALL Equil_Read_Numeric( &
+  call Equil_Read_Debug(DebFormula,DebNewt,DebJacob) !OUT
+  call Equil_Read_Conditions(initMolNu,bOH2)  ! to be replaced by Equil_Read_Numeric !!
+  call Equil_Read_Numeric( &
   & initMolNu,bOH2,LogForAqu,DirectSub,cMethod,bFinDif,Error,ErrorMsg)
   !
-  !IF(.NOT. LogForAqu) DirectSub= .TRUE.
+  !if(.not. LogForAqu) DirectSub= .true.
   !-------------------------------------------------/ read CONDITIONS --
   !
-  CALL Solmodel_Init_TotO_TotH( & !
+  call Solmodel_Init_TotO_TotH( & !
   & AdjustMode,        &          !IN
   & iBal,iO_,iH_,vEle, &          !IN
   & vCpn)                         !INOUT
   !-> calc. mole.nrs of O and H in fluid from mole.nrs of other elements
   !
-  vFas(:)%Mole=Zero
+  vFas(:)%MolFs= Zero
   nEquFas= 0
   !
-  IF(Cod(1:2)=="EQ") CALL Equil_Read_PhaseAdd(vFas)
+  if(Cod(1:2)=="EQ") call Equil_Read_PhaseAdd(vFas)
   !
-  !-> READ SYSTEM.ROCK -> modify vFas(:)%Mole
+  !-> read SYSTEM.ROCK -> modify vFas(:)%Mole
   !~ ! new deleted 18/10/2007 18:25
-  !~ DO I=1,SIZE(vFas)
+  !~ do I=1,size(vFas)
     !~ vCpn(:)%Mole= vCpn(:)%Mole + tAlfFs(:,I) *vFas(I)%Mole
-  !~ ENDDO
+  !~ end do
   !
   !------------------------------------------------------ allocations --
-  CALL Equil_Vars_Alloc(SIZE(vEle),SIZE(vSpc),nAq,nAs,SIZE(vFas))
+  call Equil_Vars_Alloc(size(vEle),size(vSpc),nAq,nAs,size(vFas))
+  !! print *,"vLnAct(isW)=", vLnAct(isW)  ;  call pause_
   !-----------------------------------------------------/ allocations --
   !
-  !! IF(TRIM(Cod)/="SPC") CALL Equil_Read_YesList(vFas,vYesList)
-  IF(Cod(1:2)=="EQ") CALL Equil_Read_YesList(SIZE(vFas),vFas,vYesList)
+  !! if(trim(Cod)/="SPC") call Equil_Read_YesList(vFas,vYesList)
+  if(Cod(1:2)=="EQ") call Equil_Read_YesList(size(vFas),vFas,vYesList)
   !
   !-------------------------------------------------- initial gamma's --
   vSpc(:)%Dat%LGam= Zero
@@ -159,74 +161,74 @@ SUBROUTINE Equil_Zero(Cod)
   vSpc(1:nAq)%Dat%Mole= InitMolNu !initial value for all aqu'species
   vSpc(isW)%Dat%Mole=   One/MWSv  !except Solvent
   !
-  IF(test_initmolnu) THEN
-    DO I=1,SIZE(vCpn)
-      IF(I/=iH_) THEN
+  if(test_initmolnu) then
+    do I=1,size(vCpn)
+      if(I/=iH_) then
         iSpc= vCpn(I)%iSpc
-        IF(vLCi(iSpc)) vSpc(iSpc)%Dat%Mole= vCpn(I)%Mole
-      ENDIF
-    ENDDO
-  ENDIF
+        if(vLCi(iSpc)) vSpc(iSpc)%Dat%Mole= vCpn(I)%Mole
+      end if
+    end do
+  end if
   !
   != for mobile aqu'species, compute mole numbers estimates
   != from their activities (which are fixed) and the current gamma's
-  DO I=1,nAq
-    IF(vLAx(I)) &
-    & vSpc(I)%Dat%Mole= EXP(vSpc(I)%Dat%LAct -vSpc(I)%Dat%LGam)
+  do I=1,nAq
+    if(vLAx(I)) &
+    & vSpc(I)%Dat%Mole= exp(vSpc(I)%Dat%LAct -vSpc(I)%Dat%LGam)
     !this gives molality, should multiply by mass of solvent ...
-  ENDDO
+  end do
   !-----------------------------------/ initial mole numbers in fluid --
   !!
-  !CALL Specia_InitBalance(vTotS) !!NEW201010!!
-  IF(iBal/=0) vTotS(iBal)= Zero
+  !call Specia_InitBalance(vTotS) !!NEW201010!!
+  if(iBal/=0) vTotS(iBal)= Zero
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Zero"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Zero"
   !
-ENDSUBROUTINE Equil_Zero
+end subroutine Equil_Zero
 
-SUBROUTINE Equil_Restart
+subroutine Equil_Restart
 !--
 !-- restart a speciation, using vCpn%Mole, vSpc%Dat%LnAct, vSpc%LnGam
 !--
-  USE M_IoTools,    ONLY: OutStrVec
+  use M_IoTools,    only: OutStrVec
   !
-  USE M_Global_Vars,ONLY: vSpc,vFas,nAq
+  use M_Global_Vars,only: vSpc,vFas,nAq
   
-  USE M_System_Vars,ONLY: vCpn
+  use M_System_Vars,only: vCpn
   
-  USE M_Basis_Vars, ONLY: iBal,nCi,nAs,tNuAs,tNuFas,tAlfFs,vOrdPr,vOrdAs
+  use M_Basis_Vars, only: iBal,nCi,nAs,tNuAs,tNuFas,tAlfFs,vOrdPr,vOrdAs
   
-  USE M_Equil_Vars, ONLY: vDeltaG_As,vTotS,vLnAct,vLnGam,vMolF
-  USE M_Equil_Vars, ONLY: vDeltaG_Fs,vFasMole,vAffScale
+  use M_Equil_Vars, only: vDeltaG_As,vTotS,vLnAct,vLnGam,vMolF
+  use M_Equil_Vars, only: vDeltaG_Fs,vFasMole,vAffScale
   !
-  INTEGER:: I
+  integer:: I
   !
   !! DEBUGG !!
-  ! WRITE(6,'(A)') "==Equil_Restart=="
-  ! DO I=1,SIZE(vFas)
-  !   WRITE(6,'(A)')  TRIM(vFas(I)%NamFs)
-  ! END DO
-  ! PAUSE
+  ! write(6,'(A)') "==Equil_Restart=="
+  ! do I=1,size(vFas)
+  !   write(6,'(A)')  trim(vFas(I)%NamFs)
+  ! end do
+  ! pause
 
   !------------------------------------------------- update deltaG's  --
   ! update deltaG's of second'aqu'species (may have changed if TP changed ...)
-  DO I=1,nAs
+  do I=1,nAs
     vDeltaG_As(I)= &
-    & vSpc(vOrdAs(I))%G0rt - DOT_PRODUCT(tNuAs(I,:),vSpc(vOrdPr(:))%G0rt)
-  ENDDO
+    & vSpc(vOrdAs(I))%G0rt - dot_product(tNuAs(I,:),vSpc(vOrdPr(:))%G0rt)
+  end do
   !
   ! update deltaG's of phases (may have changed if TP changed ...)
   ! DeltaG is free energy change for G(phase) - G(prim'species)
-  ! i.e. DeltaG of reaction of FORMATION of phase from prim'species
-  DO I=1,SIZE(vFas)
+  ! i.e. DeltaG of reaction of formatION of phase from prim'species
+  do I=1,size(vFas)
     vDeltaG_Fs(I)= &
-    & vFas(I)%Grt - DOT_PRODUCT(tNuFas(I,:),vSpc(vOrdPr(:))%G0rt)
-  ENDDO
+    & vFas(I)%Grt - dot_product(tNuFas(I,:),vSpc(vOrdPr(:))%G0rt)
+  end do
   !------------------------------------------------/ update deltaG's  --
   !
-  DO I=1,SIZE(vFas)
+  do I=1,size(vFas)
     vAffScale(I)= SUM(ABS(tNuFas(I,:)))
-  ENDDO
+  end do
   !
   ! retrieve data from current vSpc 
   vLnAct(:)=    vSpc(:)%Dat%LAct
@@ -237,11 +239,11 @@ SUBROUTINE Equil_Restart
   !~ do i=1,size(vFas)
     !~ if(vFas(i)%Mole>0.D0) &
     !~ & print *,"=========",vFas(i)%Mole,"=",trim(vFas(i)%NamFs)
-  !~ enddo
+  !~ end do
   !~ pause
   
   ! retrieve data from current vFas
-  vFasMole(:)=  vFas(:)%Mole
+  vFasMole(:)=  vFas(:)%MolFs
   !
   ! vTotS= mole nr components in SYSTEM (fluid + min), RHS in residual
   ! == in SPC, vTotS = vTot_inFluid
@@ -251,59 +253,59 @@ SUBROUTINE Equil_Restart
   vTotS(1:nCi)= vCpn(1:nCi)%Mole ! mole nrs in fluid
   !---------------------------------------------------------- REWORK !!!
   != add mole nrs from non-fluid (case of PATHEQ* calculations)
-  DO I=1,SIZE(vFas)
-    vTotS(1:nCi)= vTotS(1:nCi) + tAlfFs(1:nCi,I) *vFas(I)%Mole
-  ENDDO
-  !! IF(iDebug>2) CALL OutStrVec(51,vTotS(1:nCi))
+  do I=1,size(vFas)
+    vTotS(1:nCi)= vTotS(1:nCi) + tAlfFs(1:nCi,I) *vFasMole(I)
+  end do
+  !! if(iDebug>2) call OutStrVec(51,vTotS(1:nCi))
   
-  IF(iBal/=0) vTotS(iBal)= Zero
+  if(iBal/=0) vTotS(iBal)= Zero
   
   !print *,"iBal=",iBal   ;  pause
-  !CALL Specia_InitBalance(vTotS) !!NEW201010!!
+  !call Specia_InitBalance(vTotS) !!NEW201010!!
   
-  RETURN
-ENDSUBROUTINE Equil_Restart
+  return
+end subroutine Equil_Restart
 
-SUBROUTINE Specia_InitBalance(vTot_)
-  USE M_Basis,     ONLY: Basis_InitBalance
-  USE M_Basis_Vars,ONLY: iBal,vOrdPr,vOrdAq,vOrdAs,vOrdMs
-  USE M_Basis_Vars,ONLY: tAlfSp,tAlfPr,tAlfAs,tAlfMs,tAlfFs
+subroutine Specia_InitBalance(vTot_)
+  use M_Basis,     only: Basis_InitBalance
+  use M_Basis_Vars,only: iBal,vOrdPr,vOrdAq,vOrdAs,vOrdMs
+  use M_Basis_Vars,only: tAlfSp,tAlfPr,tAlfAs,tAlfMs,tAlfFs
   !
-  REAL(dp),DIMENSION(:),INTENT(INOUT):: vTot_
+  real(dp),dimension(:),intent(inout):: vTot_
   !
-  !! IF H is "INERT", mole balance on H replaced by mole balance on charges  !
-  !! IF(TRIM(vCpn(iH_)%Statut)=="INERT") iBal=iH_ !NEW_17/10/2007 17:40
+  !! if H is "INERT", mole balance on H replaced by mole balance on charges  !
+  !! if(trim(vCpn(iH_)%Statut)=="INERT") iBal=iH_ !NEW_17/10/2007 17:40
   !
-  IF(iBal/=0) CALL Basis_InitBalance( & !
+  if(iBal/=0) call Basis_InitBalance( & !
   & iBal,                 & !IN
   & vOrdPr,vOrdAs,vOrdMs, & !IN
   & tAlfSp,tAlfPr,tAlfAs,tAlfMs, & !INOUT
   & tAlfFs)                 !INOUT
   !
-  IF(iBal/=0) vTot_(iBal)= Zero
+  if(iBal/=0) vTot_(iBal)= Zero
   !
-ENDSUBROUTINE Specia_InitBalance
+end subroutine Specia_InitBalance
 
-SUBROUTINE Equil_Save(lEquil)
+subroutine Equil_Save(lEquil)
 !--
 !-- Update vSpc & vCpn for use in next speciations
 !--
-  USE M_Global_Vars,ONLY: vEle,vSpc,vFas,nAq
-  USE M_System_Vars,ONLY: vCpn
-  USE M_Basis_Vars, ONLY: nCi,nAx,nAs,tAlfPr,tAlfAs,tAlfFs,vOrdPr,vOrdAs
-  USE M_Equil_Vars, ONLY: vMolF,vLnAct,vLnGam,vFasMole,nEquFas
+  use M_Global_Vars,only: vEle,vSpc,vFas,nAq
+  use M_System_Vars,only: vCpn
+  use M_Basis_Vars, only: nCi,nAx,nAs,tAlfPr,tAlfAs,tAlfFs,vOrdPr,vOrdAs
+  use M_Equil_Vars, only: vMolF,vLnAct,vLnGam,vFasMole,nEquFas
   !
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_Basis_Vars,   ONLY: isH_,isOH
+  use M_Numeric_Const,only: Ln10
+  use M_Basis_Vars,   only: isH_,isOH
   !
-  LOGICAL,INTENT(IN),OPTIONAL:: lEquil
+  logical,intent(in),optional:: lEquil
   !
-  LOGICAL :: B
-  INTEGER :: iCp
-  REAL(dp):: R
+  logical :: B
+  integer :: iCp
+  real(dp):: R
   
-  B=.FALSE.
-  IF(PRESENT(lEquil)) B=lEquil
+  B=.false.
+  if(present(lEquil)) B=lEquil
   
   !-------------- store results in vSpc to use in subsequent calcul's --
   vSpc(1:nAq)%Dat%Mole= vMolF(1:nAq) !/vMolF(1)/MWsv
@@ -312,17 +314,17 @@ SUBROUTINE Equil_Save(lEquil)
   
   !-------------- store results in vFas to use in subsequent calcul's --
   !~ vFas(:)%Mole= vFasMole(:)
-  IF(nEquFas>0) CALL Save_EquPhase
+  if(nEquFas>0) call Save_EquPhase
   
-  !DO iCp=1,SIZE(vCpn) !not useful here ??
-  !  IF(vCpn(iCp)%Statut/="INERT") vCpn(iCp)%Mole= & 
+  !do iCp=1,size(vCpn) !not useful here ??
+  !  if(vCpn(iCp)%Statut/="INERT") vCpn(iCp)%Mole= & 
   !  & SUM(tAlfPr(iCp,1    :nCi    ) *vMolF(vOrdPr(1:nCi)))  & !"internal" prim'species
   !  + SUM(tAlfPr(iCp,nCi+1:nCi+nAx) *vMolF(vOrdPr(nCi+1:nCi+nAx))) &
   !  + SUM(tAlfAs(iCp,1    :nAs    ) *vMolF(vOrdAs(1:nAs)))
-  !ENDDO
+  !end do
   
   !------------- compute mole nrs components in fluid -> vCpn(:)%Mole --
-  DO iCp=1,SIZE(vCpn) !
+  do iCp=1,size(vCpn) !
     !
     R= SUM(tAlfPr(iCp,1    :nCi    ) *vMolF(vOrdPr(1:nCi)))  &
     +  SUM(tAlfPr(iCp,nCi+1:nCi+nAx) *vMolF(vOrdPr(nCi+1:nCi+nAx))) &
@@ -330,155 +332,155 @@ SUBROUTINE Equil_Save(lEquil)
     !
     vCpn(iCp)%Mole= R
     !
-  ENDDO
+  end do
   
-  IF(iDebug==4) THEN
-    PRINT '(A)',"Equil_Save, check components' mole nrs"
-    DO iCp=1,SIZE(vCpn) !
-      PRINT '(2A,2G15.6)',&
+  if(iDebug==4) then
+    print '(A)',"Equil_Save, check components' mole nrs"
+    do iCp=1,size(vCpn) !
+      print '(2A,2G15.6)',&
       & "Equil_Save, ", vEle(vCpn(iCp)%iEle)%NamEl,vCpn(iCp)%Mole
-    ENDDO
-    CALL Pause_
-  END IF
+    end do
+    call Pause_
+  end if
   
-  RETURN
-ENDSUBROUTINE Equil_Save
+  return
+end subroutine Equil_Save
 
-SUBROUTINE Save_EquPhase
-  USE M_T_MixModel, ONLY: MaxPole
-  USE M_T_Phase,    ONLY: T_Phase
-  USE M_Equil_Vars, ONLY: T_EquPhase
-  USE M_Global_Vars,ONLY: vMixModel,vMixFas,vFas
-  USE M_Basis_Vars, ONLY: tAlfFs,tNuFas
-  USE M_Equil_Vars, ONLY: nEquFas,vEquFas,cEquMode
+subroutine Save_EquPhase
+  use M_T_MixModel, only: MaxPole
+  use M_T_Phase,    only: T_Phase
+  use M_Equil_Vars, only: T_EquPhase
+  use M_Global_Vars,only: vMixModel,vMixFas,vFas
+  use M_Basis_Vars, only: tAlfFs,tNuFas
+  use M_Equil_Vars, only: nEquFas,vEquFas,cEquMode
   !
-  TYPE(T_Phase),ALLOCATABLE:: vFas0(:)
-  REAL(dp),     ALLOCATABLE:: tAlf(:,:),tNu(:,:)
-  INTEGER:: vIPole(MaxPole) ! indexes of end-members in vFas
-  INTEGER:: nPur,nMix
-  INTEGER:: I,K,nP,C,nCp
+  type(T_Phase),allocatable:: vFas0(:)
+  real(dp),     allocatable:: tAlf(:,:),tNu(:,:)
+  integer:: vIPole(MaxPole) ! indexes of end-members in vFas
+  integer:: nPur,nMix
+  integer:: I,K,nP,C,nCp
   
-  nPur= COUNT(vFas(:)%iSpc>0)
-  nCp= SIZE(tAlfFs,1)
+  nPur= count(vFas(:)%iSpc>0)
+  nCp= size(tAlfFs,1)
   
   !--- build vMixFas --
   K=0
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iMix>0) K= K+1
-  ENDDO
-  DEALLOCATE(vMixFas)
-  ALLOCATE(vMixFas(K))
+  do I=1,nEquFas
+    if(vEquFas(I)%iMix>0) K= K+1
+  end do
+  deallocate(vMixFas)
+  allocate(vMixFas(K))
   !
   K=0
-  IF(SIZE(vMixFas)>0) THEN
-    DO I=1,nEquFas
-      IF(vEquFas(I)%iMix>0) THEN
+  if(size(vMixFas)>0) then
+    do I=1,nEquFas
+      if(vEquFas(I)%iMix>0) then
       
         K= K+1
         nP= vMixModel(vEquFas(I)%iMix)%nPole
-        vMixFas(K)%Name= TRIM(vEquFas(I)%NamEq)
+        vMixFas(K)%Name= trim(vEquFas(I)%NamEq)
         vMixFas(K)%iModel= 1 !vEquFas(I)%iMix
         vMixFas(K)%vXPole(1:nP)= vEquFas(I)%vXPole(1:nP)
         
-      ENDIF
-    ENDDO
-  ENDIF
+      end if
+    end do
+  end if
   !--- build vMixFas --
   
-  nMix= COUNT(vEquFas(1:nEquFas)%iMix>0)
+  nMix= count(vEquFas(1:nEquFas)%iMix>0)
   
-  IF(nMix>0) THEN
+  if(nMix>0) then
   
     ! temporary copy
-    ALLOCATE(vFas0(nPur))
+    allocate(vFas0(nPur))
     vFas0(1:nPur)= vFas(1:nPur)
     
-    DEALLOCATE(vFas)
-    ALLOCATE(vFas(nPur+nMix))
+    deallocate(vFas)
+    allocate(vFas(nPur+nMix))
     vFas(1:nPur)= vFas0(1:nPur)
     
-    DEALLOCATE(vFas0)
+    deallocate(vFas0)
   
-    ALLOCATE(tAlf(nCp,nPur))        ; tAlf(:,1:nPur)= tAlfFs(:,1:nPur)
-    DEALLOCATE(tAlfFs)
-    ALLOCATE(tAlfFs(nCp,nPur+nMix)) ; tAlfFs(:,1:nPur)= tAlf(:,1:nPur)
-    DEALLOCATE(tAlf)
+    allocate(tAlf(nCp,nPur))        ; tAlf(:,1:nPur)= tAlfFs(:,1:nPur)
+    deallocate(tAlfFs)
+    allocate(tAlfFs(nCp,nPur+nMix)) ; tAlfFs(:,1:nPur)= tAlf(:,1:nPur)
+    deallocate(tAlf)
 
-    ALLOCATE(tNu(nPur,nCp))         ; tNu(1:nPur,:)= tNuFas(1:nPur,:)
-    DEALLOCATE(tNuFas)
-    ALLOCATE(tNuFas(nPur+nMix,nCp)) ; tNuFas(1:nPur,:)= tNu(1:nPur,:)
-    DEALLOCATE(tNu)
+    allocate(tNu(nPur,nCp))         ; tNu(1:nPur,:)= tNuFas(1:nPur,:)
+    deallocate(tNuFas)
+    allocate(tNuFas(nPur+nMix,nCp)) ; tNuFas(1:nPur,:)= tNu(1:nPur,:)
+    deallocate(tNu)
 
-  ENDIF
+  end if
   
-  vFas(:)%Mole= Zero
+  vFas(:)%MolFs= Zero
   
   K=nPur
-  DO I=1,nEquFas
+  do I=1,nEquFas
   
-    IF(vEquFas(I)%iPur>0) vFas(vEquFas(I)%iPur)%Mole= vEquFas(I)%Mole
+    if(vEquFas(I)%iPur>0) vFas(vEquFas(I)%iPur)%MolFs= vEquFas(I)%MolFs
     
-    IF(vEquFas(I)%iMix>0) THEN
+    if(vEquFas(I)%iMix>0) then
     
       K= K+1
       
-      vFas(K)%Mole= vEquFas(I)%Mole
+      vFas(K)%MolFs= vEquFas(I)%MolFs
       vFas(K)%iSpc=  0
       vFas(K)%iSol=  0
       vFas(K)%iMix=  K -nPur
-      vFas(K)%NamFs= TRIM(vEquFas(I)%NamEq)
+      vFas(K)%NamFs= trim(vEquFas(I)%NamEq)
       !! vFas(K)%Typ=   "MIXT"
       
       nP= vEquFas(I)%NPole
       vIPole(1:nP)= vEquFas(I)%vIPole(1:nP)
-      DO C=1,nCp
+      do C=1,nCp
         tAlfFs(C,K)= SUM( vEquFas(I)%vXPole(1:nP) &
         &          * tAlfFs(C,vIPole(1:nP)) )
         tNuFas(K,C)= SUM( vEquFas(I)%vXPole(1:nP) &
         &          * tNuFas(vIPole(1:nP),C) )
-      ENDDO
+      end do
 
-    ENDIF
+    end if
     
-  ENDDO
+  end do
   
-  RETURN
-ENDSUBROUTINE Save_EquPhase
+  return
+end subroutine Save_EquPhase
 
-SUBROUTINE Equil_CalcFasAff
+subroutine Equil_CalcFasAff
 !--
 !-- calculate affinity of pure phases (i.e. non-aqu'species)
 !--
-  USE M_Global_Vars,ONLY: vSpc,vFas
-  USE M_Basis_Vars, ONLY: tNuFas,vOrdPr
-  USE M_Equil_Vars, ONLY: vFasAff
+  use M_Global_Vars,only: vSpc,vFas
+  use M_Basis_Vars, only: tNuFas,vOrdPr
+  use M_Equil_Vars, only: vFasAff
   !
-  INTEGER  :: iFs,nFs,nCp
+  integer  :: iFs,nFs,nCp
   
-  nFs= SIZE(vFas)
-  nCp= SIZE(vOrdPr)
+  nFs= size(vFas)
+  nCp= size(vOrdPr)
   
-  IF (nFs>0) THEN
+  if (nFs>0) then
     !note:
     !vDeltaG_Ms(iMs)=  vSpc(vOrdMs(iMs))%G0rt 
     !               - dot_product(tNuMs(iMs,1:nCp),Spc(vOrdPr(1:nCp))%G0rt) 
     !
     !-> deltaG of PRECIPITATION reaction, Prim'Species -> Mineral
     !
-    !affinity/RT of FORMATION reaction of mineral,
+    !affinity/RT of formatION reaction of mineral,
     != A/RT= -DotProd(Nu,Mu)= -deltaG of Prim'Sp->Mineral, A/RT=ln(K/Q)
     !
     !LnQsK(iMs)= dot_product( tNuMs(iMs,1:nCp), vSpc(vOrdPr(1:nCp))%LnAct ) 
     !          - vDeltaG_Ms(iMs)
     !
-    DO iFs=1,nFs
+    do iFs=1,nFs
       vFasAff(iFs)= &
       & vFas(iFs)%Grt &
-      - DOT_PRODUCT( tNuFas(iFs,1:nCp), &
+      - dot_product( tNuFas(iFs,1:nCp), &
       &              vSpc(vOrdPr(1:nCp))%Dat%LAct+vSpc(vOrdPr(1:nCp))%G0rt )
       !vFasAff(iFs)= vFasAff(iFs) /SUM(ABS(tNuFas(iFs,1:nCp)))
-    ENDDO !_______________________________END
-  ENDIF
+    end do !_______________________________end
+  end if
   
   !expression used in Equil_1:
   !
@@ -488,154 +490,154 @@ SUBROUTINE Equil_CalcFasAff
   !with
   !
   !  vDeltaG_Fs(:)= vFas(:)%Grt 
-  !               - MATMUL(tNuFas(:,1:nCp),vSpc(vOrdPr(1:nCp))%G0rt)
+  !               - matmul(tNuFas(:,1:nCp),vSpc(vOrdPr(1:nCp))%G0rt)
   !
   !-> can also calculate vFasAff as
   !
   !  vFasAff(iFs)= &
   !  & vSpc(vFas(iFs)%iSpc)%G0rt &
-  !  - DOT_PRODUCT(tNuFas(iFs,1:nCp), &
+  !  - dot_product(tNuFas(iFs,1:nCp), &
   !  &             vSpc(vOrdPr(1:nCp))%Dat%LAct+vSpc(vOrdPr(1:nCp))%G0rt)
   
-  RETURN
-ENDSUBROUTINE Equil_CalcFasAff
+  return
+end subroutine Equil_CalcFasAff
 
-SUBROUTINE Equil_Trace_Close
+subroutine Equil_Trace_Close
 !--
 !-- close special trace files for activities, Newton, etc
 !--
-  USE M_Equil_Vars, ONLY: fTrAct, fActiz, fTrcEq
-  USE M_Numeric_Tools,ONLY: fNewtF,fNewtR
+  use M_Equil_Vars, only: fTrAct, fActiz, fTrcEq
+  use M_Numeric_Tools,only: fNewtF,fNewtR
   !
-  IF(fTrAct>0)  THEN; CLOSE(fTrAct); fTrAct= 0; ENDIF
-  IF(fActiZ>0)  THEN; CLOSE(fActiZ); fActiZ= 0; ENDIF
-  IF(fTrcEq>0)  THEN; CLOSE(fTrcEq); fTrcEq= 0; ENDIF
+  if(fTrAct>0)  then; close(fTrAct); fTrAct= 0; end if
+  if(fActiZ>0)  then; close(fActiZ); fActiZ= 0; end if
+  if(fTrcEq>0)  then; close(fTrcEq); fTrcEq= 0; end if
   !
-  IF(fNewtF>0)  THEN; CLOSE(fNewtF); fNewtF= 0; ENDIF
-  IF(fNewtR>0)  THEN; CLOSE(fNewtR); fNewtR= 0; ENDIF
+  if(fNewtF>0)  then; close(fNewtF); fNewtF= 0; end if
+  if(fNewtR>0)  then; close(fNewtR); fNewtR= 0; end if
   !
-  RETURN
-ENDSUBROUTINE Equil_Trace_Close
+  return
+end subroutine Equil_Trace_Close
 
-SUBROUTINE Equil_Trace_Init
+subroutine Equil_Trace_Init
 !--
 !-- open special trace files for activities, Newton, etc
 !--
-  USE M_IOTools,    ONLY: GetUnit
-  USE M_Files,      ONLY: DirOut,Files_Index_Write
-  USE M_Numeric_Tools,ONLY: fNewtF,fNewtR,fNewt_I
+  use M_IOTools,    only: GetUnit
+  use M_Files,      only: DirOut,Files_Index_Write
+  use M_Numeric_Tools,only: fNewtF,fNewtR,fNewt_I
   !
-  USE M_Global_Vars,ONLY: vSpc
-  USE M_Equil_Write,ONLY: Equil_Write_EnTete
-  USE M_Basis_Vars, ONLY: vLCi,vLAs,vLAx,vPrmFw
-  USE M_Equil_Vars, ONLY: DebActiv,fTrAct,fActiZ,DebNewt
+  use M_Global_Vars,only: vSpc
+  use M_Equil_Write,only: Equil_Write_EnTete
+  use M_Basis_Vars, only: vLCi,vLAs,vLAx,vPrmFw
+  use M_Equil_Vars, only: DebActiv,fTrAct,fActiZ,DebNewt
   !
-  INTEGER:: I
+  integer:: I
   
-  IF(DebActiv) THEN
+  if(DebActiv) then
     !
-    CALL GetUnit(fTrAct)
-    OPEN(fTrAct,FILE=TRIM(DirOut)//"_activ_deb.log")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirOut)//"_activ_deb.log",&
+    call GetUnit(fTrAct)
+    open(fTrAct,file=trim(DirOut)//"_activ_deb.log")
+    call Files_Index_Write(fHtm,&
+    & trim(DirOut)//"_activ_deb.log",&
     & "EQUIL/LOG: activ' aqu'species")
-    WRITE(fTrAct,'(A,A1)',ADVANCE='NO') "indx",T_
-    DO I=1,SIZE(vSpc)
-      IF(vSpc(I)%Typ=="AQU") WRITE(fTrAct,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-    ENDDO
-    WRITE(fTrAct,*)
+    write(fTrAct,'(A,A1)',advance="no") "indx",T_
+    do I=1,size(vSpc)
+      if(vSpc(I)%Typ=="AQU") write(fTrAct,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+    end do
+    write(fTrAct,*)
     !
-    CALL GetUnit(fActiz); OPEN(fActiz,FILE=TRIM(DirOut)//"_activ.log")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirOut)//"_activ.log",&
+    call GetUnit(fActiz); open(fActiz,file=trim(DirOut)//"_activ.log")
+    call Files_Index_Write(fHtm,&
+    & trim(DirOut)//"_activ.log",&
     & "EQUIL/LOG: log10(Activ)")
-    CALL Equil_Write_EnTete(fActiz,vSpc,vPrmFw,vLCi.OR.vLAs.OR.vLAx,Str1="indx")
+    call Equil_Write_EnTete(fActiz,vSpc,vPrmFw,vLCi.or.vLAs.or.vLAx,Str1="indx")
     !
-  ELSE
+  else
     !
     fTrAct= 0
     fActiZ= 0
     !
-  ENDIF
+  end if
   
-  IF(DebNewt) THEN
+  if(DebNewt) then
     !
-    CALL GetUnit(fNewtF)
-    OPEN(fNewtF,FILE=TRIM(DirOut)//"_newtequspc1.log")
-    CALL Equil_Write_EnTete(fNewtF,vSpc,vPrmFw,vLCi.OR.vLAs,Str1="count1",Str2="count2")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirOut)//"_newtequspc1.log",&
+    call GetUnit(fNewtF)
+    open(fNewtF,file=trim(DirOut)//"_newtequspc1.log")
+    call Equil_Write_EnTete(fNewtF,vSpc,vPrmFw,vLCi.or.vLAs,Str1="count1",Str2="count2")
+    call Files_Index_Write(fHtm,&
+    & trim(DirOut)//"_newtequspc1.log",&
     & "EQUIL/LOG: Newton solution")
     !
-    CALL GetUnit(fNewtR)
-    OPEN(fNewtR,FILE=TRIM(DirOut)//"_newtequspc2.log")
-    CALL Equil_Write_EnTete(fNewtR,vSpc,vPrmFw,vLCi.OR.vLAs,Str1="count1",Str2="count2")
-    CALL Files_Index_Write(fHtm,&
-    & TRIM(DirOut)//"_newtequspc2.log",&
+    call GetUnit(fNewtR)
+    open(fNewtR,file=trim(DirOut)//"_newtequspc2.log")
+    call Equil_Write_EnTete(fNewtR,vSpc,vPrmFw,vLCi.or.vLAs,Str1="count1",Str2="count2")
+    call Files_Index_Write(fHtm,&
+    & trim(DirOut)//"_newtequspc2.log",&
     & "EQUIL/LOG: Newton residue")
     !
     fNewt_I=0
     !
-  ELSE
+  else
     !
     fNewtF=0
     fNewtR=0
     !
-  ENDIF
+  end if
   
-  RETURN
-ENDSUBROUTINE Equil_Trace_Init
+  return
+end subroutine Equil_Trace_Init
 
-SUBROUTINE Equil_FasTrace_EnTete(vFas,vYesList,F)
+subroutine Equil_FasTrace_EnTete(vFas,vYesList,F)
 
-  USE M_IOTools,ONLY: GetUnit
-  USE M_Files,  ONLY: DirOut
-  USE M_T_Phase,ONLY: T_Phase
+  use M_IOTools,only: GetUnit
+  use M_Files,  only: DirOut
+  use M_T_Phase,only: T_Phase
   !
-  TYPE(T_Phase),INTENT(IN) :: vFas(:)
-  LOGICAL,      INTENT(IN) :: vYesList(:)
-  INTEGER,      INTENT(OUT):: F
+  type(T_Phase),intent(in) :: vFas(:)
+  logical,      intent(in) :: vYesList(:)
+  integer,      intent(out):: F
   !
-  INTEGER:: iFs,nFs
+  integer:: iFs,nFs
   
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(DirOut)//"_equil.log")
+  call GetUnit(F)
+  open(F,file=trim(DirOut)//"_equil.log")
   !F=51
   
-  WRITE(F,'(3(A,A1))',ADVANCE="NO") "iCount",T_,"nIts",T_,"dXi",T_
+  write(F,'(3(A,A1))',advance="NO") "iCount",T_,"nIts",T_,"dXi",T_
   
-  nFs=SIZE(vFas)
+  nFs=size(vFas)
   !
-  DO iFs=1,nFs
-    IF(vYesList(iFs)) &
-    & WRITE(F,'(A,A1)',ADVANCE="NO") "Mol_"//TRIM(vFas(iFs)%NamFs),T_
-  ENDDO
-  DO iFs=1,nFs
-    IF(vYesList(iFs)) &
-    & WRITE(F,'(A,A1)',ADVANCE="NO") "lQsK_"//TRIM(vFas(iFs)%NamFs),T_
-  ENDDO
-  WRITE(F,*)
+  do iFs=1,nFs
+    if(vYesList(iFs)) &
+    & write(F,'(A,A1)',advance="NO") "Mol_"//trim(vFas(iFs)%NamFs),T_
+  end do
+  do iFs=1,nFs
+    if(vYesList(iFs)) &
+    & write(F,'(A,A1)',advance="NO") "lQsK_"//trim(vFas(iFs)%NamFs),T_
+  end do
+  write(F,*)
   
-  RETURN
-ENDSUBROUTINE Equil_FasTrace_EnTete
+  return
+end subroutine Equil_FasTrace_EnTete
 
-SUBROUTINE Equil_FasTrace_Write(F,ICount,nIts,dXi,vYesList,vFasMole,vFasAff)
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_IOTools,ONLY: OutStrVec
+subroutine Equil_FasTrace_Write(F,ICount,nIts,dXi,vYesList,vFasMole,vFasAff)
+  use M_Numeric_Const,  only: Ln10
+  use M_IOTools,only: OutStrVec
   !
-  INTEGER, INTENT(IN):: F
-  INTEGER, INTENT(IN):: iCount
-  INTEGER, INTENT(IN):: nIts
-  REAL(dp),INTENT(IN):: dXi
-  LOGICAL, DIMENSION(:),INTENT(IN):: vYesList
-  REAL(dp),DIMENSION(:),INTENT(IN):: vFasMole,vFasAff
+  integer, intent(in):: F
+  integer, intent(in):: iCount
+  integer, intent(in):: nIts
+  real(dp),intent(in):: dXi
+  logical, dimension(:),intent(in):: vYesList
+  real(dp),dimension(:),intent(in):: vFasMole,vFasAff
   
-  WRITE(F,'(2(I7,A1),G15.6,A1)',ADVANCE="NO") iCount,T_,nIts,T_,dXi,T_
-  CALL OutStrVec(F,vFasMole,     vL=vYesList,CR=.FALSE.)
-  CALL OutStrVec(F,-vFasAff/Ln10,vL=vYesList)
+  write(F,'(2(I7,A1),G15.6,A1)',advance="NO") iCount,T_,nIts,T_,dXi,T_
+  call OutStrVec(F,vFasMole,     vL=vYesList,CR=.false.)
+  call OutStrVec(F,-vFasAff/Ln10,vL=vYesList)
   
-  RETURN
-ENDSUBROUTINE Equil_FasTrace_Write
+  return
+end subroutine Equil_FasTrace_Write
 
-ENDMODULE M_Equil_Tools
+end module M_Equil_Tools
 

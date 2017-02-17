@@ -1,16 +1,16 @@
-MODULE M_Solmodel_Test
+module M_Solmodel_Test
 !--
-  USE M_Kinds
+  use M_Kinds
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC:: Pitzer_EThetaCalc_Test
+  public:: Pitzer_EThetaCalc_Test
   
-CONTAINS
+contains
   
-SUBROUTINE Pitzer_EThetaCalc_Test
+subroutine Pitzer_EThetaCalc_Test
 !--
 !-- test de la routine de calcul EThetaCalc,
 !-- pour différentes valeurs de Zi (- 2,3,4)
@@ -30,54 +30,54 @@ SUBROUTINE Pitzer_EThetaCalc_Test
 !  Eth  : effet electrostatique asymetrique
 !  Eth1 : derivee de Eth par rapport a la temperature
 !--
-  USE M_IoTools
-  USE M_Solmodel_Calc_Pitzer
+  use M_IoTools
+  use M_Solmodel_Calc_Pitzer
   !
-  INTEGER :: F,I
-  REAL(dp):: IonicStr, APHI
-  REAL(dp):: eth, eth1
+  integer :: F,I
+  real(dp):: IonicStr, APHI
+  real(dp):: eth, eth1
   !
-  CHARACTER, PARAMETER:: tt= CHAR(9)
+  character, parameter:: tt= char(9)
   
-  CALL GetUnit(f)
-  OPEN(f,FILE="etheta_test.tab")
+  call GetUnit(f)
+  open(f,file="etheta_test.tab")
   
-  WRITE(f,'(8(A,A1))') &
-  & ".I",CHAR(9),"IonicStr",CHAR(9), &
-  & "-Eth",CHAR(9),"IonicStr*Eth1",CHAR(9), &
-  & "-Eth",CHAR(9),"IonicStr*Eth1",CHAR(9), &
-  & "-Eth",CHAR(9),"IonicStr*Eth1",CHAR(9)
+  write(f,'(8(A,A1))') &
+  & ".I",char(9),"IonicStr",char(9), &
+  & "-Eth",char(9),"IonicStr*Eth1",char(9), &
+  & "-Eth",char(9),"IonicStr*Eth1",char(9), &
+  & "-Eth",char(9),"IonicStr*Eth1",char(9)
   !
   Aphi= 0.30D0
   IonicStr= 1.D-6
   
   I= 1
-  DO
+  do
     
-    WRITE(f,'(I3,A1,G15.6,A1)',ADVANCE="NO") &
+    write(f,'(I3,A1,G15.6,A1)',advance="NO") &
     & I,tt,IonicStr,tt
     
-    CALL EThetaCalc (2, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
-    WRITE(f,'(2(G15.6,A1))',ADVANCE="NO") &
+    call EThetaCalc (2, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    write(f,'(2(G15.6,A1))',advance="NO") &
     & -Eth,tt,IonicStr*Eth1,tt
     
-    CALL EThetaCalc (3, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
-    WRITE(f,'(2(G15.6,A1))',ADVANCE="NO") &
+    call EThetaCalc (3, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    write(f,'(2(G15.6,A1))',advance="NO") &
     & -Eth,tt,IonicStr*Eth1,tt
     
-    CALL EThetaCalc (4, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
-    WRITE(f,'(2(G15.6,A1))') &
+    call EThetaCalc (4, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    write(f,'(2(G15.6,A1))') &
     & -Eth,tt,IonicStr*Eth1,tt
     
     IonicStr= IonicStr *1.5D0
     I= I+1
-    IF(IonicStr>20.0D0) EXIT
+    if(IonicStr>20.0D0) exit
     
-  ENDDO
+  end do
   
-  CLOSE(f)
+  close(f)
   
-  RETURN
-END SUBROUTINE Pitzer_EThetaCalc_Test
+  return
+end subroutine Pitzer_EThetaCalc_Test
 
-ENDMODULE M_Solmodel_Test
+end module M_Solmodel_Test

@@ -1,52 +1,62 @@
-MODULE M_T_MixModel
+module M_T_MixModel
 !--
 !-- implementation of solution models, and related potentials, activities, ...
 !-- developed for minerals,
 !-- to be used also for other mixtures (fluids, melts) that follow a mole fraction model
 !--
-  USE M_Kinds
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  implicit none
+  private
   !
-  PUBLIC:: T_MixModel,T_Margul
-  PUBLIC:: MaxSite,MaxPole,MaxAtom,MaxMulti,MaxMarg
+  public:: T_MixModel,T_Margul
+  public:: MaxSite,MaxPole,MaxAtom,MaxMulti,MaxMarg
   !
-  PUBLIC:: MixModel_Margul_Wg_Calc
-  PUBLIC:: MixModel_Index
-  PUBLIC:: MixModel_Zero
-  PUBLIC:: MixModel_XPoleToXSite
+  public:: MixModel_Param_Update
+  public:: MixModel_Index
+  public:: MixModel_Zero
+  public:: MixModel_Name
+  public:: MixModel_XPoleToXSite
 
-  PUBLIC:: MixModel_Activities
-  PUBLIC:: MixModel_GibbsMixRT
-  PUBLIC:: MixModel_GibbsIdeal
+  public:: MixModel_Activities
+  public:: MixModel_GibbsMixRT
+  public:: MixModel_GibbsIdeal
 
-  PUBLIC:: MixModel_Site_ActivIdeal
+  public:: MixModel_Site_ActivIdeal
 
-  !PUBLIC:: MixModel_Site_LnActivsIdeal
-  !PUBLIC:: MixModel_Pole_LnActivsIdeal
+  !public:: MixModel_Site_LnActivsIdeal
+  !public:: MixModel_Pole_LnActivsIdeal
 
-  !PUBLIC:: MixModel_Site_SConf
-  !PUBLIC:: MixModel_Pole_SConf
+  !public:: MixModel_Site_SConf
+  !public:: MixModel_Pole_SConf
 
-  !PUBLIC:: MixModel_Site_XsMargules
-  !PUBLIC:: MixModel_Pole_XsMargules
+  !public:: MixModel_Site_XsMargules
+  !public:: MixModel_Pole_XsMargules
 
-  !PUBLIC:: MixModel_Site_LnGammaMargules
-  !PUBLIC:: MixModel_Pole_LnGammaMargules
+  !public:: MixModel_Site_LnGammaMargules
+  !public:: MixModel_Pole_LnGammaMargules
 
-  !PUBLIC:: MixModel_Margules_Monome
+  !public:: MixModel_Margules_Monome
   !
-  !PUBLIC:: MixModel_SConf
-  !PUBLIC:: MixModel_XsMargules
+  !public:: MixModel_SConf
+  !public:: MixModel_XsMargules
   !
-  !REAL(dp),PARAMETER::& !from ModConst
-  !& R_jK= 8.314510D0,&  !R constant, in J/K/Mole, RobieHemingway (from CODATA)
+  !real(dp),parameter::& !from ModConst
+  !& R_jK= 8.314510D0,&  !R constant, in J/K/Mole, RobieHemingway (from COdata)
   !& Pref= 1.0000D0,&  !bar
   !& Tref= 298.150D0    !in degK,=25°C
-
-  !----------------------------fixed dimensions for all T_MixModel's --
+  
+  integer,parameter,public:: & !
+  & Mix_Molecular= 1, & !
+  & Mix_Felspar=   2, & !
+  & Mix_Site=      3, & !
+  & Mix_Special=   4, & !
   !
-  INTEGER,PARAMETER:: & !fixed dimensions for T_MixModel
+  & Mix_Exchange= 11, & !
+  & Mix_Surface=  12
+
+  !-----------------------------fixed dimensions for all T_MixModel's --
+  !
+  integer,parameter:: & !fixed dimensions for T_MixModel
   & MaxPole=  6,   & !max number of endmembers (or components) to define a mixture
   & MaxSite=  6,   & !max number of sites in the mixture
   & MaxAtom= 16,   & !max dimension of composition vector of mixture, used in T_MixPhase
@@ -57,11 +67,11 @@ MODULE M_T_MixModel
   !
   !---------- type for Margules parameter for up to Quaternary mixing --
   !
-  !! TYPE:: T_Margul
-  !!   INTEGER:: NPoleMarg
+  !! type:: T_Margul
+  !!   integer:: NPoleMarg
   !!   !number (2:4) of "poles" (end-members) involved in the Margules term
   !!   !most commonly, NPole=2 (binary interaction), sometimes NPole=3
-  !!   INTEGER,DIMENSION(1:4)::&
+  !!   integer,dimension(1:4)::&
   !!     vIPole, &
   !!     ! for molecular models,
   !!     !   vIPole lists the indices, in the e-m list of the mixture,
@@ -73,10 +83,10 @@ MODULE M_T_MixModel
   !!     vPower !, & !
   !!     !power(i)= power of "pole" IPole(i) in the the Margules term
   !!     !ISite    !for site models
-  !! ENDTYPE T_Margul
+  !! end type T_Margul
   
-  TYPE:: T_Margul
-    INTEGER,DIMENSION(1:MaxAtom):: vDegree
+  type:: T_Margul
+    integer,dimension(1:MaxAtom):: vDegree
     ! new format,
     !   vDegree(:) contains all degrees,
     !     listed in the same order as
@@ -84,16 +94,16 @@ MODULE M_T_MixModel
     !     or as the site fractions in case of site model
     !   if a e-m or a site fraction is not involved, its degree is zero
     ! -> vDegree(:) contains information that was contained in vIPole and in vPower
-    REAL(dp)::WG,WH,WS,WV,WCp
-    INTEGER ::Kohler
+    real(dp)::WG,WH,WS,WV,WCp
+    integer ::Kohler
     !caveat!! deCapitani allows the Kohler parameter to take fractional values
-  ENDTYPE T_Margul
+  end type T_Margul
   !
   !---------------------------------------------------------------------
   !
   !WG=   WH &
   !&   + WCP*(T-T0) &
-  !&   -(WS +WCP*LOG(T/T0))*T &
+  !&   -(WS +WCP*log(T/T0))*T &
   !&   + WV *P
   !WCp commonly Zero -> WG= WH -T*WS +P.WV
   !
@@ -101,51 +111,52 @@ MODULE M_T_MixModel
   != one Margules term M of the excess G calculated as
   !  Y=M%WG
   !<old version>
-  !  DO I=1,M%NPoleMarg !NPole= number of poles involved in term M
+  !  do I=1,M%NPoleMarg !NPole= number of poles involved in term M
   !    Y=Y*X(M%iPol(I))**(M%Power(I))
   !  !! IPole=list of indices (in the solution) of the poles involved in M
-  !  ENDDO
+  !  end do
   !  example:
   !    term 112 -> Power(1)=2, Power(2)=1 -> W112 *X(IPol(1))**2 *X(Ipol(2))
   !
   !<new version>
-  !  DO I=1,S%NPole != number of poles in the mixture
-  !    IF(M%vDegree(I)>0) Y=Y*X(I)**M%vDegree(I))
+  !  do I=1,S%NPole != number of poles in the mixture
+  !    if(M%vDegree(I)>0) Y=Y*X(I)**M%vDegree(I))
   !    !! no more use of vIPole(:)
-  !  ENDDO
+  !  end do
   !
   !--------------------------------------------------------------------
   !
-  !-----------------------------------------------------------T_MixModel 
-  TYPE:: T_MixModel
+  !-----------------------------------------------------------T_MixModel
+  type:: T_MixModel
 
-    CHARACTER(LEN=23):: Name    !same length as name in tMinThr
-    CHARACTER(LEN=3) :: Typ     !"MIN","GAS",...
-    CHARACTER(LEN=15):: Model   !TYPE of EoS: IDEAL, MOLECULAR, SITE, FELSPAR, GUGGENHEIM, ...
+    character(len=23):: Name    !same length as name in tMinThr
+    character(len=3) :: Typ     !"MIN","GAS",...
+    ! character(len=15):: Model   !type of EoS: IDEAL, MOLECULAR, SITE, FELSPAR, GUGGENHEIM, ...
+    integer          :: Model
 
-    INTEGER:: NPole             !Nr of EndMembers, must be <=MaxPole
-    INTEGER:: NSite             !Nr of Sites, must be <=MaxSite
-    INTEGER:: NMarg             !Nr of Margules terms
+    integer:: NPole             !Nr of EndMembers, must be <=MaxPole
+    integer:: NSite             !Nr of Sites, must be <=MaxSite
+    integer:: NMarg             !Nr of Margules terms
 
-    ! LOGICAL:: vHasPole(1:MaxPole)
+    ! logical:: vHasPole(1:MaxPole)
 
-    CHARACTER(LEN=23):: vNamPole(1:MaxPole)
+    character(len=23):: vNamPole(1:MaxPole)
     ! names of end-members
     ! (same name must be found also in pure species database)
 
-    INTEGER:: vIPole(1:MaxPole)
+    integer:: vIPole(1:MaxPole)
     ! vIPole(i)= index of end member i in current species list
     !   species list is generally vSpc in M_Global_Vars,
     !   thus,
     !     vIPole(i)   is Species_Index(vSpc, vNamPole(:)
     !     vNamPole(i) is vSpc(vIPole(i))%Name
 
-    INTEGER:: vMulti(1:MaxSite)
+    integer:: vMulti(1:MaxSite)
     ! site multiplicity
     ! for molecular models, multiplicity is vMulti(1)
     ! vMulti(i)<=MaxMulti forall i
     !
-    !! REAL(dp):: GuggA0,GuggA1
+    !! real(dp):: GuggA0,GuggA1
     !! ! for Guggenheim binary assymetric model (e.g. Mg-calcite)
     !
     ! fields GuggA0,GuggA1 have been deleted,
@@ -158,40 +169,40 @@ MODULE M_T_MixModel
     ! >>
     ! W12= A0  ;  W112= A1  ;  W221= -A1
     !
-    TYPE(T_Margul):: vMarg(1:MaxMarg)
+    type(T_Margul):: vMarg(1:MaxMarg)
     ! array of Margules parameters
     !
     !! vIMargSite still useful, although information is also contained in vPower
-    INTEGER:: vIMargSite(1:MaxMarg)
+    integer:: vIMargSite(1:MaxMarg)
     ! for molecular (or one-site models), vIMargSite(1:NMarg)= 1
     ! for multisite models, vIMargSite(i) tells which site vMarg(i) is for (??)
 
     !----------------------------------------------------for site models 
-    INTEGER:: NAtom
+    integer:: NAtom
     ! dimension of composition vector, <=MaxAtom
     !
-    REAL(dp):: vPoleCoeff(1:MaxPole)
+    real(dp):: vPoleCoeff(1:MaxPole)
     ! normalization factors for site models
     !
-    CHARACTER(LEN=3)::vNamSite(1:MaxSite)
+    character(len=3)::vNamSite(1:MaxSite)
     ! names of sites, e.g. M1_, M2_, M23, A__, OH_, ...
     !
-    CHARACTER(LEN=6):: vNamAtom(1:MaxAtom)
+    character(len=6):: vNamAtom(1:MaxAtom)
     ! 6 chars= 3 for element name, 3 for site name
     ! names of site fractions, e.g. Mg_M1_, Mg_M2_, Si_T__, OH_OH_, ...
     !
-    INTEGER:: vAtomMulti(1:MaxAtom)
+    integer:: vAtomMulti(1:MaxAtom)
     ! gives the multiplicity of the site containing the atom
-    INTEGER:: vIAtomSite(1:MaxAtom)
+    integer:: vIAtomSite(1:MaxAtom)
     ! gives the index of the site containing the atom
-    INTEGER:: tPoleAtom(1:MaxPole,1:MaxAtom)
+    integer:: tPoleAtom(1:MaxPole,1:MaxAtom)
     ! table of end-members w/r site fractions
     ! example
     ! SITE
     !   A    1  K__Na_     !iSite=1; K:iEle=1, Na:iEle=2
     !   M2A  1  Al_Mg_Fe_
     !   T1   2  Al_Si_
-    ! END
+    ! end
     ! >> composition vector will contain
     !   (xK_A, xNa_A, xAl_M2A, xMg_M2A, xFe_M2A, xAl_T1, xSi_T1)
     ! list of poles and site occupancy table:
@@ -201,7 +212,7 @@ MODULE M_T_MixModel
     !   Pa   Na   Al     AlSi   ! Al     SiSi
     !   MCel K    Mg     SiSi   ! Al     SiSi
     !   FCel K    Fe     SiSi   ! Al     SiSi
-    ! END
+    ! end
     ! ->>
     ! tPoleAtom=
     !      !K_A   Na_A   Al_M2A   Mg_M2A   Fe_M2A   Al_T1   Si_T1
@@ -216,7 +227,7 @@ MODULE M_T_MixModel
     !
     !---------------------------------------------------/for site models
     !
-  END TYPE T_MixModel
+  end type T_MixModel
   !----------------------------------------------------------/T_MixModel
   !
   !!!-----------------------------------------------------------examples
@@ -225,7 +236,7 @@ MODULE M_T_MixModel
   !!!    M2 2 MG_FE_
   !!!    M1 1 MG_FE_AL_ !may have up to MaxElSite elements
   !!!    T2 2 AL_SI_
-  !!!  ENDSITE
+  !!!  endSITE
   !!!  POLE
   !!!    !__________       M2____    M1_        T_____
   !!!    !possible=        MG_FE_    MG_FE_AL_  AL_SI_
@@ -235,9 +246,9 @@ MODULE M_T_MixModel
   !!!    ANNITE            FE_FE_    FE_        AL_SI_
   !!!    SIDEROPHYLLITE    FE_FE_    AL_        AL_AL_
   !!!    EASTONITE         MG_MG_    AL_        AL_AL_
-  !!!  ENDPOLE
+  !!!  endPOLE
   !!!  .../...
-  !!!ENDSOLUTION
+  !!!endSOLUTION
   !!!
   !!!
   !!!
@@ -246,24 +257,24 @@ MODULE M_T_MixModel
   !!!   M2 1.00 1.00 !sum=2.00, =vMulti(1)
   !!!   M1 0.50 0.50 !sum=1.00, =vMulti(2)
   !!!   T2 1.00 1.00 !sum=2.00, =vMulti(3)
-  !!! END
+  !!! end
   !!!
   !!!----------------------------------------------------------/examples
   !
 
-CONTAINS
+contains
 
-SUBROUTINE MixModel_Zero(S)
+subroutine MixModel_Zero(S)
 
-  TYPE(T_MixModel),INTENT(OUT)::S
+  type(T_MixModel),intent(out)::S
   
   S%Name=     "XXX"
-  S%Model=    "IDEAL"
+  S%Model=    1 ! "MOLECULAR"
   S%NPole=    0
   S%NSite=    1
   S%vMulti(1)=1
   S%nMarg=    0
-  ! S%vHasPole(:)= .FALSE.
+  !S%vHasPole(:)= .false.
   S%vNamPole(:)= "Z"
   S%vIPole(:)=   0
   S%vMulti(:)=   1
@@ -275,53 +286,78 @@ SUBROUTINE MixModel_Zero(S)
   S%vIAtomSite(:)=    1
   S%tPoleAtom(:,:)=  0
   
-END SUBROUTINE MixModel_Zero
+end subroutine MixModel_Zero
 
-INTEGER FUNCTION MixModel_Index(V,Str)
+integer function MixModel_Index(V,Str)
 !-- position of solution model named Str in V(1:nMixModel)
 !-----------------------------------------------------------------------
-  TYPE(T_MixModel),DIMENSION(:),INTENT(IN):: V
-  CHARACTER(*),                 INTENT(IN):: Str
-  INTEGER     ::I
+  type(T_MixModel),dimension(:),intent(in):: V
+  character(*),                 intent(in):: Str
+  integer     ::I
   MixModel_Index=0
   !---------------------------------------------------------------------
-  IF(SIZE(V)==0) RETURN
+  if(size(V)==0) return
   !
   I=0
-  DO
+  do
     I=I+1
-    IF(TRIM(Str)==TRIM(V(I)%Name)) THEN
-      MixModel_Index=I   ;    EXIT
-    ENDIF
-    IF(I==SIZE(V)) EXIT
-  ENDDO
+    if(trim(Str)==trim(V(I)%Name)) then
+      MixModel_Index=I
+      exit
+    end if
+    if(I==size(V)) exit
+  end do
   !
-  RETURN
-END FUNCTION MixModel_Index
+  return
+end function MixModel_Index
 
-SUBROUTINE MixModel_XPoleToXSite(MM,vX,vY)
+subroutine MixModel_Name(S,Str,Err)
+  type(T_MixModel),intent(in) :: S
+  character(len=*),intent(out):: Str
+  logical,         intent(out):: Err
+  !
+  Err= .false.
+  !
+  select case(S%Model)
+  case(Mix_Molecular)  ; Str= "MOLECULAR"
+  case(Mix_Felspar)    ; Str= "FELSPAR"
+  case(Mix_Site)       ; Str= "SITE"
+  case(Mix_Special)    ; Str= "SPECIAL"
+  !
+  case(Mix_Exchange)   ; Str= "EXCHANGE"
+  case(Mix_Surface)    ; Str= "SURFACE"
+  !
+  case default
+    Str= "none"
+    Err= .true.
+  end select
+  !
+  return
+end subroutine MixModel_Name
 
-  TYPE(T_MixModel),INTENT(IN) :: MM
-  REAL(dp),        INTENT(IN) :: vX(:) ! end member mole fractions
-  REAL(dp),        INTENT(OUT):: vY(:) ! site fractions
+subroutine MixModel_XPoleToXSite(MM,vX,vY)
+
+  type(T_MixModel),intent(in) :: MM
+  real(dp),        intent(in) :: vX(:) ! end member mole fractions
+  real(dp),        intent(out):: vY(:) ! site fractions
   !---------------------------------------------------------------------
-  INTEGER:: iP,iEl,J
+  integer:: iP,iEl,J
   !
   vY(:)= Zero
-  DO iP=1,MM%NPole
-    DO iEl=1,MM%NAtom
+  do iP=1,MM%NPole
+    do iEl=1,MM%NAtom
       J= MM%tPoleAtom(iP,iEl)
-      !PRINT *,J
-      IF(J /= 0) vY(iEl)= vY(iEl) + vX(iP) *REAL(J) /REAL(MM%vAtomMulti(iEl))
-      !PRINT *,vY
-    END DO
-    !PAUSE
-  END DO
+      !print *,J
+      if(J /= 0) vY(iEl)= vY(iEl) + vX(iP) *real(J) /real(MM%vAtomMulti(iEl))
+      !print *,vY
+    end do
+    !pause
+  end do
   !
-  RETURN
-END SUBROUTINE MixModel_XPoleToXSite
+  return
+end subroutine MixModel_XPoleToXSite
 
-REAL(dp) FUNCTION MixModel_Site_ActivIdeal( &
+real(dp) function MixModel_Site_ActivIdeal( &
 & MM,   & !IN= Mix.model, generally =vMixModel(Fas%iModel)
 & IPol, & !IN= index of end-member in models
 & vXatom) !IN= phase composition
@@ -330,241 +366,237 @@ REAL(dp) FUNCTION MixModel_Site_ActivIdeal( &
 !-- returns ideal activity of end-member IPol,
 !-- following solution model MM
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  REAL(dp),        INTENT(IN):: vXAtom(:)
-  INTEGER,         INTENT(IN):: IPol
+  type(T_MixModel),intent(in):: MM
+  real(dp),        intent(in):: vXAtom(:)
+  integer,         intent(in):: IPol
   !---------------------------------------------------------------------
-  REAL(dp):: Y
-  INTEGER :: iEl
+  real(dp):: Y
+  integer :: iEl
   !---------------------------------------------------------------------
   Y= One
   !
-  DO iEl= 1,MM%NAtom
-    !IF(MM%tPoleAtom(iPol,iEl)/=0) Y= Y *vXAtom(iEl)**MM%tPoleAtom(iPol,iEl)
-    IF(MM%tPoleAtom(iPol,iEl)/=0) Y= Y *vXAtom(iEl)**MM%vAtomMulti(iEl)
-  ENDDO
+  do iEl= 1,MM%NAtom
+    !if(MM%tPoleAtom(iPol,iEl)/=0) Y= Y *vXAtom(iEl)**MM%tPoleAtom(iPol,iEl)
+    if(MM%tPoleAtom(iPol,iEl)/=0) Y= Y *vXAtom(iEl)**MM%vAtomMulti(iEl)
+  end do
   !
   MixModel_Site_ActivIdeal= Y *MM%vPoleCoeff(iPol)
   !
-  !IF(iDebug>1) WRITE(fTrc,'(I3,1X,G15.6,1X,A)') &
-  !& iPol,MixModel_Site_ActivIdeal,TRIM(MM%vNamPole(iPol))
+  !if(iDebug>1) write(fTrc,'(I3,1X,G15.6,1X,A)') &
+  !& iPol,MixModel_Site_ActivIdeal,trim(MM%vNamPole(iPol))
   !
-ENDFUNCTION MixModel_Site_ActivIdeal
+end function MixModel_Site_ActivIdeal
 
-SUBROUTINE MixModel_Pole_LnActivsIdeal( & !
+subroutine MixModel_Pole_LnActivsIdeal( & !
 & MM,     &  !IN= Mix.model
 & vX,     &  !IN= phase composition
 & vLpole, &  !IN
 & vLnAct)    !OUT
-!--
+!-----------------------------------------------------------------------
 !-- for end-member mixing models
 !-- returns log(ideal activity) of all 'active' end-members
-!--
-  TYPE(T_MixModel),INTENT(IN) :: MM
-  REAL(dp),        INTENT(IN) :: vX(:)
-  LOGICAL,         INTENT(IN) :: vLpole(:)
-  REAL(dp),        INTENT(OUT):: vLnAct(:)
+!-----------------------------------------------------------------------
+  type(T_MixModel),intent(in) :: MM
+  real(dp),        intent(in) :: vX(:)
+  logical,         intent(in) :: vLpole(:)
+  real(dp),        intent(out):: vLnAct(:)
   !---------------------------------------------------------------------
-  INTEGER:: iP
+  integer:: iP
   !---------------------------------------------------------------------
   vLnAct(:)= Zero
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model) ! (trim(MM%Model))
   !
-  CASE("IDEAL","POLE","MOLECULAR")
-  !! should consider "IDEAL","POLE" as obsolete,
-  !! and recommand using "MOLECULAR"
-    DO iP=1,MM%NPole
-      IF(vLPole(iP)) &
-      & vLnAct(iP)= vLnAct(iP) + LOG(vX(iP))*MM%vMulti(1)
-    ENDDO
+  case(Mix_Molecular) ! ("IDEAL","POLE","MOLECULAR")
+    do iP=1,MM%NPole
+      if(vLPole(iP)) &
+      & vLnAct(iP)= vLnAct(iP) + log(vX(iP))*MM%vMulti(1)
+    end do
   !
-  CASE("FELSPAR")
-    IF(vLPole(1)) vLnAct(1)= LOG(vX(1)) !+LOG(1-vX(3)*vX(3))
-    IF(vLPole(2)) vLnAct(2)= LOG(vX(2)) !+LOG(1-vX(3)*vX(3))
-    IF(vLPole(3)) THEN
-      vLnAct(3)= LOG(vX(3))+2*LOG((One+vX(3))/2.0D0)
-      IF(vLPole(1)) vLnAct(1)= LOG(vX(1)) +LOG(One-vX(3)**2)
-      IF(vLPole(2)) vLnAct(2)= LOG(vX(2)) +LOG(One-vX(3)**2)
-    ENDIF
+  case(Mix_Felspar) ! ("FELSPAR")
+    if(vLPole(1)) vLnAct(1)= log(vX(1)) !+log(1-vX(3)*vX(3))
+    if(vLPole(2)) vLnAct(2)= log(vX(2)) !+log(1-vX(3)*vX(3))
+    if(vLPole(3)) then
+      vLnAct(3)= log(vX(3))+2*log((One+vX(3))/2.0D0)
+      if(vLPole(1)) vLnAct(1)= log(vX(1)) +log(One-vX(3)**2)
+      if(vLPole(2)) vLnAct(2)= log(vX(2)) +log(One-vX(3)**2)
+    end if
   !
-  END SELECT
+  end select
   !
-END SUBROUTINE MixModel_Pole_LnActivsIdeal
+end subroutine MixModel_Pole_LnActivsIdeal
 
-SUBROUTINE MixModel_Site_LnActivsIdeal( & !
+subroutine MixModel_Site_LnActivsIdeal( & !
 & MM,     &  !IN= Mix.model
 & vXatom, &  !IN= phase composition
 & vLpole, &  !IN
 & Ok,     &  !OUT
 & vLnAct)    !OUT
-!--
+!-----------------------------------------------------------------------
 !-- for site mixing models
 !-- returns log(ideal activity) of all 'active' end-members
-!--
+!-----------------------------------------------------------------------
+  type(T_MixModel),intent(in) :: MM
+  real(dp),        intent(in) :: vXAtom(:)
+  logical,         intent(in) :: vLpole(:)
+  logical,         intent(out):: Ok
+  real(dp),        intent(out):: vLnAct(:)
   !---------------------------------------------------------------------
-  TYPE(T_MixModel),INTENT(IN) :: MM
-  REAL(dp),        INTENT(IN) :: vXAtom(:)
-  LOGICAL,         INTENT(IN) :: vLpole(:)
-  LOGICAL,         INTENT(OUT):: Ok
-  REAL(dp),        INTENT(OUT):: vLnAct(:)
+  real(dp):: Y
+  integer :: iP,iEl,J
   !---------------------------------------------------------------------
-  REAL(dp):: Y
-  INTEGER :: iP,iEl,J
-  !---------------------------------------------------------------------
-  Ok= .TRUE.
+  Ok= .true.
   !
-  DO iP= 1,MM%NPole
+  do iP= 1,MM%NPole
 
-    IF(vLPole(iP)) THEN
+    if(vLPole(iP)) then
 
       Y= Zero
-      DO iEl= 1,MM%NAtom
+      do iEl= 1,MM%NAtom
         J= MM%tPoleAtom(iP,iEl)
-        IF(J/=0) THEN
-          IF(vXAtom(iEl)>Zero) THEN
-            Y= Y + LOG(vXAtom(iEl)) *MM%vAtomMulti(iEl) !*J
-          ELSE
+        if(J/=0) then
+          if(vXAtom(iEl)>Zero) then
+            Y= Y + log(vXAtom(iEl)) *MM%vAtomMulti(iEl) !*J
+          else
           !! normally, should never happen, if vLPole is .true. ...
-            Ok= .FALSE.
-          ENDIF
-        ENDIF
-      ENDDO
+            Ok= .false.
+          end if
+        end if
+      end do
       
       ! add correction term, to have activ=1 for pure end member
-      vLnAct(iP)= Y + LOG(MM%vPoleCoeff(iP))
+      vLnAct(iP)= Y + log(MM%vPoleCoeff(iP))
 
-    ENDIF
+    end if
 
-  ENDDO
+  end do
   !
-END SUBROUTINE MixModel_Site_LnActivsIdeal
+end subroutine MixModel_Site_LnActivsIdeal
 
-REAL(dp) FUNCTION MixModel_Site_SConf( & !
+real(dp) function MixModel_Site_SConf( & !
 & MM,   & !IN, mixing model
 & vXatom)    !IN, composition
-!--
-!------------------------------------ compute configurational entropy --
-!---------------------------------------------------- for site mixing --
-!--
-  USE M_Dtb_Const,ONLY: R_jk
+!-----------------------------------------------------------------------
+!-- compute configurational entropy for site mixing --
+!-----------------------------------------------------------------------
+  use M_Dtb_Const,only: R_jk
   !
-  TYPE(T_MixModel),INTENT(IN):: MM
-  REAL(dp),        INTENT(IN):: vXatom(:)
-  !
-  REAL(dp):: Sconf,X
-  INTEGER :: iEl
-  !
+  type(T_MixModel),intent(in):: MM
+  real(dp),        intent(in):: vXatom(:)
+  !---------------------------------------------------------------------
+  real(dp):: Sconf,X
+  integer :: iEl
+  !---------------------------------------------------------------------
   SConf= Zero
   !
   ! sum of x*ln(x) on the different sites,
   ! taking account also of site multiplicity
-  DO iEl=1,MM%NAtom
+  do iEl=1,MM%NAtom
     X= vXAtom(iEl)
-    IF(X > Zero) &
-    & Sconf= Sconf + X *LOG(X) *MM%vAtomMulti(iEl)
-  ENDDO
+    if(X > Zero) &
+    & Sconf= Sconf + X *log(X) *MM%vAtomMulti(iEl)
+  end do
   !
   MixModel_Site_Sconf= -R_jk*Sconf
   !
-ENDFUNCTION MixModel_Site_SConf
+end function MixModel_Site_SConf
 
-REAL(dp) FUNCTION MixModel_Pole_SConf( & !
+real(dp) function MixModel_Pole_SConf( & !
 & MM,   & !IN, mixing model
 & vLpole,  & !IN, pole is present / absent
 & vX)        !IN, composition
 !--
-!-- compute configurational entropy --
-!-- for end member mixing --
+!-- compute configurational entropy for end member mixing --
 !--
-  USE M_Dtb_Const,ONLY: R_jk
+  use M_Dtb_Const,only: R_jk
   !
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLpole(:)
-  REAL(dp),        INTENT(IN):: vX(:)
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLpole(:)
+  real(dp),        intent(in):: vX(:)
   !
-  REAL(dp):: Sconf
-  INTEGER :: iP
+  real(dp):: Sconf
+  integer :: iP
   !
   SConf= Zero
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model) ! (trim(MM%Model))
 
-  CASE("IDEAL","POLE","MOLECULAR")
+  case(Mix_Molecular) ! ("IDEAL","POLE","MOLECULAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR"
-    DO iP=1,MM%NPole
-      IF(vLPole(iP)) Sconf= Sconf + vX(iP)*LOG(vX(iP))
-    ENDDO
+    do iP=1,MM%NPole
+      if(vLPole(iP)) Sconf= Sconf + vX(iP)*log(vX(iP))
+    end do
     Sconf= SConf *MM%vMulti(1)
     !
-  CASE("FELSPAR")
-  !! "FELSPAR" is actually a special case of "MOLECULAR" mixing
+  case(Mix_Felspar) ! ("FELSPAR")
+  !! "FELSPAR" is actually a special case of "MOLECULAR" mixing:
+  !! configurational entropy with "Al-avoidance"
     ! ALBITE
-    IF(vLPole(1)) Sconf= Sconf + vX(1)*LOG(vX(1))
+    if(vLPole(1)) Sconf= Sconf + vX(1)*log(vX(1))
     ! K-FELSPAR
-    IF(vLPole(2)) Sconf= Sconf + vX(2)*LOG(vX(2))
+    if(vLPole(2)) Sconf= Sconf + vX(2)*log(vX(2))
     ! ANORTHITE
-    IF(vLPole(3)) THEN
-      Sconf= Sconf + vX(3) *( LOG(vX(3)) +LOG((One +vX(3))/Two) *Two )
-      IF(vLPole(1)) Sconf= Sconf + vX(1)*LOG(One -vX(3)*vX(3))
-      IF(vLPole(2)) Sconf= Sconf + vX(2)*LOG(One -vX(3)*vX(3))
-    ENDIF
+    if(vLPole(3)) then
+      Sconf= Sconf + vX(3) *( log(vX(3)) +log((One +vX(3))/Two) *Two )
+      if(vLPole(1)) Sconf= Sconf + vX(1)*log(One -vX(3)*vX(3))
+      if(vLPole(2)) Sconf= Sconf + vX(2)*log(One -vX(3)*vX(3))
+    end if
     !
-  END SELECT
+  end select
   !
   MixModel_Pole_Sconf= -R_jk*Sconf
   !
-ENDFUNCTION MixModel_Pole_SConf
+end function MixModel_Pole_SConf
 
-REAL(dp) FUNCTION MixModel_SConf( & !
-& MM,   & !IN, mixing model
+real(dp) function MixModel_SConf( & !
+& MM,      & !IN, mixing model
 & vLPole,  & !IN
 & vX)        !IN
 !--
 !-- compute configurational entropy --
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLPole(:)
-  REAL(dp),        INTENT(IN):: vX(:)
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLPole(:)
+  real(dp),        intent(in):: vX(:)
   !
-  REAL(dp),ALLOCATABLE:: vXAtom(:)
+  real(dp),allocatable:: vXAtom(:)
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model) ! (trim(MM%Model))
 
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) ! ("IDEAL","POLE","MOLECULAR","FELSPAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR"
     MixModel_SConf= MixModel_Pole_SConf(MM,vLPole,vX) ! vX is Fas%vXPole
-
-  CASE("SITE")
-    ALLOCATE(vXAtom(MM%NAtom))
+  !
+  case(Mix_Site) ! ("SITE")
+    allocate(vXAtom(MM%NAtom))
     vXAtom(:)= vX(:)
     MixModel_SConf= MixModel_Site_SConf(MM,vXAtom) ! vX is Fas%vXAtom
-    DEALLOCATE(vXAtom)
-
-  END SELECT
+    deallocate(vXAtom)
   !
-ENDFUNCTION MixModel_SConf
-
-REAL(dp) FUNCTION MixModel_Margules_Monome(M,vX)
-  TYPE(T_Margul),INTENT(IN):: M
-  REAL(dp),      INTENT(IN):: vX(:)
+  end select
   !
-  REAL(dp):: Y
-  INTEGER :: i
+end function MixModel_SConf
+
+real(dp) function MixModel_Margules_Monome(M,vX)
+  type(T_Margul),intent(in):: M
+  real(dp),      intent(in):: vX(:)
+  !
+  real(dp):: Y
+  integer :: i
   !
   Y= M%WG
-  DO i=1,SIZE(vX)
-    IF(M%vDegree(i)>0) &
+  do i=1,size(vX)
+    if(M%vDegree(i)>0) &
     & Y= Y *vX(i)**M%vDegree(i)
-  ENDDO
+  end do
   !
   MixModel_Margules_Monome= Y
   !
-END FUNCTION MixModel_Margules_Monome
+end function MixModel_Margules_Monome
 
-REAL(dp) FUNCTION MixModel_Pole_LnGammaMargules( & !
+real(dp) function MixModel_Pole_LnGammaMargules( & !
 & MM,      & !IN, mixing model
 & iP,      & !IN
 & vMonome, & !
@@ -573,14 +605,14 @@ REAL(dp) FUNCTION MixModel_Pole_LnGammaMargules( & !
 !-- for MOLECULAR model, compute RTln(Gamma) related to Margules Terms
 !-- (according to expression by deCapitani-Kirschen)
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  INTEGER,         INTENT(IN):: iP
-  REAL(dp),        INTENT(IN):: vMonome(:),vXpole(:)
+  type(T_MixModel),intent(in):: MM
+  integer,         intent(in):: iP
+  real(dp),        intent(in):: vMonome(:),vXpole(:)
   !
-  TYPE(T_Margul)::M
-  REAL(dp):: LnGam,S_i,Y,Z
-  INTEGER :: iM,I
-  INTEGER :: dSi_dXj
+  type(T_Margul)::M
+  real(dp):: LnGam,S_i,Y,Z
+  integer :: iM,I
+  integer :: dSi_dXj
   !
   ! RT.LnGam(j)=      &
   !   SUM(i=1..NMarg) &
@@ -593,33 +625,33 @@ REAL(dp) FUNCTION MixModel_Pole_LnGammaMargules( & !
   !
   LnGam=Zero
   !
-  DO iM=1,MM%NMarg
+  do iM=1,MM%NMarg
 
     M= MM%vMarg(iM)
     Y= vMonome(iM)
     Z= M%vDegree(iP) /vXpole(iP) +One -SUM(M%vDegree(:))
     !
-    IF(M%Kohler/=0) THEN
+    if(M%Kohler/=0) then
       S_i= Zero
-      DO I=1,MM%NPole
-        IF(M%vDegree(I)>0) S_i= S_i +vXpole(I)
-      END DO
+      do I=1,MM%NPole
+        if(M%vDegree(I)>0) S_i= S_i +vXpole(I)
+      end do
       dSi_dXj=0
-      IF(M%vDegree(iP)>0) dSi_dXj= 1
+      if(M%vDegree(iP)>0) dSi_dXj= 1
       !
       Y= Y / S_i**M%Kohler
       Z= Z + M%Kohler
-      IF(dSi_dXj/=0) Z= Z - M%Kohler *dSi_dXj/S_i
-    ENDIF
+      if(dSi_dXj/=0) Z= Z - M%Kohler *dSi_dXj/S_i
+    end if
     !
     LnGam= LnGam + Y*Z
-  ENDDO
+  end do
   !
   MixModel_Pole_LnGammaMargules= LnGam ! gives actually R*T*Ln(Gamma) !!
   !
-END FUNCTION MixModel_Pole_LnGammaMargules
+end function MixModel_Pole_LnGammaMargules
 
-REAL(dp) FUNCTION MixModel_Site_LnGammaMargules( & !
+real(dp) function MixModel_Site_LnGammaMargules( & !
 & MM,      & !IN, mixing model
 & iP,      & !IN
 & vMonome, & !
@@ -628,13 +660,13 @@ REAL(dp) FUNCTION MixModel_Site_LnGammaMargules( & !
 !-- for SITE model, compute RTln(Gamma) related to Margules Terms
 !-- ( should be called only when vLpole(iP) is true )
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  INTEGER,         INTENT(IN):: iP
-  REAL(dp),        INTENT(IN):: vXatom(:),vMonome(:)
+  type(T_MixModel),intent(in):: MM
+  integer,         intent(in):: iP
+  real(dp),        intent(in):: vXatom(:),vMonome(:)
   !
-  TYPE(T_Margul)::M
-  REAL(dp):: X != RT.ln(gamma)
-  INTEGER :: iM,J,iEl,iS
+  type(T_Margul)::M
+  real(dp):: X != RT.ln(gamma)
+  integer :: iM,J,iEl,iS
   !
   ! n * RT.LnGam_m=   &
   !   SUM(i=1..NMarg) &
@@ -646,157 +678,166 @@ REAL(dp) FUNCTION MixModel_Site_LnGammaMargules( & !
   !! LnAct= Zero
   X= Zero
   !
-  DO iEl= 1,MM%NAtom
+  do iEl= 1,MM%NAtom
     J= MM%tPoleAtom(iP,iEl)
-    IF(J/=0) THEN
-      !! LnAct= LnAct + LOG(vXAtom(iEl)) *J
-      DO iM=1,MM%NMarg
+    if(J/=0) then
+      !! LnAct= LnAct + log(vXAtom(iEl)) *J
+      do iM=1,MM%NMarg
         iS= MM%vIMargSite(iM)
-        IF( iS == MM%vIAtomSite(iEl) ) THEN
+        if( iS == MM%vIAtomSite(iEl) ) then
           M= MM%vMarg(iM)
           X=   X &
           &  + vMonome(iM) &
           &    *(M%vDegree(iEl) /vXatom(iEl) +One -SUM(M%vDegree(:))) &
-          &    /REAL(MM%vAtomMulti(iEl))
-        ENDIF
-      ENDDO
-    ENDIF
-  ENDDO
+          &    /real(MM%vAtomMulti(iEl))
+        end if
+      end do
+    end if
+  end do
   !
   MixModel_Site_LnGammaMargules= X ! is R*T*ln(Gamma) !!
   !
-END FUNCTION MixModel_Site_LnGammaMargules
+end function MixModel_Site_LnGammaMargules
 
-REAL(dp) FUNCTION MixModel_Pole_XsMargules( & !
+real(dp) function MixModel_Pole_XsMargules( & !
 & MM,     & !IN, mixing model
 & vLPole, & !IN
 & vXpole)   !IN, composition
 !--
 !-- for MOLECULAR model
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLPole(:)
-  REAL(dp),        INTENT(IN):: vXpole(:)
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLPole(:)
+  real(dp),        intent(in):: vXpole(:)
   !
-  TYPE(T_Margul):: M
-  REAL(dp):: Y,G_XSMix
-  INTEGER :: iM,iP
+  type(T_Margul):: M
+  real(dp):: Y,G_XSMix
+  integer :: iM,iP
   !
   G_XSMix= Zero
   !
-  DO iM=1,MM%NMarg ! number of Margules terms
+  do iM=1,MM%NMarg ! number of Margules terms
     !
     M= MM%vMarg(iM)  ! the Margules structure
-    Y= M%WG             ! the interaction energy for this Margules term
+    Y= M%WG          ! the interaction energy for this Margules term
     !
-    DO iP=1,MM%NPole
-      IF(M%vDegree(iP)>0) THEN != pole iP involved in monome Y
-        IF(vLPole(iP)) THEN
+    do iP=1,MM%NPole
+      if(M%vDegree(iP)>0) then != pole iP involved in monome Y
+        if(vLPole(iP)) then
           Y= Y *vXPole(iP)**M%vDegree(iP)
-        ELSE
+        else
           Y= Zero
-        ENDIF
-      ENDIF
-    ENDDO
+        end if
+      end if
+    end do
     !
     G_XSMix= G_XSMix +Y
-  ENDDO
+  end do
   !
   MixModel_Pole_XsMargules= G_XSMix
   !
-  RETURN
-END FUNCTION MixModel_Pole_XsMargules
+  return
+end function MixModel_Pole_XsMargules
 
-REAL(dp) FUNCTION MixModel_Site_XsMargules( & !
+real(dp) function MixModel_Site_XsMargules( & !
 & MM,    & !IN, mixing model
 & vXatom)  !IN
 !--
 !-- for SITE model
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  REAL(dp),        INTENT(IN):: vXAtom(:)
+  type(T_MixModel),intent(in):: MM
+  real(dp),        intent(in):: vXAtom(:)
   !
-  TYPE(T_Margul):: M
-  REAL(dp):: Y,G_XSMix
-  INTEGER :: iM,iEl
+  type(T_Margul):: M
+  real(dp):: Y,G_XSMix
+  integer :: iM,iEl
   !
   G_XSMix= Zero
   !
-  DO iM=1,MM%NMarg ! number of Margules terms
+  do iM=1,MM%NMarg ! number of Margules terms
     !
     M= MM%vMarg(iM)  ! the Margules structure
     Y= M%WG          ! the interaction energy for this Margules term
     !
-    DO iEl=1,MM%NAtom
-      IF(M%vDegree(iEl)>0) & != site fraction iEl is involved in monome Y
+    do iEl=1,MM%NAtom
+      if(M%vDegree(iEl)>0) & != site fraction iEl is involved in monome Y
       & Y= Y *vXAtom(iEl)**M%vDegree(iEl)
-    ENDDO
+    end do
     !
     G_XSMix= G_XSMix +Y
-  ENDDO
+  end do
   !
   MixModel_Site_XsMargules= G_XSMix
   !
-  RETURN
-END FUNCTION MixModel_Site_XsMargules
+  return
+end function MixModel_Site_XsMargules
 
-REAL(dp) FUNCTION MixModel_XsMargules( & !
+real(dp) function MixModel_XsMargules( & !
 & MM,      & !IN, mixing model
 & vLPole,  & !IN
 & vX)        !IN
 !--
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLPole(:)
-  REAL(dp),        INTENT(IN):: vX(:)
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLPole(:)
+  real(dp),        intent(in):: vX(:)
   !
   MixModel_XsMargules= Zero
   !
-  IF(MM%NMarg==0) RETURN
+  if(MM%NMarg==0) return
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model) ! (trim(MM%Model))
   !
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
-  !! should consider "IDEAL","POLE" as obsolete,
-  !! and recommand using "MOLECULAR" or "FELSPAR"
+  case(Mix_Molecular,Mix_Felspar) ! ("IDEAL","POLE","MOLECULAR","FELSPAR")
+  ! should consider "IDEAL","POLE" as obsolete,
+  ! and recommand using "MOLECULAR" or "FELSPAR"
     MixModel_XsMargules= &
     & MixModel_Pole_XsMargules(MM,vLPole,vX) ! vX is Fas%vXPole
   !
-  CASE("SITE")
+  case(Mix_Site) ! ("SITE")
     MixModel_XsMargules= &
     & MixModel_Site_XsMargules(MM,vX) ! vX is Fas%vXAtom
   !
-  END SELECT
+  end select
   !
-  RETURN
-END FUNCTION MixModel_XsMargules
+  return
+end function MixModel_XsMargules
 
-SUBROUTINE MixModel_Margul_Wg_Calc(TdgK,Pbar,S)
+subroutine MixModel_Param_Update(TdgK,Pbar,S)
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_MixModel),intent(inout):: S
+  !
+  if(S%NMarg>0) call MixModel_Margul_Wg_Calc(TdgK,Pbar,S)
+  !
+  return
+end subroutine MixModel_Param_Update
+
+subroutine MixModel_Margul_Wg_Calc(TdgK,Pbar,S)
 !--
 !-- from S%vMarg(:)%WH,WS,..., calc. values of S%vMarg(:)%WG at given P,T
 !--
-  USE M_Dtb_Const,ONLY: Tref
+  use M_Dtb_Const,only: Tref
   !
-  REAL(dp),        INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_MixModel),INTENT(INOUT):: S
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_MixModel),intent(inout):: S
   !
-  TYPE(T_Margul) ::M
-  INTEGER        ::iM
+  type(T_Margul) ::M
+  integer        ::iM
   !
-  IF(S%NMarg>0) THEN
+  if(S%NMarg>0) then
 
-    DO iM=1,S%NMarg
+    do iM=1,S%NMarg
       M=S%vMarg(iM)
       S%vMarg(iM)%WG= M%WH + M%WCP*(TdgK-Tref) &
-      &             -(M%WS +M%WCP*LOG(TdgK/Tref))*TdgK &
+      &             -(M%WS + M%WCP*log(TdgK/Tref))*TdgK &
       &             + M%WV*Pbar
-    ENDDO
+    end do
 
-  ENDIF
+  end if
   !
-  RETURN
-END SUBROUTINE MixModel_Margul_Wg_Calc
+  return
+end subroutine MixModel_Margul_Wg_Calc
 
-SUBROUTINE MixModel_Activities( & !
+subroutine MixModel_Activities( & !
 & TdgK,Pbar, & ! in
 & MM,        & ! in: mixing model
 & vXPole,    & ! in
@@ -808,28 +849,30 @@ SUBROUTINE MixModel_Activities( & !
 !--
 !-- calculate activities of end-members in phase F at given T,P
 !--
-  USE M_Dtb_Const,ONLY: R_jk
-  USE M_Trace
-  USE M_MixModel_Special
+  use M_Dtb_Const,only: R_jk
+  use M_Trace
+  use M_MixModel_Special
   !
-  REAL(dp),        INTENT(IN) :: Pbar, TdgK
-  TYPE(T_MixModel),INTENT(IN) :: MM
-  LOGICAL,         INTENT(IN) :: vLPole(:)
-  REAL(dp),        INTENT(IN) :: vXPole(:)
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(*),    INTENT(OUT):: Msg
-  REAL(dp),        INTENT(OUT):: vLGam(:)
-  REAL(dp),        INTENT(OUT):: vLIdeal(:)
-  REAL(dp),        INTENT(OUT):: vLnAct(:)
+  real(dp),        intent(in) :: Pbar, TdgK
+  type(T_MixModel),intent(in) :: MM
+  logical,         intent(in) :: vLPole(:)
+  real(dp),        intent(in) :: vXPole(:)
+  logical,         intent(out):: Ok
+  character(*),    intent(out):: Msg
+  real(dp),        intent(out):: vLGam(:)
+  real(dp),        intent(out):: vLIdeal(:)
+  real(dp),        intent(out):: vLnAct(:)
   !
-  INTEGER :: iP,iM
-  REAL(dp):: P
-  REAL(dp),ALLOCATABLE:: vMonome(:)
-  REAL(dp),ALLOCATABLE:: vXAtom(:)
+  integer :: iP,iM
+  real(dp):: P
+  real(dp):: vMonome(MM%NMarg)
+  real(dp):: vXAtom(MM%NAtom)
+  !real(dp),allocatable:: vMonome(:)
+  !real(dp),allocatable:: vXAtom(:)
   !
   P=Pbar !for future use ??
   !
-  Ok= .TRUE.
+  Ok= .true.
   Msg= "Ok"
   !
   !F%vLPole(1:MM%NPole)= vXPole(1:MM%NPole)>Zero
@@ -837,92 +880,92 @@ SUBROUTINE MixModel_Activities( & !
   vLGam(:)=   Zero !default
   vLIdeal(:)= Zero !default
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model)
   !
-  CASE("SPECIAL")
+  case(Mix_Special) ! "SPECIAL"
     !
-    CALL MixModel_Special_Activities( &
+    call MixModel_Special_Activities( &
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) ! "IDEAL","POLE","MOLECULAR","FELSPAR"
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR" or "FELSPAR"
     !
-    CALL MixModel_Pole_LnActivsIdeal(MM,vXPole,vLpole,vLIdeal)
+    call MixModel_Pole_LnActivsIdeal(MM,vXPole,vLpole,vLIdeal)
     !
-    !------------------------------------------------- Margules Terms --
-    IF(MM%NMarg>0) THEN
-      ALLOCATE(vMonome(MM%NMarg))
+    !---------------------------------------------------- Margules Terms 
+    if(MM%NMarg>0) then
+      !allocate(vMonome(MM%NMarg))
       !
-      DO iM=1,MM%NMarg
+      do iM=1,MM%NMarg
         vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),vXPole)
-      ENDDO
-      DO iP=1,MM%NPole
-        IF(vLPole(iP)) &
+      end do
+      do iP=1,MM%NPole
+        if(vLPole(iP)) &
         & vLGam(iP)= MixModel_Pole_LnGammaMargules(MM,iP,vMonome,vXPole) &
         &            /R_jk/TdgK
-      ENDDO
+      end do
       !
-      DEALLOCATE(vMonome)
+      !deallocate(vMonome)
       !
-    ENDIF
-    !-------------------------------------------------/Margules Terms --
+    end if
+    !----------------------------------------------------/Margules Terms 
     !
-  CASE("SITE")
+  case(Mix_Site)  ! "SITE"
     !
-    ALLOCATE(vXAtom(MM%NAtom))
-    CALL MixModel_XPoleToXSite(MM,vXPole,vXAtom)
+    !allocate(vXAtom(MM%NAtom))
+    call MixModel_XPoleToXSite(MM,vXPole,vXAtom)
     !
-    CALL MixModel_Site_LnActivsIdeal(MM,vXAtom,vLpole,Ok,vLIdeal)
+    call MixModel_Site_LnActivsIdeal(MM,vXAtom,vLpole,Ok,vLIdeal)
     !
-    !------------------------------------------------- Margules Terms --
-    IF(MM%NMarg>0) THEN
-      ALLOCATE(vMonome(MM%NMarg))
+    !---------------------------------------------------- Margules Terms 
+    if(MM%NMarg>0) then
+      !allocate(vMonome(MM%NMarg))
       !
-      DO iM=1,MM%NMarg
+      do iM=1,MM%NMarg
         vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),vXAtom)
-      ENDDO
-      DO iP=1,MM%NPole
-        IF(vLPole(iP)) &
+      end do
+      do iP=1,MM%NPole
+        if(vLPole(iP)) &
         & vLGam(iP)= MixModel_Site_LnGammaMargules(MM,iP,vMonome,vXAtom) &
         &            /R_jk/TdgK
-      ENDDO
+      end do
       !
-      DEALLOCATE(vMonome)
+      !deallocate(vMonome)
       !
-    ENDIF
-    !-------------------------------------------------/Margules Terms --
-    DEALLOCATE(vXAtom)
+    end if
+    !----------------------------------------------------/Margules Terms 
+    !deallocate(vXAtom)
     !
-  CASE DEFAULT
-    Ok= .FALSE.
-    Msg= TRIM(MM%Model)//"= invalid MM%Model in MixModel_CalcActivities"
-    !
-  END SELECT
+  ! case default
+  !   Ok= .false.
+  !   Msg= trim(MM%Model)//"= invalid MM%Model in MixModel_CalcActivities"
+  !   !
+  end select
   !
   vLnAct(1:MM%NPole)= vLIdeal(1:MM%NPole) + vLGam(1:MM%NPole)
   !
-  IF(iDebug>3) THEN !=========================================< trace ==
-    WRITE(fTrc,'(A)') "MixModel_CalcActivs -> X,ActIdeal,Gamma,Activ"
-    WRITE(fTrc,'(2A)') "MixModel=",MM%Name
-    DO iP=1,MM%NPole
-      IF(vLPole(iP)) THEN
-        WRITE(fTrc,'()')
-        WRITE(fTrc,'(A,I2,A1,A15,A1,4(A4,G15.6,A1))') &
+  if(iDebug>3) then !----------------------------------------------trace
+    write(fTrc,'(A)') "MixModel_CalcActivs -> X,ActIdeal,Gamma,Activ"
+    write(fTrc,'(2A)') "MixModel=",MM%Name
+    do iP=1,MM%NPole
+      if(vLPole(iP)) then
+        write(fTrc,'()')
+        write(fTrc,'(A,I2,A1,A15,A1,4(A4,G15.6,A1))') &
         & "POLE",iP,              T_,&
-        & TRIM(MM%vNamPole(iP)),  T_,&
+        & trim(MM%vNamPole(iP)),  T_,&
         & "Frc=",vXPole(iP),          T_,&
-        & "XId=",EXP(vLIdeal(iP)),T_,&
-        & "Gam=",EXP(vLGam(iP)),  T_,&
-        & "Act=",EXP(vLnAct(iP)), T_
-      ENDIF
-    ENDDO
-  ENDIF !====================================================</ trace ==
+        & "XId=",exp(vLIdeal(iP)),T_,&
+        & "Gam=",exp(vLGam(iP)),  T_,&
+        & "Act=",exp(vLnAct(iP)), T_
+      end if
+    end do
+  end if !--------------------------------------------------------/trace
   !
-END SUBROUTINE MixModel_Activities
+end subroutine MixModel_Activities
 
-REAL(dp) FUNCTION MixModel_GibbsIdeal( & !
+real(dp) function MixModel_GibbsIdeal( & !
 & TdgK,Pbar, & !IN
 & MM,        & !IN, mixing model
 & vLPole,    & !IN
@@ -930,55 +973,55 @@ REAL(dp) FUNCTION MixModel_GibbsIdeal( & !
 !--
 !-- !!! todo - check implementation of site models !!!
 !--
-  USE M_Dtb_Const,ONLY: R_jk
-  USE M_MixModel_Special
+  use M_Dtb_Const,only: R_jk
+  use M_MixModel_Special
   !
-  REAL(dp),        INTENT(IN):: TdgK,Pbar
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLPole(:)
-  REAL(dp),        INTENT(IN):: vXPole(:)
+  real(dp),        intent(in):: TdgK,Pbar
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLPole(:)
+  real(dp),        intent(in):: vXPole(:)
   !
-  REAL(dp),ALLOCATABLE:: vXAtom(:)
-  REAL(dp),ALLOCATABLE:: vLIdeal(:),vLGam(:)
-  REAL(dp):: G_IdMix
+  real(dp),allocatable:: vXAtom(:)
+  real(dp),allocatable:: vLIdeal(:),vLGam(:)
+  real(dp):: G_IdMix
   !
   ! G_IdMix: ideal part of free energy of mixing of solution MM for a given P,T
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model)
   !
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) !("IDEAL","POLE","MOLECULAR","FELSPAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommend using "MOLECULAR" or "FELSPAR" only
     G_IdMix= -TdgK *MixModel_Pole_SConf(MM,vLPole,vXPole)
     !
-  CASE("SITE")
-    ALLOCATE(vXAtom(MM%NAtom))
-    CALL MixModel_XPoleToXSite(MM,vXPole,vXAtom)
+  case(Mix_Site) ! ("SITE")
+    allocate(vXAtom(MM%NAtom))
+    call MixModel_XPoleToXSite(MM,vXPole,vXAtom)
     !
     G_IdMix= -TdgK *MixModel_Site_SConf(MM,vXAtom)
     !
-    DEALLOCATE(vXAtom)
+    deallocate(vXAtom)
   !
-  CASE("SPECIAL")
-    ALLOCATE(vLIdeal(SIZE(vXPole)))
-    ALLOCATE(vLGam(SIZE(vXPole)))
+  case(Mix_Special) ! ("SPECIAL")
+    allocate(vLIdeal(size(vXPole)))
+    allocate(vLGam(size(vXPole)))
     !
-    CALL MixModel_Special_Activities( &
+    call MixModel_Special_Activities( &
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
     G_IdMix= SUM(vXPole(:)*vLIdeal(:), MASK=vLPole(:)) *R_jk  *TdgK
     !
-    DEALLOCATE(vLIdeal)
-    DEALLOCATE(vLGam)
+    deallocate(vLIdeal)
+    deallocate(vLGam)
   !
-  END SELECT
+  end select
   !
   MixModel_GibbsIdeal= G_IdMix
   !
-ENDFUNCTION MixModel_GibbsIdeal
+end function MixModel_GibbsIdeal
 
-REAL(dp) FUNCTION MixModel_GibbsMixRT( & !
+real(dp) function MixModel_GibbsMixRT( & !
 & TdgK,Pbar, & !IN
 & MM,        & !IN, mixing model
 & vLPole,    & !IN
@@ -986,17 +1029,17 @@ REAL(dp) FUNCTION MixModel_GibbsMixRT( & !
 !--
 !-- !!! check implementation of site models !!!
 !--
-  USE M_Dtb_Const,ONLY: R_jk
-  USE M_MixModel_Special
+  use M_Dtb_Const,only: R_jk
+  use M_MixModel_Special
   !
-  REAL(dp),        INTENT(IN):: TdgK,Pbar
-  TYPE(T_MixModel),INTENT(IN):: MM
-  LOGICAL,         INTENT(IN):: vLPole(:)
-  REAL(dp),        INTENT(IN):: vXPole(:)
+  real(dp),        intent(in):: TdgK,Pbar
+  type(T_MixModel),intent(in):: MM
+  logical,         intent(in):: vLPole(:)
+  real(dp),        intent(in):: vXPole(:)
   !
-  REAL(dp),ALLOCATABLE:: vXAtom(:)
-  REAL(dp),ALLOCATABLE:: vLIdeal(:),vLGam(:)
-  REAL(dp):: G_IdMixRT,G_XSMixRT
+  real(dp),allocatable:: vXAtom(:)
+  real(dp),allocatable:: vLIdeal(:),vLGam(:)
+  real(dp):: G_IdMixRT,G_XSMixRT
   !
   ! GMixing= G_IdealMixing + G_XSMixing
   !   G_IdMix: ideal part of free energy of mixing of solution MM for a given P,T
@@ -1006,50 +1049,50 @@ REAL(dp) FUNCTION MixModel_GibbsMixRT( & !
   !
   G_XSMixRT=Zero
   !
-  SELECT CASE(TRIM(MM%Model))
+  select case(MM%Model)
   !
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) !("IDEAL","POLE","MOLECULAR","FELSPAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR" or "FELSPAR"
     G_IdMixRT= - MixModel_Pole_SConf(MM,vLPole,vXPole) /R_jk
     !
-    IF(MM%NMarg>0) G_XSMixRT= &
+    if(MM%NMarg>0) G_XSMixRT= &
     & MixModel_Pole_XsMargules(MM,vLPole,vXPole) /R_jk /TdgK
   !
-  CASE("SITE")
-    ALLOCATE(vXAtom(MM%NAtom))
-    CALL MixModel_XPoleToXSite(MM,vXPole,vXAtom)
+  case(Mix_Site) ! ("SITE")
+    allocate(vXAtom(MM%NAtom))
+    call MixModel_XPoleToXSite(MM,vXPole,vXAtom)
     !
     G_IdMixRT= - MixModel_Site_SConf(MM,vXAtom) /R_jk
     !
-    IF(MM%NMarg>0) G_XSMixRT= &
+    if(MM%NMarg>0) G_XSMixRT= &
     & MixModel_Site_XsMargules(MM,vXAtom) /R_jk /TdgK
     !
-    DEALLOCATE(vXAtom)
+    deallocate(vXAtom)
   !
-  CASE("SPECIAL")
-    ALLOCATE(vLIdeal(SIZE(vXPole)))
-    ALLOCATE(vLGam(SIZE(vXPole)))
+  case(Mix_Special) ! ("SPECIAL")
+    allocate(vLIdeal(size(vXPole)))
+    allocate(vLGam(size(vXPole)))
     !
-    CALL MixModel_Special_Activities( &
+    call MixModel_Special_Activities( &
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
     G_IdMixRT= SUM(vXPole(:)*vLIdeal(:), MASK=vLPole(:))
     G_XSMixRT= SUM(vXPole(:)*vLGam(:),   MASK=vLPole(:))
     !
-    DEALLOCATE(vLIdeal)
-    DEALLOCATE(vLGam)
+    deallocate(vLIdeal)
+    deallocate(vLGam)
   !
-  END SELECT
+  end select
   !
   !!! GMeca is not computed here,
   !!! because we are concerned only with mixing properties
   !
   MixModel_GibbsMixRT= G_IdMixRT +G_XSMixRT
   !
-ENDFUNCTION MixModel_GibbsMixRT
+end function MixModel_GibbsMixRT
 
-ENDMODULE M_T_MixModel
+end module M_T_MixModel
 
 

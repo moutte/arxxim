@@ -1,26 +1,26 @@
-MODULE M_Element_Read
-  USE M_Kinds
-  USE M_Trace,    ONLY: iDebug,T_,fTrc,Stop_,Warning_
-  USE M_T_Element,ONLY: T_Element
-  IMPLICIT NONE
+module M_Element_Read
+  use M_Kinds
+  use M_Trace,    only: iDebug,T_,fTrc,Stop_,Warning_
+  use M_T_Element,only: T_Element
+  implicit none
 
-  PRIVATE
+  private
   
-  PUBLIC:: Elements_BuildLnk
-  PUBLIC:: Elements_LnkToVec
-  PUBLIC:: LnkEle_Build
-  PUBLIC:: T_LnkEle
-  PUBLIC:: Element_Read_Redox
-  PUBLIC:: Element_Read_Entropy
+  public:: Elements_BuildLnk
+  public:: Elements_LnkToVec
+  public:: LnkEle_Build
+  public:: T_LnkEle
+  public:: Element_Read_Redox
+  public:: Element_Read_Entropy
   !
-  TYPE:: T_LnkEle
-    TYPE(T_Element)         ::Value
-    TYPE(T_LnkEle), POINTER ::Next
-  ENDTYPE T_LnkEle
+  type:: T_LnkEle
+    type(T_Element)         ::Value
+    type(T_LnkEle), pointer ::Next
+  end type T_LnkEle
   !
-CONTAINS
+contains
 
-SUBROUTINE Element_Read_Entropy(vEle)
+subroutine Element_Read_Entropy(vEle)
 !--
 !-- read entropy of elements at standard state
 !--
@@ -28,264 +28,276 @@ SUBROUTINE Element_Read_Entropy(vEle)
 !-- are needed for conversion from Berman-Brown
 !-- to Benson-Helgeson convention
 !--
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_Files,    ONLY: NamFInn
-  USE M_T_Element,ONLY: T_Element,Element_Index
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_Files,    only: NamFInn
+  use M_T_Element,only: T_Element,Element_Index
   !
-  TYPE(T_Element),INTENT(INOUT):: vEle(:)
+  type(T_Element),intent(inout):: vEle(:)
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios,i
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios,i
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "< Elements_Read_Entropy"
+  if(iDebug>0) write(fTrc,'(/,A,/)') "< Elements_Read_Entropy"
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
   !
-  DoFile: DO 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppENDToEND(L,W,EoL)
-    SELECT CASE(W)
-      CASE("ELEMENTS.ENTROPY") !!!!!!canevas for READing one "block"
-        DoBlock: DO
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          CALL AppendToEND(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-          SELECT CASE(W)
-            CASE("END","ENDELEMENTS.ENTROPY"); EXIT DoFile
-          ENDSELECT
-          CALL Str_AppEND(W,3)
+  DoFile: do 
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToend(L,W,EoL)
+    select case(W)
+      case("ELEMENTS.ENTROPY") !!!!!!canevas for reading one "block"
+        DoBlock: do
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          call AppendToend(L,W,EoL)
+          if(W(1:1)=='!') cycle DoBlock !skip comment lines
+          select case(W)
+            case("END","ENDELEMENTS.ENTROPY"); exit DoFile
+          end select
+          call Str_Append(W,3)
           i= Element_Index(W(1:3),vEle)
-          IF(i>0) THEN
-            CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,vEle(i)%S0)
-          ELSE
-            CALL Warning_("Element "//TRIM(W)//" not in base")
-          ENDIF
-        ENDDO DoBlock
-    ENDSELECT
-  ENDDO DoFile
-  CLOSE(F)
+          if(i>0) then
+            call LinToWrd(L,W,EoL); call WrdToReal(W,vEle(i)%S0)
+          else
+            call Warning_("Element "//trim(W)//" not in base")
+          end if
+        end do DoBlock
+    end select
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) THEN
-    WRITE(fTrc,'(A,/)') "entropy of element at standard conditions:"
-    DO i=1,SIZE(vEle)
-      WRITE(fTrc,"(A3,A1,G12.3)") &
+  if(iDebug>0) then
+    write(fTrc,'(A,/)') "entropy of element at standard conditions:"
+    do i=1,size(vEle)
+      write(fTrc,"(A3,A1,G12.3)") &
       & vEle(I)%NamEl, T_, vEle(I)%S0
-    ENDDO
-  ENDIF
+    end do
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "</ Elements_Read_Entropy"
-ENDSUBROUTINE Element_Read_Entropy
+  if(iDebug>0) write(fTrc,'(/,A,/)') "</ Elements_Read_Entropy"
+end subroutine Element_Read_Entropy
   
-SUBROUTINE Element_Read_Redox(vEle)
+subroutine Element_Read_Redox(vEle)
 !--
 !-- read redox state of (some) elements
 !--
 !-- format of block:
-!--   ELEMENTS.REDOX
+!--   ELEMENTS.REdoX
 !--     FE 2
 !--     ../..
-!--   END
+!--   end
 !--
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_Files,    ONLY: NamFInn
-  USE M_T_Element,ONLY: T_Element,Element_Index
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_Files,    only: NamFInn
+  use M_T_Element,only: T_Element,Element_Index
   !
-  TYPE(T_Element),INTENT(INOUT):: vEle(:)
+  type(T_Element),intent(inout):: vEle(:)
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios,i
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios,i
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "< Elements_Read_Redox"
+  if(iDebug>0) write(fTrc,'(/,A,/)') "< Elements_Read_Redox"
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
   !
-  DoFile: DO 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppENDToEND(L,W,EoL)
-    SELECT CASE(W)
-      CASE("ELEMENTS.REDOX") !!!!!!canevas for READing one "block"
-        DoBlock: DO
+  DoFile: do 
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToend(L,W,EoL)
+    select case(W)
+      case("ELEMENTS.REDOX") !!!!!!canevas for reading one "block"
+        DoBlock: do
           !
-          READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          CALL AppendToEND(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
-          SELECT CASE(W)
-            CASE("END","ENDELEMENTS.REDOX"); EXIT DoFile
-          ENDSELECT
+          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          call AppendToend(L,W,EoL)
+          if(W(1:1)=='!') cycle DoBlock !skip comment lines
+          select case(W)
+            case("END","ENDELEMENTS.REDOX"); exit DoFile
+          end select
           !
-          CALL Str_Append(W,3)
+          call Str_Append(W,3)
           i= Element_Index(W(1:3),vEle)
-          IF(i>0) THEN
-            CALL LinToWrd(L,W,EoL)
-            CALL WrdToInt(W,vEle(i)%Z)
-          ELSE
-            CALL Warning_("Element "//TRIM(W)//" not in base")
-          ENDIF
+          if(i>0) then
+            call LinToWrd(L,W,EoL)
+            call WrdToInt(W,vEle(i)%Z)
+          else
+            call Warning_("Element "//trim(W)//" not in base")
+          end if
           !
-        ENDDO DoBlock
-    ENDSELECT
-  ENDDO DoFile
-  CLOSE(F)
+        end do DoBlock
+    end select
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) THEN
-    WRITE(fTrc,'(A,/)') "oxydation states, default values:"
-    DO i=1,SIZE(vEle)
-      WRITE(fTrc,"(A3,A1,I3)") &
+  if(iDebug>0) then
+    write(fTrc,'(A,/)') "oxydation states, default values:"
+    do i=1,size(vEle)
+      write(fTrc,"(A3,A1,I3)") &
       & vEle(I)%NamEl, T_, vEle(I)%Z
-    ENDDO
-  ENDIF
+    end do
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "</ Elements_Read_Redox"
-ENDSUBROUTINE Element_Read_ReDOx
+  if(iDebug>0) write(fTrc,'(/,A,/)') "</ Elements_Read_Redox"
+end subroutine Element_Read_Redox
   
-SUBROUTINE LnkEle_Build(B,E,L,P)
-  LOGICAL               ::b
-  TYPE(T_Element)     ::E
-  TYPE(T_LnkEle),POINTER::L,P
-  IF(B) NULLIFY(L)
-  IF(B) THEN; ALLOCATE(L);     NULLIFY(L%next);      L%Value=E;       P=>L
-  ELSE;       ALLOCATE(P%next);NULLIFY(P%next%next); P%next%Value=E;  P=>P%next
-  ENDIF
-ENDSUBROUTINE LnkEle_Build
+subroutine LnkEle_Build(B,E,L,P)
+  logical        ::b
+  type(T_Element)::E
+  type(T_LnkEle),pointer::L,P
+  !
+  if(B) then
+    nullify(L)
+    allocate(L)
+    nullify(L%next)
+    L%Value=E
+    P=>L
+  else
+    allocate(P%next)
+    nullify(P%next%next)
+    P%next%Value=E
+    P=>P%next
+  end if
+end subroutine LnkEle_Build
 
-SUBROUTINE Elements_LnkToVec(LnkEle,vEle)
-  USE M_T_Element,ONLY: T_Element
+subroutine Elements_LnkToVec(LnkEle,vEle)
+  use M_T_Element,only: T_Element
   !
-  TYPE(T_LnkEle), POINTER    :: LnkEle
-  TYPE(T_Element),INTENT(OUT):: vEle(:)
+  type(T_LnkEle), pointer    :: LnkEle
+  type(T_Element),intent(out):: vEle(:)
   !
-  TYPE(T_LnkEle),POINTER:: pCur, pPrev
-  INTEGER:: I
+  type(T_LnkEle),pointer:: pCur, pPrev
+  integer:: I
   !
   I=0
   pCur=>LnkEle
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associated(pCur))
     I= I+1
     vEle(I)=pCur%Value
-    pPrev=>pCur; pCur=> pCur%next; DEALLOCATE(pPrev)
-  ENDDO
+    pPrev=>pCur
+    pCur=> pCur%next
+    deallocate(pPrev)
+  end do
   !
-ENDSUBROUTINE Elements_LnkToVec
+end subroutine Elements_LnkToVec
 
-SUBROUTINE Elements_BuildLnk(LnkEle,nEle)
-  USE M_IOTools !,ONLY: LinToWrd
-  USE M_Files,    ONLY: NamFEle
-  USE M_T_Element,ONLY: T_Element
+subroutine Elements_BuildLnk(LnkEle,nEle)
+  use M_IOTools !,only: LinToWrd
+  use M_Files,    only: NamFEle
+  use M_T_Element,only: T_Element
   !
-  TYPE(T_LnkEle),POINTER    :: LnkEle
-  INTEGER,       INTENT(OUT):: nEle
+  type(T_LnkEle),pointer    :: LnkEle
+  integer,       intent(out):: nEle
   !
-  LOGICAL:: L_Aqueous=.TRUE.
+  logical:: L_Aqueous=.true.
   !
-  TYPE(T_Element)   :: Ele
-  CHARACTER(LEN=512):: L,W,sListElem
-  LOGICAL           :: EoL
-  INTEGER           :: f,ios
-  TYPE(T_LnkEle),POINTER::pCur
+  type(T_Element)   :: Ele
+  character(len=512):: L,W,sListElem
+  logical           :: EoL
+  integer           :: f,ios
+  type(T_LnkEle),pointer::pCur
   !
-  IF(iDebug>0) WRITE(fTrc,'(A)') "< Elements_BuildLnk"
+  if(iDebug>0) write(fTrc,'(A)') "< Elements_BuildLnk"
   !
   ! nEle-> total nr in database, not the nCp of the run
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFele))
+  call GetUnit(f)
+  open(f,file=trim(NamFele))
   !
-  !-------------------------------------------------------- build linked list --
-  DoFile: DO 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=="!") CYCLE DoFile !skip comment lines
-    CALL AppENDToEnd(L,W,EoL)
-    SELECT CASE(W)
+  !--------------------------------------------------- build linked list
+  DoFile: do
+    read(F,'(A)',iostat=ios) L  ; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=="!") cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT")  ; exit DoFile
     !
-    CASE("ELEMENTS")
-      nEle=0; sListElem=""
+    case("ELEMENTS")
+      nEle=0
+      sListElem=""
       !
-      IF(L_Aqueous) THEN
+      if(L_Aqueous) then
         Ele%NamEl="O__"  ;  Ele%WeitKg=0.015999D0  ;  Ele%Z=-2  ;  Ele%S0=102.57D0
         nEle=nEle+1
-        CALL LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
-        sListElem=TRIM(sListElem)//TRIM(Ele%NamEl)
+        call LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
+        sListElem=trim(sListElem)//trim(Ele%NamEl)
         !
         Ele%NamEl="H__"  ;  Ele%WeitKg=0.001008D0  ;  Ele%Z=1   ;  Ele%S0=65.34D0
         nEle=nEle+1
-        CALL LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
-        sListElem=TRIM(sListElem)//TRIM(Ele%NamEl)
+        call LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
+        sListElem=trim(sListElem)//trim(Ele%NamEl)
         !
         Ele%NamEl="OX_"  ;  Ele%WeitKg=Zero        ;  Ele%Z=1   ;  Ele%S0=Zero
         nEle=nEle+1
-        CALL LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
-        sListElem=TRIM(sListElem)//TRIM(Ele%NamEl)
+        call LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
+        sListElem=trim(sListElem)//trim(Ele%NamEl)
         !
         !-> sListElem="O__H__OX_"
-        IF(iDebug==5) PRINT '(A)',TRIM(sListElem)
-      ENDIF
+        if(iDebug==5) print '(A)',trim(sListElem)
+      end if
       !
-      LoopReadElem: DO
+      LoopReadElem: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=="!") CYCLE LoopReadElem !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
-        SELECT CASE(W)
-          CASE("ENDINPUT"); EXIT DoFile
-          CASE("END","ENDELEMENTS"); EXIT LoopReadElem
-        END SELECT
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=="!") cycle LoopReadElem !skip comment lines
+        call AppendToEnd(L,W,EoL)
+        select case(W)
+          case("ENDINPUT"); exit DoFile
+          case("END","ENDELEMENTS"); exit LoopReadElem
+        end select
         
-        CALL Str_Append(W,3)
-        IF(INDEX(sListElem,TRIM(W))<1) THEN
+        call Str_Append(W,3)
+        if(index(sListElem,trim(W))<1) then
           !
-          CALL Str_Append(W,3)
-          Ele%NamEl=TRIM(W)
-          IF(iDebug>0) WRITE(fTrc,"(A3)") Ele%NamEl
+          call Str_Append(W,3)
+          Ele%NamEl=trim(W)
+          if(iDebug>0) write(fTrc,"(A3)") Ele%NamEl
           !
-          sListElem=TRIM(sListElem)//TRIM(W)
-          IF(iDebug==5) PRINT '(A)',TRIM(sListElem)
+          sListElem=trim(sListElem)//trim(W)
+          if(iDebug==5) print '(A)',trim(sListElem)
           !
-          CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,Ele%WeitKg)
+          call LinToWrd(L,W,EoL); call WrdToReal(W,Ele%WeitKg)
           !
-          CALL LinToWrd(L,W,EoL); CALL WrdToInt (W,Ele%Z)
-          IF(Ele%Z==0) THEN  ; Ele%ReDOx="VAR"
-          ELSE               ; Ele%ReDOx="FIX"
+          call LinToWrd(L,W,EoL); call WrdToInt (W,Ele%Z)
+          if(Ele%Z==0) then  ; Ele%Redox="VAR"
+          else               ; Ele%Redox="FIX"
           !
-          ENDIF
-          CALL LinToWrd(L,W,EoL)
+          end if
+          call LinToWrd(L,W,EoL)
           !
-          CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,Ele%S0)
+          call LinToWrd(L,W,EoL); call WrdToReal(W,Ele%S0)
           !
           nEle=nEle+1
-          !!IF(nEle <= nElMax) THEN
-          CALL LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
-          !!ELSE
-          !!  CALL Warning_("Too many elements >> element Skipped")
-          !!ENDIF
-        ENDIF
+          !!if(nEle <= nElMax) then
+          call LnkEle_Build(nEle==1,Ele,LnkEle,pCur)
+          !!else
+          !!  call Warning_("Too many elements >> element Skipped")
+          !!end if
+        end if
         !
-      ENDDO LoopReadElem
+      end do LoopReadElem
       
-      IF(iDebug>0) WRITE(fTrc,"(A,I3)") "nEle=",nEle
+      if(iDebug>0) write(fTrc,"(A,I3)") "nEle=",nEle
       
-    !ENDCASE("ELEMENT")
-    END SELECT
-  ENDDO DoFile
-  CLOSE(f)
-  !-------------------------------------------------------/ build linked list --
+    !endcase("ELEMENT")
+    end select
+  end do DoFile
+  close(f)
+  !--------------------------------------------------/ build linked list
   !
-  IF(nEle==0) CALL Stop_("Found NO Elements ... (missing path ??)")
+  if(nEle==0) call Stop_("Found NO Elements ... (missing path ??)")
   !
-  IF(iDebug>0) WRITE(fTrc,'(A)') "</ Elements_BuildLnk"
-ENDSUBROUTINE Elements_BuildLnk
+  if(iDebug>0) write(fTrc,'(A)') "</ Elements_BuildLnk"
+end subroutine Elements_BuildLnk
 
-ENDMODULE M_Element_Read
+end module M_Element_Read

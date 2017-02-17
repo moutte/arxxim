@@ -1,236 +1,236 @@
-MODULE M_Equil_Jacobian
-  USE M_Trace,        ONLY: iDebug,fTrc,T_,Stop_,Pause_
-  USE M_Numeric_Const,ONLY: MinExpDP,MaxExpDP
-  USE M_Kinds
-  IMPLICIT NONE
+module M_Equil_Jacobian
+  use M_Trace,        only: iDebug,fTrc,T_,Stop_,Pause_
+  use M_Numeric_Const,only: MinExpDP,MaxExpDP
+  use M_Kinds
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Equil_Jacobian
+  public:: Equil_Jacobian
   !
-CONTAINS
+contains
 
-SUBROUTINE Equil_Jacobian(vX,tJac)
+subroutine Equil_Jacobian(vX,tJac)
 !--
 !-- EquJacobian of the system EquResidual; used by Newton
 !-- NB: in vX and in tJac, solvent has index 1 !!!!
 !--
-  USE M_Safe_Functions
+  use M_Safe_Functions
   !
-  USE M_Basis_Vars,ONLY: isW,MWsv
-  USE M_Basis_Vars,ONLY: tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas
-  USE M_Basis_Vars,ONLY: vOrdPr,vOrdAq,nAx,nAs,nCi
+  use M_Basis_Vars,only: isW,MWsv
+  use M_Basis_Vars,only: tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas
+  use M_Basis_Vars,only: vOrdPr,vOrdAq,nAx,nAs,nCi
   !
-  USE M_Equil_Vars,ONLY: vMolal,vLnAct,vLnGam,vMolSec
-  !~ USE M_Equil_Vars,ONLY: vFasYes
-  USE M_Equil_Vars,ONLY: cEquMode
-  USE M_Equil_Vars,ONLY: vAffScale,vFasAff,dXi
-  !~ USE M_Equil_Vars,ONLY: OsmoSv,UseOsmoSv
-  USE M_Equil_Vars,ONLY: DebNewt,DebJacob
-  USE M_Equil_Vars,ONLY: LogForAqu,DirectSub
-  USE M_Equil_Vars,ONLY: tAlfEq,tNuEq,nEquFas
+  use M_Equil_Vars,only: vMolal,vLnAct,vLnGam,vMolSec
+  !~ use M_Equil_Vars,only: vFasYes
+  use M_Equil_Vars,only: cEquMode
+  use M_Equil_Vars,only: vAffScale,vFasAff,dXi
+  !~ use M_Equil_Vars,only: OsmoSv,UseOsmoSv
+  use M_Equil_Vars,only: DebNewt,DebJacob
+  use M_Equil_Vars,only: LogForAqu,DirectSub
+  use M_Equil_Vars,only: tAlfEq,tNuEq,nEquFas
   !
-  REAL(dp),DIMENSION(:),                INTENT(IN) :: vX
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)),INTENT(OUT):: tJac
+  real(dp),dimension(:),                intent(in) :: vX
+  real(dp),dimension(size(vX),size(vX)),intent(out):: tJac
   !
-  REAL(dp),DIMENSION(1:nCi):: dRatdX
-  INTEGER :: iCi,jCi,iAs,iAx,I
-  REAL(dp):: X
-  REAL(dp):: AffScale
-  ! REAL(dp):: SumXi !sum of solute mole nrs, used when working with osmo'coeff
-  REAL(dp),ALLOCATABLE:: vLnXf(:),vXf(:)
-  REAL(dp),ALLOCATABLE:: vSumNuAs(:)
+  real(dp),dimension(1:nCi):: dRatdX
+  integer :: iCi,jCi,iAs,iAx,I
+  real(dp):: X
+  real(dp):: AffScale
+  ! real(dp):: SumXi !sum of solute mole nrs, used when working with osmo'coeff
+  real(dp),allocatable:: vLnXf(:),vXf(:)
+  real(dp),allocatable:: vSumNuAs(:)
   !
-  INTEGER:: nF !nr of aqu'species in array vX of residual
-  INTEGER:: nM !nr of non-aqu'species in array vX of residual
+  integer:: nF !nr of aqu'species in array vX of residual
+  integer:: nM !nr of non-aqu'species in array vX of residual
   !
   tJac=  Zero
   !
-  !IF(DirectSub) CALL Stop_("No Analytic Jacobian ...")
+  !if(DirectSub) call Stop_("No Analytic Jacobian ...")
   !
-  IF(DirectSub) THEN  ;   nF= nCi
-  ELSE                ;   nF= nCi +nAs
-  ENDIF
+  if(DirectSub) then  ;   nF= nCi
+  else                ;   nF= nCi +nAs
+  end if
   !
   nM= nEquFas
   !
-  ALLOCATE(vXf(nF))  ;  vXf= Zero
+  allocate(vXf(nF))  ;  vXf= Zero
   !
-  ALLOCATE(vLnXf(nF))
-  IF(LogForAqu) THEN
+  allocate(vLnXf(nF))
+  if(LogForAqu) then
     vLnXf(1:nF)= vX(1:nF)
     vXf(:)= FSafe_vExp(vLnXf(:)) ! avoid overflow with EXP
-  ELSE
+  else
     vXf(1:nF)= vX(1:nF)
     vLnXf(1:nF)= FSafe_vLog(vX(1:nF))
-  ENDIF
+  end if
   !
-  ALLOCATE(vSumNuAs(nAs))
-  DO iAs=1,nAs
+  allocate(vSumNuAs(nAs))
+  do iAs=1,nAs
     X= Zero
-    DO I=1,nCi
-      IF(I/=isW) X= X+tNuAs(iAs,I)
-    ENDDO
+    do I=1,nCi
+      if(I/=isW) X= X+tNuAs(iAs,I)
+    end do
     vSumNuAs(iAs)= X
-  ENDDO
+  end do
   !
-  !DO I=1,nAx
-  !  vMolal(vOrdPr(nCi+I))= EXP(vLnAct(vOrdPr(nCi+I))-vLnGam(vOrdPr(nCi+I)))
-  !ENDDO
-  !IF(nAx>0) vMolal(vOrdPr(nCi+1:nCi+nAx))= &
-  !& EXP(vLnAct(vOrdPr(nCi+1:nCi+nAx))-vLnGam(vOrdPr(nCi+1:nCi+nAx))) !-> i.e. molality
+  !do I=1,nAx
+  !  vMolal(vOrdPr(nCi+I))= exp(vLnAct(vOrdPr(nCi+I))-vLnGam(vOrdPr(nCi+I)))
+  !end do
+  !if(nAx>0) vMolal(vOrdPr(nCi+1:nCi+nAx))= &
+  !& exp(vLnAct(vOrdPr(nCi+1:nCi+nAx))-vLnGam(vOrdPr(nCi+1:nCi+nAx))) !-> i.e. molality
   !
-  IF(LogForAqu) THEN
+  if(LogForAqu) then
     !------------------------------------------ material conservation --
     !--------------------------- rows 1:nCi - "internal" prim'species --
-    DO iCi=1,nCi
+    do iCi=1,nCi
       !--- solvent
       tJac(iCi,1)= tAlfPr(iCi,1)*vXf(1)
       !-------- prim'mobile'aqu'species -> add corresponding moles of Solvent --
-      !~ IF(nAx>0) &
+      !~ if(nAx>0) &
       !~ & tJac(iCi,1)= tJac(iCi,1) &
       !~ & + vXf(isW) *MWSv &
-      !~ &   *DOT_PRODUCT(tAlfPr(iCi,nCi+1:nCi+nAx),vMolal(vOrdPr(nCi+1:nCi+nAx)))
-      DO iAx=1,nAx
+      !~ &   *dot_product(tAlfPr(iCi,nCi+1:nCi+nAx),vMolal(vOrdPr(nCi+1:nCi+nAx)))
+      do iAx=1,nAx
         tJac(iCi,1)= tJac(iCi,1) &
         &          + vXf(isW) *MWSv *tAlfPr(iCi,nCi+iAx) *vMolal(vOrdPr(nCi+iAx))
-      ENDDO
+      end do
       !--- prim'intern'species
-      DO jCi=2,nCi
+      do jCi=2,nCi
         tJac(iCi,jCi)= tAlfPr(iCi,jCi)*vXf(jCi)
-      ENDDO
+      end do
       !
       !--- second'species
-      IF(DirectSub) THEN
-        DO iAs=1,nAs
+      if(DirectSub) then
+        do iAs=1,nAs
           tJac(iCi,1)= tJac(iCi,1) &
           &          + vMolSec(iAs) *tAlfAs(iCi,iAs) *(One - vSumNuAs(iAs))
-        ENDDO
-        DO jCi=2,nCi
-          DO iAs=1,nAs
+        end do
+        do jCi=2,nCi
+          do iAs=1,nAs
             tJac(iCi,jCi)= tJac(iCi,jCi) &
             &            + vMolSec(iAs) *tAlfAs(iCi,iAs) *tNuAs(iAs,jCi)
-          ENDDO
-        ENDDO
-      ELSE
-        DO iAs=1,nAs
+          end do
+        end do
+      else
+        do iAs=1,nAs
           tJac(iCi,nCi+iAs)= vXf(nCi+iAs) *tAlfAs(iCi,iAs)
-        ENDDO
-      ENDIF
+        end do
+      end if
       !
-    ENDDO
+    end do
     !---/"internal" prim'species --
     !
-    !~ IF(bMolal) THEN
+    !~ if(bMolal) then
       !~ tJac(isW,:)= Zero
       !~ tJac(isW,1)= vXf(isW)
-    !~ ENDIF
+    !~ end if
     !
-    IF(DirectSub) THEN
+    if(DirectSub) then
       !
-    ELSE
+    else
       !--- rows nCi+1:nAq- sec'species --
-      DO iAs=1,nAs
+      do iAs=1,nAs
         tJac(nCi+iAs,1)= One-SUM(tNuAs(iAs,2:nCi)) !for Solvent
         tJac(nCi+iAs,2:nCi)=     tNuAs(iAs,2:nCi)  !for other aqu.species
-      ENDDO
-      DO iAs=1,nAs
+      end do
+      do iAs=1,nAs
         tJac(nCi+iAs,nCi+iAs)= -One
-      ENDDO
+      end do
       !---/
-    ENDIF
+    end if
     !
-    !~ IF(UseOsmoSv) THEN
+    !~ if(UseOsmoSv) then
       !~ !
       !~ SumXi= SUM(vXf(1:nAs))-vXf(isW)
       !~ !
-      !~ DO iAs=1,nAs !add terms for osmotic coeff'
+      !~ do iAs=1,nAs !add terms for osmotic coeff'
         !~ tJac(nCi+iAs,1  )= tJac(nCi+iAs,1) &
         !~ &                + tNuAs(iAs,isW) *OsmoSv *SumXi /vXf(isW) != d/dXw(LnActW)
-        !~ DO I=2,nAs !for other aqu.species
+        !~ do I=2,nAs !for other aqu.species
           !~ tJac(nCi+iAs,I)= tJac(nCi+iAs,I) &
           !~ &              - tNuAs(iAs,isW) *OsmoSv *vXf(I)/vXf(isW) != d/dXi(LnActW)
-        !~ ENDDO
-      !~ ENDDO
+        !~ end do
+      !~ end do
       !~ !
-    !~ ENDIF
+    !~ end if
 
-  ELSE
+  else
     !-------------------------------------------------- NOT LogForAqu --
-    !~ IF(DirectSub) CALL Stop_("No Analytic Jacobian ...")
+    !~ if(DirectSub) call Stop_("No Analytic Jacobian ...")
     !
     !------------------------------------------ material conservation --
-    DO iCi=1,nCi
+    do iCi=1,nCi
       !
       !--- solvent --
       tJac(iCi,1)= tAlfPr(iCi,1)
-      DO iAx=1,nAx
+      do iAx=1,nAx
         tJac(iCi,1)= tJac(iCi,1) &
         &          + tAlfPr(iCi,nCi+iAx)*vMolal(vOrdPr(nCi+iAx))*MWsv
-      ENDDO
+      end do
       !---/
       !--- prim'intern'species
       tJac(iCi,2:nCi)= tAlfPr(iCi,2:nCi)
       !
-      IF(DirectSub) THEN
+      if(DirectSub) then
         !--- solvent --
-        DO iAs=1,nAs
-          IF(tNuAs(iAs,iCi)/= 0.0D0) THEN
+        do iAs=1,nAs
+          if(tNuAs(iAs,iCi)/= 0.0D0) then
             ! RESIDUAL ! X= X + tAlfAs(iCi,iAs) *vMolal(iAs)*(vX(isW)*MWSv)
             tJac(iCi,1)= tJac(iCi,1) &
             &          + tAlfAs(iCi,iAs) *vMolal(iAs)*MWSv
-          ENDIF
-        END DO
-      ELSE
+          end if
+        end do
+      else
         !--- second'species
         tJac(iCi,nCi+1:nCi+nAs)= tAlfAs(iCi,1:nAs)
-      ENDIF
+      end if
       !
-    END DO
+    end do
     !-----------------------------------------/ material conservation --
     !
-    IF(.NOT. DirectSub) THEN
+    if(.not. DirectSub) then
       !-------------------------------------- sec'species equilibrium --
       !------------------------ deriv' second'species vs prim'species --
-      DO iAs=1,nAs
+      do iAs=1,nAs
         !~ tJac(nCi+iAs,1)= vMolal(iAs)*(vX(isW)*MWSv) *(One -vSumNuAs(iAs)) /vX(isW)
         tJac(nCi+iAs,1)= vMolSec(iAs) *(One -vSumNuAs(iAs)) /vX(isW)
-        DO iCi=1,nCi
-          IF(iCi/=isW .AND. tNuAs(iAs,iCi)/= 0.0D0) &
+        do iCi=1,nCi
+          if(iCi/=isW .and. tNuAs(iAs,iCi)/= 0.0D0) &
           !~ & tJac(nCi+iAs,iCi)= vMolal(iAs)*(vX(isW)*MWSv) *tNuAs(iAs,iCi) /vX(iCi)
           & tJac(nCi+iAs,iCi)= vMolSec(iAs) *tNuAs(iAs,iCi) /vX(iCi)
-        END DO
-      END DO
+        end do
+      end do
       !---------------------- deriv' second'species vs second'species --
-      DO iAs=1,nAs
+      do iAs=1,nAs
         tJac(nCi+iAs,nCi+iAs)= -One
-      ENDDO
+      end do
       !-------------------------------------/ sec'species equilibrium --
-    ENDIF
+    end if
     !
     !-------------------------------------------------/ NOT LogForAqu --
-  ENDIF
+  end if
   !
-  IF(nEquFas>0) THEN
+  if(nEquFas>0) then
 
-    SELECT CASE(cEquMode)
+    select case(cEquMode)
 
-    CASE("EQ2")
-      DO I=1,nEquFas
-        DO iCi=1,nCi
+    case("EQ2")
+      do I=1,nEquFas
+        do iCi=1,nCi
           tJac(iCi,nF+I)= tAlfEq(iCi,I)
-        ENDDO
-        IF(LogForAqu) THEN
+        end do
+        if(LogForAqu) then
           tJac(nF+I,isW)=   SUM(tNuEq(I,2:nCi))
           tJac(nF+I,2:nCi)= - tNuEq(I,2:nCi)
-        ELSE
+        else
           tJac(nF+I,isW)=   SUM(tNuEq(I,2:nCi)) / vX(isW)
           tJac(nF+I,2:nCi)= - tNuEq(I,2:nCi) / vX(2:nCi)
-        ENDIF
-      ENDDO
+        end if
+      end do
 
-    CASE("EQ1")
-      DO I=1,nEquFas
+    case("EQ1")
+      do I=1,nEquFas
         AffScale= SUM(ABS(tNuEq(I,:)))
         dRatdX(isW)= - SUM(tNuEq(I,2:nCi)) &
         &            *FSafe_Exp(- vFasAff(I)/AffScale) &
@@ -238,68 +238,68 @@ SUBROUTINE Equil_Jacobian(vX,tJac)
         dRatdX(2:nCi)= tNuEq(I,2:nCi) &
         &            *FSafe_Exp(- vFasAff(I)/AffScale) &
         &            /AffScale
-        DO iCi=1,nCi
+        do iCi=1,nCi
           tJac(iCi,1:nCi)= tJac(iCi,1:nCi) &
           &              + tAlfEq(iCi,I) *dXI *dRatdX(1:nCi)
-        ENDDO
+        end do
         !
         tJac(nF+I,1:nCi)= - dXi *dRatdX(1:nCi)
         tJac(nF+I,nF+I)=    One
-      ENDDO
+      end do
 
-    ENDSELECT
+    end select
 
-  ENDIF
+  end if
   !
-  IF(DebNewt .AND. DebJacob) THEN
-    CALL ShoJacob(nCi,nF,nAs,tJac)
-    DebJacob=.FALSE.
-  ENDIF
+  if(DebNewt .and. DebJacob) then
+    call ShoJacob(nCi,nF,nAs,tJac)
+    DebJacob=.false.
+  end if
   !
-  DEALLOCATE(vSumNuAs)
-  DEALLOCATE(vXf)
-  DEALLOCATE(vLnXf)
+  deallocate(vSumNuAs)
+  deallocate(vXf)
+  deallocate(vLnXf)
   !
-ENDSUBROUTINE Equil_Jacobian
+end subroutine Equil_Jacobian
 
-SUBROUTINE ShoJacob(nCi,nF,nAs,tJac)
-  USE M_IoTools,ONLY: GetUnit
-  USE M_Files,  ONLY: DirLog
-  USE M_Global_Vars, ONLY: vSpc
+subroutine ShoJacob(nCi,nF,nAs,tJac)
+  use M_IoTools,only: GetUnit
+  use M_Files,  only: DirLog
+  use M_Global_Vars, only: vSpc
   !
-  INTEGER, INTENT(IN):: nCi,nAs,nF
-  REAL(dp),INTENT(IN):: tJac(:,:)
+  integer, intent(in):: nCi,nAs,nF
+  real(dp),intent(in):: tJac(:,:)
   !
-  INTEGER::I,J,f
+  integer::I,J,f
   !
-  WRITE(fTrc,'(/,A)') "< ShoJacob"
-  WRITE(fTrc,'(A)') "Isaac Newton_&_Carl_Gustav_Jacob_Jacobi -> FILE=JACOB.LOG"
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(DirLog)//"debug_jacob.log")
-  DO I=1,nCi; WRITE(f,'(A7,A1)',ADVANCE='NO') vSpc(I)%NamSp,    T_; ENDDO
-  DO I=1,nAs; WRITE(f,'(A7,A1)',ADVANCE='NO') vSpc(nCi+I)%NamSp,T_; ENDDO
-  WRITE(f,*)
-  DO I=1,nF
-    DO J=1,nF
-      IF(tJac(I,J)/=Zero) THEN; WRITE(f,'(E8.1,A1)',ADVANCE='NO') tJac(I,J), T_
-      ELSE;                     WRITE(f,'(A1,A1)',  ADVANCE='NO') ".",       T_
-      ENDIF
-    ENDDO
-    WRITE(f,'(I3)') I
-  ENDDO
-  WRITE(f,'(A7)') "_______"
-  DO I=1,nF
-    DO J=1,nF
-      IF(tJac(I,J)/=Zero) THEN; WRITE(f,'(G15.4,A1)',ADVANCE='NO') tJac(I,J), T_
-      ELSE                    ; WRITE(f,'(A1,A1)',   ADVANCE='NO') "0",       T_
-      ENDIF
-    ENDDO
-    WRITE(f,'(I3)') I
-  ENDDO
-  CLOSE(f)
-  WRITE(fTrc,'(A,/)') "</ ShoJacob"
-ENDSUBROUTINE ShoJacob
+  write(fTrc,'(/,A)') "< ShoJacob"
+  write(fTrc,'(A)') "Isaac Newton_&_Carl_Gustav_Jacob_Jacobi -> file=JACOB.LOG"
+  call GetUnit(f)
+  open(f,file=trim(DirLog)//"debug_jacob.log")
+  do I=1,nCi; write(f,'(A7,A1)',advance="no") vSpc(I)%NamSp,    T_; end do
+  do I=1,nAs; write(f,'(A7,A1)',advance="no") vSpc(nCi+I)%NamSp,T_; end do
+  write(f,*)
+  do I=1,nF
+    do J=1,nF
+      if(tJac(I,J)/=Zero) then; write(f,'(E8.1,A1)',advance="no") tJac(I,J), T_
+      else;                     write(f,'(A1,A1)',  advance="no") ".",       T_
+      end if
+    end do
+    write(f,'(I3)') I
+  end do
+  write(f,'(A7)') "_______"
+  do I=1,nF
+    do J=1,nF
+      if(tJac(I,J)/=Zero) then; write(f,'(G15.4,A1)',advance="no") tJac(I,J), T_
+      else                    ; write(f,'(A1,A1)',   advance="no") "0",       T_
+      end if
+    end do
+    write(f,'(I3)') I
+  end do
+  close(f)
+  write(fTrc,'(A,/)') "</ ShoJacob"
+end subroutine ShoJacob
 
-ENDMODULE M_Equil_Jacobian
+end module M_Equil_Jacobian
 
 

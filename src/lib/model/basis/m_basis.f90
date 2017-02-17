@@ -1,117 +1,117 @@
-MODULE M_Basis
+module M_Basis
 !--
 !-- basic tools used by higher level modules:
 !-- build vFas, vMixModel, ...
 !-- operations on basis
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc,T_,Stop_,iDebug
+  use M_Kinds
+  use M_Trace,only: fTrc,T_,Stop_,iDebug
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Basis_Build
-  PUBLIC:: Basis_Change
-  PUBLIC:: Basis_Change_Wrk
-  PUBLIC:: Basis_InitBalance
-  PUBLIC:: Basis_CpnInert
+  public:: Basis_Build
+  public:: Basis_Change
+  public:: Basis_Change_Wrk
+  public:: Basis_InitBalance
+  public:: Basis_CpnInert
   !
-CONTAINS
+contains
 
-SUBROUTINE Basis_Build(LBuffer,vCpn)
-  USE M_T_Component,ONLY: T_Component
-  USE M_Basis_Tools
-
-  USE M_Global_Vars,ONLY: vEle,vSpc,vFas,vMixFas,vMixModel
-  USE M_Global_Vars,ONLY: tFormula
-  USE M_Global_Vars,ONLY: nAq,nMn,nGs
-  USE M_System_Vars,ONLY: BufferIsExtern,CpnIsSpc
-
-  USE M_Basis_Vars,ONLY: isW,iO_,iH_,iOx,isH_,isOH,isO2,MWsv,iBal
-  USE M_Basis_Vars,ONLY: tStoikio
-  USE M_Basis_Vars,ONLY: vLCi,vLAx,vLMx,vLAs,vLMs
-  USE M_Basis_Vars,ONLY: nCi, nAx, nMx, nAs, nMs
-  USE M_Basis_Vars,ONLY: vOrdPr,vOrdAq,vOrdAs,vOrdMs
-  USE M_Basis_Vars,ONLY: vPrmFw,vPrmBk
-  USE M_Basis_Vars,ONLY: tAlfSp,tAlfPr,tAlfAs,tAlfMs
-  USE M_Basis_Vars,ONLY: tNuSp,tNuAs,tNuMs
-  USE M_Basis_Vars,ONLY: tNuFas,tAlfFs
+subroutine Basis_Build(LBuffer,vCpn)
+  use M_T_Component,only: T_Component
+  use M_Basis_Tools
   !
-  LOGICAL,          INTENT(IN)   :: LBuffer
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  use M_Global_Vars,only: vEle,vSpc,vFas,vMixFas,vMixModel
+  use M_Global_Vars,only: tFormula
+  use M_Global_Vars,only: nAq,nMn,nGs
+  use M_System_Vars,only: BufferIsExtern
   !
-  INTEGER:: nSp,nCp,nFs,I
+  use M_Basis_Vars,only: iO_,iH_,iOx,iBal
+  use M_Basis_Vars,only: tStoikio
+  use M_Basis_Vars,only: vLCi,vLAx,vLMx,vLAs,vLMs
+  use M_Basis_Vars,only: nCi, nAx, nMx, nAs, nMs
+  use M_Basis_Vars,only: vOrdPr,vOrdAq,vOrdAs,vOrdMs
+  use M_Basis_Vars,only: vPrmFw,vPrmBk
+  use M_Basis_Vars,only: tAlfSp,tAlfPr,tAlfAs,tAlfMs
+  use M_Basis_Vars,only: tNuSp,tNuAs,tNuMs
+  use M_Basis_Vars,only: tNuFas,tAlfFs
+  !---------------------------------------------------------------------
+  logical,          intent(in)   :: LBuffer
+  type(T_Component),intent(inout):: vCpn(:)
+  !---------------------------------------------------------------------
+  integer:: nSp,nCp,nFs,I
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Basis_Build"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Basis_Build"
   !
-  nSp= SIZE(vSpc)
-  nCp= SIZE(vEle)
-  nFs= SIZE(vFas)
+  nSp= size(vSpc)
+  nCp= size(vEle)
+  nFs= size(vFas)
   !
-  CALL Basis_Dimensions(   & !
+  call Basis_Dimensions(   & !
   & BufferIsExtern,        & !IN
   & vCpn,vSpc,nAq,nMn,nGs, & !IN
   & nCi,nMx,nAx,nMs,nAs)     !OUT, may change when components'status change
   !
-  CALL Basis_Alloc(nSp,nCp,nFs,nAq,nAs,nMs)
+  call Basis_Alloc(nSp,nCp,nFs,nAq,nAs,nMs)
   !
   !---------------------------------------- build logical tables vLxx --
-  CALL Basis_SpcTypes_Build( &
+  call Basis_SpcTypes_Build( &
   & vSpc,vCpn, &                 !IN
   & vLCi,vLAx,vLMx,vLAs,vLMs)    !OUT
   !
   !----------------------------------- order components, inert/mobile --
-  CALL Basis_Cpn_Order( &
-  & vSpc,COUNT(vLCi),COUNT(vLAx), & !IN
+  call Basis_Cpn_Order( &
+  & vSpc,count(vLCi),count(vLAx), & !IN
   & vCpn) !INOUT
   !
   !----------------------------- indexes of elements O, H, Ox in vCpn --
   !--- (may change in basis change, because element'order may change) --
-  CALL Basis_Calc_iO_iH_iOx( &
+  call Basis_Calc_iO_iH_iOx( &
   & vEle,vCpn, &
   & iO_,iH_,iOx)
   !
   !--------- component status and order may have changed -> find iBal --
-  IF(ALL(vCpn(:)%Statut=="INERT")) THEN
+  if(all(vCpn(:)%Statut=="INERT")) then
     iBal=0 !-> no balance element -> mass balance on H
-  ELSE
-    CALL Basis_FindIBal(vCpn,vSpc,iH_,iBal)
-    IF(iBal==0) iBal= iH_
+  else
+    call Basis_FindIBal(vCpn,vSpc,iH_,iBal)
+    if(iBal==0) iBal= iH_
     ! when iBal=iH_, mass balance on H is "replaced" by charge balance
-  ENDIF
+  end if
   !
   !------------ component order may have changed -> new stoikio table --
   tStoikio(1:nCp,1:nSp)= tFormula(vCpn(1:nCp)%iEle,1:nSp) !-> line permutation
   !
-  !~ !--- NEW2010-10-29
-  !~ IF(CpnIsSpc) THEN
-    !~ DO i=1,nCp
-      !~ !vCpn(i)%iEle= I
-      !~ vCpn(i)%vStoikCp(0:nCp+1)= vSpc(vCpn(i)%iSpc)%vStoikio(0:nCp+1)
-    !~ ENDDO
-  !~ ELSE
-    !~ DO i=1,nCp
-      !~ vCpn(i)%iEle= I
-      !~ vCpn(i)%vStoikCp(0)= 1 !formula divider !!
-      !~ vCpn(i)%vStoikCp(:)= 0
-      !~ vCpn(i)%vStoikCp(i)= 1
-    !~ ENDDO
-  !~ ENDIF
-  !~ !---/ NEW2010-10-29
+  ! !--- NEW2010-10-29
+  ! if(CpnIsSpc) then
+  !   do i=1,nCp
+  !     !vCpn(i)%iEle= I
+  !     vCpn(i)%vStoikCp(0:nCp+1)= vSpc(vCpn(i)%iSpc)%vStoikio(0:nCp+1)
+  !   end do
+  ! else
+  !   do i=1,nCp
+  !     vCpn(i)%iEle= I
+  !     vCpn(i)%vStoikCp(0)= 1 !formula divider !!
+  !     vCpn(i)%vStoikCp(:)= 0
+  !     vCpn(i)%vStoikCp(i)= 1
+  !   end do
+  ! end if
+  ! !---/ NEW2010-10-29
   !
   !---------------------------------------------- build vOrdXx,vPrmXx --
-  CALL Basis_SpcOrdPrm_Build(    & !
+  call Basis_SpcOrdPrm_Build(    & !
   & vSpc,vCpn,                   & !IN
   & vLCi,vLAx,vLMx,vLAs,vLMs,    & !IN
   & vOrdPr,vOrdAq,vOrdAs,vOrdMs, & !OUT
   & vPrmFw,vPrmBk)                 !OUT
   !
-  IF(iDebug>1) &
-  & CALL Basis_StoikTable_Sho(vEle,vCpn,vSpc,tStoikio,vLCi,vLAx,vLMx,vLAs,vLMs)
+  if(iDebug>1) &
+  & call Basis_StoikTable_Sho(vEle,vCpn,vSpc,tStoikio,vLCi,vLAx,vLMx,vLAs,vLMs)
   !
   !----------------------------------------------- build tAlfXx,tNuXx --
-  CALL Basis_AlfaNu_Build( &
+  call Basis_AlfaNu_Build( &
   & vEle,vCpn,vSpc,tStoikio,     & !IN
   & vFas,vMixFas,vMixModel,      & !
   & vLCi,vLAx,vLMx,vLAs,vLMs,    & !
@@ -123,99 +123,98 @@ SUBROUTINE Basis_Build(LBuffer,vCpn)
   & tNuFas,tAlfFs)                 !
   !
   !---------------------------------- modify stoichio tables for iBal --
-  IF(iBal/=0) CALL Basis_InitBalance( & !
+  if(iBal/=0) call Basis_InitBalance( & !
   & iBal,                 & !IN
   & vOrdPr,vOrdAs,vOrdMs, & !IN
   & tAlfSp,tAlfPr,tAlfAs,tAlfMs, & !INOUT
   & tAlfFs)                 !INOUT
   !
-  DO I=1,nCp
-    IF(vCpn(I)%Statut/="INERT") vCpn(iBal)%Mole= Zero
-  ENDDO
+  do I=1,nCp
+    if(vCpn(I)%Statut/="INERT") vCpn(iBal)%Mole= Zero
+  end do
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Basis_Build"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Basis_Build"
   !
-ENDSUBROUTINE Basis_Build
+end subroutine Basis_Build
 
-SUBROUTINE Basis_Change( & !
+subroutine Basis_Change( & !
 & Cod,                   & !
 !! & tStoikio,           & !
 !! & isW,isH_,isOH,isO2, & !
 !! & MWsv,               & !
 & vCpn)
   
-  USE M_T_Component,ONLY: T_Component
-  USE M_Dtb_Const,  ONLY: T_CK
-  USE M_Basis_Tools
+  use M_T_Component,only: T_Component
+  use M_Dtb_Const,  only: T_CK
+  use M_Basis_Tools
   !
-  USE M_Global_Vars,ONLY: vSpc,nAq,vMixFas,vEle !,vSpcAq
-  USE M_Basis_Vars, ONLY: isW,isH_,isOH,isO2,tStoikio,MWsv
+  use M_Global_Vars,only: vSpc,nAq,vMixFas
+  use M_Basis_Vars, only: isW,isH_,isOH,isO2,tStoikio,MWsv
   !
-  CHARACTER(LEN=3), INTENT(IN)   :: Cod
-  !! REAL(dp),         INTENT(IN)   :: tStoikio(:,:)
-  !! INTEGER,          INTENT(OUT)  :: isW,isH_,isOH,isO2
-  !! REAL(dp),         INTENT(OUT)  :: MWsv
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  character(len=3), intent(in)   :: Cod
+  !! real(dp),         intent(in)   :: tStoikio(:,:)
+  !! integer,          intent(out)  :: isW,isH_,isOH,isO2
+  !! real(dp),         intent(out)  :: MWsv
+  type(T_Component),intent(inout):: vCpn(:)
   !
-  INTEGER:: nCp,I
-  LOGICAL:: LBuffer
-  INTEGER,ALLOCATABLE:: vIndex(:)
+  integer:: nCp,I
+  logical:: LBuffer
+  integer,allocatable:: vIndex(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Basis_Change"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Basis_Change"
   !
-  CALL Basis_IndexInit(isW,isH_,isOH,isO2,MWsv)
+  call Basis_IndexInit(isW,isH_,isOH,isO2,MWsv)
   !
-  LBuffer= (Cod(1:3)=="DYN") !! .TRUE. !! !.OR. (Cod(1:2)=="EQ")
+  LBuffer= (Cod(1:3)=="DYN") !! .true. !! !.or. (Cod(1:2)=="EQ")
   !
-  nCp= SIZE(vCpn)
+  nCp= size(vCpn)
   !
-  IF(SIZE(vMixFas)>0) &
-  & CALL Basis_MixPhase_CpnUpdate( &
+  if(size(vMixFas)>0) &
+  & call Basis_MixPhase_CpnUpdate( &
   & vMixFas,   & !in
   & vSpc,vCpn)   !inout
   !
-  SELECT CASE(TRIM(Cod))
+  select case(trim(Cod))
   !
-  CASE("DYN","EQU")
+  case("DYN","EQU")
     !
-    WHERE(vCpn(:)%Statut/="BUFFER") vCpn(:)%Statut="INERT"
+    where(vCpn(:)%Statut/="BUFFER") vCpn(:)%Statut="INERT"
     !
-    !~ print *,"SUM(tStoikio(I,:) *vSpc(:)%Dat%Mole)"
-    !~ DO I=1,nCp
-      !~ vCpn(I)%Mole= SUM(tStoikio(I,:) *vSpc(:)%Dat%Mole)
-      !~ print '(I3,G15.6,A)',I,vCpn(I)%Mole,TRIM(vEle(vCpn(I)%iEle)%NamEl)
-    !~ ENDDO
+    ! print *,"SUM(tStoikio(I,:) *vSpc(:)%Dat%Mole)"
+    ! do I=1,nCp
+    !   vCpn(I)%Mole= SUM(tStoikio(I,:) *vSpc(:)%Dat%Mole)
+    !   print '(I3,G15.6,A)',I,vCpn(I)%Mole,trim(vEle(vCpn(I)%iEle)%NamEl)
+    ! end do
     !
-    ! compute element mole numbers refer to abundances in fluid ONLY
+    ! compute element mole numbers refer to abundances in fluid only
     ! (-> normal case when coming from a speciation calc')
     !print *,"SUM(tStoikio(I,:) *vSpc(:)%Dat%Mole)"
-    DO I=1,SIZE(vCpn)
+    do I=1,size(vCpn)
       vCpn(I)%Mole= &
       & SUM(tStoikio(I,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> abundance in fluid
-      !print '(I3,G15.6,A)',I,vCpn(I)%Mole,TRIM(vEle(vCpn(I)%iEle)%NamEl)
-      !~ & + SUM(tAlfFs(I,1:nFs) *vFas(1:nFs)%Mole)
-      !~ WRITE(FF,'(A,A1,G15.6)') vEle(vCpn(I)%iEle)%NamEl,T_,X
-    ENDDO
-    !~ call pause_
+      !print '(I3,G15.6,A)',I,vCpn(I)%Mole,trim(vEle(vCpn(I)%iEle)%NamEl)
+      ! & + SUM(tAlfFs(I,1:nFs) *vFas(1:nFs)%Mole)
+      ! write(FF,'(A,A1,G15.6)') vEle(vCpn(I)%iEle)%NamEl,T_,X
+    end do
+    ! call pause_
     !
     vCpn(1:nCp)%LnAct= vSpc(vCpn(1:nCp)%iSpc)%Dat%LAct
     !
     !-------------------- assign prim'species to each inert component --
-    ALLOCATE(vIndex(nCp))
+    allocate(vIndex(nCp))
     !
-    CALL Basis_Cpn_ISpc_Select( & !
-    ! CALL Basis_Species_Select( & !
+    call Basis_Cpn_ISpc_Select( & !
     & vSpc,isW,vCpn, & !in
     & vIndex) !inout, only values of vCpn(:)%iSpc are possibly changed
     !
     vCpn(:)%iSpc= vIndex(:)
-    DEALLOCATE(vIndex)
+    deallocate(vIndex)
     !-------------------/ assign prim'species to each inert component --
     !
-    !! IF(iOx/=0) CALL Basis_RedoxAssign(vCpn,vEle,vSpc)
-  END SELECT
+    !! if(iOx/=0) call Basis_RedoxAssign(vCpn,vEle,vSpc)
+  end select
   !
-  CALL Basis_Build(LBuffer,vCpn)
+  call Basis_Build(LBuffer,vCpn)
   !-> include following
   ! Basis_Dimensions      !-> nCi,nMx,nAx,nMs,nAs
   ! Basis_Alloc           !-> allocate basis_vars
@@ -227,85 +226,85 @@ SUBROUTINE Basis_Change( & !
   ! Basis_AlfaNu_Build    !-> build tAlfXx,tNuXx
   ! Basis_InitBalance     !
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Basis_Change"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Basis_Change"
   !
-END SUBROUTINE Basis_Change
+end subroutine Basis_Change
 
-SUBROUTINE Basis_Change_Wrk(isW,vCpn)
+subroutine Basis_Change_Wrk(isW,vCpn)
   !---------------------------------------------------------------------
-  USE M_T_Component,ONLY: T_Component
-  USE M_Basis_Tools,ONLY: Basis_Cpn_ISpc_Select
+  use M_T_Component,only: T_Component
+  use M_Basis_Tools,only: Basis_Cpn_ISpc_Select
   !
-  USE M_Global_Vars,ONLY: vSpc
+  use M_Global_Vars,only: vSpc
   !---------------------------------------------------------------------
-  INTEGER,          INTENT(IN)   :: isW
-  TYPE(T_Component),INTENT(INOUT):: vCpn(:)
+  integer,          intent(in)   :: isW
+  type(T_Component),intent(inout):: vCpn(:)
   !
-  INTEGER,ALLOCATABLE:: vIndex(:)
+  integer,allocatable:: vIndex(:)
   !
-  IF(iDebug==4) WRITE(fTrc,'(/,A)') "< Basis_Change_wrk"
+  if(iDebug==4) write(fTrc,'(/,A)') "< Basis_Change_wrk"
   !
-  ALLOCATE(vIndex(SIZE(vCpn)))
+  allocate(vIndex(size(vCpn)))
   !
-  CALL Basis_Cpn_ISpc_Select( & !
-  ! CALL Basis_Species_Select( & !
+  call Basis_Cpn_ISpc_Select( & !
+  ! call Basis_Species_Select( & !
   & vSpc,isW,vCpn, & !in
   & vIndex)
   !
   !--------- change basis only if the primary species set has changed --
-  IF(ANY (vCpn(:)%iSpc /= vIndex(:)) ) THEN
+  if(ANY (vCpn(:)%iSpc /= vIndex(:)) ) then
     !
     vCpn(:)%iSpc= vIndex(:)
     !
-    CALL Basis_Build(.FALSE.,vCpn)
+    call Basis_Build(.false.,vCpn)
     !
-      IF(iDebug>2) WRITE(*,'(A)') "===============< basis changed >===="
+    if(iDebug>2) write(*,'(A)') "===============< basis changed >===="
     !
-  ENDIF
+  end if
   !
-  DEALLOCATE(vIndex)
+  deallocate(vIndex)
   !
-  IF(iDebug==4) WRITE(fTrc,'(A,/)') "</ Basis_Change_wrk"
-END SUBROUTINE Basis_Change_Wrk
+  if(iDebug==4) write(fTrc,'(A,/)') "</ Basis_Change_wrk"
+end subroutine Basis_Change_Wrk
 
-SUBROUTINE Basis_IndexInit(isW,isH_,isOH,isO2,MWsv)
+subroutine Basis_IndexInit(isW,isH_,isOH,isO2,MWsv)
 !--
 !-- calc' dimensions and indexes that are constant for given vSpc
 !--
-  USE M_T_Species,  ONLY: Species_Index
+  use M_T_Species,  only: Species_Index
   !
-  USE M_Global_Vars,ONLY: vSpc,nAq,nMn,nGs
+  use M_Global_Vars,only: vSpc,nAq,nMn,nGs
   !
-  INTEGER, INTENT(OUT):: isW,isH_,isOH,isO2
-  REAL(dp),INTENT(OUT):: MWsv
+  integer, intent(out):: isW,isH_,isOH,isO2
+  real(dp),intent(out):: MWsv
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Basis_IndexInit"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Basis_IndexInit"
   !
-  nAq= COUNT(vSpc%Typ(1:3)=="AQU")
-  nMn= COUNT(vSpc%Typ(1:3)=="MIN")
-  nGs= COUNT(vSpc%Typ(1:3)=="GAS")
+  nAq= count(vSpc%Typ(1:3)=="AQU")
+  nMn= count(vSpc%Typ(1:3)=="MIN")
+  nGs= count(vSpc%Typ(1:3)=="GAS")
   nMn= nMn + nGs
   !
   ! find indexes of solvent, H+, OH-, O2 in vSpc
   ! -> unchanged in basis switch -> called only once for a given vSpc
   !-------------- ranks of species H+ and OH- in current species list --
   isW=  Species_Index("H2O",  vSpc)
-  isOH= Species_Index("OH-",  vSpc); IF(isOH==0) isOH=Species_Index("OH[-]",vSpc)
-  isH_= Species_Index("H+",   vSpc); IF(isH_==0) isH_=Species_Index("H[+]",vSpc)
-  isO2= Species_Index("O2,AQ",vSpc); IF(isO2==0) isO2=Species_Index("O2(AQ)",vSpc)
+  isOH= Species_Index("OH-",  vSpc); if(isOH==0) isOH=Species_Index("OH[-]",vSpc)
+  isH_= Species_Index("H+",   vSpc); if(isH_==0) isH_=Species_Index("H[+]",vSpc)
+  isO2= Species_Index("O2,AQ",vSpc); if(isO2==0) isO2=Species_Index("O2(AQ)",vSpc)
   isO2= Species_Index("O2_AQ",vSpc)
   !
-  IF(isW==0)  CALL Stop_("species H2O not found !!!") !=============STOP
-  IF(isH_==0) CALL Stop_("species H+ not found  !!!") !=============STOP
-  IF(isOH==0) CALL Stop_("species OH- not found !!!") !=============STOP
+  if(isW==0)  call Stop_("species H2O not found !!!") !--===========stop
+  if(isH_==0) call Stop_("species H+ not found  !!!") !--===========stop
+  if(isOH==0) call Stop_("species OH- not found !!!") !--===========stop
   !
   MWsv=vSpc(isW)%WeitKg
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Basis_IndexInit"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Basis_IndexInit"
   !
-ENDSUBROUTINE Basis_IndexInit
+end subroutine Basis_IndexInit
 
-SUBROUTINE Basis_InitBalance( & !
+subroutine Basis_InitBalance( & !
 & iBal,                 & !IN
 & vOrdPr,vOrdAs,vOrdMs, & !IN
 & tAlfSp,tAlfPr,tAlfAs,tAlfMs,tAlfFs) !INOUT
@@ -314,69 +313,69 @@ SUBROUTINE Basis_InitBalance( & !
 !-- in line iBal of all stoikio matrices tAlfSp,tAlfPr,tAlfAs,tAlfMs,tAlfFs
 !--
   !
-  USE M_Global_Vars,ONLY: vSpc
+  use M_Global_Vars,only: vSpc
   !
-  INTEGER, INTENT(IN)   :: iBal
-  INTEGER, INTENT(IN)   :: vOrdPr(:),vOrdAs(:),vOrdMs(:)
-  REAL(dp),INTENT(INOUT):: tAlfSp(:,:),tAlfPr(:,:),tAlfAs(:,:),tAlfMs(:,:),tAlfFs(:,:)
+  integer, intent(in)   :: iBal
+  integer, intent(in)   :: vOrdPr(:),vOrdAs(:),vOrdMs(:)
+  real(dp),intent(inout):: tAlfSp(:,:),tAlfPr(:,:),tAlfAs(:,:),tAlfMs(:,:),tAlfFs(:,:)
   !
-  tAlfSp(iBal,:)=                    REAL(vSpc(:)%Z)
-  tAlfPr(iBal,:)=                    REAL(vSpc(vOrdPr(:))%Z)
-  IF(SIZE(vOrdAs)>0) tAlfAs(iBal,:)= REAL(vSpc(vOrdAs(:))%Z)
-  IF(SIZE(vOrdMs)>0) tAlfMs(iBal,:)= REAL(vSpc(vOrdMs(:))%Z)
+  tAlfSp(iBal,:)=                    real(vSpc(:)%Z)
+  tAlfPr(iBal,:)=                    real(vSpc(vOrdPr(:))%Z)
+  if(size(vOrdAs)>0) tAlfAs(iBal,:)= real(vSpc(vOrdAs(:))%Z)
+  if(size(vOrdMs)>0) tAlfMs(iBal,:)= real(vSpc(vOrdMs(:))%Z)
   tAlfFs(iBal,:)= Zero
   !
-ENDSUBROUTINE Basis_InitBalance
+end subroutine Basis_InitBalance
 
-SUBROUTINE Basis_CpnInert(isW,tStoikio,vCpnIn,vCpnInert)
+subroutine Basis_CpnInert(isW,tStoikio,vCpnIn,vCpnInert)
 !--
 !-- used only in Equil_Write,
 !-- for printing composition of aqueous phase as closed system
 !-- make "INERT" all "MOBILE" components,
 !-- reorder components, assign prim'species, ...
 !--
-  USE M_T_Component,ONLY: T_Component
-  USE M_Basis_Tools,ONLY: Basis_Species_Select_Test
-  USE M_Basis_Tools,ONLY: Basis_Cpn_ISpc_Select
+  use M_T_Component,only: T_Component
+  use M_Basis_Tools,only: Basis_Species_Select_Test
+  use M_Basis_Tools,only: Basis_Cpn_ISpc_Select
   !
-  USE M_Global_Vars,ONLY: vEle,vSpc,nAq,tFormula
+  use M_Global_Vars,only: vSpc
   !
-  INTEGER,          INTENT(IN) :: isW
-  REAL(dp),         INTENT(IN) :: tStoikio(:,:)
-  TYPE(T_Component),INTENT(IN) :: vCpnIn(:)
-  TYPE(T_Component),INTENT(OUT):: vCpnInert(:)
+  integer,          intent(in) :: isW
+  real(dp),         intent(in) :: tStoikio(:,:)
+  type(T_Component),intent(in) :: vCpnIn(:)
+  type(T_Component),intent(out):: vCpnInert(:)
   !
-  INTEGER:: i
-  INTEGER,ALLOCATABLE:: vIndex(:)
+  integer:: i
+  integer,allocatable:: vIndex(:)
   !
   vCpnInert= vCpnIn
   vCpnInert(:)%Statut="INERT"
   !
   !-------- compute total amount of each component in the fluid phase --
-  DO i=1,SIZE(vCpnInert)
+  do i=1,size(vCpnInert)
     vCpnInert(i)%Mole= &
     & SUM( tStoikio(i,:)*vSpc(:)%Dat%Mole, MASK= (vSpc(:)%Typ=="AQU") )
-  ENDDO
+  end do
   !
   !---------------------------------------------- assign prim'species --
-  ALLOCATE(vIndex(SIZE(vCpnInert)))
+  allocate(vIndex(size(vCpnInert)))
   !
-  !~ CALL Basis_Species_Select_Test( & !
-  !~ & vSpc,isW,vCpnInert,tFormula, & !in
-  !~ & vIndex)
+  ! call Basis_Species_Select_Test( & !
+  ! & vSpc,isW,vCpnInert,tFormula, & !in
+  ! & vIndex)
 
-  CALL Basis_Cpn_ISpc_Select( & !
-  ! CALL Basis_Species_Select( & !
+  call Basis_Cpn_ISpc_Select( & !
+  ! call Basis_Species_Select( & !
   & vSpc,isW,vCpnInert, & !in
   & vIndex) !out
   !
   vCpnInert(:)%iSpc= vIndex(:)
   !---------------------------------------------/ assign prim'species --
   !
-  DEALLOCATE(vIndex)
+  deallocate(vIndex)
   !
-ENDSUBROUTINE Basis_CpnInert
+end subroutine Basis_CpnInert
 
-ENDMODULE M_Basis
+end module M_Basis
 
 

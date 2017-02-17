@@ -1,59 +1,59 @@
-MODULE M_Dynam_Column
-  USE M_Kinds
-  USE M_Trace,      ONLY: iDebug,Pause_,T_
-  USE M_T_Component,ONLY: T_Component
+module M_Dynam_Column
+  use M_Kinds
+  use M_Trace,      only: iDebug,Pause_,T_
+  use M_T_Component,only: T_Component
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Dynam_Column
+  public:: Dynam_Column
   !
-  ! PUBLIC:: TUnit, Tfinal, Dtime, Time
-  ! PUBLIC:: PhiF, Fout, vQTotInj
-  ! PUBLIC:: CoupledCoores
+  ! public:: TUnit, Tfinal, Dtime, Time
+  ! public:: PhiF, Fout, vQTotInj
+  ! public:: CoupledCoores
   
-CONTAINS
+contains
 
-SUBROUTINE Dynam_Column
+subroutine Dynam_Column
   !
-  USE M_IOTools,ONLY: GetUnit
-  USE M_Files,  ONLY: DirOut
+  use M_IOTools,only: GetUnit
+  use M_Files,  only: DirOut
   !
-  USE M_Equil_Write, ONLY: Equil_Write_Detail
+  use M_Equil_Write, only: Equil_Write_Detail
   !
-  USE M_Dynam_Tools   !Dynam_Zero_X,Dynam_Close
-  USE M_Dynam_Read    !Dynam_Read
-  USE M_Dynam_Tools   !Dynam_Init
-  USE M_Dynam_Files   !Dynam_Files_Init,Dynam_Files_Close
-  USE M_Dynam_Calc    !Dynam_Calc,DTimeTooSmall,PorosTooSmall,...
+  use M_Dynam_Tools   !Dynam_Zero_X,Dynam_Close
+  use M_Dynam_Read    !Dynam_Read
+  use M_Dynam_Tools   !Dynam_Init
+  use M_Dynam_Files   !Dynam_Files_Init,Dynam_Files_Close
+  use M_Dynam_Calc    !Dynam_Calc,DTimeTooSmall,PorosTooSmall,...
   !
-  USE M_Dynam_Cell
+  use M_Dynam_Cell
   !
-  USE M_System_Vars, ONLY: TdgK,Pbar,vCpn
-  USE M_Global_Vars, ONLY: vKinFas,vFas
+  use M_System_Vars, only: TdgK,Pbar,vCpn
+  use M_Global_Vars, only: vKinFas,vFas
   !
-  USE M_Dynam_Vars,  ONLY: DynTime,DynBox,DynBoxUser
-  USE M_Dynam_Vars,  ONLY: vTotF,vTotInj,vMolarVol
-  USE M_Dynam_Vars,  ONLY: VBox
-  USE M_Dynam_Vars,  ONLY: DynColumn
+  use M_Dynam_Vars,  only: DynTime,DynBox,DynBoxUser
+  use M_Dynam_Vars,  only: vTotF,vTotInj,vMolarVol
+  use M_Dynam_Vars,  only: VBox
+  use M_Dynam_Vars,  only: DynColumn
   !
-  USE M_Dynam_Vars, ONLY: & !
+  use M_Dynam_Vars, only: & !
   !-----------------------import from M_Dynam_Vars to publish in M_Dynam
   & TUnit, Tfinal, Dtime, & !
   & Time,                 & !
   & PhiF, Fout, vQTotInj, & !
   & CoupledCoores
   !---------------------------------------------------------------------
-  LOGICAL:: Ok
-  CHARACTER(LEN=80):: Msg
+  logical:: Ok
+  character(len=80):: Msg
   !
-  INTEGER:: nCell
-  TYPE(T_Cell_State), ALLOCATABLE:: vCell(:)
-  LOGICAL:: Time_To_Small
+  integer:: nCell
+  type(T_Cell_State), allocatable:: vCell(:)
+  logical:: Time_To_Small
   !
-  INTEGER:: nCp,nAq,nMk
-  INTEGER:: ix,i,j,k
+  integer:: nCp,nAq,nMk
+  integer:: ix,i,j,k
   !
   real(dp):: CpuBegin,CpuEnd
   !
@@ -71,54 +71,54 @@ SUBROUTINE Dynam_Column
   real(dp):: time_print, Time_Save, T1D_TSave
   integer :: iter
   integer:: fCp,fMk,fVar,fQsk ! file indexes
-  logical:: time_refine = .FALSE. !.TRUE.
+  logical:: time_refine = .false. !.true.
   !integer:: nt, iter, Pulse_0, Pulse_1
   !-----------------------------------------------------------/rt1d vars
-  
+  !
   !-------------------------------------------------- Dynamic calc. init
-  CALL Dynam_Zero_Numeric
-  CALL Dynam_Zero_Time(DynTime)
-  CALL Dynam_Zero_Box(DynBox)
+  call Dynam_Zero_Numeric
+  call Dynam_Zero_Time(DynTime)
+  call Dynam_Zero_Box(DynBox)
   !
-  CALL Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
-  IF(.NOT. Ok) THEN
-    PRINT *,"Error in Dynam_Read !!"
-    CALL Pause_
-    RETURN !------------------------------------------------------RETURN
-  ENDIF
+  call Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
+  if(.not. Ok) then
+    print *,"Error in Dynam_Read !!"
+    call Pause_
+    return !------------------------------------------------------return
+  end if
   !
-  CALL Dynam_Alloc
-  CALL Dynam_Init(TdgK,Pbar,DynTime,DynBox)
+  call Dynam_Alloc
+  call Dynam_Init(TdgK,Pbar,DynTime,DynBox)
   !! print '(20G15.7)',(vTotInj(i),i=1,size(vTotInj))   ;   pause
   !
-  CALL Dynam_ReStart_Box(DynBox,DynTime%TimeFactor)
-  CALL Dynam_ReStart_Time(DynTime)
+  call Dynam_ReStart_Box(DynBox,DynTime%TimeFactor)
+  call Dynam_ReStart_Time(DynTime)
   !
-  CALL Dynam_Calc_Init
+  call Dynam_Calc_Init
   !
-  IF(iDebug>2) CALL Dynam_Files_Init
+  if(iDebug>2) call Dynam_Files_Init
   !
-  CALL Dynam_Save
+  call Dynam_Save
   !--------------------------------------------------/Dynamic calc. init
   !
   write(*,*) "Dynam_Column"
   write(*,*) "TUnit=", DynTime%TUnit
   write(*,*) "VBox=", VBox
-  write(*,*) "pHIf=", PhiF
+  write(*,*) "PhiF=", PhiF
   write(*,*) "TotF="
   do i=1,size(vTotF(:))
-    write(*,'(A15,G12.3)') TRIM(vCpn(i)%NamCp),vTotF(i)
+    write(*,'(A15,G12.3)') trim(vCpn(i)%NamCp),vTotF(i)
   end do
   write(*,*) "TotInj="
   do i=1,size(vTotInj(:))
-    write(*,'(A15,G12.3)') TRIM(vCpn(i)%NamCp),vTotInj(i)
+    write(*,'(A15,G12.3)') trim(vCpn(i)%NamCp),vTotInj(i)
   end do
   if (iDebug>2) call pause_
   !
-  CALL GetUnit(fCp)  ;  OPEN(fCp, FILE=TRIM(DirOut)//"_cells_fluid.tab")
-  CALL GetUnit(fMk)  ;  OPEN(fMk, FILE=TRIM(DirOut)//"_cells_minerals.tab")
-  CALL GetUnit(fVar) ;  OPEN(fVar,FILE=TRIM(DirOut)//"_cells_min_delta.tab")
-  CALL GetUnit(fQsk) ;  OPEN(fQsk,FILE=TRIM(DirOut)//"_cells_min_qsk.tab")
+  call GetUnit(fCp)  ;  open(fCp, file=trim(DirOut)//"_cells_fluid.tab")
+  call GetUnit(fMk)  ;  open(fMk, file=trim(DirOut)//"_cells_minerals.tab")
+  call GetUnit(fVar) ;  open(fVar,file=trim(DirOut)//"_cells_min_delta.tab")
+  call GetUnit(fQsk) ;  open(fQsk,file=trim(DirOut)//"_cells_min_qsk.tab")
   !
   !------------------------------------------------------------rt1d init
   !
@@ -133,10 +133,10 @@ SUBROUTINE Dynam_Column
   DynColumn%nCell    = 20
   !
   !--read parameters from file
-  CALL Dynam_ReadColumn(DynColumn,Ok,Msg)
+  call Dynam_ReadColumn(DynColumn,Ok,Msg)
   !
   if(DynColumn%nCell>200) DynColumn%nCell= 200
-  !IF(Ok) THEN
+  !if(Ok) then
     vv        = DynColumn%UDarcy   
     Disp      = DynColumn%Disp     
     dx        = DynColumn%dx       
@@ -145,9 +145,9 @@ SUBROUTINE Dynam_Column
     Duration  = DynColumn%Duration 
     T1D_TSave = DynColumn%Time_Save
     nCell     = DynColumn%nCell    
-  !ELSE
-  !  PRINT *,TRIM(Msg)  ;  PAUSE
-  !ENDIF
+  !else
+  !  print *,trim(Msg)  ;  pause
+  !end if
   !
   ! call rt1d_check_peclet(disp, vv, dx)
   call rt1d_check_courant(vv, dx, T1D_dt)
@@ -160,14 +160,14 @@ SUBROUTINE Dynam_Column
   !-----------------------------------------------------------/rt1d init
   !
   !-----------------------------------------------------------init cells
-  ALLOCATE(vCell(nCell))
+  allocate(vCell(nCell))
   !
-  CALL Dynam_Column_Initialize(nCp,nAq,nMk,vCell)
+  call Dynam_Column_Initialize(nCp,nAq,nMk,vCell)
   !
-  ALLOCATE(tMolK_Init(nCell,nMk))
-  DO ix= 1,nCell
+  allocate(tMolK_Init(nCell,nMk))
+  do ix= 1,nCell
     tMolK_Init(ix,:)=vCell(ix)%vMolK(:)
-  END DO
+  end do
   !! write(12,'(200G12.3)') (vCell(i)%vMolK(1), i=1,nCell)
   !! write(13,'(200G12.3)') (vCell(i)%vMolK(2), i=1,nCell)
   !--------------------------------------------------------/init cells--
@@ -237,7 +237,7 @@ SUBROUTINE Dynam_Column
     !!   !
     !! end do
     !
-    ! if (modulo(iter,nt/NPRINT)==0) call output
+    ! if (modulo(iter,nt/Nprint)==0) call output
     if (time_rt>=time_print) then
       call output
       time_print= time_rt + Time_Save != time for next print
@@ -254,15 +254,15 @@ SUBROUTINE Dynam_Column
   call CPU_TIME(CpuEnd)
   print '(A,G15.6,/)',"CPU_TIME=",(CpuEnd-CpuBegin)
   !
-  CALL Dynam_Calc_Close
-  CALL Dynam_Save
+  call Dynam_Calc_Close
+  call Dynam_Save
   !
   !--------------------------------------write speciation of final fluid
-  !! CALL Equil_Write_Detail("DYN",TdgK,Pbar,vCpn)
+  !! call Equil_Write_Detail("DYN",TdgK,Pbar,vCpn)
   !
-  CALL Dynam_Files_Close
+  call Dynam_Files_Close
   !
-  CALL Dynam_Clean
+  call Dynam_Clean
   !-------------------------------------------------------/Dynamic calc.
   !
   close(fCp)
@@ -270,22 +270,22 @@ SUBROUTINE Dynam_Column
   close(fVar)
   close(fQsk)
   
-CONTAINS
+contains
 
-  SUBROUTINE conc_initial
-    INTEGER:: ix
+  subroutine conc_initial
+    integer:: ix
     !-------------------------------------------------------------------
     !print *,size(conc,2), size(vCell)  ;  pause
-    DO ix=1,nCell
+    do ix=1,nCell
       ! conc(:,ix)= vCell(ix)%vTotF(:) /vCell(ix)%PhiF
       conc(:,ix)= vCell(ix)%vTotF(:) / (vCell(ix)%PhiF *VBox *1.D3)
       !-> components' concentr'ns in mole /litre of aq'phase
-    END DO
+    end do
     !
-  END SUBROUTINE conc_initial
+  end subroutine conc_initial
   
-  SUBROUTINE setboundary !(iter, Pulse_0, Pulse_1)
-    ! INTEGER,INTENT(IN):: iter, Pulse_0, Pulse_1
+  subroutine setboundary !(iter, Pulse_0, Pulse_1)
+    ! integer,intent(in):: iter, Pulse_0, Pulse_1
     !!!-----------------------------------------------------------------
     !!if (iter <= Pulse_0) then
     !!  Conc(:, 1)= 1.D-3
@@ -296,46 +296,46 @@ CONTAINS
     !!end if
     !!!-----------------------------------------------------------------
     if (vv>0.D0) conc(:,1)= vTotInj(:)
-    ! write(12,'(10G12.3)') (Conc(i,1), i=1,SIZE(conc,1))
-  END SUBROUTINE setboundary
+    ! write(12,'(10G12.3)') (Conc(i,1), i=1,size(conc,1))
+  end subroutine setboundary
   
-  SUBROUTINE output
-    INTEGER:: i,ix
+  subroutine output
+    integer:: i,ix
     !
-    DO i=1,nCp
-      WRITE(fCp,'(A,1X,G15.8,200G15.8)') &
+    do i=1,nCp
+      write(fCp,'(A,1X,G15.8,200G15.8)') &
       & trim(vCpn(i)%NamCp), &
       & time_rt, &
       & (vCell(ix)%vTotF(i)/vCell(ix)%vTotF(1), ix=1,nCell)
-    END DO
-    WRITE(fMk,'(A,1X,G15.8,200G15.4)') &
+    end do
+    write(fMk,'(A,1X,G15.8,200G15.4)') &
     & "POROSITY", &
     & time_rt, &
     & (vCell(ix)%PhiF*VBox*1.D3, ix=1,nCell)
-    DO i=1,nMk
-      WRITE(fMk,'(A,1X,G15.8,200G15.4)') &
+    do i=1,nMk
+      write(fMk,'(A,1X,G15.8,200G15.4)') &
       & trim(vFas(vKinFas(i)%iFas)%NamFs), &
       & time_rt, &
       & (vCell(ix)%vMolK(i)*vMolarVol(i)*1.D3, ix=1,nCell)
-    END DO
-    DO i=1,nMk
-      WRITE(fVar,'(A,1X,G15.8,200G15.4)') &
+    end do
+    do i=1,nMk
+      write(fVar,'(A,1X,G15.8,200G15.4)') &
       & trim(vFas(vKinFas(i)%iFas)%NamFs), &
       & time_rt, &
       & (vCell(ix)%vMolK(i)-tMolK_Init(ix,i), ix=1,nCell)
-    END DO
-    DO i=1,nMk
-      WRITE(fQsk,'(A,1X,G15.8,200G15.8)') &
+    end do
+    do i=1,nMk
+      write(fQsk,'(A,1X,G15.8,200G15.8)') &
       & trim(vFas(vKinFas(i)%iFas)%NamFs), &
       & time_rt, &
       & (vCell(ix)%vKinQsk(i), ix=1,nCell)
-    END DO
+    end do
     !
-  END SUBROUTINE output
+  end subroutine output
   
-END SUBROUTINE Dynam_Column
+end subroutine Dynam_Column
 
-SUBROUTINE Dynam_Column_Transport( &
+subroutine Dynam_Column_Transport( &
 & T1D_Method,  &
 & nCp,nCell,   &
 & vv,dt,dx,    &
@@ -371,30 +371,30 @@ SUBROUTINE Dynam_Column_Transport( &
     end do
   end select
   !
-END SUBROUTINE Dynam_Column_Transport
+end subroutine Dynam_Column_Transport
 
-SUBROUTINE Dynam_Column_Initialize(nCp,nAq,nMk,vCell)
-  USE M_Global_Vars, ONLY: vKinFas,vFas
-  USE M_Dynam_Cell,  ONLY: T_Cell_State
-  USE M_Dynam_Vars,  ONLY: vTotF,vMolF,vLnAct,vLnGam,vLnBuf !,vTotInj
-  USE M_Dynam_Vars,  ONLY: vMolK,vKinQsk,vSurfK,vStatusK,vMolarVol
-  USE M_Dynam_Vars,  ONLY: PhiF
+subroutine Dynam_Column_Initialize(nCp,nAq,nMk,vCell)
+  use M_Global_Vars, only: vKinFas,vFas
+  use M_Dynam_Cell,  only: T_Cell_State
+  use M_Dynam_Vars,  only: vTotF,vMolF,vLnAct,vLnGam,vLnBuf !,vTotInj
+  use M_Dynam_Vars,  only: vMolK,vKinQsk,vSurfK,vStatusK,vMolarVol
+  use M_Dynam_Vars,  only: PhiF
   !
-  INTEGER,           INTENT(OUT)  :: nCp,nAq,nMk
-  TYPE(T_Cell_State),INTENT(INOUT):: vCell(:)
+  integer,           intent(out)  :: nCp,nAq,nMk
+  type(T_Cell_State),intent(inout):: vCell(:)
   !
-  INTEGER :: ix,i
+  integer :: ix,i
   !
-  nCp= SIZE(vTotF)
-  nAq= SIZE(vMolF)
-  nMk= SIZE(vMolK)
+  nCp= size(vTotF)
+  nAq= size(vMolF)
+  nMk= size(vMolK)
   !
-  DO i= 1,SIZE(vCell)
-    CALL vCell(i)%New_(nCp,nAq,nMk)
-  END DO
+  do i= 1,size(vCell)
+    call vCell(i)%New_(nCp,nAq,nMk)
+  end do
   !
-  DO ix= 1,SIZE(vCell)
-    CALL vCell(ix)%Set_( &  !
+  do ix= 1,size(vCell)
+    call vCell(ix)%Set_( &  !
     & vMolK,    & !-> mole nr's of kin'phases in cell
     & vSurfK,   & !-> surfaces of kin'phases in cell
     & vKinQsk,  & !-> sat'states of kin'phases
@@ -406,53 +406,53 @@ SUBROUTINE Dynam_Column_Initialize(nCp,nAq,nMk,vCell)
     & vLnBuf,   & !
     & PhiF      & !-> vol'fraction of fluid
     & )
-  END DO
+  end do
   !
   print *,"Dynam_Column_Initialize"
-  do i=1,SIZE(vKinFas)
+  do i=1,size(vKinFas)
     print *,"KinFas= ",vFas(vKinFas(I)%iFas)%NamFs,vCell(1)%vMolK(i)
   end do
   if (iDebug>2) call pause_
   !
-END SUBROUTINE Dynam_Column_Initialize
+end subroutine Dynam_Column_Initialize
 
-SUBROUTINE Dynam_Column_Reaction( &
+subroutine Dynam_Column_Reaction( &
 & dt,        &
 & conc,      &
 & vCell,     &
 & error)
-  !USE M_Dynam_Calc    !Dynam_Calc,DTimeTooSmall,PorosTooSmall,...
-  USE M_Dynam_Cell,  ONLY: T_Cell_State
-  USE M_Dynam_Vars,  ONLY: vTotF,vMolF,vLnAct,vLnGam,vLnBuf !,vTotInj
-  USE M_Dynam_Vars,  ONLY: vMolK,vKinQsk,vSurfK,vStatusK,vMolarVol
-  USE M_Dynam_Vars,  ONLY: PhiF,VBox,vQTotInj
-  USE M_Dynam_Vars,  ONLY: Time,TFinal
-  USE M_Dynam_Calc,  ONLY: DTimeTooSmall
-  USE M_Dynam_Calc,  ONLY: Dynam_Calc_Main
+  !use M_Dynam_Calc    !Dynam_Calc,DTimeTooSmall,PorosTooSmall,...
+  use M_Dynam_Cell,  only: T_Cell_State
+  use M_Dynam_Vars,  only: vTotF,vMolF,vLnAct,vLnGam,vLnBuf !,vTotInj
+  use M_Dynam_Vars,  only: vMolK,vKinQsk,vSurfK,vStatusK,vMolarVol
+  use M_Dynam_Vars,  only: PhiF,VBox,vQTotInj
+  use M_Dynam_Vars,  only: Time,TFinal
+  use M_Dynam_Calc,  only: DTimeTooSmall
+  use M_Dynam_Calc,  only: Dynam_Calc_Main
   !
-  REAL(dp),          INTENT(IN)   :: dt
-  REAL(dp),          INTENT(INOUT):: conc(:,:)
-  TYPE(T_Cell_State),INTENT(INOUT):: vCell(:)
-  LOGICAL,           INTENT(OUT)  :: error
+  real(dp),          intent(in)   :: dt
+  real(dp),          intent(inout):: conc(:,:)
+  type(T_Cell_State),intent(inout):: vCell(:)
+  logical,           intent(out)  :: error
   !
-  REAL(dp):: tmpTime
-  INTEGER :: ix,i
-  INTEGER :: nRepeat
-  INTEGER,PARAMETER :: maxRepeat = 1000
+  real(dp):: tmpTime
+  integer :: ix,i
+  integer :: nRepeat
+  integer,parameter :: maxRepeat = 1000
   !---------------------------------------------------------------------
-  error= .FALSE.
+  error= .false.
   !
   vQTotInj= 0.D0
   !
-  DO ix= 1,SIZE(vCell)
+  do ix= 1,size(vCell)
     !
     nRepeat= 1
-    DO_Repeat: DO
+    do_Repeat: do
     
-      DO i=1,nRepeat
+      do i=1,nRepeat
         !
         !---------retrieve the properties of cell ix from last time step
-        CALL vCell(ix)%Get_( &  !
+        call vCell(ix)%Get_( &  !
         & vMolK,    & !-> mole nr's of kin'phases in cell
         & vSurfK,   & !-> surfaces of kin'phases in cell
         & vKinQsk,  & !-> sat'states of kin'phases
@@ -462,8 +462,7 @@ SUBROUTINE Dynam_Column_Reaction( &
         & vLnAct,   & !
         & vLnGam,   & !
         & vLnBuf,   & !
-        & PhiF      & !-> vol'fraction of fluid
-        & )
+        & PhiF      ) !-> vol'fraction of fluid
         !--------------------------------------------------------------/
         !
         !------retrieve fluid mole nrs resulting from transport operator
@@ -471,30 +470,30 @@ SUBROUTINE Dynam_Column_Reaction( &
         !--------------------------------------------------------------/
         Time=   0.D0
         TFinal= dt/nRepeat !DynTime%TFinal
-        CALL Dynam_Calc_Main
+        call Dynam_Calc_Main
         !
-        IF (DTimeTooSmall) THEN
-          PRINT *,"Reaction, Cell Nr",iX," nRepeat=",nRepeat
+        if (DTimeTooSmall) then
+          print *,"Reaction, Cell Nr",iX," nRepeat=",nRepeat
           nRepeat= 5 *nRepeat
-          CYCLE DO_Repeat
-          IF(nRepeat>maxRepeat) THEN
-            error= .TRUE.
-            RETURN
-          END IF
-        ELSE
-          EXIT DO_Repeat
-        END IF
+          cycle do_Repeat
+          if(nRepeat>maxRepeat) then
+            error= .true.
+            return
+          end if
+        else
+          exit do_Repeat
+        end if
         !
-      END DO
+      end do
     
-    END DO DO_Repeat
+    end do do_Repeat
     !
     !----------------update the fluid composition for transport operator
     conc(:,ix)= vTotF(:) /(PhiF *VBox *1.D3)
     !------------------------------------------------------------------/
     
     !----------------update the properties of cell ix for next time step
-    CALL vCell(ix)%Set_( &  !
+    call vCell(ix)%Set_( &  !
     & vMolK,    & !-> mole nr's of kin'phases in cell
     & vSurfK,   & !-> surfaces of kin'phases in cell
     & vKinQsk,  & !-> sat'states of kin'phases
@@ -504,23 +503,22 @@ SUBROUTINE Dynam_Column_Reaction( &
     & vLnAct,   & !
     & vLnGam,   & !
     & vLnBuf,   & !
-    & PhiF      & !-> vol'fraction of fluid
-    & )
+    & PhiF      ) !-> vol'fraction of fluid
     !------------------------------------------------------------------/
     !
-  END DO
+  end do
   
-  RETURN
-END SUBROUTINE Dynam_Column_Reaction
+  return
+end subroutine Dynam_Column_Reaction
   
 subroutine rt1d_check_courant( & !
 & vv,dx, & !
 & dt)
   !
-  real(8),intent(in)    :: vv,dx
-  real(8),intent(inout) :: dt
+  real(dp),intent(in)    :: vv,dx
+  real(dp),intent(inout) :: dt
   !
-  real(8):: Courant
+  real(dp):: Courant
   
   Courant= vv * dt / dx
   print *,"Courant number= ",Courant
@@ -536,10 +534,10 @@ subroutine rt1d_check_peclet( & !
 & disp,vv, & !
 & dx)
   !
-  real(8),intent(in)    :: disp,vv
-  real(8),intent(inout) :: dx
+  real(dp),intent(in)    :: disp,vv
+  real(dp),intent(inout) :: dx
   !
-  real(8):: Pec
+  real(dp):: Pec
 
   Pec= vv * dx / disp
   print *,"Peclet number= ",Pec
@@ -552,5 +550,5 @@ subroutine rt1d_check_peclet( & !
   !
 end subroutine rt1d_check_peclet
 
-END MODULE M_Dynam_Column
+end module M_Dynam_Column
 

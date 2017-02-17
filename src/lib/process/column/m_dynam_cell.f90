@@ -1,36 +1,36 @@
-MODULE M_Dynam_Cell  !!_Types
-  USE M_Kinds
+module M_Dynam_Cell  !!_Types
+  use M_Kinds
   
-  IMPLICIT NONE
+  implicit none
 
-  TYPE:: T_Cell_State
+  type:: T_Cell_State
     !
-    !! INTEGER :: nAq,nMk
+    !! integer :: nAq,nMk
     !
-    REAL(dp), ALLOCATABLE:: & !
+    real(dp), allocatable:: & !
     & vMolK   (:), &          ! mole nr's of kin'phases in cell
     & vSurfK  (:), &          ! surfaces of kin'phases in cell
     & vKinQsk (:)             ! sat'states of kin'phases
     !
-    CHARACTER,ALLOCATABLE:: vStatusK(:)
+    character,allocatable:: vStatusK(:)
     !
-    REAL(dp), ALLOCATABLE:: & !
+    real(dp), allocatable:: & !
     & vTotF   (:), &          !
     & vMolF   (:), &          !-> mole nr's of aqu'species in cell
     & vLnAct  (:), &          !
     & vLnGam  (:), &          !
     & vLnBuf  (:)             !
     !
-    REAL(dp):: PhiF         ! vol'fraction of fluid
+    real(dp):: PhiF         ! vol'fraction of fluid
     !
-    CONTAINS
+    contains
     
-    PROCEDURE :: New_
-    PROCEDURE :: Free_
-    PROCEDURE :: Set_
-    PROCEDURE :: Get_
+    procedure :: New_
+    procedure :: Free_
+    procedure :: Set_
+    procedure :: Get_
   
-  END TYPE
+  end type
   
   !! vMolK(1:nMk)=     vKinFas(1:nMk)%Dat%PhiM /vMolarVol(1:nMk) *VBox
   !! !                 !-> mole nr's of kin'phases in box
@@ -45,32 +45,34 @@ MODULE M_Dynam_Cell  !!_Types
   !! vMolF(1:nAq)= vSpc(vOrdAq(1:nAq))%Dat%Mole
   !! !                 !-> mole nr's of aqu'species in box
   
-CONTAINS
+contains
 
-SUBROUTINE New_( &  !
+subroutine New_( &  !
 & self,          & !
 & nCp,nAq,nMk    & !
 & )
   !---------------------------------------------------------------------
-  CLASS(T_Cell_State):: Self
-  INTEGER,INTENT(IN):: nCp,nAq,nMk
+  class(T_Cell_State):: Self
+  integer,intent(in):: nCp,nAq,nMk
   !---------------------------------------------------------------------
-  ALLOCATE(               &    !
+  allocate(               &    !
   & self%vMolK   (1:nMk), &    ! mole nr's of kin'phases in cell
   & self%vSurfK  (1:nMk), &    ! surfaces of kin'phases in cell
   & self%vKinQsk (1:nMk), &    ! sat'states of kin'phases
-  & self%vStatusK(1:nMk), &    ! 
+  & self%vStatusK(1:nMk), &    !
+  !
   & self%vTotF   (1:nCp), &    ! 
+  !
   & self%vMolF   (1:nAq), &    ! mole nr's of aqu'species in cell
   & self%vLnAct  (1:nAq), &    !
   & self%vLnGam  (1:nAq), &    !
-  & self%vLnBuf  (1:nAq)  &    !
-  & ) 
+  !
+  & self%vLnBuf  (1:nAq)  ) 
 
-  RETURN
-END SUBROUTINE New_
+  return
+end subroutine New_
 
-SUBROUTINE Set_( & !
+subroutine Set_( & !
 & Self,          & !
 & vMolK,         & !-> mole nr's of kin'phases in cell
 & vSurfK,        & !-> surfaces of kin'phases in cell
@@ -81,21 +83,24 @@ SUBROUTINE Set_( & !
 & vLnAct,        & !
 & vLnGam,        & !
 & vLnBuf,        & !
-& PhiF           & !-> vol'fraction of fluid
-& )
+& PhiF           ) !-> vol'fraction of fluid
+
   !---------------------------------------------------------------------
-  CLASS(T_Cell_State):: Self
-  REAL(dp)::     &    !
+  class(T_Cell_State):: Self
+  real(dp)::     &    !
+  !
   & vMolK   (:), &    !-> mole nr's of kin'phases in cell
   & vSurfK  (:), &    !-> surfaces of kin'phases in cell
   & vKinQsk (:), &    !-> sat'states of kin'phases
+  !
   & vTotF   (:), &    ! 
   & vMolF   (:), &    !-> mole nr's of aqu'species in cell
   & vLnAct  (:), &    ! 
   & vLnGam  (:), &    ! 
   & vLnBuf  (:), &    ! 
+  !
   & PhiF              !-> vol'fraction of fluid
-  CHARACTER:: vStatusK(:)
+  character:: vStatusK(:)
   !---------------------------------------------------------------------
   
   self%vMolK   (:)= vMolK   (:)
@@ -111,14 +116,14 @@ SUBROUTINE Set_( & !
   !
   self%PhiF       = PhiF
   
-  RETURN
-END SUBROUTINE Set_
+  return
+end subroutine Set_
 
-SUBROUTINE Free_(Self)
+subroutine Free_(Self)
 
-  CLASS(T_Cell_State):: Self
+  class(T_Cell_State):: Self
 
-  DEALLOCATE(      &    !
+  deallocate(      &    !
   & self%vMolK   , &    ! mole nr's of kin'phases in cell
   & self%vSurfK  , &    ! surfaces of kin'phases in cell
   & self%vKinQsk , &    ! sat'states of kin'phases
@@ -127,13 +132,12 @@ SUBROUTINE Free_(Self)
   & self%vMolF,    &    ! mole nr's of aqu'species in cell
   & self%vLnAct,   &    !
   & self%vLnGam,   &    !
-  & self%vLnBuf    &    !
-  & ) 
+  & self%vLnBuf    ) 
 
-  RETURN
-END SUBROUTINE Free_
+  return
+end subroutine Free_
 
-SUBROUTINE Get_( & !
+subroutine Get_( & !
 & Self,          & !
 & vMolK,         & !-> mole nr's of kin'phases in cell
 & vSurfK,        & !-> surfaces of kin'phases in cell
@@ -144,11 +148,10 @@ SUBROUTINE Get_( & !
 & vLnAct,        & !
 & vLnGam,        & !
 & vLnBuf,        & !
-& PhiF           & !-> vol'fraction of fluid
-& )
+& PhiF           ) !-> vol'fraction of fluid
   !---------------------------------------------------------------------
-  CLASS(T_Cell_State):: Self
-  REAL(dp)::     &    !
+  class(T_Cell_State):: Self
+  real(dp)::     &    !
   & vMolK   (:), &    !-> mole nr's of kin'phases in cell
   & vSurfK  (:), &    !-> surfaces of kin'phases in cell
   & vKinQsk (:), &    !-> sat'states of kin'phases
@@ -158,7 +161,7 @@ SUBROUTINE Get_( & !
   & vLnGam  (:), &    ! 
   & vLnBuf  (:), &    ! 
   & PhiF              !-> vol'fraction of fluid
-  CHARACTER:: vStatusK(:)
+  character:: vStatusK(:)
   !---------------------------------------------------------------------
   vMolK   (:)= self%vMolK   (:)
   vSurfK  (:)= self%vSurfK  (:)
@@ -173,7 +176,7 @@ SUBROUTINE Get_( & !
 
   PhiF       = self%PhiF      
   
-  RETURN
-END SUBROUTINE Get_
+  return
+end subroutine Get_
 
-END MODULE M_Dynam_Cell  !!_Types
+end module M_Dynam_Cell  !!_Types

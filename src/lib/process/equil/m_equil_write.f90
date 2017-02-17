@@ -1,237 +1,237 @@
-MODULE M_Equil_Write
+module M_Equil_Write
 !--
 !-- routines writing results of equilibrium or speciation calculations
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,fHtm,T_,Pause_
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,fHtm,T_,Pause_
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC:: Equil_Write_Detail
-  PUBLIC:: Equil_Write_ShoDetail
-  PUBLIC:: Equil_Write_EnTete
-  PUBLIC:: Equil_Write_LogK
+  public:: Equil_Write_Detail
+  public:: Equil_Write_ShoDetail
+  public:: Equil_Write_EnTete
+  public:: Equil_Write_LogK
 
-  LOGICAL:: Done_WriteLogK= .false.
+  logical:: Done_WriteLogK= .false.
 
-CONTAINS
+contains
 
-SUBROUTINE Equil_Write_LogK(vCpn,TdgK,Pbar)
+subroutine Equil_Write_LogK(vCpn,TdgK,Pbar)
 !--
 !-- write a table of logK of species
 !-- calculated with logK-0 for the SYSTEM's primary species
 !--
-  USE M_T_Component,ONLY: T_Component
-  USE M_Dtb_Test,   ONLY: Dtb_Tabulate_ForSystem
-  USE M_Basis,      ONLY: Basis_Build
-  USE M_Basis_Vars, ONLY: vLCi,vLAx,vOrdPr,tNuSp
-  USE M_TPcond_Read,ONLY: TPpath_Read
+  use M_T_Component,only: T_Component
+  use M_Dtb_Test,   only: Dtb_Tabulate_ForSystem
+  use M_Basis,      only: Basis_Build
+  use M_Basis_Vars, only: vLCi,vLAx,vOrdPr,tNuSp
+  use M_TPcond_Read,only: TPpath_Read
   !
-  USE M_Global_Vars,ONLY: vSpc,vSpcDtb
-  USE M_Path_Vars,  ONLY: vTPpath
+  use M_Global_Vars,only: vSpc,vSpcDtb
+  use M_Path_Vars,  only: vTPpath
   !
-  TYPE(T_Component),INTENT(IN):: vCpn(:)
-  REAL(dp),         INTENT(IN):: TdgK,Pbar
+  type(T_Component),intent(in):: vCpn(:)
+  real(dp),         intent(in):: TdgK,Pbar
   !
-  TYPE(T_Component):: vCpnTmp(SIZE(vCpn))
+  type(T_Component):: vCpnTmp(size(vCpn))
   !
-  IF(Done_WriteLogK) RETURN !-------------------------------------return
+  if(Done_WriteLogK) return !-------------------------------------return
   !
   vCpnTmp= vCpn
-  CALL Basis_Build(.FALSE.,vCpnTmp)
+  call Basis_Build(.false.,vCpnTmp)
   !
-  CALL TPpath_Read(TdgK,Pbar)
+  call TPpath_Read(TdgK,Pbar)
   !
-  CALL Dtb_Tabulate_ForSystem( &
+  call Dtb_Tabulate_ForSystem( &
   & vTPpath, &
   & vCpnTmp,vSpc,vSpcDtb, &
   & vLCi,vLAx,vOrdPr,tNuSp)
   !
-  DEALLOCATE(vTPpath)
+  if(allocated(vTPpath)) deallocate(vTPpath)
   !
   Done_WriteLogK= .true.
   !
-  RETURN
-ENDSUBROUTINE Equil_Write_LogK
+  return
+end subroutine Equil_Write_LogK
 
-SUBROUTINE Equil_Write_EnTete(iFile,vSpc,vPrm,vBool,Str1,Str2,WriteCR)
+subroutine Equil_Write_EnTete(iFile,vSpc,vPrm,vBool,Str1,Str2,WriteCR)
 !--
 !-- write title line: a name (s) followed by species names
 !--
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !
-  INTEGER,        INTENT(IN):: iFile
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  INTEGER,        INTENT(IN):: vPrm(:)
-  LOGICAL,        INTENT(IN):: vBool(:)
+  integer,        intent(in):: iFile
+  type(T_Species),intent(in):: vSpc(:)
+  integer,        intent(in):: vPrm(:)
+  logical,        intent(in):: vBool(:)
   !
-  CHARACTER(*),   INTENT(IN),OPTIONAL:: Str1
-  CHARACTER(*),   INTENT(IN),OPTIONAL:: Str2
-  LOGICAL,        INTENT(IN),OPTIONAL:: WriteCR
+  character(*),   intent(in),optional:: Str1
+  character(*),   intent(in),optional:: Str2
+  logical,        intent(in),optional:: WriteCR
   !
-  INTEGER::I,J
+  integer::I,J
   !
-  IF(PRESENT(Str1)) WRITE(iFile,'(A,A1)',ADVANCE='NO') TRIM(Str1),T_
-  IF(PRESENT(Str2)) WRITE(iFile,'(A,A1)',ADVANCE='NO') TRIM(Str2),T_
+  if(present(Str1)) write(iFile,'(A,A1)',advance="no") trim(Str1),T_
+  if(present(Str2)) write(iFile,'(A,A1)',advance="no") trim(Str2),T_
 
-  DO J=1,SIZE(vSpc)
+  do J=1,size(vSpc)
     I=vPrm(J)
-    IF(vBool(I)) WRITE(iFile,'(A,A1)',ADVANCE='NO') TRIM(vSpc(I)%NamSp),T_
-  ENDDO
-  IF(.NOT. PRESENT(WriteCR)) THEN
-    WRITE(iFile,*)
-  ELSE
-    IF(WriteCR) WRITE(iFile,*)
-  ENDIF
+    if(vBool(I)) write(iFile,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),T_
+  end do
+  if(.not. present(WriteCR)) then
+    write(iFile,*)
+  else
+    if(WriteCR) write(iFile,*)
+  end if
 
-  RETURN
-ENDSUBROUTINE Equil_Write_EnTete
+  return
+end subroutine Equil_Write_EnTete
 
-SUBROUTINE Equil_Write_Detail(cSelec,TdgK,Pbar,vCpn)
+subroutine Equil_Write_Detail(cSelec,TdgK,Pbar,vCpn)
 !--
 !-- write detailed results for a single speciation
 !--
-  USE M_Numeric_Tools !->CalcPermut
-  USE M_IoTools !GetUnit
-  USE M_Files,       ONLY: DirOut,cTitle,File_Write_Date_Time,Files_Index_Write
-  USE M_Dtb_Const,   ONLY: T_CK, R_JK, F_JV
-  USE M_Numeric_Const,ONLY: MinExpDP,MaxExpDP,Ln10
-  USE M_T_Species,   ONLY: T_Species
-  USE M_T_Component, ONLY: T_Component
-  USE M_SolModel_Tools,ONLY: Solmodel_CalcMolal,Solmodel_pHpE
-  USE M_Basis,       ONLY: Basis_CpnInert,Basis_Change
+  use M_Numeric_Tools !->CalcPermut
+  use M_IoTools !GetUnit
+  use M_Files,       only: DirOut,cTitle,File_Write_Date_Time,Files_Index_Write
+  use M_Dtb_Const,   only: T_CK, R_JK, F_JV
+  use M_Numeric_Const,only: MinExpDP,MaxExpDP,Ln10
+  use M_T_Species,   only: T_Species
+  use M_T_Component, only: T_Component
+  use M_SolModel_Tools,only: Solmodel_CalcMolal,Solmodel_pHpE
+  use M_Basis,       only: Basis_CpnInert,Basis_Change
   !
-  USE M_Global_Vars, ONLY: vSpc,vSpcDtb,vEle,nAq
-  USE M_Global_Vars, ONLY: vFas,vMixFas,vMixModel
-  USE M_Basis_Vars,  ONLY: iH_,iBal,isW,MWsv,iOx,isH_,isO2,tStoikio
-  USE M_Basis_Vars,  ONLY: vOrdPr,tAlfFs,tNuFas
+  use M_Global_Vars, only: vSpc,vSpcDtb,vEle,nAq
+  use M_Global_Vars, only: vFas,vMixFas,vMixModel
+  use M_Basis_Vars,  only: iH_,iBal,isW,MWsv,iOx,isH_,isO2,tStoikio
+  use M_Basis_Vars,  only: vOrdPr,tAlfFs,tNuFas
+  !----------------------------------------------------------------inout
+  character(len=3), intent(in):: cSelec
+  real(dp),         intent(in):: TdgK,Pbar
+  type(T_Component),intent(in):: vCpn(:)
+  !---------------------------------------------------------------/inout
+  type(T_Species)  :: S
+  character(len=80):: Str1,Str2
+  character(len=80):: strFile
+  integer :: nCp,nFs,nSp,nPur
+  integer :: iPr,iAq,iFs,fo,J,K,iModel
+  real(dp):: IonStr
+  real(dp):: X,Y,Affin,pH_,pE_,Eh_
+  real(dp):: Z_Plus,Z_Minus
+  logical,parameter:: ReportMajorOnly= .false.
   !
-  CHARACTER(LEN=3), INTENT(IN):: cSelec
-  REAL(dp),         INTENT(IN):: TdgK,Pbar
-  TYPE(T_Component),INTENT(IN):: vCpn(:)
+  integer, allocatable::vPrm(:),vPrmMs(:)
+  real(dp),allocatable::vMolal(:),vQsK(:)
   !
-  TYPE(T_Species)  :: S
-  CHARACTER(LEN=80):: Str1,Str2,Str
-  CHARACTER(LEN=80):: strFile
-  INTEGER :: nCp,nFs,nSp,nPur
-  INTEGER :: iPr,iAq,iFs,fo,J,K,iModel
-  REAL(dp):: IonStr
-  REAL(dp):: X,Y,Affin,pH_,pE_,Eh_
-  REAL(dp):: Z_Plus,Z_Minus
-  LOGICAL,PARAMETER:: ReportMajorOnly= .FALSE.
+  type(T_Component),dimension(:),allocatable:: vCpnInert
+  ! type(T_Component),dimension(:),allocatable:: vC
   !
-  INTEGER, ALLOCATABLE::vPrm(:),vPrmMs(:)
-  REAL(dp),ALLOCATABLE::vMolal(:),vQsK(:)
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Write_Detail"
   !
-  TYPE(T_Component),DIMENSION(:),ALLOCATABLE:: vCpnInert
-  ! TYPE(T_Component),DIMENSION(:),ALLOCATABLE:: vC
+  nCp=size(vCpn)
+  nSp=size(vSpc)
+  nFs=size(vFas)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Write_Detail"
-  !
-  nCp=SIZE(vCpn)
-  nSp=SIZE(vSpc)
-  nFs=SIZE(vFas)
-  !
-  ALLOCATE(vPrm(nAq))
-  ALLOCATE(vMolal(nAq))
+  allocate(vPrm(nAq))
+  allocate(vMolal(nAq))
   !
   Z_Plus= SUM(vSpc(1:nAq)%Dat%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z >0))
   Z_Minus=SUM(vSpc(1:nAq)%Dat%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z <0))
   !
-  CALL Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
-  CALL Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  call Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
+  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
   !
-  SELECT CASE(TRIM(cSelec))
-  CASE("SPC")  ;  strFile="_specia.res"
-  CASE("MIX")  ;  strFile="_specia_mix.res"
-  CASE("BOX")  ;  strFile="_specia_box.res"
-  CASE("INJ")  ;  strFile="_specia_inj.res"
-  CASE("INI")  ;  strFile="_specia_ini.res"
-  CASE("DYN")  ;  strFile="_specia_end.res"
-  CASE("EQ1","EQ2","EQM")  ; strFile="_equil.res"
-  ENDSELECT
+  select case(trim(cSelec))
+  case("SPC")  ;  strfile="_specia.res"
+  case("MIX")  ;  strfile="_specia_mix.res"
+  case("BOX")  ;  strfile="_specia_box.res"
+  case("INJ")  ;  strfile="_specia_inj.res"
+  case("INI")  ;  strfile="_specia_ini.res"
+  case("DYN")  ;  strfile="_specia_end.res"
+  case("EQ1","EQ2","EQM")  ; strfile="_equil.res"
+  end select
   !
-  CALL GetUNit(fo)
-  OPEN(fo,FILE=TRIM(DirOut)//TRIM(strFile))
+  call GetUNit(fo)
+  open(fo,file=trim(DirOut)//trim(strFile))
 
-  CALL Files_Index_Write(fHtm,&
-  & TRIM(DirOut)//TRIM(strFile),&
+  call Files_Index_Write(fHtm,&
+  & trim(DirOut)//trim(strFile),&
   & "SPC/EQU: result of speciation or equilibrium")
   !
-  CALL File_Write_Date_Time(fo)
+  call File_Write_Date_Time(fo)
   !
-  WRITE(fo,'(A)') "!."//TRIM(cTitle)
+  write(fo,'(A)') "!."//trim(cTitle)
   !
-  SELECT CASE(TRIM(cSelec))
-    CASE("EQ1","EQ2","EQM")
-      WRITE(fo,'(A)') "!.fluid in equilibrium with other phases"
-    CASE("SPC")
-      WRITE(fo,'(A)') "!.fluid speciation (before interaction)"
-    CASE("DYN")
-      WRITE(fo,'(A)') "!.fluid speciation (after interaction)"
-    CASE("INI")
-      WRITE(fo,'(A)') "!.fluid speciation (begin interaction)"
-    CASE("MIX")
-      WRITE(fo,'(A)') "!.fluid speciation of mixing fluid"
-  ENDSELECT
+  select case(trim(cSelec))
+  case("EQ1","EQ2","EQM")
+    write(fo,'(A)') "!.fluid in equilibrium with other phases"
+  case("SPC")
+    write(fo,'(A)') "!.fluid speciation (before interaction)"
+  case("DYN")
+    write(fo,'(A)') "!.fluid speciation (after interaction)"
+  case("INI")
+    write(fo,'(A)') "!.fluid speciation (begin interaction)"
+  case("MIX")
+    write(fo,'(A)') "!.fluid speciation of mixing fluid"
+  end select
   !
-  !WRITE(fo,'(A)') "INPUT="//TRIM(NamFInn)
+  !write(fo,'(A)') "INPUT="//trim(NamFInn)
   !-------------------------------------------------write Charge Balance
   X= Zero
-  IF(Z_Plus - Z_Minus > EPSILON(X)) X= (Z_Plus + Z_Minus)/(Z_Plus - Z_Minus)
-  WRITE(fo,'(/,A)') &
+  if(Z_Plus - Z_Minus > EPSILON(X)) X= (Z_Plus + Z_Minus)/(Z_Plus - Z_Minus)
+  write(fo,'(/,A)') &
   & "Charge balance, sum(+), sum(-), delta/sum"
-  WRITE(fo,'(3G15.6,/)') Z_Plus,Z_Minus,X
+  write(fo,'(3G15.6,/)') Z_Plus,Z_Minus,X
   !
-  IF(iBal==0 .AND. vCpn(iH_)%Statut/="INERT") &
-  & WRITE(fo,'(A,/,A,/,A)') &
+  if(iBal==0 .and. vCpn(iH_)%Statut/="INERT") &
+  & write(fo,'(A,/,A,/,A)') &
   & "!!!", &
   & "!CAVEAT! NO Element For Electron Balance -> ELECTRONEUTRALITY NOT ENFORCED", &
   & "!!!"
   !--/
   
   !---------------------------------------------------GLOBAL COMPOSITION
-  ALLOCATE(vCpnInert(1:nCp))
-  CALL Basis_CpnInert(isW,tStoikio,vCpn,vCpnInert)
+  allocate(vCpnInert(1:nCp))
+  call Basis_CpnInert(isW,tStoikio,vCpn,vCpnInert)
   !
-  WRITE(fo,'(A,/,A,/,A)') &
+  write(fo,'(A,/,A,/,A)') &
   & "!-----------------------------------------------------------------------", &
   & "!--fluid composition, mole nr / kgH2O-----------------------------------", &
   & "!--can be used as SYSTEM for a new all-inert run------------------------"
-  WRITE(fo,'(2X,A,G15.6)') "TdgC  ",TdgK-T_CK
-  WRITE(fo,'(2X,A,G15.6)') "Pbar  ",Pbar
-  DO iPr=1,SIZE(vCpn)
-    WRITE(fo,'(2X,3(A,1X),G15.6)') &
+  write(fo,'(2X,A,G15.6)') "TdgC  ",TdgK-T_CK
+  write(fo,'(2X,A,G15.6)') "Pbar  ",Pbar
+  do iPr=1,size(vCpn)
+    write(fo,'(2X,3(A,1X),G15.6)') &
     & vEle(vCpnInert(iPr)%iEle)%NamEl, &
     & "INERT", &
     & vSpc(vCpnInert(iPr)%iSpc)%NamSp,&
     & vCpnInert(iPr)%Mole /MWsv /vCpnInert(isW)%Mole
-  ENDDO
-  WRITE(fo,'(A,/)') &
+  end do
+  write(fo,'(A,/)') &
   & "!-----------------------------------------------------------------------"
   !
-  DEALLOCATE(vCpnInert)
+  deallocate(vCpnInert)
   !
-  IF(cSelec(1:2)=="EQ") THEN
+  if(cSelec(1:2)=="EQ") then
 
-    WRITE(fo,'(A,/,A)') "!","!total composition"
-    !WRITE(fo,'(A)') "!can be used as input for fluid mixing"
-    DO iPr=1,SIZE(vCpn)
+    write(fo,'(A,/,A)') "!","!total composition"
+    !write(fo,'(A)') "!can be used as input for fluid mixing"
+    do iPr=1,size(vCpn)
       X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) &
-      +  SUM(tAlfFs(iPr,1:nFs) *vFas(1:nFs)%Mole)
-      WRITE(fo,'(A,2(A1,G24.17))') vEle(vCpn(iPr)%iEle)%NamEl,T_,X !,T_,Y
-    ENDDO
+      +  SUM(tAlfFs(iPr,1:nFs) *vFas(1:nFs)%MolFs)
+      write(fo,'(A,2(A1,G24.17))') vEle(vCpn(iPr)%iEle)%NamEl,T_,X !,T_,Y
+    end do
 
-  ENDIF
+  end if
   !--------------------------------------------------/GLOBAL COMPOSITION
   !
   !--------------------------------------------------ELEMENTS,COMPONENTS
-  WRITE(fo,'(A)') &
+  write(fo,'(A)') &
   & "!-----------------------------------------------------------------------"
-  WRITE(fo,'(A)') "!element, status, mole balance, mole number, mg/kg"
+  write(fo,'(A)') "!element, status, mole balance, mole number, mg/kg"
   !
-  DO iPr=1,SIZE(vCpn)
+  do iPr=1,size(vCpn)
     !
     X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> abundance in fluid
     Y= X *vEle(vCpn(iPr)%iEle)%WeitKg *1.D6 !-> kg to mg
@@ -241,532 +241,531 @@ SUBROUTINE Equil_Write_Detail(cSelec,TdgK,Pbar,vCpn)
     !  seems it is the input value ....
     !---/
 
-    WRITE(fo,'(I3,A1,2(A,A1),3(G15.8,A1))',ADVANCE="NO") &
+    write(fo,'(I3,A1,2(A,A1),3(G15.8,A1))',advance="NO") &
     & iPr,                       T_, &
     & vEle(vCpn(iPr)%iEle)%NamEl,T_, &
     & vCpn(iPr)%Statut,          T_, &
     & vCpn(iPr)%Mole,            T_, &
     & X,T_,Y,T_
     !
-    !IF(vCpn(iPr)%Statut=="MOBILE") & !
-    IF(    TRIM(vCpn(iPr)%Statut)=="MOBILE" &
-    & .OR. TRIM(vCpn(iPr)%Statut)=="BUFFER") &
-    & WRITE(fo,'(G15.6,A1,A,A1)',ADVANCE="NO") &
-    & EXP(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),T_,vSpc(vCpn(iPr)%iSpc)%NamSp,T_
+    !if(vCpn(iPr)%Statut=="MOBILE") & !
+    if(    trim(vCpn(iPr)%Statut)=="MOBILE" &
+    & .or. trim(vCpn(iPr)%Statut)=="BUFFER") &
+    & write(fo,'(G15.6,A1,A,A1)',advance="NO") &
+    & exp(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),T_,vSpc(vCpn(iPr)%iSpc)%NamSp,T_
     !
-    WRITE(fo,*)
+    write(fo,*)
     !
-  ENDDO
+  end do
   !
   !-------------------------------------------------/ELEMENTS,COMPONENTS
   
   !--------------------------------------------------------------pH, etc
-  WRITE(fo,'(A)') &
+  write(fo,'(A)') &
   & "!-----------------------------------------------------------------------"
-  WRITE(fo,'(A,G12.3)') "pH=         ",pH_ !vSpc(isH_)%LnAct/Ln10
-  IF(iOx>0) THEN
+  write(fo,'(A,G12.3)') "pH=         ",pH_ !vSpc(isH_)%LnAct/Ln10
+  if(iOx>0) then
     Eh_= pE_ *TdgK *Ln10 *R_JK /F_JV
-    WRITE(fo,'(A,G12.3)') "pE=         ",pE_
-    WRITE(fo,'(A,G12.3)') "Eh(Volts)=  ",Eh_
-  ENDIF
-  WRITE(fo,'(A12,G12.3)')            "IonStrength=",IonStr
+    write(fo,'(A,G12.3)') "pE=         ",pE_
+    write(fo,'(A,G12.3)') "Eh(Volts)=  ",Eh_
+  end if
+  write(fo,'(A12,G12.3)')            "IonStrength=",IonStr
   !------------------------------------------------------------/ pH, etc
   
   !---------------------------------------------------EQUILIBRIUM.PHASES
-  IF(cSelec(1:2)=="EQ") THEN
+  if(cSelec(1:2)=="EQ") then
     !
-    WRITE(fo,'(A)') &
+    write(fo,'(A)') &
     & "!-----------------------------------------------------------------------"
 
-    WRITE(fo,'(A)') "Equilibrium Species (result of Equil_n)"
+    write(fo,'(A)') "Equilibrium Species (result of Equil_n)"
 
-    DO iFs=1,SIZE(vFas)
+    do iFs=1,size(vFas)
 
-      IF(vFas(iFs)%Mole > Zero) THEN
+      if(vFas(iFs)%MolFs > Zero) then
 
-        WRITE(fo,'(2A,G15.6)', ADVANCE="NO") &
-        & vFas(iFs)%NamFs," MOLE=",vFas(iFs)%Mole
+        write(fo,'(2A,G15.6)', advance="NO") &
+        & vFas(iFs)%NamFs," MOLE=",vFas(iFs)%MolFs
 
-        IF(vFas(iFs)%iMix>0) THEN
-          WRITE(fo,'(A)',ADVANCE="NO") " X(:)="
+        if(vFas(iFs)%iMix>0) then
+          write(fo,'(A)',advance="NO") " X(:)="
           !print *, "vFas(iFs)%iMix",vFas(iFs)%iMix
           !pause
           iModel= vMixFas(vFas(iFs)%iMix)%iModel
           !print *, "iModel, nPole=",iModel,vMixModel(iModel)%nPole
           !pause
-          DO J=1,vMixModel(iModel)%nPole
-            WRITE(fo,'(G15.6,1X)',ADVANCE="NO") &
+          do J=1,vMixModel(iModel)%nPole
+            write(fo,'(G15.6,1X)',advance="NO") &
             & vMixFas(vFas(iFs)%iMix)%vXPole(J)
-          ENDDO
-        ENDIF
-        WRITE(fo,*)
+          end do
+        end if
+        write(fo,*)
 
-      ENDIF
+      end if
 
-    ENDDO
+    end do
 
-    WRITE(fo,'(A)') &
+    write(fo,'(A)') &
     & "!-----------------------------------------------------------------------"
 
     !-------------------------------------------------------------header
-    WRITE(fo,'(A7,A1)', ADVANCE="NO") "Element",T_
-    WRITE(fo,'(A15,A1)',ADVANCE="NO") "Fluid          ",T_
-    DO iFs=1,nFs
-      IF(vFas(iFs)%Mole > Zero) &
-      WRITE(fo,'(A15,A1)',ADVANCE="NO") vFas(iFs)%NamFs,T_
-    ENDDO
-    WRITE(fo,*)
+    write(fo,'(A7,A1)', advance="NO") "Element",T_
+    write(fo,'(A15,A1)',advance="NO") "Fluid          ",T_
+    do iFs=1,nFs
+      if(vFas(iFs)%MolFs > Zero) &
+      write(fo,'(A15,A1)',advance="NO") vFas(iFs)%NamFs,T_
+    end do
+    write(fo,*)
     !------------------------------------------------------------------/
 
     !--------------results: distribution of element amounts among phases
-    DO iPr=1,SIZE(vCpn)
-      WRITE(fo,'(A7,A1)',ADVANCE="NO") vEle(vCpn(iPr)%iEle)%NamEl,T_
+    do iPr=1,size(vCpn)
+      write(fo,'(A7,A1)',advance="NO") vEle(vCpn(iPr)%iEle)%NamEl,T_
       X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
-      WRITE(fo,'(G15.6,A1)',ADVANCE="NO") X,T_
-      DO iFs=1,nFs
-        IF(vFas(iFs)%Mole > Zero .AND. vFas(iFs)%iSpc/=0) THEN
-          !!!toDO!!! PRINT *,vFas(iFs)%NamFs
-          WRITE(fo,'(G15.6,A1)',ADVANCE="NO") &
-          & tStoikio(iPr,vFas(iFs)%iSpc)*vFas(iFs)%Mole,T_
-        ENDIF
-      ENDDO
-      WRITE(fo,*)
-    ENDDO
+      write(fo,'(G15.6,A1)',advance="NO") X,T_
+      do iFs=1,nFs
+        if(vFas(iFs)%MolFs > Zero .and. vFas(iFs)%iSpc/=0) then
+          !!!todo!!! print *,vFas(iFs)%NamFs
+          write(fo,'(G15.6,A1)',advance="NO") &
+          & tStoikio(iPr,vFas(iFs)%iSpc)*vFas(iFs)%MolFs,T_
+        end if
+      end do
+      write(fo,*)
+    end do
     !------------------------------------------------------------------/
 
-    WRITE(fo,'(A)') &
+    write(fo,'(A)') &
     & "!-----------------------------------------------------------------------"
 
-    WRITE(fo,'(A)') "Fluid Composition"
-    DO iPr=1,SIZE(vCpn)
+    write(fo,'(A)') "Fluid Composition"
+    do iPr=1,size(vCpn)
       X=SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
-      WRITE(fo,'(I3,A1,2(A,A1),G15.6,A1)',ADVANCE="NO") &
+      write(fo,'(I3,A1,2(A,A1),G15.6,A1)',advance="NO") &
       & iPr,T_, vEle(vCpn(iPr)%iEle)%NamEl,T_, vCpn(iPr)%Statut,T_,X,T_
-      !IF(TRIM(vCpn(iPr)%Statut)=="MOBILE") &!
-      IF(TRIM(vCpn(iPr)%Statut)=="MOBILE" .OR. &
-      &  TRIM(vCpn(iPr)%Statut)=="BUFFER") &
-      & WRITE(fo,'(G15.6,A1,A,A1)',ADVANCE="NO") &
-      & EXP(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),T_,vSpc(vCpn(iPr)%iSpc)%NamSp,T_
-      WRITE(fo,*)
-    ENDDO
+      !if(trim(vCpn(iPr)%Statut)=="MOBILE") &!
+      if(trim(vCpn(iPr)%Statut)=="MOBILE" .or. &
+      &  trim(vCpn(iPr)%Statut)=="BUFFER") &
+      & write(fo,'(G15.6,A1,A,A1)',advance="NO") &
+      & exp(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),T_,vSpc(vCpn(iPr)%iSpc)%NamSp,T_
+      write(fo,*)
+    end do
 
-    WRITE(fo,'(A)') &
+    write(fo,'(A)') &
     & "!-----------------------------------------------------------------------"
 
-  ENDIF !(cSelec=="EQ*")
+  end if !(cSelec=="EQ*")
   !--------------------------------------------------/EQUILIBRIUM.PHASES
   !
   !--- order species --
-  CALL CalcPermut(vSpc(1:nAq)%Dat%Mole,vPrm)
+  call CalcPermut(vSpc(1:nAq)%Dat%Mole,vPrm)
   !-> order species by increasing abundance
   !to apply permutation vPermut to array Arr: Arr=Arr(vPermut)
   !---/
   !
   !----------------------------------------------------------AQU.SPECIES
-  WRITE(fo,'(A)') &
+  write(fo,'(A)') &
   & "!-----------------------------------------------------------------------"
-  WRITE(fo,'(A)') "All Species, in order of decreasing Mole number"
+  write(fo,'(A)') "All Species, in order of decreasing Mole number"
   !
-  WRITE(fo,'(A15,A1)',   ADVANCE='NO') "________SPECIES",T_
-  WRITE(fo,'(2(A12,A1))',ADVANCE='NO') "_MOLE_NUMBER",T_,"_MOLALITY___",T_
-  WRITE(fo,'(2(A12,A1))',ADVANCE='NO') "_LOG(GAMMA)_",T_,"_GAMMA______",T_
-  WRITE(fo,'(2(A12,A1))',ADVANCE='NO') "LOG(ACTIVIT)",T_,"_ACTIVITY___",T_
-  WRITE(fo,*)
+  write(fo,'(A15,A1)',   advance="no") "________SPECIES",T_
+  write(fo,'(2(A12,A1))',advance="no") "_MOLE_NUMBER",T_,"_MOLALITY___",T_
+  write(fo,'(2(A12,A1))',advance="no") "_log(GAMMA)_",T_,"_GAMMA______",T_
+  write(fo,'(2(A12,A1))',advance="no") "log(ACTIVIT)",T_,"_ACTIVITY___",T_
+  write(fo,*)
   !
   !-----------------------------------------ordered in decreasing amount
-  !DO iPr=1,nCp
+  !do iPr=1,nCp
 
-    DO iAq=nAq,1,-1
+    do iAq=nAq,1,-1
 
       S= vSpc(vPrm(iAq))
       X= S%Dat%Mole /vSpc(isW)%Dat%Mole /vSpc(isW)%WeitKg
       !-> X is molality
 
-      WRITE(fo,'(A15,A1)',ADVANCE='NO')  TRIM(S%NamSp),T_
+      write(fo,'(A15,A1)',advance="no")  trim(S%NamSp),T_
 
-      WRITE(fo,'(5(G12.5,A1))',ADVANCE='NO') &
+      write(fo,'(5(G12.5,A1))',advance="no") &
       & S%Dat%Mole,      T_, &
       & X,               T_, &
       & S%Dat%LGam/Ln10, T_, &
-      & EXP(S%Dat%LGam), T_, &
+      & exp(S%Dat%LGam), T_, &
       & S%Dat%LAct/Ln10, T_
 
-      IF(S%Dat%LAct>MinExpDP .AND. S%Dat%LAct<MaxExpDP) THEN
-        WRITE(fo,'(G12.5,A1)') EXP(S%Dat%LAct),T_
-      ELSE
-        WRITE(fo,*)
-      ENDIF
+      if(S%Dat%LAct>MinExpDP .and. S%Dat%LAct<MaxExpDP) then
+        write(fo,'(G12.5,A1)') exp(S%Dat%LAct),T_
+      else
+        write(fo,*)
+      end if
 
-    ENDDO
+    end do
 
-  !ENDDO
-  WRITE(fo,*)
+  !end do
+  write(fo,*)
   !---------------------------------------------------------/AQU.SPECIES
 
   !-----------------------------------------------------RELATIVE AMOUNTS
-  WRITE(fo,'(/,2A,/)') &
+  write(fo,'(/,2A,/)') &
   & "for each Element, Species in order of decreasing Mole number", &
   & "Relative Amounts in Permil of Total Amount"
-  WRITE(fo,*)
+  write(fo,*)
   !
-  WRITE(fo,'(A15,A1,A7,A1)',ADVANCE='NO')  &
+  write(fo,'(A15,A1,A7,A1)',advance="no")  &
   & "________ELEMENT",T_,"_STOKIO",T_
-  WRITE(fo,'(7(A15,A1))',   ADVANCE='NO')  &
+  write(fo,'(7(A15,A1))',   advance="no")  &
   & "________SPECIES",T_, &
   & "RELATIVE_AMOUNT",T_,"_______MOLALITY",T_,"___MOLE_NUMBER_",T_, &
-  & "____ACTIV_COEFF",T_,"__LOG(ACTIVITY)",T_,"_______ACTIVITY",T_
-  WRITE(fo,*)
+  & "____ACTIV_COEFF",T_,"__log(ACTIVITY)",T_,"_______ACTIVITY",T_
+  write(fo,*)
   !
-  DO iPr=2,nCp
+  do iPr=2,nCp
     !
-    WRITE(fo,'(A15,A1,A7,A1,A15,A1,F15.3)') &
+    write(fo,'(A15,A1,A7,A1,A15,A1,F15.3)') &
     & vEle(vCpn(iPr)%iEle)%NamEl,T_, &
     & "___",                    T_, &
     & "        TOT=",           T_, &
     & vCpn(iPr)%Mole
     !
-    DO iAq=nAq,1,-1
+    do iAq=nAq,1,-1
 
-      IF(tStoikio(iPr,vPrm(iAq))/=0) THEN
+      if(tStoikio(iPr,vPrm(iAq))/=0) then
         S= vSpc(vPrm(iAq))
         !
         X= 1000.0D0 *ABS(tStoikio(iPr,vPrm(iAq))) *S%Dat%Mole &
         &  /SUM(tStoikio(iPr,:)*vSpc(:)%Dat%Mole)
         !
-        WRITE(fo,'(A15,A1,F7.2,A1)',ADVANCE='NO') &
+        write(fo,'(A15,A1,F7.2,A1)',advance="no") &
         & vEle(vCpn(iPr)%iEle)%NamEl, T_, &
         & tStoikio(iPr,vPrm(iAq)),   T_
-        WRITE(fo,'(A15,A1)',     ADVANCE='NO') TRIM(S%NamSp),T_
-        WRITE(fo,'(5(G15.6,A1))',ADVANCE='NO') &
+        write(fo,'(A15,A1)',     advance="no") trim(S%NamSp),T_
+        write(fo,'(5(G15.6,A1))',advance="no") &
         & X,                T_, &
         & vMolal(vPrm(iAq)),T_, &
         & S%Dat%Mole,       T_, &
-        & EXP(S%Dat%LGam),  T_, &
+        & exp(S%Dat%LGam),  T_, &
         & S%Dat%LAct/Ln10
         !
-        IF(S%Dat%LAct>MinExpDP .AND. S%Dat%LAct<MaxExpDP) THEN
-          WRITE(fo,'(G15.6,A1)') EXP(S%Dat%LAct),T_
-        ELSE
-          WRITE(fo,*)
-        ENDIF
+        if(S%Dat%LAct>MinExpDP .and. S%Dat%LAct<MaxExpDP) then
+          write(fo,'(G15.6,A1)') exp(S%Dat%LAct),T_
+        else
+          write(fo,*)
+        end if
         !
-      ENDIF
+      end if
 
-    ENDDO
+    end do
     !
-    WRITE(fo,'(A)') &
+    write(fo,'(A)') &
     & "!-----------------------------------------------------------------------"
     !
-  ENDDO
+  end do
   !----------------------------------------------------/RELATIVE AMOUNTS
 
   !--------------------------------------------RELATIVE AMOUNTS (MAJORS)
-  IF(ReportMajorOnly) THEN
+  if(ReportMajorOnly) then
     !
-    WRITE(fo,'(/,A,/)') & !the same, ONLY major species ....
-    & "for each Element, Species in order of decreasing Mole number, ONLY Major"
+    write(fo,'(/,A,/)') & !the same, only major species ....
+    & "for each Element, Species in order of decreasing Mole number, only Major"
     !
-    DO iPr=2,nCp
+    do iPr=2,nCp
 
-      WRITE(fo,'(A12,A1,A3,A1,A12,A1,F15.3)') &
+      write(fo,'(A12,A1,A3,A1,A12,A1,F15.3)') &
       & vEle(vCpn(iPr)%iEle)%NamEl,T_, &
       & "___",                     T_, &
       & "        TOT=",            T_, &
       & vCpn(iPr)%Mole
 
-      DO iAq=nAq,1,-1
+      do iAq=nAq,1,-1
 
-        IF(tStoikio(iPr,vPrm(iAq))/=0) THEN
+        if(tStoikio(iPr,vPrm(iAq))/=0) then
           S=vSpc(vPrm(iAq))
           X=1.0D3 *ABS(tStoikio(iPr,vPrm(iAq))) &
           &       *S%Dat%Mole &
           &       /SUM(tStoikio(iPr,:)*vSpc(:)%Dat%Mole)
-          IF(X>=10.0D0) THEN
-            WRITE(fo,'(A12,A1,F7.2,A1)',    ADVANCE='NO') &
+          if(X>=10.0D0) then
+            write(fo,'(A12,A1,F7.2,A1)',    advance="no") &
             & vEle(vCpn(iPr)%iEle)%NamEl, T_, &
             & tStoikio(iPr,vPrm(iAq)),   T_
-            WRITE(fo,'(A12,A1)',            ADVANCE='NO') &
-            & TRIM(S%NamSp),T_
-            WRITE(fo,'(F15.3, A1,F15.4,A1)',ADVANCE='NO') &
+            write(fo,'(A12,A1)',            advance="no") &
+            & trim(S%NamSp),T_
+            write(fo,'(F15.3, A1,F15.4,A1)',advance="no") &
             & X,                T_, &
             & vMolal(vPrm(iAq)),T_
-            WRITE(fo,'(F15.8, A1,G15.4,A1)',ADVANCE='NO') &
+            write(fo,'(F15.8, A1,G15.4,A1)',advance="no") &
             & S%Dat%Mole, T_, &
             & S%Dat%Mole, T_
-            WRITE(fo,'(G15.4,A1,G15.4,A1,G15.4)') &
-            & EXP(S%Dat%LGam),T_, &
-            & EXP(S%Dat%LAct),T_, &
+            write(fo,'(G15.4,A1,G15.4,A1,G15.4)') &
+            & exp(S%Dat%LGam),T_, &
+            & exp(S%Dat%LAct),T_, &
             & S%Dat%LAct/Ln10
-          ENDIF
-        ENDIF
+          end if
+        end if
 
-      ENDDO
+      end do
 
-    ENDDO
+    end do
     !
-  ENDIF
+  end if
   !-------------------------------------------/RELATIVE AMOUNTS (MAJORS)
   !
   !-------------------------------------------AFFINITIES PHASES vs FLUID
-  IF(nFs>0) THEN
+  if(nFs>0) then
     !
-    nPur= COUNT(vFas(:)%iSpc>0)
+    nPur= count(vFas(:)%iSpc>0)
     !
-    ALLOCATE(vQsK(1:nPur))
-    ALLOCATE(vPrmMs(1:nPur))
+    allocate(vQsK(1:nPur))
+    allocate(vPrmMs(1:nPur))
     !
-    WRITE(fo,'(/,A,/)') &
+    write(fo,'(/,A,/)') &
     & "logQsK, all non-aqueous phases, Minerals & Gases"
     !
     !--- calculate logQsk -> store in vQsk
-    DO iFs=1,nPur
+    do iFs=1,nPur
       Affin= vFas(iFs)%Grt &
-      &    - DOT_PRODUCT( tNuFas(iFs,1:nCp),  &
+      &    - dot_product( tNuFas(iFs,1:nCp),  &
       &        vSpc(vOrdPr(1:nCp))%Dat%LAct + vSpc(vOrdPr(1:nCp))%G0rt )
       vQsK(iFs)= - Affin /Ln10
-    ENDDO
+    end do
     !
     !-------------sort minerals in order of increasing saturation degree
-    CALL CalcPermut(vQsk(:),vPrmMs(:))
+    call CalcPermut(vQsk(:),vPrmMs(:))
     !
     !---------------------write sorted (in both F12.3 and G15.8 formats)
-    DO iFs=nPur,1,-1
+    do iFs=nPur,1,-1
       J=vPrmMs(iFs)
-      WRITE(fo,'(A24,A1,F12.3,A1,G15.8,A1)',ADVANCE='NO') &
-      & TRIM(vFas(J)%NamFs),T_,&
+      write(fo,'(A24,A1,F12.3,A1,G15.8,A1)',advance="no") &
+      & trim(vFas(J)%NamFs),T_,&
       & vQsk(J),T_,&
       & vQsk(J),T_
-      WRITE(fo,*)
-    ENDDO
+      write(fo,*)
+    end do
     !---/
     !
-    WRITE(fo,'(/,2(A,/))') &
+    write(fo,'(/,2(A,/))') &
     & "logQsK, all non-aqueous phases, Minerals & Gases", &
     & "scaled to stoichiometric numbers of moles of prim'species in reaction"
     !--- compute logQsk -> store in vQsk --
-    DO iFs=1,nPur
+    do iFs=1,nPur
       Affin= vFas(iFs)%Grt &
-      &    - DOT_PRODUCT( tNuFas(iFs,1:nCp), &
+      &    - dot_product( tNuFas(iFs,1:nCp), &
       &                   vSpc(vOrdPr(1:nCp))%Dat%LAct &
       &                   +vSpc(vOrdPr(1:nCp))%G0rt )
       vQsK(iFs)= -Affin /Ln10 /SUM(ABS(tNuFas(iFs,1:nCp)))
-    ENDDO
+    end do
     !---/
     !
     !---------------sort phases in order of increasing saturation degree
-    CALL CalcPermut(vQsk(:),vPrmMs(:))
+    call CalcPermut(vQsk(:),vPrmMs(:))
     !
     !---------------------write sorted (in both F12.3 and G15.8 formats)
-    DO iFs=nPur,1,-1
+    do iFs=nPur,1,-1
       J= vPrmMs(iFs)
-      !! IF(vFas(J)%iSpc/=0) THEN
+      !! if(vFas(J)%iSpc/=0) then
       Str1="_"
       Str2="_"
-      IF(vFas(J)%iSpc/=0) THEN
+      if(vFas(J)%iSpc/=0) then
         K= vFas(J)%iSpc
-        IF(vSpc(K)%iDtb>0) Str1= TRIM(vSpcDtb(vSpc(K)%iDtb)%DtbTrace)
-        IF(vSpc(K)%iDtb>0) Str2= TRIM(vSpc(K)%Formula)
-      ENDIF
-      WRITE(fo,'(A24,A1,F12.3,A1,G15.8,A1,A7,A1,A,A1)',ADVANCE='NO') &
-      & TRIM(vFas(J)%NamFs),T_, &
+        if(vSpc(K)%iDtb>0) Str1= trim(vSpcDtb(vSpc(K)%iDtb)%DtbTrace)
+        if(vSpc(K)%iDtb>0) Str2= trim(vSpc(K)%Formula)
+      end if
+      write(fo,'(A24,A1,F12.3,A1,G15.8,A1,A7,A1,A,A1)',advance="no") &
+      & trim(vFas(J)%NamFs),T_, &
       & vQsk(J),            T_, &
       & vQsk(J),            T_, &
-      & TRIM(Str1),         T_, &
-      & TRIM(Str2),         T_
-      WRITE(fo,*)
-    ENDDO
+      & trim(Str1),         T_, &
+      & trim(Str2),         T_
+      write(fo,*)
+    end do
     !---/
     !
-    DEALLOCATE(vQsK)
-    DEALLOCATE(vPrmMs)
+    deallocate(vQsK)
+    deallocate(vPrmMs)
     !
-  ENDIF !IF(nFs>0)
+  end if !if(nFs>0)
   !------------------------------------------/AFFINITIES PHASES vs FLUID
   !
-  DEALLOCATE(vPrm)
-  DEALLOCATE(vMolal)
+  deallocate(vPrm)
+  deallocate(vMolal)
   !
-  CLOSE(fo)
+  close(fo)
   !
-  IF(iDebug>0) THEN
-    PRINT '(/,A,/)',&
-    & "Speciation detail saved in file "//TRIM(DirOut)//TRIM(strFile)
-    IF(iDebug>1) CALL Pause_
-  ENDIF
+  if(iDebug>0) then
+    print '(/,A,/)',&
+    & "Speciation detail saved in file "//trim(DirOut)//trim(strFile)
+    if(iDebug>1) call Pause_
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Write_Detail"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Write_Detail"
   !
-ENDSUBROUTINE Equil_Write_Detail
+end subroutine Equil_Write_Detail
 
-SUBROUTINE Equil_Write_ShoDetail(cSelec,TdgK,Pbar,vCpn)
+subroutine Equil_Write_ShoDetail(cSelec,TdgK,Pbar,vCpn)
 !--
 !-- write detailed results for a single speciation
 !--
-  USE M_Numeric_Tools !->CalcPermut
-  USE M_IoTools !GetUnit
-  USE M_Files,       ONLY: DirOut,cTitle
+  use M_Numeric_Tools !->CalcPermut
+  use M_IoTools !GetUnit
   !
-  USE M_Dtb_Const,   ONLY: T_CK
-  USE M_Numeric_Const,ONLY: MinExpDP,MaxExpDP,Ln10
+  use M_Dtb_Const,   only: T_CK
+  use M_Numeric_Const,only: MinExpDP,MaxExpDP,Ln10
   !
-  USE M_SolModel_Tools,ONLY: Solmodel_CalcMolal,Solmodel_pHpE
+  use M_SolModel_Tools,only: Solmodel_CalcMolal,Solmodel_pHpE
   !
-  USE M_T_Component, ONLY: T_Component
-  USE M_T_Species,   ONLY: T_Species
+  use M_T_Component, only: T_Component
+  use M_T_Species,   only: T_Species
   !
-  USE M_Global_Vars, ONLY: vSpc,vEle,vFas,nAq
-  USE M_Basis_Vars,  ONLY: iH_,isW,iOx,isH_,isO2,MWsv
-  USE M_Basis_Vars,  ONLY: vOrdPr,tNuFas,tAlfFs,tStoikio
+  use M_Global_Vars, only: vSpc,vEle,vFas,nAq
+  use M_Basis_Vars,  only: isW,iOx,isH_,isO2
+  use M_Basis_Vars,  only: tAlfFs,tStoikio
   !
-  CHARACTER(LEN=3), INTENT(IN):: cSelec
-  REAL(dp),         INTENT(IN):: TdgK,Pbar
-  TYPE(T_Component),INTENT(IN):: vCpn(:)
+  character(len=3), intent(in):: cSelec
+  real(dp),         intent(in):: TdgK,Pbar
+  type(T_Component),intent(in):: vCpn(:)
   !
-  TYPE(T_Species):: S
-  INTEGER :: nCp,nFs,nSp
-  INTEGER :: iPr,iAq,iMs !,J
-  REAL(dp):: IonStr
-  REAL(dp):: X,pH_,pE_ !,Y,Affin
-  REAL(dp):: Z_Plus,Z_Minus
-  INTEGER :: vPrm(nAq)
-  REAL(dp):: vMolal(nAq)
+  type(T_Species):: S
+  integer :: nCp,nFs,nSp
+  integer :: iPr,iAq,iMs !,J
+  real(dp):: IonStr
+  real(dp):: X,pH_,pE_ !,Y,Affin
+  real(dp):: Z_Plus,Z_Minus
+  integer :: vPrm(nAq)
+  real(dp):: vMolal(nAq)
   !
-  INTEGER,PARAMETER:: FF= 6 != write on screen
+  integer,parameter:: FF= 6 != write on screen
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Write_ShoDetail"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Write_ShoDetail"
   !
-  nCp= SIZE(vCpn)
-  nSp= SIZE(vSpc)
-  nFs= SIZE(vFas)
-  nFs= COUNT(vFas(:)%iSpc>0)
+  nCp= size(vCpn)
+  nSp= size(vSpc)
+  nFs= size(vFas)
+  nFs= count(vFas(:)%iSpc>0)
   !
   Z_Plus= SUM(vSpc(1:nAq)%Dat%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z >0))
   Z_Minus=SUM(vSpc(1:nAq)%Dat%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z <0))
   !
-  CALL Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
-  CALL Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  call Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
+  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
   !
-  WRITE(FF,'(A)') "----------------------------------------------------"
-  WRITE(FF,'(A)') "----------------------------------------- results --"
-  WRITE(FF,'(A)') "----------------------------------------------------"
-  WRITE(FF,'(2(A,G15.6,A1))') "TdgC=",TdgK-T_CK,T_,"Pbar=",Pbar,T_
+  write(FF,'(A)') "----------------------------------------------------"
+  write(FF,'(A)') "----------------------------------------- results --"
+  write(FF,'(A)') "----------------------------------------------------"
+  write(FF,'(2(A,G15.6,A1))') "TdgC=",TdgK-T_CK,T_,"Pbar=",Pbar,T_
   !
   !---------------------------------------------------global composition
-  WRITE(FF,'(A)') "< --------------------- global composition (mole) --"
-  DO iPr=1,SIZE(vCpn)
+  write(FF,'(A)') "< --------------------- global composition (mole) --"
+  do iPr=1,size(vCpn)
     X=  SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) & !-> abundance in fluid
-    & + SUM(tAlfFs(iPr,1:nFs) *vFas(1:nFs)%Mole)
-    WRITE(FF,'(A,A1,G15.6)') vEle(vCpn(iPr)%iEle)%NamEl,T_,X
-  ENDDO
-  WRITE(FF,'(A)') "</--"
-  WRITE(FF,*)
+    & + SUM(tAlfFs(iPr,1:nFs) *vFas(1:nFs)%MolFs)
+    write(FF,'(A,A1,G15.6)') vEle(vCpn(iPr)%iEle)%NamEl,T_,X
+  end do
+  write(FF,'(A)') "</--"
+  write(FF,*)
 
   !----------------------------------------------------fluid composition
-  WRITE(FF,'(A)') "< ---------------- fluid composition (mole|activ) --"
-  DO iPr=1,SIZE(vCpn)
+  write(FF,'(A)') "< ---------------- fluid composition (mole|activ) --"
+  do iPr=1,size(vCpn)
     !
-    WRITE(FF,'(I3,1X,2(A,A1))',ADVANCE="NO") &
+    write(FF,'(I3,1X,2(A,A1))',advance="NO") &
     & iPr,vEle(vCpn(iPr)%iEle)%NamEl,T_,vCpn(iPr)%Statut,T_
     !
-    IF(TRIM(vCpn(iPr)%Statut)=="MOBILE" .OR. &
-    &  TRIM(vCpn(iPr)%Statut)=="BUFFER") THEN
+    if(trim(vCpn(iPr)%Statut)=="MOBILE" .or. &
+    &  trim(vCpn(iPr)%Statut)=="BUFFER") then
 
       !------for MOBILE/BUFFER comp't print activity and related species
-      WRITE(FF,'(G15.6,A1,A)') &
-      & EXP(vSpc(vCpn(iPr)%iSpc)%Dat%LAct), T_, &
+      write(FF,'(G15.6,A1,A)') &
+      & exp(vSpc(vCpn(iPr)%iSpc)%Dat%LAct), T_, &
       & vSpc(vCpn(iPr)%iSpc)%NamSp
 
-    ELSE
+    else
 
       !---------------------for INERT/BALANCE species, print mole number
       X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
-      WRITE(FF,'(G15.6,A1,G15.6)') vCpn(iPr)%Mole,T_,X
+      write(FF,'(G15.6,A1,G15.6)') vCpn(iPr)%Mole,T_,X
 
-    ENDIF
+    end if
     !
-  ENDDO
-  WRITE(FF,'(A)') "</--"
-  WRITE(FF,*)
+  end do
+  write(FF,'(A)') "</--"
+  write(FF,*)
 
   !---------------------------------------------------------------------
-  WRITE(FF,'(A)') "< ----------------------- neutrality, pH, pE, ... --"
+  write(FF,'(A)') "< ----------------------- neutrality, pH, pE, ... --"
   !
-  WRITE(FF,'(3(A,G15.6,/))') &
+  write(FF,'(3(A,G15.6,/))') &
   & "  Sum(+)=     ", Z_Plus,    &
   & "  Sum(-)=     ", Z_Minus,   &
   & "  Balance=    ", ABS(Z_Plus + Z_Minus)
   !
-  WRITE(FF,'(A,G12.3)')           "  pH=         ",pH_ !vSpc(isH_)%LnAct/Ln10
-  IF(iOx>0) WRITE(FF,'(A,G12.3)') "  pE=         ",pE_
-  WRITE(FF,'(A,G12.3)')           "  IonStrength=",IonStr
+  write(FF,'(A,G12.3)')           "  pH=         ",pH_ !vSpc(isH_)%LnAct/Ln10
+  if(iOx>0) write(FF,'(A,G12.3)') "  pE=         ",pE_
+  write(FF,'(A,G12.3)')           "  IonStrength=",IonStr
   !
-  WRITE(FF,'(A)') "</-- " !neutrality, pH, pE, ... --"
-  WRITE(FF,*)
+  write(FF,'(A)') "</-- " !neutrality, pH, pE, ... --"
+  write(FF,*)
 
   !-------------------------------------------------for equilibrium runs
-  IF(cSelec(1:2)=="EQ") THEN
+  if(cSelec(1:2)=="EQ") then
 
-    WRITE(FF,'(A)') "< ------------------------- equilibrium results --"
+    write(FF,'(A)') "< ------------------------- equilibrium results --"
     !
-    WRITE(FF,'(A)') "------------------------------- minerals, gases --"
-    DO iMs=1,SIZE(vFas)
-      IF(vFas(iMs)%Mole > Zero) &
-      WRITE(FF,'(G15.6,2A)') vFas(iMs)%Mole,"= ",TRIM(vFas(iMs)%NamFs)
-    ENDDO
-    WRITE(FF,'(A)') "--"
+    write(FF,'(A)') "------------------------------- minerals, gases --"
+    do iMs=1,size(vFas)
+      if(vFas(iMs)%MolFs > Zero) &
+      write(FF,'(G15.6,2A)') vFas(iMs)%MolFs,"= ",trim(vFas(iMs)%NamFs)
+    end do
+    write(FF,'(A)') "--"
     !
-    WRITE(FF,'(A)') "----------------------------------------- fluid --"
-    DO iPr=1,SIZE(vCpn)
+    write(FF,'(A)') "----------------------------------------- fluid --"
+    do iPr=1,size(vCpn)
       !
       X=SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
-      WRITE(FF,'(I3,A1,2(A,A1),G15.8,A1)',ADVANCE="NO") &
+      write(FF,'(I3,A1,2(A,A1),G15.8,A1)',advance="NO") &
       & iPr,                                        T_, &
       & vEle(vCpn(iPr)%iEle)%NamEl,                 T_, &
       & vCpn(iPr)%Statut,                           T_, &
       & X,                                          T_
-      !IF(TRIM(vCpn(iPr)%Statut)=="MOBILE") & !
+      !if(trim(vCpn(iPr)%Statut)=="MOBILE") & !
       !
-      IF(TRIM(vCpn(iPr)%Statut)=="MOBILE" .OR. &
-      &  TRIM(vCpn(iPr)%Statut)=="BUFFER") &
-      & WRITE(FF,'(G15.6,A1,A,A1)',ADVANCE="NO") &
-      & EXP(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),  T_, &
+      if(trim(vCpn(iPr)%Statut)=="MOBILE" .or. &
+      &  trim(vCpn(iPr)%Statut)=="BUFFER") &
+      & write(FF,'(G15.6,A1,A,A1)',advance="NO") &
+      & exp(vSpc(vCpn(iPr)%iSpc)%Dat%LAct),  T_, &
       & vSpc(vCpn(iPr)%iSpc)%NamSp,          T_
       !
-      WRITE(FF,*)
+      write(FF,*)
     
-    ENDDO
+    end do
     
-    WRITE(FF,'(A)') "--"
-    WRITE(FF,'(A)') "</------------------------- equilibrium results --"
+    write(FF,'(A)') "--"
+    write(FF,'(A)') "</------------------------- equilibrium results --"
 
-  ENDIF
+  end if
   !------------------------------------------------/for equilibrium runs
 
-  WRITE(FF,'(A)') &
+  write(FF,'(A)') &
   & "!-----------------------------------------------------------------------"
-  WRITE(FF,'(A)') "All Species, in order of decreasing Mole number"
+  write(FF,'(A)') "All Species, in order of decreasing Mole number"
   !
   ! order species by increasing abundance
   !,to apply permutation vPrm to array Arr: Arr=Arr(vPrm)
-  CALL CalcPermut(vSpc(1:nAq)%Dat%Mole,vPrm)
+  call CalcPermut(vSpc(1:nAq)%Dat%Mole,vPrm)
   !
-  WRITE(FF,'(4(A15,A1))') &
+  write(FF,'(4(A15,A1))') &
   & "________SPECIES",T_,"____MOLE_NUMBER",T_, &
-  & "____ACTIV_COEFF",T_,"__LOG(ACTIVITY)",T_
-  DO iAq=nAq,1,-1
+  & "____ACTIV_COEFF",T_,"__log(ACTIVITY)",T_
+  do iAq=nAq,1,-1
     S=vSpc(vPrm(iAq))
-    WRITE(FF,'(A15,A1,3(G15.6,A1))') &
-    & TRIM(S%NamSp),  T_, &
+    write(FF,'(A15,A1,3(G15.6,A1))') &
+    & trim(S%NamSp),  T_, &
     & S%Dat%Mole,     T_, &
-    & EXP(S%Dat%LGam),T_, &
+    & exp(S%Dat%LGam),T_, &
     & S%Dat%LAct/Ln10,T_
-  ENDDO
-  WRITE(FF,'(A)') &
+  end do
+  write(FF,'(A)') &
   & "!-----------------------------------------------------------------------"
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Write_ShoDetail"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Write_ShoDetail"
 
-  RETURN
-ENDSUBROUTINE Equil_Write_ShoDetail
+  return
+end subroutine Equil_Write_ShoDetail
 
-ENDMODULE M_Equil_Write
+end module M_Equil_Write

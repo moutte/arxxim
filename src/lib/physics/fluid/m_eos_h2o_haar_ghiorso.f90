@@ -1,4 +1,4 @@
-MODULE M_Eos_H2O_Haar_Ghiorso
+module M_Eos_H2O_Haar_Ghiorso
 !! was M_Haar_Ghiorso_H2O
 
 !-----------------------------------------------------------------------
@@ -14,76 +14,79 @@ MODULE M_Eos_H2O_Haar_Ghiorso
 ! Arxim Integration : J.Moutte
 !-----------------------------------------------------------------------
 
-USE M_Kinds
-IMPLICIT NONE
+use M_Kinds
 
-PRIVATE
+implicit none
 
-!// PUBLIC FUNCTIONS
-PUBLIC::  Eos_H2O_Haar_Ghiorso !!CalcGH2O_Haar_Ghiorso
+private
 
-CONTAINS
+!! integer, parameter :: dp= KIND(1.0D0)
 
-SUBROUTINE Eos_H2O_Haar_Ghiorso ( &
+!// public functions
+public::  Eos_H2O_Haar_Ghiorso !!CalcGH2O_Haar_Ghiorso
+
+contains
+
+subroutine Eos_H2O_Haar_Ghiorso ( &
 & TdgK,Pbar, &
 & gH2Ort,hH2O,sH2O,vH2O_m3 )
   !
-  USE M_Dtb_Const,ONLY: R_jK, DtbConv_Benson,S0_Hydrogen,S0_Oxygen,Tref
+  use M_Dtb_Const,only: R_jK, DtbConv_Benson,S0_Hydrogen,S0_Oxygen,Tref
   !
-  REAL(dp),INTENT(IN)  :: TdgK,Pbar
-  REAL(dp),INTENT(OUT) :: gH2Ort,hH2O,sH2O,vH2O_m3
+  real(dp),intent(in)  :: TdgK,Pbar
+  real(dp),intent(out) :: gH2Ort,hH2O,sH2O,vH2O_m3
   !
-  REAL(dp) :: gH2O,cp,cv,rhof,dvdth2o,blkgas,sndspeed
+  real(dp) :: gH2O,cp,cv,rhof,dvdth2o,blkgas,sndspeed
   !
-  CALL CalcGH2O_Haar_Ghiorso_Detail &
+  call CalcGH2O_Haar_Ghiorso_Detail &
   & (TdgK,Pbar, &
   &  gH2O,hH2O,sH2O,vH2O_m3,&
   &  rhof,cp,cv,blkgas,dvdth2o,sndspeed)
   !
-  !Robie/CODATA DATA for entropies of elements at 298.15:
+  !Robie/COdata data for entropies of elements at 298.15:
   !! H2: 130.68 J/K/mole = 2*S0_Electron
   !! O2: 205.15 J/K/mole
   !! C:    5.74 J/K/mole
   !! -> for H2O, to transform G(BermBrown) to G(BensHelg),
   !!____add 298.15*(130.68 + 205.15/2)=  69544.98 J
   !
-  IF(DtbConv_Benson) gH2O= gH2O + Tref *(S0_Hydrogen *Two + S0_Oxygen)
+  if(DtbConv_Benson) gH2O= gH2O + Tref *(S0_Hydrogen *2.0D0 + S0_Oxygen)
   !
   gH2Ort= GH2O /R_jK /TdgK
   !
-END SUBROUTINE Eos_H2O_Haar_Ghiorso
+end subroutine Eos_H2O_Haar_Ghiorso
 
 !---
 
-SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
-& (TdgK,Pbar, &
+subroutine CalcGH2O_Haar_Ghiorso_Detail( &
+&  TdgK,Pbar, &
 &  gH2O,hH2O,sH2O,vH2O_m3,&
 &  rhof,cp,cv,blkgas,dvdth2o,sndspeed)
 !--
 !-- CALCULATES THERMODYNAMIC PROPERTIES OF WATER AND STEAM
 !-- USING THE EQUATIONS OF HAAR ET AL. (1984).  
 !--
-!-- PROGRAM AUTHORS:
+!-- program AUTHORS:
 !--  (1) MARK GHIORSO, DEPT. OF GEOLOGY & GEOPHYSICS UNIVERSITY OF WASHINGTON
 !--  Seattle, WA 98195-1310
 !--  ghiorso@u.washington.edu 
-!--  (2) LARRY G. MASTIN, U.S. GEOLOGICAL SURVEY CASCADES VOLCANO OBSERVATORY
+!--  (2) LARRY G. MASTIN, U.S. GEOlogical SURVEY CASCADES VOLCANO OBSERVATORY
 !--  lgmastin@usgs.gov
 !--  tel. 360-993-8925 (USA)
 !-- http://vulcan.wr.usgs.gov/Projects/Mastin
 !-- DATE:        WRITTEN, 1998, REVISED DECEMBER 2002
 !-- LANGUAGE:    FORTRAN 90 (98% fortran 77)
-!-- THIS PROGRAM WAS ORIGINALLY  WRITTEN BY MARK GHIORSO IN C.
+!-- THIS program WAS ORIGINALLY  WRITTEN BY MARK GHIORSO IN C.
 !-- IT WAS TRANSLATED INTO FORTRAN BY LARRY MASTIN, JUNE 1998,
-!-- AND DONATED TO THE UNIVERSITY OF NEW HAMPSHIRE CONDUIT MODELING WORKSHOP WEB PAGE DECEMBER, 2002.
+!-- AND doNATED TO THE UNIVERSITY OF NEW HAMPSHIRE CONDUIT MODELING WORKSHOP WEB PAGE DECEMBER, 2002.
 !-- 
-!-- INPUT PARAMETERS:
+!-- INPUT parameterS:
 !--   TdgK temperature, Kelvin
 !--   Pbar pressure, bar
 !-- 
-!-- OUTPUT PARAMETERS:
-!--   cp       specIFic heat at constant pressure (J/kg K)
-!--   cv       specIFic heat at constant volume (J/kg K)
+!-- OUTPUT parameterS:
+!--   cp       specific heat at constant pressure (J/kg K)
+!--   cv       specific heat at constant volume (J/kg K)
 !--   gH2O     Gibbs free energy (J/kg)
 !--   hH2O     enthalpy relative to the elements (H and O) at STP (J/kg)
 !--   sH2O     entropy relative to the elements at STP (J/kg K)
@@ -93,91 +96,91 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
 !--   dvdth2o  change in molar volume with temperature (m3/kg K)
 !--   sndspeed sound speed (m/s)
 !--
-  USE M_Eos_H2O_Rho_Psat, ONLY: Eos_H2O_psat
-  USE M_Eos_Utils, ONLY: kubik, f_Square, f_Cube, f_Quart, f_Quint
+  use M_Eos_H2O_Rho_Psat, only: Eos_H2O_psat
+  use M_Eos_Utils, only: kubik, f_Square, f_Cube, f_Quart, f_Quint
   !
-  REAL(dp),INTENT(IN)  :: TdgK,Pbar
-  REAL(dp),INTENT(OUT) :: gH2O,hH2O,sH2O,vH2O_m3
-  REAL(dp),INTENT(OUT) :: cp,cv,rhof,dvdth2o,blkgas,sndspeed 
+  real(dp),intent(in)  :: TdgK,Pbar
+  real(dp),intent(out) :: gH2O,hH2O,sH2O,vH2O_m3
+  real(dp),intent(out) :: cp,cv,rhof,dvdth2o,blkgas,sndspeed 
   !
-  REAL(dp):: vH2Ocm3
-  REAL(dp):: &
+  real(dp):: vH2Ocm3
+  real(dp):: &
   r=  4.6152D0, & 
   !4.6152= 10 * 8.31441 / 18.0152 = R in bar.cc/ gramH2O /K
   rr= 8.31441D0
-  !Nota: in RobieHemingway (from CODATA), R_jK= 8.314510D0 J/K/Mole
+  !Nota: in RobieHemingway (from COdata), R_jK= 8.314510D0 J/K/Mole
   !
-  REAL(dp):: &
+  real(dp):: &
   gref=  -54955.23970014D0, &
   !-54955.2356146121147 25 c and 1 bar 
   href=  -34099.89230644D0
   !! sref=  69.94917790942D0  !not used ??
   !! 69.9146D0 is used instead ??
   !
-  REAL(dp):: &
+  real(dp):: &
   t0= 647.25D0, &
   ps= 220.55D0, &
   P0= 1.01325D0 != 1 atm
   !
-  REAL(dp):: T,P
+  real(dp):: T,P
   !
-  REAL(dp):: alpha,beta,gamma
-  REAL(dp):: &
+  real(dp):: alpha,beta,gamma
+  real(dp):: &
   & taui(0:6), ermi(0:9), &
   & vol, rhn, &
   & dp_, dr_, rh, pr, &
   & dpr, q10, qm, x_, tr, dtrdt, dpdrh, dpdt, drhdt, d2pdt2, &
   & d2pdtdrh, d2pdrh2, temp
   !
-  REAL(dp):: ark, brk, oft, buk, cuk, duk 
-  REAL(dp):: x1,x2,x2i,x3
-  INTEGER :: i, icount
+  real(dp):: ark, brk, oft, buk, cuk, duk 
+  real(dp):: x1,x2,x2i,x3
+  integer :: i, icount
   !
-  !TERMS USED IN BASE FUNCTION
-  REAL(dp):: b,  dbdt,  d2bdt2,  d3bdt3
-  REAL(dp):: bb, dbbdt, d2bbdt2, d3bbdt3
-  REAL(dp):: &
+  !terms used in base function
+  real(dp):: b,  dbdt,  d2bdt2,  d3bdt3
+  real(dp):: bb, dbbdt, d2bbdt2, d3bbdt3
+  real(dp):: &
   & y, dydt, dydrh, d2ydt2, d2ydtdrh, d2ydrh2, &
   & d3ydt3, d3ydt2drh, d3ydtdrh2, d3ydrh3, &
   & yy,yy2,yy3,yy4
   !
-  !BASE FUNCTION AND ITS DERIVATIVES
-  REAL(dp):: &
+  !base function and its derivatives
+  real(dp):: &
   & Z, dZdt, dZdrh, d2Zdt2, d2Zdtdrh, d2Zdrh2,& 
   & d3Zdt3, d3Zdt2drh,d3Zdtdrh2, d3Zdrh3
-  REAL(dp):: &
+  real(dp):: &
   & Ab, dAbdt, dAbdrh, d2Abdt2, d2Abdtdrh, &
   & d2Abdrh2, d3Abdt3, d3Abdt2drh, d3Abdtdrh2, d3Abdrh3
   !
-  !TERMS USED IN RESIDUAL FUNCTION
-  REAL(dp):: del, tau, abc
+  !terms user in residual function
+  real(dp):: del, tau, abc
   !
-  !RESIDUAL FUNCTION AND ITS DERIVATIVES
-  REAL(dp):: &
+  !residual function and its derivatives
+  real(dp):: &
   & Ar, dArdt, dArdrh, d2Ardt2, d2Ardtdrh, &
   & d2Ardrh2, d3Ardt3, d3Ardt2drh, d3Ardtdrh2, d3Ardrh3
   !
-  !IDEAL GAS FUNCTION AND ITS DERIVATIVES
-  REAL(dp):: Ai, dAidt, d2Aidt2, d3Aidt3
+  !ideal gas function and its derivatives
+  real(dp):: Ai, dAidt, d2Aidt2, d3Aidt3
   !
-  !HELMHOLTZ FUNCTION AND ITS DERIVATIVES
-  REAL(dp):: &
+  !helmholtz function and its derivatives
+  real(dp):: &
   & A, dAdt, dAdrh, d2Adt2, d2Adtdrh, d2Adrh2, &
   & d3Adt3, d3Adt2drh, d3Adtdrh2, d3Adrh3
   !
-  !FINAL THERMODYNAMIC VALUES (besides those as INTENT(OUT))
-  REAL(dp):: &
+  !final thermodynamic values (besides those as intent(out))
+  real(dp):: &
   & cpH2O,cvH2O,dcpdtH2O, &
   & dvdpH2O,d2vdt2H2O,&
   & d2vdtdpH2O,d2vdp2H2O
   !
-  !OTHER TERMS
-  REAL(dp):: &
+  !other terms
+  real(dp):: &
   & eps1,expQ,Q,dQdt,dQdrh,d2Qdtdrh,&
   & d2Qdrh2,d2Qdt2,d3Qdt3,&
   & d3Qdt2drh,d3Qdtdrh2,d3Qdrh3
   !
-  REAL(dp):: gi(1:40)=(/ &
+  real(dp):: gi(1:40)=(/ &
   & -.53062968529023D4,  .22744901424408D5,  .78779333020687D4, &
   & -.69830527374994D3,  .17863832875422D6, -.39514731563338D6, &
   &  .33803884280753D6, -.13855050202703D6, -.25637436613260D7, &
@@ -193,7 +196,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   & -.225D1,            -1.68D1,             .055D1,            &
   & -93.0D1 /)                                                  
   !
-  REAL(dp)::ci(1:18)=(/ &
+  real(dp)::ci(1:18)=(/ &
   & .19730271018D2,      .209662681977D2,   -.483429455355D0,   &
   & .605743189245D1,   22.56023885D0,        -9.87532442D0,     &
   &-.43135538513D1,      .458155781D0,        -.47754901883D-1, &
@@ -201,22 +204,22 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   &-.56473658748D-6,     .16200446D-7,      -.3303822796D-9,    &
   & .451916067368D-11,  -.370734122708D-13,  .137546068238D-15 /)
   !
-  INTEGER::ki(1:40)=(/ &
+  integer::ki(1:40)=(/ &
   & 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, &
   & 6, 6, 6, 6, 7, 7, 7, 7, 9, 9, 9, 9, 3, 3, 1, 5, 2, 2, 2, 4  /)
-  INTEGER:: li(1:40)=(/ &
+  integer:: li(1:40)=(/ &
   & 1, 2, 4, 6, 1, 2, 4, 6, 1, 2, 4, 6, 1, 2, 4, 6, 1, 2, 4, 6, &
   & 1, 2, 4, 6, 1, 2, 4, 6, 1, 2, 4, 6, 0, 3, 3, 3, 0, 2, 0, 0  /)
   !
-  REAL(dp):: rhoi(37:40)= (/ 0.319D0, 0.310D0, 0.310D0,  1.55D0 /)
-  REAL(dp):: ttti(37:40)= (/ 640.0D0, 640.0D0, 641.6D0, 270.0D0 /)
-  REAL(dp):: alpi(37:40)= (/  34.0D0,  40.0D0,  30.0D0,1050.0D0 /)
-  REAL(dp):: beti(37:40)= (/   2.0D4,   2.0D4,   4.0D4,  25.0D0 /)
+  real(dp):: rhoi(37:40)= (/ 0.319D0, 0.310D0, 0.310D0,  1.55D0 /)
+  real(dp):: ttti(37:40)= (/ 640.0D0, 640.0D0, 641.6D0, 270.0D0 /)
+  real(dp):: alpi(37:40)= (/  34.0D0,  40.0D0,  30.0D0,1050.0D0 /)
+  real(dp):: beti(37:40)= (/   2.0D4,   2.0D4,   4.0D4,  25.0D0 /)
   !
-  REAL(dp)::bi(0:5) =&
+  real(dp)::bi(0:5) =&
   (/ 0.7478629D0,  -0.3540782D0,  Zero,         &
   &  0.007159876D0, Zero,        -0.003528426D0 /)
-  REAL(dp)::bbi(0:5)=&
+  real(dp)::bbi(0:5)=&
   (/ 1.1278334D0,  -0.5944001D0, -5.010996D0,   &
   &  Zero,          0.63684256D0, Zero          /)
 
@@ -242,13 +245,13 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   !The values of reduced temperature (T/T0)**i are stored in the  array TAUI(i)
   taui(0)=  One
   taui(1)=  t/t0
-  DO i=2,6
+  do i=2,6
     taui(i)=  taui(i-1)*taui(1)
-  ENDDO
+  end do
   b=    bi(1)*log(taui(1)) + bi(0)  + bi(3)/taui(3)  + bi(5)/taui(5)
   bb=   bbi(0) + bbi(1)/taui(1) + bbi(2)/taui(2) + bbi(4)/taui(4)
   !
-  IF (t<=647.25D0) CALL Eos_H2O_psat(t,ps) !ps=  psat2(t)
+  if (t<=647.25D0) call Eos_H2O_psat(t,ps) !ps=  psat2(t)
   !set initial guess for rho using thb-fit to redlich-kwong
   !
   !ark=  redlich-kwong constant a 
@@ -268,44 +271,44 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   cuk=  oft - brk*brk + brk*buk
   duk=  - brk*oft
   
-  CALL kubik(buk,cuk,duk,x1,x2,x2i,x3)
+  call kubik(buk,cuk,duk,x1,x2,x2i,x3)
   !
   !CALCULATE MOLAR VOLUME
   !
-  IF (x2i/=Zero) THEN
+  if (x2i/=Zero) then
     vol=  x1
-  ELSE
-    IF (p<ps) THEN ;  vol=  MAX(x1, MAX(x2, x3))
-    ELSE           ;  vol=  MIN(x1, MIN(x2, x3))
-    ENDIF
-  ENDIF
+  else
+    if (p<ps) then ;  vol=  MAX(x1, MAX(x2, x3))
+    else           ;  vol=  MIN(x1, MIN(x2, x3))
+    end if
+  end if
   !
-  !CALCULATE SPECIFIC VOLUME
+  !CALCULATE SPECifIC VOLUME
   !
-  IF (vol<=Zero) THEN  ;  rhn=  1.9
-  ELSE                 ;  rhn=  (One/vol)*18.0152
-  ENDIF
+  if (vol<=Zero) then  ;  rhn=  1.9
+  else                 ;  rhn=  (One/vol)*18.0152
+  end if
   !
-  !CALCULATE PARAMETERS THAT GO INTO BASE FUNCTION:
+  !CALCULATE parameterS THAT GO INTO BASE function:
   !
   dp_=  9.99e+10
   dr_=  9.99e+10
   !
   icount=1
-  eps1=  10.0*epsilon(REAL(8))
+  eps1=  10.0*epsilon(real(8))
   !
-  !DO WHILE ((icount<=100).and.
+  !do while ((icount<=100).and.
   ! *  ((dp_>eps1).or.
   ! *   (dr_>eps1)))
   !
-  DO WHILE (icount<=100)
+  do while (icount<=100)
     
-    IF (dp_<1.0D-06) EXIT
-    IF (dr_<1.0D-06) EXIT
+    if (dp_<1.0D-06) exit
+    if (dr_<1.0D-06) exit
     
     rh=  rhn
-    IF (rh<=Zero) rh=  1.D-8
-    IF (rh> 1.9) rh=  1.9D0
+    if (rh<=Zero) rh=  1.D-8
+    if (rh> 1.9) rh=  1.9D0
     
     !CALCULATE Y, WHICH IS USED IN BASE FUNCTION  (HAAR ET AL., P. 272)
     y=  rh*b/4.0
@@ -313,27 +316,27 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
     !CALCULATE TERMS USED IN RESIDUAL FUNCTION (EQ. A.5 OF HAAR ET AL.)
     ermi(0)=  One
     ermi(1)=  One -exp(-rh)
-    DO i=2,9; ermi(i)=  ermi(i-1)*ermi(1); ENDDO
+    do i=2,9; ermi(i)=  ermi(i-1)*ermi(1); end do
     
     pr=   Zero
     dpr=  Zero
     
     !CALCULATE RESIDUAL FUNCTION
-    DO i=1,36
+    do i=1,36
       pr= pr &
       & + gi(i)/taui(li(i))*ermi(ki(i)-1)
       dpr= dpr &
       &  + (2.0+rh*(ki(i)*exp(-rh)-One)/ermi(1)) &
       &     *gi(i)/taui(li(i))*ermi(ki(i)-1)
-    ENDDO
+    end do
     !
-    DO i=37,40
+    do i=37,40
       del=  rh/rhoi(i) - One
       tau=  t/ttti(i)  - One
       abc=  -alpi(i)*del**ki(i)-beti(i)*tau*tau
-      IF (abc>-100.0D0) THEN  ;  q10=  gi(i)*del**li(i) * exp(abc)
-      ELSE                    ;  q10=  Zero
-      ENDIF
+      if (abc>-100.0D0) then  ;  q10=  gi(i)*del**li(i) * exp(abc)
+      else                    ;  q10=  Zero
+      end if
       !
       qm=   li(i)/del - ki(i)*alpi(i)*del**(ki(i)-1)
       pr=   pr + q10*qm*rh*rh/rhoi(i)
@@ -341,7 +344,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
       &  + (q10*qm*rh*rh/rhoi(i)) * (2.0/rh+qm/rhoi(i)) &
       &  - rh*rh/(rhoi(i)*rhoi(i))*q10 &
       &         * ( li(i)/del/del + ki(i)*(ki(i)-1)*alpi(i)*del**(ki(i)-2) )
-    ENDDO
+    end do
     !
     pr= rh*(rh*exp(-rh)*pr  &
     & + r*t*((One + alpha*y + beta*y*y)/f_Cube(One-y) &
@@ -351,24 +354,24 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
     &  + 3.0*y*(One + alpha*y + beta*y*y)/f_Quart(One-y) &
     &  + 2.0*4.0*y*(bb/b - gamma))
     
-    IF (dpr<=Zero) THEN
-      IF (p<=ps) THEN  ;  rhn=  rhn*0.95
-      ELSE             ;  rhn=  rhn*1.05
-      ENDIF
-      ELSE
-      IF (dpr<0.01) dpr=  0.01
+    if (dpr<=Zero) then
+      if (p<=ps) then  ;  rhn=  rhn*0.95
+      else             ;  rhn=  rhn*1.05
+      end if
+      else
+      if (dpr<0.01) dpr=  0.01
       x_=  (p - pr)/dpr
-      IF (ABS(x_)>0.1) x_=  0.1*x_/ABS(x_)
+      if (ABS(x_)>0.1) x_=  0.1*x_/ABS(x_)
       rhn=  rh + x_
-    ENDIF
+    end if
     
     dp_=  ABS(One - pr/p)
     dr_=  ABS(One - rhn/rh)
     icount=icount+1
     
-  ENDDO
+  end do
   !
-  !WRITE (6,1) t, p, ps, rhn
+  !write (6,1) t, p, ps, rhn
   !!c1  format (5x,'t=',f8.2,' p=',f8.2,' ps=',f8.2,' rhn=',f8.4)
   !
   !CALCULATE DERIVATIVES W/R TO TEMPERATURE
@@ -410,9 +413,9 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   !
   ermi(0)=  One
   ermi(1)=  One-exp(-rh)
-  DO i=2,9
+  do i=2,9
     ermi(i)=  ermi(i-1)*ermi(1)
-  ENDDO
+  end do
   !
   yy=  One-y
   yy2= yy*yy
@@ -469,17 +472,17 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   &     - 2.0D0*(b*dbbdt-bb*dbdt)*b*dbdt)*dydt)*yy4                     &
   &     - 4.0D0*((b*d2bbdt2-bb*d2bdt2)*f_Square(b)                      &
   &     - 2.0D0*(b*dbbdt-bb*dbdt)*b*dbdt)*f_Cube(b)*y*dbdt)/(yy4*yy4)   &
-  &     + 2.0D0*f_Cube(dydt/(yy)) &
-  &     + 12.0D0*(alpha+beta+One)*f_Cube(dydt)/f_Quint(yy) &
-  &     - 6.0D0*(beta-One)*f_Cube(dydt)/yy4 &
-  &     + 8.0D0*((b*d2bbdt2-bb*d2bdt2)*f_Square(b)              &
-  &     - 2.0D0*(b*dbbdt-bb*dbdt)*b*dbdt)*dydt/yy4     &
+  &     + 2.0D0*f_Cube(dydt/(yy))                                       &
+  &     + 12.0D0*(alpha+beta+One)*f_Cube(dydt)/f_Quint(yy)              &
+  &     - 6.0D0*(beta-One)*f_Cube(dydt)/yy4                             &
+  &     + 8.0D0*((b*d2bbdt2-bb*d2bdt2)*f_Square(b)                      &
+  &     - 2.0D0*(b*dbbdt-bb*dbdt)*b*dbdt)*dydt/yy4                      &
   &     + 12.0D0*(b*dbbdt-bb*dbdt)*d2ydt2/f_Square(b)                   &
-  &     + 3.0D0*dydt*d2ydt2/yy2                           &
-  &     + 9.0D0*(alpha+beta+One)*dydt*d2ydt2/yy4       &
-  &     - 6.0D0*(beta-One)*dydt*d2ydt2/yy3                &
-  &     + 4.0D0*(bb/b-gamma)*d3ydt3 + d3ydt3/(yy)                &
-  &     + (alpha+beta+One)*d3ydt3/yy3                     &
+  &     + 3.0D0*dydt*d2ydt2/yy2                                         &
+  &     + 9.0D0*(alpha+beta+One)*dydt*d2ydt2/yy4                        &
+  &     - 6.0D0*(beta-One)*dydt*d2ydt2/yy3                              &
+  &     + 4.0D0*(bb/b-gamma)*d3ydt3 + d3ydt3/(yy)                       &
+  &     + (alpha+beta+One)*d3ydt3/yy3                                   &
   &     - (beta-One)*d3ydt3/yy2;
   d3Zdt2drh= 4.0D0*(((b*d2bbdt2-bb*d2bdt2)*f_Square(b) &
   &        - 2.0D0*(b*dbbdt-bb*dbdt)*b*dbdt)*dydrh)/yy4 &
@@ -530,7 +533,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   d3Abdtdrh2=  r*d2Zdrh2 + r*t*d3Zdtdrh2
   d3Abdrh3=    r*t*d3Zdrh3
   !
-  !calculate residual FUNCTION Ar and its derivatives
+  !calculate residual function Ar and its derivatives
   Ar=          Zero
   dArdt=       Zero
   dArdrh=      Zero
@@ -542,130 +545,130 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   d3Ardtdrh2=  Zero
   d3Ardrh3=    Zero
   !
-  DO i=1,36
+  do i=1,36
     Ar=          Ar + gi(i)/ki(i)/taui(li(i))*ermi(ki(i))
     dArdt=       dArdt + (-li(i)*gi(i)/ki(i)/(taui(li(i))*t) * ermi(ki(i)))
     dArdrh=      dArdrh + gi(i)/taui(li(i))*ermi(ki(i)-1)*exp(-rh)
     d2Ardt2=     d2Ardt2 + (li(i)+One)*li(i)*gi(i)/ki(i) /(taui(li(i))*t*t)*ermi(ki(i))
     d2Ardtdrh=   d2Ardtdrh + (-li(i)*gi(i)/ (taui(li(i))*t)*ermi(ki(i)-1)*exp(-rh))
-    IF (ki(i)>1) THEN
+    if (ki(i)>1) then
       d2Ardrh2= d2Ardrh2 &
       &       + gi(i)/taui(li(i)) &
       &         *((ki(i)-One)*ermi(ki(i)-2) *exp(-rh)-ermi(ki(i)-1)) *exp(-rh)
-    ELSE
+    else
       d2Ardrh2=  d2Ardrh2 + (-gi(i)/taui(li(i))*exp(-rh))
-    ENDIF
+    end if
     !
     d3Ardt3=     d3Ardt3 - (li(i)+2.0D0)*(li(i)+One)*li(i)*gi(i)/ki(i) &
     &                     /(taui(li(i))*t*t*t) *ermi(ki(i))
     d3Ardt2drh=  d3Ardt2drh +(li(i)+One)*li(i)*gi(i) &
     &                       /(taui(li(i))*t*t) *ermi(ki(i)-1) *exp(-rh)
     !
-    IF (ki(i)>1) THEN
+    if (ki(i)>1) then
       d3Ardtdrh2=  d3Ardtdrh2 - li(i)*gi(i)/(taui(li(i))*t) &
       &         *((ki(i)-One)*ermi(ki(i)-2) &
       &         *exp(-rh)-ermi(ki(i)-1))*exp(-rh)
-    ELSE
+    else
       d3Ardtdrh2=  d3Ardtdrh2 + li(i)*gi(i)/(taui(li(i))*t)*exp(-rh)
-    ENDIF
-    IF (ki(i)>2) THEN
+    end if
+    if (ki(i)>2) then
       d3Ardrh3=  d3Ardrh3 + gi(i)/taui(li(i)) &
       &       *(((ki(i)-2.0D0)*ermi(ki(i)-3)*exp(-rh)  &
       &       - 3.0D0*ermi(ki(i)-2)) &
       &       *(ki(i)-One)*exp(-rh)+ermi(ki(i)-1))*exp(-rh)
-    ELSE IF (ki(i)>1) THEN 
+    else if (ki(i)>1) then 
       d3Ardrh3=  d3Ardrh3 - gi(i)/taui(li(i)) *(4.0D0*exp(-rh)-One)*exp(-rh)
-    ELSE
+    else
       d3Ardrh3=  d3Ardrh3 + gi(i)/taui(li(i))*exp(-rh)
-    ENDIF
-  ENDDO
+    end if
+  end do
   !
-  DO3740: DO i=37,40
+  do3740: do i=37,40
     del=    rh/rhoi(i) - One
     tau=    t/ttti(i) - One
     Q=      -alpi(i)*del**ki(i) - beti(i)*tau*tau
     dQdt=   -beti(i)*2.0D0*tau/ttti(i)
-    IF (ki(i)==0) THEN  ;  dQdrh=  Zero
-    ELSE                ;  dQdrh=  -alpi(i)*ki(i)*del**(ki(i)-1)/rhoi(i)
-    ENDIF
+    if (ki(i)==0) then  ;  dQdrh=  Zero
+    else                ;  dQdrh=  -alpi(i)*ki(i)*del**(ki(i)-1)/rhoi(i)
+    end if
     !
     d2Qdt2=     -beti(i)*2.0D0/f_Square(ttti(i))
     d2Qdtdrh=   Zero
     !
-    IF (ki(i)==0 .or. ki(i)==1) THEN; d2Qdrh2=  Zero
-    ELSE; d2Qdrh2=  -alpi(i)*ki(i)*(ki(i)-One)*del**(ki(i)-2) /f_Square(rhoi(i))
-    ENDIF
+    if (ki(i)==0 .or. ki(i)==1) then; d2Qdrh2=  Zero
+    else; d2Qdrh2=  -alpi(i)*ki(i)*(ki(i)-One)*del**(ki(i)-2) /f_Square(rhoi(i))
+    end if
     !
     d3Qdt3=  Zero
     d3Qdt2drh=  Zero
     d3Qdtdrh2=  Zero
-    IF (ki(i)==0 .or. ki(i)==1 .or. ki(i)==2) THEN; d3Qdrh3=  Zero
-    ELSE; d3Qdrh3=  -alpi(i)*ki(i)*(ki(i)-One)*(ki(i)-2.0D0) *del**(ki(i)-3)/f_Cube(rhoi(i))
-    ENDIF
+    if (ki(i)==0 .or. ki(i)==1 .or. ki(i)==2) then; d3Qdrh3=  Zero
+    else; d3Qdrh3=  -alpi(i)*ki(i)*(ki(i)-One)*(ki(i)-2.0D0) *del**(ki(i)-3)/f_Cube(rhoi(i))
+    end if
     !
-    IF (Q>-100.0D0) THEN; expQ= dexp(Q)
-    ELSE;                 expQ= Zero
-    ENDIF
+    if (Q>-100.0D0) then; expQ= dexp(Q)
+    else;                 expQ= Zero
+    end if
     Ar=  Ar + gi(i)*del**li(i)*expQ
     dArdt=  dArdt + gi(i)*del**li(i)*expQ*dQdt
     !
-    IF (li(i)==0) THEN
+    if (li(i)==0) then
       dArdrh= dArdrh &
       &     + gi(i)*expQ*dQdrh
-    ELSE
+    else
       dArdrh= dArdrh &
       &     + gi(i)*li(i)*del**(li(i)-1)*expQ/rhoi(i) &
       &     + gi(i)*del**li(i)*expQ*dQdrh
-    ENDIF
+    end if
     d2Ardt2= d2Ardt2 &
     &      + gi(i)*del**li(i)*expQ*(f_Square(dQdt)+d2Qdt2)
     !
-    IF (li(i)==0) THEN
+    if (li(i)==0) then
       d2Ardtdrh=   d2Ardtdrh + gi(i)*expQ*dQdt*dQdrh  + gi(i)*expQ*d2Qdtdrh
-    ELSE
+    else
       d2Ardtdrh= d2Ardtdrh &
       &        + gi(i)*li(i) *del**(li(i)-1)*expQ*dQdt/rhoi(i) &
       &        + gi(i)*del**li(i)*expQ*(dQdt*dQdrh+d2Qdtdrh)
-    ENDIF
+    end if
     !
-    IF (li(i)==0) THEN
+    if (li(i)==0) then
       d2Ardrh2= d2Ardrh2 &
       &       + gi(i)*expQ*f_Square(dQdrh) &
       &       + gi(i)*expQ*d2Qdrh2
-    ELSE IF (li(i)==1) THEN
+    else if (li(i)==1) then
       d2Ardrh2= d2Ardrh2 + 2.0D0*gi(i)*expQ*dQdrh/rhoi(i) &
       &       + gi(i)*del*expQ*f_Square(dQdrh) &
       &       + gi(i)*del*expQ*d2Qdrh2
-    ELSE 
+    else 
       d2Ardrh2= d2Ardrh2 &
       &       + gi(i)*li(i)*(li(i)-One)*del**(li(i)-2) *expQ/f_Square(rhoi(i)) &
       &       + 2.0D0*gi(i)*li(i)*(del**(li(i)-1))*expQ*dQdrh/rhoi(i) &
       &       + gi(i)*del**li(i)*(expQ*f_Square(dQdrh)+expQ*d2Qdrh2)
-    ENDIF
+    end if
     !
     d3Ardt3= d3Ardt3 &
     &      + gi(i)*del**li(i)*expQ *(f_Cube(dQdt)+3.0D0*dQdt*d2Qdt2+d3Qdt3)
     !
-    IF (li(i)==0) THEN
+    if (li(i)==0) then
       d3Ardt2drh=  d3Ardt2drh &
       &         + gi(i)*(expQ*f_Square(dQdt)*dQdrh  &
       &                + expQ*(d2Qdt2*dQdrh + dQdt*d2Qdtdrh)) &
       &         + gi(i)*(expQ*dQdt*d2Qdtdrh + expQ*d3Qdt2drh)
-    ELSE
+    else
       d3Ardt2drh=  d3Ardt2drh &
       &         + gi(i)*li(i)*del**(li(i)-1) *(expQ*f_Square(dQdt)+expQ*d2Qdt2)/rhoi(i) &
       &         + gi(i)*del**li(i)*(expQ*dQdt*(dQdt*dQdrh+d2Qdtdrh) &
       &                           + expQ*(d2Qdt2*dQdrh+dQdt*d2Qdtdrh+d3Qdt2drh))
-    ENDIF
+    end if
     !
-    IF (li(i)==1) THEN
+    if (li(i)==1) then
       d3Ardtdrh2= d3Ardtdrh2 &
       &         + 2.0D0*gi(i)*li(i)*(expQ*dQdt*dQdrh + expQ*d2Qdtdrh)/rhoi(i) &
       &         + gi(i)*del*(expQ*dQdt*f_Square(dQdrh)  &
       &                    + expQ*2.0D0*dQdrh*d2Qdtdrh  &
       &                    + expQ*dQdt*d2Qdrh2        &
       &                    + expQ*d3Qdtdrh2)
-    ELSE
+    else
       d3Ardtdrh2= d3Ardtdrh2 &
       &         + gi(i)*li(i)*(li(i)-One) *del**(li(i)-2) &
       &                *expQ *dQdt/f_Square(rhoi(i)) &
@@ -675,22 +678,22 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
       &                           + expQ*2.0D0*dQdrh*d2Qdtdrh &
       &                           + expQ*dQdt*d2Qdrh2       &
       &                           + expQ*d3Qdtdrh2)
-    ENDIF
+    end if
     !
-    IF (li(i)==0) THEN
+    if (li(i)==0) then
       d3Ardrh3= d3Ardrh3 &
       &       + gi(i)*(expQ*f_Cube(dQdrh) &
       &              + expQ*2.0D0*dQdrh*d2Qdrh2 &            
       &              + expQ*dQdrh*d2Qdrh2 &
       &              + expQ*d3Qdrh3)
-    ELSE IF (li(i)==1) THEN
+    else if (li(i)==1) then
       d3Ardrh3=  d3Ardrh3 &
       &       + 3.0D0*gi(i)*(expQ*f_Square(dQdrh)+ expQ*d2Qdrh2)/rhoi(i) &
       &       + gi(i)*del*(expQ*f_Cube(dQdrh)      &
       &                  + expQ*2.0D0*dQdrh*d2Qdrh2 & 
       &                  + expQ*dQdrh*d2Qdrh2     &
       &                  + expQ*d3Qdrh3)
-    ELSE IF (li(i)==2) THEN
+    else if (li(i)==2) then
       d3Ardrh3= d3Ardrh3                                 &
       &       + 3.0D0*gi(i)*2.0D0*expQ*dQdrh/f_Square(rhoi(i)) &
       &       + 3.0D0*gi(i)*2.0D0*del*(expQ*f_Square(dQdrh) + expQ*d2Qdrh2)/rhoi(i)  &
@@ -698,7 +701,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
       &                          + expQ*2.0D0*dQdrh*d2Qdrh2  &
       &                          + expQ*dQdrh*d2Qdrh2        &
       &                          + expQ*d3Qdrh3)
-    ELSE 
+    else 
       d3Ardrh3=  d3Ardrh3 &
       &       + gi(i)*li(i)*(li(i)-One)*(li(i)-2.0D0) *del**(li(i)-3)*expQ/f_Cube(rhoi(i))    &
       &       + 3.0D0*gi(i)*li(i)*(li(i)-One)*del**(li(i)-2) *expQ*dQdrh/f_Square(rhoi(i))    &
@@ -707,13 +710,13 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
       &                         + expQ*2.0D0*dQdrh*d2Qdrh2 &
       &                         + expQ*dQdrh*d2Qdrh2 &
       &                         + expQ*d3Qdrh3)
-    ENDIF
+    end if
     !
-  ENDDO DO3740
+  end do do3740
   !
   !calculate ideal gas function Ai and derivatives
-  tr=      t/1.0D2
-  dtrdt=   One/100.0
+  tr=      t*1.0D-2
+  dtrdt=   1.0D-2
   !
   Z=      One + (ci(1)/tr + ci(2))*log(tr)
   dZdt=   (-ci(1)*dtrdt/f_Square(tr))*log(tr) + (ci(1)/tr + ci(2))*dtrdt/tr
@@ -730,19 +733,19 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   &     - (-ci(1)*dtrdt/f_Square(tr))*f_Square(dtrdt/tr)     &
   &     + 2.0*(ci(1)/tr + ci(2))*f_Cube(dtrdt/tr)
   !
-  DO i=3,18
+  do i=3,18
     Z=       Z      +                         ci(i) *tr**(i-6)
     dZdt=    dZdt   + (i-6.0)                *ci(i) *tr**(i-7) *dtrdt
     d2Zdt2=  d2Zdt2 + (i-6.0)*(i-7.0)        *ci(i) *tr**(i-8) *f_Square(dtrdt)
     d3Zdt3=  d3Zdt3 + (i-6.0)*(i-7.0)*(i-8.0)*ci(i) *tr**(i-9) *f_Cube(dtrdt)
-  ENDDO
+  end do
   !
-  Ai=         -r*t*Z
+  Ai=         - r*t*Z
   dAidt=      - r*Z - r*t*dZdt
   d2Aidt2=    - 2.0*r*dZdt - r*t*d2Zdt2
   d3Aidt3=    - 3.0*r*d2Zdt2 - r*t*d3Zdt3
   !
-  !calculate the total helmholtz A FUNCTION and its deriviatives
+  !calculate the total helmholtz A function and its deriviatives
   A=          Ab         + Ar         + Ai
   dAdt=       dAbdt      + dArdt      + dAidt
   dAdrh=      dAbdrh     + dArdrh
@@ -769,7 +772,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   hH2O=        A + p/rh - t*dAdt
   sH2O=        - dAdt
   cpH2O=       -t*d2Adt2 + (t/(rh*rh))*f_Square(dpdt)/(dpdrh)
-  cvH2O=       -t *d2Adt2
+  cvH2O=       -t*d2Adt2
   vH2Ocm3=     One/rh
   dvdtH2O=     -(One/f_Square(rh))*drhdt
   dvdpH2O=     -(One/f_Square(rh))/dpdrh
@@ -784,7 +787,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   &            + t*(2.D0*dpdrh*dpdt*d2pdt2 - f_Square(dpdt)*d2pdtdrh) /f_Square(rh*dpdrh);
   dcpdtH2O=    temp + t*(d2vdt2H2O)*dpdt
   !
-  !CONVERT FROM SPECIFIC (PER G) VALUES TO MOLAR VALUES
+  !convert from specific (per g) values to molar values
   gH2O=        gH2O       *18.0152D0 /10.0D0
   hH2O=        hH2O       *18.0152D0 /10.0D0
   sH2O=        sH2O       *18.0152D0 /10.0D0
@@ -798,7 +801,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   d2vdtdpH2O=  d2vdtdpH2O *18.0152D0
   d2vdp2H2O=   d2vdp2H2O  *18.0152D0
   !
-  !SUBSTRACT OUT BERMAN'S VALUE (CHECK THIS!)
+  !substract out Berman's value (check this!)
   !_______________________Berman 1988____________________Haar 1977
   gH2O=        gH2O     - gref - 285829.96D0 - (298.15D0*69.9146D0)
   hH2O=        hH2O     - href - 285829.96D0                        
@@ -807,7 +810,7 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   ! deltaH_0_f= -285829.96D0
   ! S_0_ref=    +69.9146D0
   !
-  !CONVERT TO SI UNITS
+  !convert to si units
   cp=       cpH2O /0.0180152D0
   cv=       cvH2O /0.0180152D0
   rhof=     1.0D6 *0.0180152D0 /vH2Ocm3 !-> kg/m3
@@ -816,10 +819,10 @@ SUBROUTINE CalcGH2O_Haar_Ghiorso_Detail &
   !! error with compaq !! sndspeed= sqrt((cp/cv)*blkgas/rhof)
   sndspeed= zero
   !
-  !CONVERT DVDTH2O FROM CM3/MOLE TO M3/(KG K)
+  !convert dvdth2o from cm3/mole to m3/(kg k)
   dvdtH2O=  dvdth2o /0.0180152D0 /1.0d+06
   !
-  RETURN
-ENDSUBROUTINE CalcGH2O_Haar_Ghiorso_Detail
+  return
+end subroutine CalcGH2O_Haar_Ghiorso_Detail
 
-ENDMODULE M_Eos_H2O_Haar_Ghiorso
+end module M_Eos_H2O_Haar_Ghiorso

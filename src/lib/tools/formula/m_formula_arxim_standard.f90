@@ -1,4 +1,4 @@
- MODULE M_Formula_Arxim_Standard
+ module M_Formula_Arxim_Standard
    
   !===============================================================
   ! Purpose :  Arxim Formulas Utils Standard
@@ -11,147 +11,147 @@
   ! CO3(MgCa)0.5 = C(2)O(6)MG(1)CA(1)/(2) 
   !             or C(2)O(6)MG(1)CA(1)DIV(2)
   !===============================================================
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
 
-  PUBLIC :: Formula_Arxim_Build_Standard
-  PUBLIC :: Formula_Arxim_Read_Standard
+  public :: Formula_Arxim_Build_Standard
+  public :: Formula_Arxim_Read_Standard
 
-  LOGICAL, PARAMETER :: DebFormula = .false.
+  logical, parameter :: DebFormula = .false.
 
   !---
 
-CONTAINS
+contains
   
   
-  SUBROUTINE Formula_Arxim_Read_Standard(sFormul,vNameEle,Z,nDiv,fOk,vStoik) 
+  subroutine Formula_Arxim_Read_Standard(sFormul,vNameEle,Z,nDiv,fOk,vStoik) 
   !=============================================================================
-  !== READ a chemical formula sFormul
-  !== to a stoikiometric vector (vStoik)/Div and the charge Z
-  !== according to the element list vEle
-  !==
-  !==-> used to read the elemental decompositon of a substance from its formula
-  !==
-  !== CAVEAT
-  !==   vStoik is an array of integers; nDiv the formula divisor
-  !==   thus, the "REAL" stoichio coeff for element vEle(i) is vstoik(i)/Div !!!
-  !==
+  !-- read a chemical formula sFormul
+  !-- to a stoikiometric vector (vStoik)/Div and the charge Z
+  !-- according to the element list vEle
+  !--
+  !---> used to read the elemental decompositon of a substance from its formula
+  !--
+  !-- CAVEAT
+  !--   vStoik is an array of integers; nDiv the formula divisor
+  !--   thus, the "real" stoichio coeff for element vEle(i) is vstoik(i)/Div !!!
+  !--
   !=============================================================================
 
-    USE M_Formula_Utils
-    USE M_IOTools,ONLY: Str_Append, WrdToInt
-    IMPLICIT NONE
+    use M_Formula_Utils
+    use M_IOTools,only: Str_Append, WrdToInt
+    implicit none
     !
-    CHARACTER(LEN=*),INTENT(IN) :: sFormul       !the stoichio'formula of a substance
-    CHARACTER(LEN=*),INTENT(IN) :: vNameEle(:)   !the current element name list
-    INTEGER,         INTENT(OUT):: Z,nDiv        !the charge and the "divisor"
-    LOGICAL,         INTENT(OUT):: fOk           !the formula is consistent (with elemental basis)
-    INTEGER,         INTENT(OUT):: vStoik(:)     !the "formula vector"
+    character(len=*),intent(in) :: sFormul       !the stoichio'formula of a substance
+    character(len=*),intent(in) :: vNameEle(:)   !the current element name list
+    integer,         intent(out):: Z,nDiv        !the charge and the "divisor"
+    logical,         intent(out):: fOk           !the formula is consistent (with elemental basis)
+    integer,         intent(out):: vStoik(:)     !the "formula vector"
     !   
-    CHARACTER(LEN=80):: sRest
-    CHARACTER(LEN=3) :: sElem
-    CHARACTER(LEN=7) :: sCoeff
-    INTEGER          :: Coeff,I,LenRest,iEl
+    character(len=80):: sRest
+    character(len=3) :: sElem
+    character(len=7) :: sCoeff
+    integer          :: Coeff,I,LenRest,iEl
     !-------
-    fOk= .TRUE.
+    fOk= .true.
     
-    sRest= TRIM(sFormul)//"_"
+    sRest= trim(sFormul)//"_"
     
-    IF(TRIM(sRest)=="_") THEN
-      fOk= .FALSE.
-      RETURN
-    ENDIF
+    if(trim(sRest)=="_") then
+      fOk= .false.
+      return
+    end if
     
     vStoik= 0
     Coeff=  0
     Z=      0
     nDiv=   1
     
-    DO
-      IF (sRest(1:1)=='_') EXIT               !END of formula
+    do
+      if (sRest(1:1)=='_') exit               !end of formula
       
-      LenRest= LEN_TRIM(sRest)
+      LenRest= len_trim(sRest)
       I= SCAN(sRest,'(')                     !find 1st occurrence of '('
       
-      IF(I==0) EXIT                          !no '(' found --> end of string
+      if(I==0) exit                          !no '(' found --> end of string
       
-      IF(I>1) THEN
+      if(I>1) then
       
         sElem=sRest(1:I-1)                   !ElementName
         sRest=sRest(I+1:LenRest)             !rest of string
         I=SCAN(sRest,')')
-        IF(I>1) THEN
+        if(I>1) then
           sCoeff=sRest(1:I-1)                !Element Coeff
           sRest=sRest(I+1:LenRest)           !rest of string
-        ENDIF
+        end if
       
-      ENDIF
+      end if
        
-      CALL Str_Append(sElem,3)
-      CALL WrdToInt(sCoeff,Coeff)
+      call Str_Append(sElem,3)
+      call WrdToInt(sCoeff,Coeff)
        
-      SELECT CASE(TRIM(sElem))
-        CASE("___"); EXIT                    !end of formula
-        CASE("DIV"); nDiv=Coeff; CYCLE
-        CASE("/__"); nDiv=Coeff; CYCLE
-        CASE("E__"); Z= Coeff;   CYCLE
-        CASE("+__"); Z= Coeff;   CYCLE
-        CASE("-__"); Z=-Coeff;   CYCLE
-      ENDSELECT
+      select case(trim(sElem))
+        case("___"); exit                    !end of formula
+        case("DIV"); nDiv=Coeff; cycle
+        case("/__"); nDiv=Coeff; cycle
+        case("E__"); Z= Coeff;   cycle
+        case("+__"); Z= Coeff;   cycle
+        case("-__"); Z=-Coeff;   cycle
+      end select
        
-      !IF(DebFormula) WRITE(fTrc,'(A)') TRIM(sElem)
+      !if(DebFormula) write(fTrc,'(A)') trim(sElem)
       iEl=Name_Index(sElem,vNameEle)
        
-      IF(iEl==0) THEN
+      if(iEl==0) then
       
-        fOk=.FALSE.  !element not found in input element list
-        RETURN
+        fOk=.false.  !element not found in input element list
+        return
        
-      ELSE
+      else
       
         vStoik(iEl)=Coeff
-        ! IF(iFirst==0) iFirst=iEl !iFirst==0 checks whether iFirst already allocated
-        ! IF(DebFormula) WRITE(fTrc,'(A13,A3,A1,I3,A1,I3)') &
+        ! if(iFirst==0) iFirst=iEl !iFirst==0 checks whether iFirst already allocated
+        ! if(DebFormula) write(fTrc,'(A13,A3,A1,I3,A1,I3)') &
         ! & "El iEl Coeff ",sElem,T_,iEl,T_,Coeff  !,T_,Z
         
-      ENDIF
+      end if
        
-    ENDDO
+    end do
     
-    RETURN
-  ENDSUBROUTINE Formula_Arxim_Read_Standard
+    return
+  end subroutine Formula_Arxim_Read_Standard
 
   !---
   
-  SUBROUTINE Formula_Arxim_Build_Standard(vNameEle,vStoik,Zsp,nDiv,S) !,Discret_,nDiv1,nDiv2,I_,J_,S)
-    !=================================================
+  subroutine Formula_Arxim_Build_Standard(vNameEle,vStoik,Zsp,nDiv,S) !,Discret_,nDiv1,nDiv2,I_,J_,S)
+    !--===============================================
     ! Purpose : build a formula with a "static" element order,
     !           -> to make species sorting easier ...
-    !=================================================
-    IMPLICIT NONE
-    CHARACTER(LEN=*), INTENT(IN) :: vNameEle(:)
-    INTEGER,          INTENT(IN) :: vStoik(:)
-    INTEGER,          INTENT(IN) :: Zsp,nDiv
-    CHARACTER(LEN=*), INTENT(OUT):: S
+    !--===============================================
+    implicit none
+    character(len=*), intent(in) :: vNameEle(:)
+    integer,          intent(in) :: vStoik(:)
+    integer,          intent(in) :: Zsp,nDiv
+    character(len=*), intent(out):: S
     !
-    CHARACTER(LEN=4):: Str
-    INTEGER:: iEl
+    character(len=4):: Str
+    integer:: iEl
     S=""
-    DO iEl=SIZE(vNameEle),1,-1 !-> will have H and O as last elements 
-      IF(vStoik(iEl)>0) THEN
-        WRITE(Str,'(I4)') vStoik(iEl) !; IF(vStoik(iEl)<10) Str(1:1)='0'
-        S= TRIM(S)//vNameEle(iEl)(1:2)//"("//TRIM(ADJUSTL(Str))//")"
-      ENDIF
-    ENDDO
-    IF(Zsp>0) THEN
-      WRITE(Str,'(I4)') Zsp  ; S= TRIM(S)//"+("//TRIM(ADJUSTL(Str))//")"
-    ENDIF
-    IF(Zsp<0) THEN
-      WRITE(Str,'(I4)') -Zsp  ; S= TRIM(S)//"-("//TRIM(ADJUSTL(Str))//")"
-    ENDIF
-    IF(nDiv>1) THEN
-      WRITE(Str,'(I4)') nDiv  ; S= TRIM(S)//"/("//TRIM(ADJUSTL(Str))//")"
-    ENDIF
-  ENDSUBROUTINE Formula_Arxim_Build_Standard
+    do iEl=size(vNameEle),1,-1 !-> will have H and O as last elements 
+      if(vStoik(iEl)>0) then
+        write(Str,'(I4)') vStoik(iEl) !; if(vStoik(iEl)<10) Str(1:1)='0'
+        S= trim(S)//vNameEle(iEl)(1:2)//"("//trim(adjustl(Str))//")"
+      end if
+    end do
+    if(Zsp>0) then
+      write(Str,'(I4)') Zsp  ; S= trim(S)//"+("//trim(adjustl(Str))//")"
+    end if
+    if(Zsp<0) then
+      write(Str,'(I4)') -Zsp  ; S= trim(S)//"-("//trim(adjustl(Str))//")"
+    end if
+    if(nDiv>1) then
+      write(Str,'(I4)') nDiv  ; S= trim(S)//"/("//trim(adjustl(Str))//")"
+    end if
+  end subroutine Formula_Arxim_Build_Standard
 
-END MODULE M_Formula_Arxim_Standard
+end module M_Formula_Arxim_Standard

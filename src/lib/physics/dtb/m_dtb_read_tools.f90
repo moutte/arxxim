@@ -1,80 +1,80 @@
-MODULE M_Dtb_Read_Tools
+module M_Dtb_Read_Tools
 !.tools for database reading routines
-  USE M_Kinds
+  use M_Kinds
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: DtbRead_Build_vElement
-  PUBLIC:: DtbRead_Build_ExtendedFormula
+  public:: DtbRead_Build_vElement
+  public:: DtbRead_Build_ExtendedFormula
   !
-CONTAINS
+contains
 
-SUBROUTINE DtbRead_Build_vElement(vEle,vElement)
-  USE M_IOTools,ONLY: cUpper,cLower
-  USE M_T_Element,ONLY: T_Element
+subroutine DtbRead_Build_vElement(vEle,vElement)
+  use M_IOTools,only: cUpper,cLower
+  use M_T_Element,only: T_Element
   !
-  TYPE(T_Element), INTENT(IN) :: vEle(:)
-  CHARACTER(LEN=2),INTENT(OUT):: vElement(:)
+  type(T_Element), intent(in) :: vEle(:)
+  character(len=2),intent(out):: vElement(:)
   !
-  CHARACTER(LEN=2):: ss
-  INTEGER:: i
+  character(len=2):: ss
+  integer:: i
   !
   vElement= "  "
-  DO i= 1, SIZE(vEle)
+  do i= 1, size(vEle)
     ss="  "
     ss(1:1)= cUpper(vEle(i)%NamEl(1:1))
-    IF(vEle(i)%NamEl(2:2)/="_") ss(2:2)= cLower(vEle(i)%NamEl(2:2))
-    vElement(i)= TRIM(ss)
-  ENDDO
+    if(vEle(i)%NamEl(2:2)/="_") ss(2:2)= cLower(vEle(i)%NamEl(2:2))
+    vElement(i)= trim(ss)
+  end do
   !
-  vElement(SIZE(vEle)+1)= '+'
-  vElement(SIZE(vEle)+2)= '-'
-  vElement(SIZE(vEle)+3)= '/'
+  vElement(size(vEle)+1)= '+'
+  vElement(size(vEle)+2)= '-'
+  vElement(size(vEle)+3)= '/'
   !
-ENDSUBROUTINE DtbRead_Build_vElement
+end subroutine DtbRead_Build_vElement
 
-SUBROUTINE DtbRead_Build_ExtendedFormula(ff,vElement,W,isOk)
+subroutine DtbRead_Build_ExtendedFormula(ff,vElement,W,isOk)
 !--
 !-- transform compact formula to extended formula
 !--
-  USE M_Trace,  ONLY: t_
-  USE M_Formula_Parser
+  use M_Trace,  only: t_
+  use M_Formula_Parser
   !
-  INTEGER,INTENT(IN):: ff
-  CHARACTER(LEN=2),INTENT(IN):: vElement(:)
-  CHARACTER(LEN=*),INTENT(INOUT):: W
-  LOGICAL,INTENT(OUT):: isOk 
+  integer,intent(in):: ff
+  character(len=2),intent(in):: vElement(:)
+  character(len=*),intent(inout):: W
+  logical,intent(out):: isOk 
   !
-  !! CHARACTER(LEN=10):: FilCode
+  !! character(len=10):: FilCode
   !
-  REAL(dp) :: b(SIZE(vElement))
-  REAL(dp) :: divREAL
-  CHARACTER(LEN=71) :: s
+  real(dp) :: b(size(vElement))
+  real(dp) :: divreal
+  character(len=71) :: s
   !
-  IF(ff>0) WRITE(ff,'(A72,1X)',ADVANCE="NO") TRIM(W)
+  if(ff>0) write(ff,'(A72,1X)',advance="NO") trim(W)
   !
-  CALL Formula_Vector_Read ( W, vElement, s, b, isok, divREAL )
+  call Formula_Vector_Read ( W, vElement, s, b, isok, divreal )
   !
-  IF(.not. isok) THEN
-    IF(ff>0) WRITE(ff,'(A)') " -> !!!CHECK!!!"
-    RETURN
-  ENDIF
+  if(.not. isok) then
+    if(ff>0) write(ff,'(A)') " -> !!!CHECK!!!"
+    return
+  end if
   !
-  !IF(ff>0 .and. nint(divREAL)/=1) &
-  !& WRITE(ff,'(A,I3,A)',ADVANCE="NO") "divREAL=",nint(divREAL)," = "
+  !if(ff>0 .and. nint(divreal)/=1) &
+  !& write(ff,'(A,I3,A)',advance="NO") "divreal=",nint(divreal)," = "
   !
-  CALL Formula_Arxim_Build ( vElement, nint(b*divREAL), W )
+  call Formula_Arxim_Build ( vElement, nint(b*divreal), W )
   !
-  IF(nint(divREAL)/=1) THEN
+  if(nint(divreal)/=1) then
     s=''
-    WRITE(s,'(I6)') nint(divREAL)
-    s= ADJUSTL(s)
-    W= TRIM(W)//'/('//TRIM(s)//')'
-  ENDIF
+    write(s,'(I6)') nint(divreal)
+    s= adjustl(s)
+    W= trim(W)//'/('//trim(s)//')'
+  end if
   !
-  IF(ff>0) WRITE(ff,'(A)') TRIM(W)
-ENDSUBROUTINE DtbRead_Build_ExtendedFormula
+  if(ff>0) write(ff,'(A)') trim(W)
+end subroutine DtbRead_Build_ExtendedFormula
 
-ENDMODULE M_Dtb_Read_Tools
+end module M_Dtb_Read_Tools

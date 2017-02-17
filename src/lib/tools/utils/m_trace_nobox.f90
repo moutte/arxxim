@@ -1,4 +1,4 @@
-MODULE M_Trace
+module M_Trace
   !===========================================================
   ! Trace File and Debug Status Manager
   !-----------------------------------------------------------
@@ -9,199 +9,198 @@ MODULE M_Trace
   !  - Pause_, Debug_, Info_, Warning_ 
   !  - Fatal_, Stop_
   !=========================================================== 
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  !// PARAMETERS
-  CHARACTER(LEN=20), PARAMETER :: Default_TraceFileName =  "debug_all.log"
+  !// parameterS
+  character(len=20), parameter :: Default_TraceFileName =  "debug_all.log"
 
-  !// PUBLIC DATA
-  CHARACTER,PARAMETER,PUBLIC:: T_         = ACHAR(9)
-  CHARACTER,PARAMETER,PUBLIC:: TAB_       = ACHAR(9)
-  CHARACTER,PARAMETER,PUBLIC:: SLASH_     = ACHAR(47)
-  CHARACTER,PARAMETER,PUBLIC:: BACKSLASH_ = ACHAR(92)
+  !// public data
+  character,parameter,public:: T_         = Achar(9)
+  character,parameter,public:: TAB_       = Achar(9)
+  character,parameter,public:: SLASH_     = Achar(47)
+  character,parameter,public:: BACKSLASH_ = Achar(92)
 
-  INTEGER,PUBLIC:: iDebug= -1
-  INTEGER,PUBLIC:: fTrc= 0
-  INTEGER,PUBLIC:: fHtm= 0
-  LOGICAL,PUBLIC:: DebugCoores=.FALSE.
+  integer,public:: iDebug= -1
+  integer,public:: fTrc= 0
+  integer,public:: fHtm= 0
+  logical,public:: DebugCoores=.false.
 
-  LOGICAL,PUBLIC:: LInfo= .FALSE.
-  LOGICAL,PUBLIC:: LWarning= .FALSE.
+  logical,public:: LInfo= .false.
+  logical,public:: LWarning= .false.
 
-  !// PUBLIC FUNCTIONS
-  PUBLIC:: Trace_Init
-  PUBLIC:: Trace_Close
+  !// public functionS
+  public:: Trace_Init
+  public:: Trace_Close
   !
-  PUBLIC:: Debug_
-  PUBLIC:: Pause_
-  PUBLIC:: Info_
-  PUBLIC:: Fatal_
-  PUBLIC:: Stop_
-  PUBLIC:: Warning_
-  PUBLIC:: Message_
+  public:: Debug_
+  public:: Pause_
+  public:: Info_
+  public:: Fatal_
+  public:: Stop_
+  public:: Warning_
+  public:: Message_
 
-  !// PRIVATE FUNCTIONS
-  PRIVATE:: GetUnit_Trace
+  !// private functionS
+  private:: GetUnit_Trace
   !
-  !// PRIVATE DATA
-  CHARACTER(LEN=80):: TraceFileName = Default_TraceFileName
-  !INTEGER:: fError= 0
+  !// private data
+  character(len=80):: TraceFileName = Default_TraceFileName
+  !integer:: fError= 0
   
-CONTAINS
+contains
 
   !---
 
-  SUBROUTINE Trace_Reset()
-    IMPLICIT NONE
-    CALL Trace_Close
-    CALL Trace_Init(TraceFileName)
+  subroutine Trace_Reset()
+    implicit none
+    call Trace_Close
+    call Trace_Init(TraceFileName)
     
-  ENDSUBROUTINE Trace_Reset
+  end subroutine Trace_Reset
 
   !---
 
-  SUBROUTINE Trace_Init(Str)
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN),OPTIONAL:: Str
+  subroutine Trace_Init(Str)
+    implicit none
+    character(len=*),intent(in),optional:: Str
     !--
-    CHARACTER(LEN=80) :: FileName
+    character(len=80) :: FileName
     !--
     FileName= Default_TraceFileName
-    IF(PRESENT(Str)) FileName= Str 
+    if(present(Str)) FileName= Str 
     
-    IF(fTrc==0) THEN
+    if(fTrc==0) then
        !// open a new file
-       CALL GetUnit_Trace(fTrc)
+       call GetUnit_Trace(fTrc)
        TraceFileName= FileName
-       OPEN(fTrc,FILE=TRIM(FileName))
-    ELSE
+       open(fTrc,file=trim(FileName))
+    else
        !// nothing to do
-       CALL Warning_("TraceFile Already Initialized")
-    END IF
+       call Warning_("TraceFile Already Initialized")
+    end if
    
-  ENDSUBROUTINE Trace_Init
+  end subroutine Trace_Init
 
   !---
 
-  SUBROUTINE Trace_Close
-    IMPLICIT NONE
-    IF(fTrc>0) THEN; CLOSE(fTrc)
+  subroutine Trace_Close
+    implicit none
+    if(fTrc>0) then; close(fTrc)
        fTrc= 0
-    ENDIF
-  END SUBROUTINE Trace_Close
+    end if
+  end subroutine Trace_Close
 
   !---
 
-  SUBROUTINE Pause_(Str)
-    IMPLICIT NONE
-    CHARACTER(LEN=*),OPTIONAL,INTENT(IN):: Str
+  subroutine Pause_(Str)
+    implicit none
+    character(len=*),optional,intent(in):: Str
     !--
-    IF(PRESENT(Str)) THEN 
-      CALL Message_("Pause",Str)
-    END IF
-    WRITE(*,'(A)') "... type return to continue." 
-    READ(*,*)
+    if(present(Str)) then 
+      call Message_("Pause",Str)
+    end if
+    write(*,'(A)') "... type return to continue." 
+    read(*,*)
 
-  ENDSUBROUTINE Pause_
+  end subroutine Pause_
 
   !---
 
-  SUBROUTINE Warning_(Str)
-    IMPLICIT NONE
-    CHARACTER(LEN=*),OPTIONAL,INTENT(IN):: Str
+  subroutine Warning_(Str)
+    implicit none
+    character(len=*),optional,intent(in):: Str
     !--
-    IF(PRESENT(Str)) THEN 
-      IF (LWarning) CALL Message_("Warning",Str)
-    ENDIF
+    if(present(Str)) then 
+      if (LWarning) call Message_("Warning",Str)
+    end if
 
-  ENDSUBROUTINE Warning_
+  end subroutine Warning_
 
   !---
 
-  SUBROUTINE Debug_(Str) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
+  subroutine Debug_(Str) 
+    implicit none
+    character(len=*),intent(in)::Str
     !--
-    IF (iDebug>0) CALL Message_("Debug",Str)
+    if (iDebug>0) call Message_("Debug",Str)
 
-  ENDSUBROUTINE Debug_
+  end subroutine Debug_
 
   !---
 
-  SUBROUTINE Info_(Str) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
+  subroutine Info_(Str) 
+    implicit none
+    character(len=*),intent(in)::Str
     !--
-    IF (LInfo) CALL Message_("Info",Str)
+    if (LInfo) call Message_("Info",Str)
 
-  ENDSUBROUTINE Info_
+  end subroutine Info_
 
   !---
 
-  SUBROUTINE Fatal_(Str)
-    !~ USE M_BOX_COUPLER_VARS
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
+  subroutine Fatal_(Str)
+    ! use M_BOX_COUPLER_VARS
+    implicit none
+    character(len=*),intent(in)::Str
     !--
-    !~ IF (LCouplerActive) THEN
-      !~ CALL Message_("Warning",Str)
-      !~ IerrorChemistry = 1
-    !~ ELSE
-      CALL Message_("Fatal Error",Str)
-      STOP "FATAL ERROR"
-    !~ ENDIF
-
-  ENDSUBROUTINE Fatal_
+    !if (LCouplerActive) then
+    !  call Message_("Warning",Str)
+    !  IerrorChemistry = 1
+    !else
+      call Message_("Fatal Error",Str)
+      stop "FATAL ERROR"
+    !end if
+  end subroutine Fatal_
 
   !---
 
-  SUBROUTINE Stop_(Str) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
+  subroutine Stop_(Str) 
+    implicit none
+    character(len=*),intent(in)::Str
     !--
-    CALL Message_("Program Stop",Str)
+    call Message_("Program Stop",Str)
     
-    !IF(fError==0) THEN
-    !  CALL GetUnit_Trace(fError)
-    !  OPEN(fError,FILE="error.log")
-    !ENDIF
-    !WRITE(fError,'(A)') TRIM(Str)
+    !if(fError==0) then
+    !  call GetUnit_Trace(fError)
+    !  open(fError,file="error.log")
+    !end if
+    !write(fError,'(A)') trim(Str)
     
-    STOP "PROGRAM STOP" 
+    stop "program stop" 
     
-  ENDSUBROUTINE Stop_
+  end subroutine Stop_
 
   !---
 
-  SUBROUTINE Message_(Header, Str)
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Header
-    CHARACTER(LEN=*),INTENT(IN), optional :: Str
+  subroutine Message_(Header, Str)
+    implicit none
+    character(len=*),intent(in)::Header
+    character(len=*),intent(in), optional :: Str
 
     !// Trace file
-    IF(fTrc>0) THEN
-       IF(PRESENT(Str)) THEN
-          WRITE(fTrc,'(3A)') TRIM(Header) , ' : ', TRIM(Str)
-       ELSE
-          WRITE(fTrc,'(A)') TRIM(Header) 
-       END IF
-    END IF
+    if(fTrc>0) then
+       if(present(Str)) then
+          write(fTrc,'(3A)') trim(Header) , ' : ', trim(Str)
+       else
+          write(fTrc,'(A)') trim(Header) 
+       end if
+    end if
     
     !// Screen
-    IF(PRESENT(Str)) THEN
-      WRITE(*,'(3A)')    TRIM(Header) , ' : ', TRIM(Str)
-      IF (iDebug>1) CALL Pause_
-    ELSE
-       WRITE(*,'(A)')    TRIM(Header) 
-    END IF
+    if(present(Str)) then
+      write(*,'(3A)')    trim(Header) , ' : ', trim(Str)
+      if (iDebug>1) call Pause_
+    else
+       write(*,'(A)')    trim(Header) 
+    end if
 
-  END SUBROUTINE Message_
+  end subroutine Message_
 
   !---
 
-  SUBROUTINE GetUnit_Trace(F) 
+  subroutine GetUnit_Trace(F) 
     !===========================================================
     !returns a free unit number.
     !-------------------------------
@@ -209,31 +208,31 @@ CONTAINS
     !A "free" FORTRAN unit number is an integer between 1 and 99
     !which is not currently associated with an I/O device.
     !A free FORTRAN unit number is needed in order to open a 
-    !file with the OPEN command.
+    !file with the open command.
     !IUNIT=0
     !no free FORTRAN unit could be found, although all 99 units
     !were checked
     !===========================================================
-    IMPLICIT NONE
-    INTEGER,INTENT(OUT)::F
-    INTEGER:: i, ios
-    LOGICAL:: lOpen
+    implicit none
+    integer,intent(out)::F
+    integer:: i, ios
+    logical:: lOpen
     F= 0
-    DO i=1,99
-       IF (i/=5 .AND. i/=6 .AND. i/=9) THEN
+    do i=1,99
+       if (i/=5 .and. i/=6 .and. i/=9) then
           !units 5-6-9 are commonly reserved for console I/O
-          INQUIRE(UNIT=i,OPENED=lopen,IOSTAT=ios)
-          IF (ios==0) THEN
-             IF (.NOT. lOpen) THEN
+          inquire(UNIT=i,opened=lopen,iostat=ios)
+          if (ios==0) then
+             if (.not. lOpen) then
                 F=i
-                RETURN
-             ENDIF
-          ENDIF
-       ENDIF
-    ENDDO
-    RETURN
-  ENDSUBROUTINE GetUnit_Trace
+                return
+             end if
+          end if
+       end if
+    end do
+    return
+  end subroutine GetUnit_Trace
 
 
-ENDMODULE M_Trace
+end module M_Trace
 

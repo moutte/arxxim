@@ -1,39 +1,39 @@
-MODULE M_Equil_Specia
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc
-  IMPLICIT NONE
+module M_Equil_Specia
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Equil_Specia
+  public:: Equil_Specia
   !
-CONTAINS
+contains
 
-SUBROUTINE Equil_Specia(iErr)
+subroutine Equil_Specia(iErr)
 !--
 !-- calculate equilibrium speciation of the aqueous phase
 !-- (i.e. no consideration of saturation with minerals or gases)
 !--
-  USE M_Equil_Solve,ONLY: Equil_Solve
+  use M_Equil_Solve,only: Equil_Solve
   !
-  INTEGER,INTENT(OUT):: iErr
+  integer,intent(out):: iErr
   !
-  INTEGER :: nIts
-  !~ REAL(dp):: CpuBegin,CpuEnd
+  integer :: nIts
+  !~ real(dp):: CpuBegin,CpuEnd
   
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Specia >"
-  !~ IF(iDebug>0) CALL CPU_TIME(CpuBegin)
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Specia >"
+  !~ if(iDebug>0) call CPU_TIME(CpuBegin)
   !
-  CALL Equil_Solve(nIts,iErr)
+  call Equil_Solve(nIts,iErr)
   !
-  !~ IF(iDebug>0) CALL CPU_TIME(CpuEnd)
-  !~ IF(iDebug>0) WRITE(fTrc,'(/,A,G15.6,/)') "CPU-Time",1.D3*(CpuEnd-CpuBegin)
+  !~ if(iDebug>0) call CPU_TIME(CpuEnd)
+  !~ if(iDebug>0) write(fTrc,'(/,A,G15.6,/)') "CPU-Time",1.D3*(CpuEnd-CpuBegin)
   
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Specia >"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Specia >"
   
-  RETURN
-ENDSUBROUTINE Equil_Specia
+  return
+end subroutine Equil_Specia
 
-ENDMODULE M_Equil_Specia
+end module M_Equil_Specia
 
 

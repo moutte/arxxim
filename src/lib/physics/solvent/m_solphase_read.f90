@@ -1,71 +1,71 @@
-MODULE M_SolPhase_Read
+module M_SolPhase_Read
 !--
 !-- tools for reading solution phases
 !-- (- phase of variable composition, with assymetric model)
 !-- from text files,
 !-- and build an array of T_SolPhase (- container for a mixture phase)
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Warning_
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Warning_
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: SolPhase_Read
+  public:: SolPhase_Read
 
-CONTAINS
+contains
 
-SUBROUTINE SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
+subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
 !--
 !-- scan the ELECTROLYTE block(s)
 !--
-  USE M_IoTools
-  USE M_Files,     ONLY: NamFInn
-  USE M_T_Species, ONLY: T_Species,Species_Index
-  USE M_T_SolModel,ONLY: T_SolModel
-  USE M_T_SolPhase,ONLY: T_SolPhase !,SolPhase_ActPole
+  use M_IoTools
+  use M_Files,     only: NamFInn
+  use M_T_Species, only: T_Species,Species_Index
+  use M_T_SolModel,only: T_SolModel
+  use M_T_SolPhase,only: T_SolPhase !,SolPhase_ActPole
   !
-  USE M_Global_Vars,ONLY: vSolFas
+  use M_Global_Vars,only: vSolFas
   !
-  TYPE(T_Species), INTENT(IN) :: vSpc(:)
-  TYPE(T_SolModel),INTENT(IN) :: vSolModel(:)
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(*),    INTENT(OUT):: MsgError
+  type(T_Species), intent(in) :: vSpc(:)
+  type(T_SolModel),intent(in) :: vSolModel(:)
+  logical,         intent(out):: Ok
+  character(*),    intent(out):: MsgError
   !
-  CHARACTER(LEN=255):: L !,sList0 !=elements in Database
-  CHARACTER(LEN=80) :: W !,V1,V2
-  LOGICAL :: EoL
-  INTEGER :: ios,fInn
+  character(len=255):: L !,sList0 !=elements in Database
+  character(len=80) :: W !,V1,V2
+  logical :: EoL
+  integer :: ios,fInn
   !
-  TYPE(T_SolModel)  :: SolModel
-  TYPE(T_SolPhase)  :: SolFas
-  TYPE(T_SolPhase)  :: vSolTmp(10)
+  type(T_SolModel)  :: SolModel
+  type(T_SolPhase)  :: SolFas
+  type(T_SolPhase)  :: vSolTmp(10)
   !
-  INTEGER :: I,J,K,nS,N
-  REAL(dp):: X1
+  integer :: I,J,K,nS,N
+  real(dp):: X1
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< SolPhase_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< SolPhase_Read"
 
-  Ok= .TRUE.
+  Ok= .true.
   MsgError= "Ok"
 
-  CALL GetUnit(fInn)
-  OPEN(fInn,FILE=TRIM(NamFInn))
+  call GetUnit(fInn)
+  open(fInn,file=trim(NamFInn))
 
   N=0
   !
-  DoFile: DO
-    READ(fInn,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+  DoFile: do
+    read(fInn,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
 
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
 
-    CASE("ELECTROLYTE")
+    case("ELECTROLYTE")
 
       ! ELECTROLYTE WATER1
       !   MODEL MYAQUEOUS-MODEL
@@ -76,154 +76,154 @@ SUBROUTINE SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
       !     NACL(AQ) 0.002
       !     H+   1.e-7
       !     OH-  1.e-7
-      !   END
-      ! END
+      !   end
+      ! end
 
-      CALL LinToWrd(L,W,EoL) !-> phase name
+      call LinToWrd(L,W,EoL) !-> phase name
 
-      IF(Species_Index(W,vSpc)>0) THEN
-        Ok= .FALSE.
+      if(Species_Index(W,vSpc)>0) then
+        Ok= .false.
         MsgError= "Solution name should not match with any species name !!!"
-        RETURN !--------------------------------------------------RETURN
-      ENDIF
+        return !--------------------------------------------------return
+      end if
 
-      SolFas%Name=TRIM(W)
+      SolFas%Name=trim(W)
 
-      DoSolFas: DO
+      DoSolFas: do
         !
-        READ(fInn,'(A)',IOSTAT=ios) L  ;  IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoSolFas
-        CALL AppendToEnd(L,W,EoL)
+        read(fInn,'(A)',iostat=ios) L  ;  if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoSolFas
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(W)
 
-        CASE("ENDINPUT")             ; EXIT DoFile
+        case("ENDINPUT")             ; exit DoFile
 
-        CASE("END","ENDELECTROLYTE") ; EXIT DoSolFas
+        case("END","ENDELECTROLYTE") ; exit DoSolFas
 
         !----------------------------------------------- read model name 
-        CASE("MODEL")
+        case("MODEL")
         ! read model name and check it is among the model base vSolModel
         ! -> return its index in array vSolModel
-          CALL LinToWrd(L,W,EoL)
+          call LinToWrd(L,W,EoL)
           !
           !find the model name in vSolModel%Name
           K=0
-          DO I=1,SIZE(vSolModel)
-            IF(TRIM(W)==TRIM(vSolModel(I)%Name)) THEN
+          do I=1,size(vSolModel)
+            if(trim(W)==trim(vSolModel(I)%Name)) then
               K= I
-              EXIT
-            ENDIF
-          ENDDO
-          IF(K==0) THEN
-            Ok= .FALSE.
-            MsgError=             TRIM(W)//"= ELECTROLYTE.MODEL UNKNOWN"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+              exit
+            end if
+          end do
+          if(K==0) then
+            Ok= .false.
+            MsgError=             trim(W)//"= ELECTROLYTE.MODEL UNKNOWN"
+            return !----------------------------------------------return
+          end if
 
-          IF(iDebug>0) WRITE(fTrc,'(2A)') "MODEL=", TRIM(W)
+          if(iDebug>0) write(fTrc,'(2A)') "MODEL=", trim(W)
           SolFas%iModel= K
 
           nS= vSolModel(K)%nSpecies
-          ALLOCATE(SolFas%vXSpecies(nS))
+          allocate(SolFas%vXSpecies(nS))
           SolFas%vXSpecies(:)= Zero !!1.0D-32
 
-        !/CASE("MODEL")
+        !/case("MODEL")
         !-----------------------------------------------/read model name 
 
         !-----------------------------------------/read phase compositon
-        CASE("COMPOSITION")
+        case("COMPOSITION")
           !
-          IF(iDebug>0) WRITE(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
+          if(iDebug>0) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
           !
-          IF(SolFas%iModel==0) THEN
-            Ok= .FALSE.
+          if(SolFas%iModel==0) then
+            Ok= .false.
             MsgError=             "must define MODEL before COMPOSITION"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            return !----------------------------------------------return
+          end if
           !
           SolModel=vSolModel(SolFas%iModel)
           !-------------------input on several lines, one per end-member
-          DO
+          do
 
-            READ(fInn,'(A)') L
-            CALL LinToWrd(L,W,EoL)
-            IF(W=="!") CYCLE !-> comment line
-            CALL AppendToEnd(L,W,EoL)
+            read(fInn,'(A)') L
+            call LinToWrd(L,W,EoL)
+            if(W=="!") cycle !-> comment line
+            call AppendToEnd(L,W,EoL)
 
-            IF(W=="END") EXIT
-            IF(W=="ENDCOMPOSITION") EXIT
+            if(W=="END") exit
+            if(W=="ENDCOMPOSITION") exit
 
-            I= Species_Index(TRIM(W),vSpc)
+            I= Species_Index(trim(W),vSpc)
             !--- search for the species with global index I
             !--- in the species list, vISpecies(:), of solution model SolModel
             !--- and read mole fraction
             J= 0
-            !~ PRINT *,"I=",I
-            DO K=1,SolModel%nSpecies
-              !~ PRINT *,"  vISpecies(K)=",SolModel%vISpecies(K)
-              IF(SolModel%vISpecies(K)==I) THEN
+            !~ print *,"I=",I
+            do K=1,SolModel%nSpecies
+              !~ print *,"  vISpecies(K)=",SolModel%vISpecies(K)
+              if(SolModel%vISpecies(K)==I) then
                 J= I
-                EXIT
-              ENDIF
-            ENDDO
+                exit
+              end if
+            end do
 
-            IF(J==0) THEN
-              Ok= .FALSE.
-              MsgError=   TRIM(W)//" NOT FOUND in species list of MODEL"
-              RETURN !--------------------------------------------RETURN
-            ENDIF
+            if(J==0) then
+              Ok= .false.
+              MsgError=   trim(W)//" NOT FOUND in species list of MODEL"
+              return !--------------------------------------------return
+            end if
 
-            CALL LinToWrd(L,W,EoL) !-> rest of line -> composition
-            CALL WrdToReal(W,X1)
+            call LinToWrd(L,W,EoL) !-> rest of line -> composition
+            call WrdToReal(W,X1)
 
             SolFas%vXSpecies(K)= X1
 
-          ENDDO
+          end do
           !
           N=N+1
           !
-          IF(iDebug>0) &
-          & WRITE(fTrc,'(I3,1X,A24,A24)') N, SolFas%Name, SolModel%Name
+          if(iDebug>0) &
+          & write(fTrc,'(I3,1X,A24,A24)') N, SolFas%Name, SolModel%Name
 
           vSolTmp(N)%Name=   SolFas%Name
           vSolTmp(N)%iModel= SolFas%iModel
           nS= vSolModel(SolFas%iModel)%nSpecies
-          ALLOCATE(vSolTmp(N)%vXSpecies(nS))
+          allocate(vSolTmp(N)%vXSpecies(nS))
           vSolTmp(N)%vXSpecies(:)= SolFas%vXSpecies(:)
 
-          DEALLOCATE(SolFas%vXSpecies)
+          deallocate(SolFas%vXSpecies)
 
-        !/CASE("COMPOSITION")
+        !/case("COMPOSITION")
         !-----------------------------------------/read phase compositon
         !
-        END SELECT !CASE(W)
+        end select !case(W)
         !
-      ENDDO DoSolFas
-    !/CASE(ELECTROLYTE)
+      end do DoSolFas
+    !/case(ELECTROLYTE)
 
-    END SELECT !CASE(W)
+    end select !case(W)
 
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(fInn)
+  close(fInn)
 
-  IF(N>0) THEN
-    IF(ALLOCATED(vSolFas)) DEALLOCATE(vSolFas)
-    ALLOCATE(vSolFas(N))
-    DO I=1,N
+  if(N>0) then
+    if(allocated(vSolFas)) deallocate(vSolFas)
+    allocate(vSolFas(N))
+    do I=1,N
       vSolFas(I)%Name= vSolTmp(I)%Name
       vSolFas(I)%iModel= vSolTmp(I)%iModel
       nS= vSolModel(vSolFas(I)%iModel)%nSpecies
-      ALLOCATE(vSolFas(I)%vXSpecies(nS))
+      allocate(vSolFas(I)%vXSpecies(nS))
       vSolFas(I)%vXSpecies(:)= vSolTmp(I)%vXSpecies(:)
-    ENDDO
-  ENDIF
+    end do
+  end if
 
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ SolPhase_BuildLnk"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ SolPhase_BuildLnk"
 
-  RETURN
-ENDSUBROUTINE SolPhase_Read
+  return
+end subroutine SolPhase_Read
 
-ENDMODULE M_SolPhase_Read
+end module M_SolPhase_Read

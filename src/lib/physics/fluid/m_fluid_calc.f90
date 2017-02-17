@@ -1,5 +1,4 @@
-MODULE M_Fluid_Calc
-
+module M_Fluid_Calc
 !-----------------------------------------------------------------------
 ! Purpose : General Interface for Computation of Pure Fluid Properties
 !
@@ -13,102 +12,120 @@ MODULE M_Fluid_Calc
 ! and from CdeCapitani F77 sources
 ! (http://titan.minpet.unibas.ch/minpet/theriak/)
 !-----------------------------------------------------------------------
-
-  USE M_Kinds
+  use M_Kinds
 
   !// Import Modules Fluid H2O
-  USE M_Eos_H2O_Rho_Psat
-  USE M_Eos_H2O_Ideal
-  USE M_Eos_H2O_Holland_Powell
-  USE M_Eos_H2O_Haar
-  USE M_Eos_H2O_Haar_Ghiorso
+  use M_Eos_H2O_Rho_Psat
+  use M_Eos_H2O_Ideal
+  use M_Eos_H2O_Holland_Powell
+  use M_Eos_H2O_Haar
+  use M_Eos_H2O_Haar_Ghiorso
   
   !// Import Modules Fluid CO2
-  USE M_Eos_CO2_Holland_Powell
-  USE M_Eos_KerJac
-  USE M_Mixmodel_Duan
+  use M_Eos_CO2_Holland_Powell
+  use M_Eos_KerJac
+  use M_Mixmodel_Duan
   
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  !// EXPORT FUNCTIONS FROM : M_Eos_H2O_Rho_Psat
-  PUBLIC:: Eos_H2O_rho
-  PUBLIC:: Eos_H2O_psat
+  !!// EXPORT functionS FROM : M_Eos_H2O_Rho_Psat
+  public:: Eos_H2O_rho
+  public:: Eos_H2O_psat
+  !
+  !!// EXPORT functionS FROM : M_Eos_H2O_Ideal
+  !public:: Eos_H2O_Ideal
+  !
+  !!// EXPORT functionS FROM : M_Eos_H2O_Holland_Powell
+  !public:: Eos_H2O_HolPow91
+  !public:: Eos_H2O_HolPow
+  !
+  !!// EXPORT functionS FROM : M_Supcrt_H2O
+  !! public:: CalcGH2O_Supcrt
+  !
+  !!// EXPORT functionS FROM : M_Eos_H2O_Haar
+  !public:: Eos_H2O_Haar
+  !
+  !!// EXPORT functionS FROM : M_Eos_H2O_Haar_Ghiorso
+  !public:: Eos_H2O_Haar_Ghiorso
+  !
+  !!// EXPORT functionS FROM : M_Eos_CO2_HolPow91
+  !public:: Eos_CO2_HolPow91
+  !
+  !// public function WRAPPER
+  public:: EosFluid_Calc
 
-  !// EXPORT FUNCTIONS FROM : M_Eos_H2O_Ideal
-  PUBLIC:: Eos_H2O_Ideal
+  contains
 
-  !// EXPORT FUNCTIONS FROM : M_Eos_H2O_Holland_Powell
-  PUBLIC:: Eos_H2O_HolPow91
-  PUBLIC:: Eos_H2O_HolPow
-
-  !// EXPORT FUNCTIONS FROM : M_Supcrt_H2O
-  ! PUBLIC:: CalcGH2O_Supcrt
-
-  !// EXPORT FUNCTIONS FROM : M_Eos_H2O_Haar
-  PUBLIC:: Eos_H2O_Haar
-
-  !// EXPORT FUNCTIONS FROM : M_Eos_H2O_Haar_Ghiorso
-  PUBLIC:: Eos_H2O_Haar_Ghiorso
-
-  !// EXPORT FUNCTIONS FROM : M_Eos_CO2_HolPow91
-  PUBLIC:: Eos_CO2_HolPow91
-
-  !// PUBLIC FUNCTION WRAPPER
-  PUBLIC:: CalcFluid
-
-  CONTAINS
-
-SUBROUTINE CalcFluid( &
-& sFluid,sModel, &
-& TdgK,Pbar,     &
-& Grt,H,S,V_m3,  &
+subroutine EosFluid_Calc( &
+& sFluid,sModel,          &
+& TdgK,Pbar,              &
+& Grt,H,S,V_m3,LnFug,     &
 & Ok)
-  CHARACTER(LEN=*),INTENT(IN) :: sFluid,sModel
-  REAL(dp),        INTENT(IN) :: TdgK,Pbar
+  use M_Dtb_Const,only: R_jK
   !
-  REAL(dp),        INTENT(OUT):: Grt,H,S,V_m3
-  LOGICAL,         INTENT(OUT):: Ok
-
-  Ok= .TRUE.
-
-  Grt= Zero
-  H=   Zero
-  S=   Zero
-  V_m3=Zero
+  character(len=*),intent(in) :: sFluid,sModel
+  real(dp),        intent(in) :: TdgK,Pbar
   !
-  SELECT CASE(TRIM(sFluid))
+  real(dp),        intent(out):: Grt,H,S,V_m3,LnFug
+  logical,         intent(out):: Ok
   !
-  CASE("H2O")
+  real(dp):: LnPhi
 
-    SELECT CASE(TRIM(sModel))
-    CASE("HAAR.GHIORSO")
-      CALL Eos_H2O_Haar_Ghiorso(TdgK,Pbar,Grt,H,S,V_m3)
-    !CASE("SUPCRT")
-    !  CALL CalcGH2O_Supcrt(TdgK,Pbar,Grt,H,S,V_m3)
-    CASE("HAAR")
-      CALL Eos_H2O_Haar  (TdgK,Pbar,Grt,V_m3)
-    CASE("HP91")
-      CALL Eos_H2O_HolPow91  (TdgK,Pbar,Grt,V_m3)
-    CASE("HOLPOW")
-      CALL Eos_H2O_HolPow(TdgK,Pbar,Grt)
-    !CASE("HAAR2")
-      !CALL WHAAR2(Pbar,TdgK,Grt,V_m3)
-    CASE DEFAULT
-      !! err_msg= TRIM(sFluid) // "=unknown model for H2O !!"
-      Ok= .FALSE.
-    END SELECT
+  Ok= .true.
 
-  CASE("CO2")
+  Grt=  Zero
+  H=    Zero
+  S=    Zero
+  V_m3= R_JK*TdgK/Pbar*1.0D-5
+  LnFug=log(Pbar)
+  !
+  select case(trim(sFluid))
+  !
+  case("H2O")
 
-    SELECT CASE(TRIM(sModel))
-    CASE("HP91")
-      CALL Eos_CO2_HolPow91(TdgK,Pbar,Grt,V_m3)
-    END SELECT
+    select case(trim(sModel))
+    case("HAAR.GHIORSO")
+      call Eos_H2O_Haar_Ghiorso(TdgK,Pbar,Grt,H,S,V_m3)
+    !case("SUPCRT")
+    !  call CalcGH2O_Supcrt(TdgK,Pbar,Grt,H,S,V_m3)
+    case("HAAR")
+      call Eos_H2O_Haar(TdgK,Pbar,Grt,V_m3)
+    case("HP91")
+      call Eos_H2O_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
+    case("HOLPOW")
+      call Eos_H2O_HolPow(TdgK,Pbar,Grt,LnFug)
+    !case("HAAR2") 
+    !  call WHAAR2(Pbar,TdgK,Grt,V_m3)
+    case("KERJAC")
+      call EoS_H2O_KerJac(TdgK,Pbar,Grt,V_m3,LnPhi)
+      LnFug= LnPhi+log(Pbar)
+    case("DUAN92")
+      call EoS_H2O_Duan92(TdgK,Pbar,Grt,V_m3,LnPhi)
+      LnFug= LnPhi+log(Pbar)
+    case default
+      Ok= .false.
+      !! err_msg= trim(sFluid) // "=unknown model for H2O !!"
+    end select
 
-  END SELECT
+  case("CO2")
 
-ENDSUBROUTINE CalcFluid
+    select case(trim(sModel))
+    case("HP91")
+      call Eos_CO2_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
+    case("KERJAC")
+      call EoS_CO2_KerJac(TdgK,Pbar,Grt,V_m3,LnPhi)
+      LnFug= LnPhi+log(Pbar)
+    case("DUAN92")
+      call EoS_CO2_Duan92(TdgK,Pbar,Grt,V_m3,LnPhi)
+      LnFug= LnPhi+log(Pbar)
+    case default
+      Ok= .false.
+    end select
 
-ENDMODULE M_Fluid_Calc
+  end select
+
+end subroutine EosFluid_Calc
+
+end module M_Fluid_Calc

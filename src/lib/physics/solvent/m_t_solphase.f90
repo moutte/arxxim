@@ -1,50 +1,50 @@
-MODULE M_T_SolPhase
+module M_T_SolPhase
 
-  USE M_Kinds
-  USE M_T_Species,ONLY: nElMax
+  use M_Kinds
+  use M_T_Species,only: nElMax
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC:: T_SolPhase
-  PUBLIC:: SolPhase_Init
+  public:: T_SolPhase
+  public:: SolPhase_Init
 
-  TYPE:: T_SolPhaseData
+  type:: T_SolPhaseData
     != composition of an asymmetric solution is given
     != in terms of molalities of solute species
-    REAL(dp),ALLOCATABLE:: vMolal(:)
+    real(dp),allocatable:: vMolal(:)
     !
     !-- current values at (T,P,X), for the solvent and species
-    REAL(dp):: LnActW                 ! solvent
-    REAL(dp),ALLOCATABLE:: vLnAct(:)  ! solute species
+    real(dp):: LnActW                 ! solvent
+    real(dp),allocatable:: vLnAct(:)  ! solute species
     !
-    ! REAL(dp):: LnGamW
-    ! REAL(dp),ALLOCATABLE:: vLnGam(:)
+    ! real(dp):: LnGamW
+    ! real(dp),allocatable:: vLnGam(:)
     ! !
     ! !--- current values for the phase
-    ! REAL(dp):: Grt,H,S,V,Cp
+    ! real(dp):: Grt,H,S,V,Cp
     !
-  ENDTYPE T_SolPhaseData
+  end type T_SolPhaseData
 
-  TYPE:: T_SolPhase
+  type:: T_SolPhase
   != implements a phase that follows a T_SolModel mixing model,
   != i.e. an asymmetric model,
   != >> used for a molality-based solution
   !=  (e.g. electrolytes, aqueous solution)
-    CHARACTER(LEN=23):: Name
+    character(len=23):: Name
     !
     !--- solution model- index in vSolModel --
-    INTEGER:: iModel
+    integer:: iModel
     !
     !--- the composition --
-    REAL(dp),ALLOCATABLE:: vXSpecies(:)
+    real(dp),allocatable:: vXSpecies(:)
     !
-  ENDTYPE T_SolPhase
+  end type T_SolPhase
 
-CONTAINS
+contains
 
-SUBROUTINE SolPhase_Init( & !
+subroutine SolPhase_Init( & !
 & iModel,    & !IN, model index
 & vSolModel, & !IN, base of solution models
 & S,         & !INOUT, solution phase
@@ -52,41 +52,41 @@ SUBROUTINE SolPhase_Init( & !
 !--
 !-- initialize [solution]%iModel --
 !--
-  USE M_T_SolModel,ONLY: T_SolModel
+  use M_T_SolModel,only: T_SolModel
   !
-  INTEGER,         INTENT(IN)   :: iModel !index of solvent model
-  TYPE(T_SolModel),INTENT(IN)   :: vSolModel(:)
-  TYPE(T_SolPhase),INTENT(INOUT):: S
-  LOGICAL,         INTENT(OUT)  :: Ok
-  CHARACTER(*),    INTENT(OUT)  :: Msg
+  integer,         intent(in)   :: iModel !index of solvent model
+  type(T_SolModel),intent(in)   :: vSolModel(:)
+  type(T_SolPhase),intent(inout):: S
+  logical,         intent(out)  :: Ok
+  character(*),    intent(out)  :: Msg
   !
-  ! INTEGER:: I
+  ! integer:: I
   !
-  Ok= .TRUE.
+  Ok= .true.
   Msg= ""
 
   ! S%iModel= 0
-  ! DO I=1,SIZE(vSolModel)
-  !   IF(TRIM(Str)==TRIM(vSolModel(I)%Name)) THEN
+  ! do I=1,size(vSolModel)
+  !   if(trim(Str)==trim(vSolModel(I)%Name)) then
   !     S%iModel= I
-  !     EXIT
-  !   ENDIF
-  ! ENDDO
+  !     exit
+  !   end if
+  ! end do
   ! !
-  ! IF(S%iModel == 0) THEN
-  !   Ok= .FALSE.
-  !   Msg= "Activity model "//TRIM(Str)//" Not Found"
-  ! ENDIF
+  ! if(S%iModel == 0) then
+  !   Ok= .false.
+  !   Msg= "Activity model "//trim(Str)//" Not Found"
+  ! end if
 
   S%iModel= iModel
-  ALLOCATE(S%vXSpecies(vSolModel(iModel)%nSpecies))
-  ! ALLOCATE(S%Dat%vMolal(vSolModel(iModel)%nSpecies))
-  ! ALLOCATE(S%Dat%vLnAct(vSolModel(iModel)%nSpecies))
+  allocate(S%vXSpecies(vSolModel(iModel)%nSpecies))
+  ! allocate(S%Dat%vMolal(vSolModel(iModel)%nSpecies))
+  ! allocate(S%Dat%vLnAct(vSolModel(iModel)%nSpecies))
   !
-  RETURN
-END SUBROUTINE SolPhase_Init
+  return
+end subroutine SolPhase_Init
 
-! SUBROUTINE SolPhase_Molal_Get( & !
+! subroutine SolPhase_Molal_Get( & !
 ! & SolModel, &  !IN
 ! & SolFas,   &  !IN
 ! & nMol,     &  !IN: amount of solution phase in terms of solvent mole number!!
@@ -94,22 +94,22 @@ END SUBROUTINE SolPhase_Init
 ! !--
 ! !-- from S%vMolalCp(:), retrieve mole numbers of components /elements
 ! !--
-!   USE M_T_SolModel,ONLY: T_SolModel
+!   use M_T_SolModel,only: T_SolModel
 !   !
-!   TYPE(T_SolModel),INTENT(IN) :: SolModel
-!   TYPE(T_SolPhase),INTENT(IN) :: SolFas
-!   REAL(dp),        INTENT(IN) :: nMol
-!   REAL(dp),        INTENT(OUT):: vTotCp(:)
+!   type(T_SolModel),intent(in) :: SolModel
+!   type(T_SolPhase),intent(in) :: SolFas
+!   real(dp),        intent(in) :: nMol
+!   real(dp),        intent(out):: vTotCp(:)
 !   !
-!   INTEGER:: I
+!   integer:: I
 !   !
-!   DO I= 1,SolModel%nCp
+!   do I= 1,SolModel%nCp
 !     vTotCp(I)= SolFas%vMolalCp(I) *nMol *SolModel%MolWeitSv
-!   ENDDO
+!   end do
 !   !
-! END SUBROUTINE SolPhase_vTotCp_Get
+! end subroutine SolPhase_vTotCp_Get
 
-! SUBROUTINE SolPhase_MolalCp_Set( & !
+! subroutine SolPhase_MolalCp_Set( & !
 ! & SolModel, &  !IN
 ! & vSpc,     &  !IN
 ! & vMol,     &  !IN
@@ -117,35 +117,35 @@ END SUBROUTINE SolPhase_Init
 ! !--
 ! !-- from a fluid compo' given in species mole nrs, set %vMolalCp(:) --
 ! !--
-!   USE M_T_Species, ONLY: T_Species
-!   USE M_T_SolModel,ONLY: T_SolModel
+!   use M_T_Species, only: T_Species
+!   use M_T_SolModel,only: T_SolModel
 !   !
-!   TYPE(T_SolModel),INTENT(IN)   :: SolModel
-!   TYPE(T_Species), INTENT(IN)   :: vSpc(:)
-!   REAL(dp),        INTENT(IN)   :: vMol(:)
-!   TYPE(T_SolPhase),INTENT(INOUT):: SolFas
+!   type(T_SolModel),intent(in)   :: SolModel
+!   type(T_Species), intent(in)   :: vSpc(:)
+!   real(dp),        intent(in)   :: vMol(:)
+!   type(T_SolPhase),intent(inout):: SolFas
 !   !
-!   TYPE(T_Species):: S
-!   INTEGER :: iSolute,iSolvent
-!   INTEGER :: I,J
-!   REAL(dp),ALLOCATABLE:: vX(:)
+!   type(T_Species):: S
+!   integer :: iSolute,iSolvent
+!   integer :: I,J
+!   real(dp),allocatable:: vX(:)
 !   !
-!   ALLOCATE(vX(SolModel%nCp))
+!   allocate(vX(SolModel%nCp))
 !   !
 !   vX(:)= Zero
-!   DO I= 1,SolModel%nSpecies
+!   do I= 1,SolModel%nSpecies
 !     iSolute= SolModel%vISolute(I)
 !     S= vSpc(iSolute)
-!     DO J=1,SolModel%nCp
-!       vX(J)= vX(J) + vMol(iSolute) *S%vStoikio(J) /REAL(S%vStoikio(0))
-!     ENDDO
-!   ENDDO
+!     do J=1,SolModel%nCp
+!       vX(J)= vX(J) + vMol(iSolute) *S%vStoikio(J) /real(S%vStoikio(0))
+!     end do
+!   end do
 !   !
 !   iSolvent= SolModel%iSolvent
 !   SolFas%vMolalCp(:)= vX(:) /vMol(iSolvent) /vSpc(iSolvent)%WeitKg
 !   !
-!   DEALLOCATE(vX)
+!   deallocate(vX)
 !   !
-! END SUBROUTINE SolPhase_MolalCp_Set
+! end subroutine SolPhase_MolalCp_Set
 
-ENDMODULE M_T_SolPhase
+end module M_T_SolPhase

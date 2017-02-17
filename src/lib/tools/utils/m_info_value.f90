@@ -1,80 +1,81 @@
-  MODULE M_Info_Value
+  module M_Info_Value
 
-  USE M_Trace
-  IMPLICIT NONE
-  PRIVATE
+  use M_Trace
+  implicit none
+  private
 
-  CHARACTER(LEN=8), PRIVATE :: RFormat = 'G16.6'
-  CHARACTER(LEN=8), PRIVATE :: IFormat = 'I8'
+  character(len=8), private :: RFormat = 'G16.6'
+  character(len=8), private :: iformat = 'I8'
 
-  INTERFACE Info_Value
-    MODULE PROCEDURE Info_Value_Real
-    MODULE PROCEDURE Info_Value_Integer
-    MODULE PROCEDURE Info_Value_Logical
-    MODULE PROCEDURE Info_Value_String
-  END INTERFACE
+  interface Info_Value
+    module procedure Info_Value_Real
+    module procedure Info_Value_Integer
+    module procedure Info_Value_Logical
+    module procedure Info_Value_String
+  end interface
 
-  PUBLIC :: Info_Value
+  public :: Info_Value
 
-  PRIVATE :: Info_Value_Real
-  PRIVATE :: Info_Value_Integer
-  PRIVATE :: Info_Value_Logical
-  PRIVATE :: Info_Value_String
+  private :: Info_Value_Real
+  private :: Info_Value_Integer
+  private :: Info_Value_Logical
+  private :: Info_Value_String
 
-CONTAINS
+contains
 
     !---
-  SUBROUTINE Info_Value_Real(Str, X) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
-    REAL(kind=8),INTENT(IN)::X
+  subroutine Info_Value_Real(Str, X) 
+    use M_Kinds
+    implicit none
+    character(len=*),intent(in)::Str
+    real(dp),intent(in)::X
     !--
-    CHARACTER(LEN=20)::W
+    character(len=20)::W
     !--
-    WRITE(W, '('//RFormat//')' ) X
-    CALL Message_("Info",Str//" , VALUE =  "//W )
+    write(W, '('//RFormat//')' ) X
+    call Message_("Info",Str//" , value =  "//W )
 
-  ENDSUBROUTINE Info_Value_Real
+  end subroutine Info_Value_Real
   
   !---
   
-  SUBROUTINE Info_Value_Integer(Str, X) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
-    INTEGER,INTENT(IN)::X
+  subroutine Info_Value_Integer(Str, X) 
+    implicit none
+    character(len=*),intent(in)::Str
+    integer,intent(in)::X
     !--
-    CHARACTER(LEN=20)::W
+    character(len=20)::W
     !--
-    WRITE(W, '('//IFormat//')' ) X
-    CALL Message_("Info",Str//" , VALUE = "//W )
+    write(W, '('//iformat//')' ) X
+    call Message_("Info",Str//" , value = "//W )
 
-  ENDSUBROUTINE Info_Value_Integer
+  end subroutine Info_Value_Integer
 
   !---
 
-  SUBROUTINE Info_Value_Logical(Str, X) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
-    LOGICAL,INTENT(IN)::X
+  subroutine Info_Value_Logical(Str, X) 
+    implicit none
+    character(len=*),intent(in)::Str
+    logical,intent(in)::X
     !--
-    CHARACTER(LEN=20)::W
+    character(len=20)::W
     !--
-    W = ".FALSE."
-    IF ( X ) W = ".TRUE."
+    W = ".false."
+    if ( X ) W = ".true."
     
-    CALL Message_("Info",Str//" , VALUE = "//W )
+    call Message_("Info",Str//" , value = "//W )
 
-  ENDSUBROUTINE Info_Value_Logical
+  end subroutine Info_Value_Logical
 
   !---
 
-  SUBROUTINE Info_Value_String(Str, X) 
-    IMPLICIT NONE
-    CHARACTER(LEN=*),INTENT(IN)::Str
-    CHARACTER(LEN=*),INTENT(IN)::X
+  subroutine Info_Value_String(Str, X) 
+    implicit none
+    character(len=*),intent(in)::Str
+    character(len=*),intent(in)::X
     !--
-    CALL Message_("Info",Str//" , VALUE = "//trim(X) )
+    call Message_("Info",Str//" , value = "//trim(X) )
 
-  ENDSUBROUTINE Info_Value_String
+  end subroutine Info_Value_String
 
-END MODULE M_Info_Value
+end module M_Info_Value

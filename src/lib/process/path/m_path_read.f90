@@ -1,96 +1,96 @@
-MODULE M_Path_Read
+module M_Path_Read
 !--
 !-- read parameters for path calculations --
 !--
 !
-  USE M_Kinds
-  USE M_Trace
-  USE M_T_MixPhase,ONLY: T_MixPhase
+  use M_Kinds
+  use M_Trace
+  use M_T_MixPhase,only: T_MixPhase
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Path_ReadParam
-  PUBLIC:: Path_ReadParam_new
-  PUBLIC:: Path_ReadMode
+  public:: Path_ReadParam
+  public:: Path_ReadParam_new
+  public:: Path_ReadMode
   ! 
-CONTAINS
+contains
 
-SUBROUTINE Path_ReadMode( &
+subroutine Path_ReadMode( &
 & NamFInn, &
 & PathMode,Ok,Msg)
 !--
 !-- read path mode --
 !--
-  USE M_IOTools
+  use M_IOTools
   !
-  CHARACTER(LEN=*),INTENT(IN) :: NamFInn
-  CHARACTER(LEN=*),INTENT(OUT):: PathMode
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(LEN=*),INTENT(OUT):: Msg
+  character(len=*),intent(in) :: NamFInn
+  character(len=*),intent(out):: PathMode
+  logical,         intent(out):: Ok
+  character(len=*),intent(out):: Msg
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL:: EoL
-  INTEGER:: f, ios
+  character(len=255):: L
+  character(len=80) :: W
+  logical:: EoL
+  integer:: f, ios
   !
-  Ok=.FALSE.
+  Ok=.false.
   Msg= ""
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L  ; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!')   CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L  ; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!')   cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    IF(W=="PATH") THEN
+    if(W=="PATH") then
       !
-      IF(EoL) THEN
+      if(EoL) then
         Ok=  .false.
         Msg= "Error in PATH: Path type undefined"
-        RETURN
-      ENDIF
+        return
+      end if
       ! 
       !------------------------------------------- read the path mode --
-      CALL LinToWrd(L,W,EoL)
+      call LinToWrd(L,W,EoL)
       !
-      Ok=.TRUE.
+      Ok=.true.
       !
-      SELECT CASE(TRIM(W))
+      select case(trim(W))
       
-      CASE("MIX")         ; PathMode= "MIX"
-      CASE("ADD")         ; PathMode= "ADD"
-      CASE("ADDALL")      ; PathMode= "ADA"
-      CASE("CHANGE")      ; PathMode= "CHG"
-      CASE("GRID")        ; PathMode= "GRD"
-      CASE("EVAPORATE")   ; PathMode= "EVP"
-      CASE("LOGK")        ; PathMode= "LGK"
+      case("MIX")         ; PathMode= "MIX"
+      case("ADD")         ; PathMode= "ADD"
+      case("ADDALL")      ; PathMode= "ADA"
+      case("CHANGE")      ; PathMode= "CHG"
+      case("GRID")        ; PathMode= "GRD"
+      case("EVAPORATE")   ; PathMode= "EVP"
+      case("LOGK")        ; PathMode= "LGK"
       
-      CASE DEFAULT
+      case default
         Ok=  .false.
         Msg= "Error in PATH: Path mode should be CHANGE | ADD | MIX | LOGK"
-        RETURN
+        return
       
-      ENDSELECT
+      end select
       !------------------------------------------/ read the path mode --
       !
-    ENDIF !Cod=="PATH"
+    end if !Cod=="PATH"
     !
-  ENDDO DoFile
+  end do DoFile
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(.not. Ok) Msg= "PATH block not found !!"
+  if(.not. Ok) Msg= "PATH block not found !!"
   !
-  RETURN
-ENDSUBROUTINE Path_ReadMode
+  return
+end subroutine Path_ReadMode
 
-SUBROUTINE Path_ReadParam( &
+subroutine Path_ReadParam( &
 & NamFInn,   &  !IN
 & PathMode,  &  !IN
 & vCpn,      &  !IN
@@ -99,54 +99,55 @@ SUBROUTINE Path_ReadParam( &
 !--
 !-- read the path parameters --
 !--
-  USE M_IOTools
-  USE M_Dtb_Const,   ONLY: T_CK
-  USE M_System_Tools,ONLY: System_TP_Update
-  USE M_T_Element,   ONLY: Formula_Read,Element_Index
-  USE M_T_Species,   ONLY: Species_Index
-  USE M_T_Component, ONLY: T_Component,Component_Index
-  USE M_Basis,       ONLY: Basis_Change
-  USE M_T_MixPhase,  ONLY: MixPhase_Index
+  use M_IOTools
+  use M_Dtb_Const,   only: T_CK
+  use M_System_Tools,only: System_TP_Update
+  use M_T_Element,   only: Formula_Read,Element_Index
+  use M_T_Species,   only: Species_Index
+  use M_T_Component, only: T_Component,Component_Index
+  use M_Basis,       only: Basis_Change
+  use M_T_MixPhase,  only: MixPhase_Index
   !
-  USE M_Global_Vars, ONLY: vEle,vSpc,vFas,vMixFas,vMixModel
-  USE M_Basis_Vars,  ONLY: tAlfFs
-  USE M_Path_Vars,   ONLY: vLPath,vTPpath,tPathData,DimPath
-  USE M_Path_Vars,   ONLY: vPhasBegin,vPhasFinal
-  USE M_Path_Vars,   ONLY: iLogK,vPathLogK
+  use M_Global_Vars, only: vEle,vSpc,vFas,vMixFas,vMixModel
+  use M_Basis_Vars,  only: tAlfFs
+  use M_Path_Vars,   only: vLPath,vTPpath,tPathData,DimPath
+  use M_Path_Vars,   only: vPhasBegin,vPhasFinal
+  use M_Path_Vars,   only: iLogK,vPathLogK
   !
-  CHARACTER(LEN=*), INTENT(IN)   :: NamFInn
-  CHARACTER(LEN=*), INTENT(IN)   :: PathMode
-  TYPE(T_Component),INTENT(IN)   :: vCpn(:)
-  REAL(dp),         INTENT(IN)   :: TdgK,Pbar
-  LOGICAL,          INTENT(OUT)  :: Ok
-  CHARACTER(LEN=*), INTENT(OUT)  :: Msg
+  character(len=*), intent(in)   :: NamFInn
+  character(len=*), intent(in)   :: PathMode
+  type(T_Component),intent(in)   :: vCpn(:)
+  real(dp),         intent(in)   :: TdgK,Pbar
+  logical,          intent(out)  :: Ok
+  character(len=*), intent(out)  :: Msg
   !
-  INTEGER,PARAMETER:: DimMax= 255
+  integer,parameter:: DimMax= 255
   !
-  CHARACTER(LEN=1024):: L
-  CHARACTER(LEN=80) :: W,W1
-  LOGICAL :: EoL, fOk, OkMix, PathAdd, BuildTable, TestMixture
-  INTEGER :: ios, ieOx, Z, Zxs, nDiv, iMix
-  INTEGER :: I, J, K, f, iCp, nCp, nStep
-  REAL(dp):: rBegin,rFinal,rRatio,rDelta,AddedTot,X
-  INTEGER,DIMENSION(1:SIZE(vCpn))::vStoik !for PathAdd
+  character(len=1024):: L
+  character(len=80) :: W,W1
+  logical :: EoL, fOk, OkMix, PathAdd, BuildTable, TestMixture
+  integer :: ios, ieOx, Z, Zxs, nDiv, iMix
+  integer :: I, J, K, f, iCp, nCp, nStep
+  integer :: fCheck
+  real(dp):: rBegin,rFinal,rRatio,rDelta,AddedTot,X
+  integer,dimension(1:size(vCpn))::vStoik !for PathAdd
   !
-  REAL(dp):: vTmp(DimMax)
-  REAL(dp),ALLOCATABLE:: tTmp(:,:)
-  INTEGER, ALLOCATABLE:: vNstep(:)
-  INTEGER, ALLOCATABLE:: vStAdd(:)
+  real(dp):: vTmp(DimMax)
+  real(dp),allocatable:: tTmp(:,:)
+  integer, allocatable:: vNstep(:)
+  integer, allocatable:: vStAdd(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Path_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Path_ReadParam"
   !
-  !IF(iDebug==4) PRINT '(A)',"Path_Read"
+  !if(iDebug==4) print '(A)',"Path_Read"
   !
-  Ok=.FALSE.
+  Ok=.false.
   Msg= ""
-  TestMixture= .FALSE.
+  TestMixture= .false.
   !
-  nCp=SIZE(vCpn)
+  nCp=size(vCpn)
   !
-  ALLOCATE(tTmp(1:nCp+2,1:DimMax))
+  allocate(tTmp(1:nCp+2,1:DimMax))
   ! 1:nCp = components
   ! nCp+1 = TdgC
   ! nCp+2 = Pbar
@@ -154,100 +155,100 @@ SUBROUTINE Path_ReadParam( &
   tTmp(nCp+1,:)= TdgK -T_CK
   tTmp(nCp+2,:)= Pbar
   !
-  ALLOCATE(vNstep(nCp+2))  ;  vNstep(:)= 0
+  allocate(vNstep(nCp+2))  ;  vNstep(:)= 0
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  IF(iDebug>2) THEN
-    DO I=1,SIZE(vCpn)
-      PRINT '(I3,1X,3A)', &
+  if(iDebug>2) then
+    do I=1,size(vCpn)
+      print '(I3,1X,3A)', &
       & I,vCpn(I)%NamCp," -> STATUT=",vCpn(I)%Statut
-    ENDDO
-    CALL Pause_
-  ENDIF
+    end do
+    call Pause_
+  end if
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile !---------------------------------end of file
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile !---------------------------------end of file
     !
-    CALL LinToWrd(L,W,EoL)
+    call LinToWrd(L,W,EoL)
     !
-    IF(W(1:1)=='!') CYCLE DoFile !--------------------skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !--------------------skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
     BuildTable= .false.
     !
-    IF(W=="PATH") THEN 
+    if(W=="PATH") then 
       !
-      Ok=.TRUE.
+      Ok=.true.
       !
       !--------------------allocate variables according to the Path mode
-      SELECT CASE(PathMode) 
-      CASE("ADD","ADA")
-        ALLOCATE(vStAdd(0:nCp))  ; vStAdd=0
+      select case(PathMode) 
+      case("ADD","ADA")
+        allocate(vStAdd(0:nCp))  ; vStAdd=0
         !
-      CASE("CHG","EVP")
-        ALLOCATE(vLPath(1:nCp+2))  ;  vLPath=.FALSE.
+      case("CHG","EVP")
+        allocate(vLPath(1:nCp+2))  ;  vLPath=.false.
         !
-        ALLOCATE(vPhasBegin(1:nCp))  ;  vPhasBegin=0
-        ALLOCATE(vPhasFinal(1:nCp))  ;  vPhasFinal=0
+        allocate(vPhasBegin(1:nCp))  ;  vPhasBegin=0
+        allocate(vPhasFinal(1:nCp))  ;  vPhasFinal=0
         !
-      END SELECT
+      end select
       !-------------------------------------------------------/ allocate
       !
       !---------------------------------------- read the path parameters
-      DoBlock: DO
+      DoBlock: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!')   CYCLE DoBlock !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!')   cycle DoBlock !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        IF(W=="ENDINPUT") EXIT  DoFile
-        IF(W=="END" .OR. W=="ENDPATH") EXIT  DoFile
-        !-> READ ONLY the first PATH block found !!
+        if(W=="ENDINPUT") exit  DoFile
+        if(W=="END" .or. W=="ENDPATH") exit  DoFile
+        !-> read only the first PATH block found !!
         !
-        SELECT CASE(TRIM(PathMode))
-        !-------------------------------------------- CASE "LGK" (-LOGK)
-        CASE("LGK")
+        select case(trim(PathMode))
+        !-------------------------------------------- case "LGK" (-LOGK)
+        case("LGK")
           
-          iLogK= Species_Index(TRIM(W),vSpc)
-          IF(iLogK==0) THEN
+          iLogK= Species_Index(trim(W),vSpc)
+          if(iLogK==0) then
             Ok=  .false.
-            Msg=      "In PATH LOGK, "//TRIM(W)//"= unknown species !!!"
-            RETURN !----------------------------------------------------
-          ENDIF
+            Msg=      "In PATH LOGK, "//trim(W)//"= unknown species !!!"
+            return !----------------------------------------------------
+          end if
           
           !--------------------------------------------------read values
           rBegin=Zero; rFinal=Zero; rDelta=Zero
-          DO
-            IF(EoL) EXIT
+          do
+            if(EoL) exit
             
-            CALL LinToWrd(L,W1,EoL)
+            call LinToWrd(L,W1,EoL)
             
-            SELECT CASE(W1)
-            CASE("INITIAL")
-              CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rBegin)
-            CASE("FINAL")
-              CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rFinal)
-            CASE("DELTA")
-              CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rDelta)
-            CASE DEFAULT
+            select case(W1)
+            case("INITIAL")
+              call LinToWrd(L,W1,EoL); call WrdToReal(W1,rBegin)
+            case("FINAL")
+              call LinToWrd(L,W1,EoL); call WrdToReal(W1,rFinal)
+            case("DELTA")
+              call LinToWrd(L,W1,EoL); call WrdToReal(W1,rDelta)
+            case default
               Ok=  .false.
-              Msg= "In PATH LOGK, "//TRIM(W1)//"= invalid keyword !!!"
-              RETURN !--------------------------------------------RETURN
-            END SELECT
-          ENDDO
+              Msg= "In PATH LOGK, "//trim(W1)//"= invalid keyword !!!"
+              return !--------------------------------------------return
+            end select
+          end do
           
-          IF(ABS(rDelta)<Epsilon(rDelta)) THEN
+          if(ABS(rDelta)<Epsilon(rDelta)) then
             Ok=  .false.
             Msg=                       "In PATH LOGK, Delta not defined"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            return !----------------------------------------------return
+          end if
           
-          ! IF(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
+          ! if(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
           
           rDelta= SIGN(rDelta,rFinal-rBegin)
           !-- function SIGN(a,b) returns abs(a)*sign(b) --
@@ -257,53 +258,53 @@ SUBROUTINE Path_ReadParam( &
           !--------------------------------------------- build vPathLogK
           I= 1
           vTmp(I)= rBegin
-          DO
-            IF(I>DimMax) EXIT
-            IF(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) EXIT
+          do
+            if(I>DimMax) exit
+            if(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) exit
             I=I+1
             vTmp(I)= vTmp(I-1) + rDelta
             print '(A,I3,G15.6)',"logK=",I,vTmp(i)
-          ENDDO
+          end do
           ! call pause_
           !
           DimPath= I
-          ALLOCATE(vPathLogK(1:I))
+          allocate(vPathLogK(1:I))
           vPathLogK(1:I)= vTmp(1:I)
           !-----------------------------------------/ build vPathLogK --
           !
-        !----------------------------------------/ CASE "LGK" (-LOGK) --
+        !----------------------------------------/ case "LGK" (-LOGK) --
         !
-        !------------------------------------------------- CASE "ADD" --
-        CASE("ADD","ADA")
+        !------------------------------------------------- case "ADD" --
+        case("ADD","ADA")
           !
           !------------------------- read stoichio of added material --
-          CALL Formula_Read(W,vEle,Z,nDiv,fOk,vStoik)
+          call Formula_Read(W,vEle,Z,nDiv,fOk,vStoik)
           !
-          IF(Z/=0) THEN
+          if(Z/=0) then
             Ok=  .false.
-            Msg=     "In PATH ADD, "//TRIM(W)//"= should be neutral !!!"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            Msg=     "In PATH ADD, "//trim(W)//"= should be neutral !!!"
+            return !----------------------------------------------return
+          end if
           !
           !---------------------compute stoikio coeff of redox component
           ieOx= Element_Index("OX_",vEle)
-          Zxs= DOT_PRODUCT(vStoik(:),vEle(:)%Z)
+          Zxs= dot_product(vStoik(:),vEle(:)%Z)
           !-- -> oxidation state
-          IF(Zxs/=Z) THEN
-            IF(ieOx/=0) THEN
+          if(Zxs/=Z) then
+            if(ieOx/=0) then
               vStoik(ieOx)= Z - Zxs
-              fOk= .TRUE.
-            ELSE
-              fOk= .FALSE.
-            ENDIF
-          ENDIF
+              fOk= .true.
+            else
+              fOk= .false.
+            end if
+          end if
           !-------------------/ compute stoikio coeff of redox component
           !
-          IF(.NOT.fOk) THEN
+          if(.not.fOk) then
             Ok=  .false.
-            Msg= "In PATH ADD, "//TRIM(W)//"= problem in stoikiometry ?"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            Msg= "In PATH ADD, "//trim(W)//"= problem in stoikiometry ?"
+            return !----------------------------------------------return
+          end if
           !
           vStAdd(1:nCp)= vStoik(vCpn(1:nCp)%iEle)
           vStAdd(0)=     nDiv
@@ -321,419 +322,428 @@ SUBROUTINE Path_ReadParam( &
           tTmp(1:nCp,1)= vCpn(:)%Mole
           !
           !---------------------------------------------- read values --
-          DO
-            IF(EoL) EXIT
+          do
+            if(EoL) exit
             !
-            CALL LinToWrd(L,W,EoL)
-            SELECT CASE(W)
+            call LinToWrd(L,W,EoL)
+            select case(W)
               
-              CASE("INITIAL","FINAL","RATIO","DELTA")
+              case("INITIAL","FINAL","RATIO","DELTA")
                 BuildTable= .true.
-                SELECT CASE(W)
-                  CASE("INITIAL"); CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rBegin)
-                  CASE("FINAL");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rFinal)
-                  CASE("RATIO");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
-                  CASE("DELTA");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
-                END SELECT
+                select case(W)
+                  case("INITIAL"); call LinToWrd(L,W,EoL); call WrdToReal(W,rBegin)
+                  case("FINAL");   call LinToWrd(L,W,EoL); call WrdToReal(W,rFinal)
+                  case("RATIO");   call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
+                  case("DELTA");   call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
+                end select
               
-              CASE DEFAULT
-                IF(BuildTable) THEN
+              case default
+                if(BuildTable) then
                   Ok=  .false.
-                  Msg=       TRIM(W)//"= unknown keyword in PATH CHANGE"
-                  RETURN !==============================================
-                ELSE
-                  DO
+                  Msg=       trim(W)//"= unknown keyword in PATH CHANGE"
+                  return !----------------------------------------return
+                else
+                  do
                     nStep= nStep+1
-                    CALL WrdToReal(W,X)
+                    call WrdToReal(W,X)
                     !
-                    DO iCp=1,SIZE(vCpn)
+                    do iCp=1,size(vCpn)
                       tTmp(iCp,nStep)= tTmp(iCp,1) &
-                      + vStAdd(iCp) /REAL(vStAdd(0)) *X
-                    ENDDO
+                      + vStAdd(iCp) /real(vStAdd(0)) *X
+                    end do
                     !
-                    IF(EoL) EXIT
-                    IF(nStep==DimMax) EXIT
+                    if(EoL) exit
+                    if(nStep==DimMax) exit
                     !
-                    CALL LinToWrd(L,W,EoL)
-                  ENDDO
+                    call LinToWrd(L,W,EoL)
+                  end do
                   !vNstep(I)= nStep
-                ENDIF
+                end if
                 
-            END SELECT
-          ENDDO
+            end select
+          end do
           !---------------------------------------------/ read values --
           !
           !------------------------------------------ build tPathData --
-          PathAdd= (rDelta>Zero) !.FALSE.
+          PathAdd= (rDelta>Zero) !.false.
           !
-          IF(iDebug>2) THEN
-            PRINT '(A)',"conditions for PATH ADD"
-            PRINT '(A)',"stoikiometry vStAdd" ; CALL Pause_
-            DO I=1,nCp
-              IF(vStAdd(I)/=0) PRINT '(I3,G9.2)',I,vStAdd(I)  
-            ENDDO
-            !~ PRINT '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
+          if(iDebug>2) then
+            print '(A)',"conditions for PATH ADD"
+            print '(A)',"stoikiometry vStAdd" ; call Pause_
+            do I=1,nCp
+              if(vStAdd(I)/=0) print '(I3,G9.2)',I,vStAdd(I)  
+            end do
+            !~ print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
             !~ & rAddBegin,rAddFinal,rAddRatio,rAddDelta
-            CALL Pause_
-          ENDIF
+            call Pause_
+          end if
           !
-          IF(BuildTable) THEN
-            DO
+          if(BuildTable) then
+            !
+            if(iDebug>2) then
+              call GetUnit(fCheck)
+              open(fCheck,file="debug_pathadd_table.restab")
+            end if
+            !
+            do
               nStep= nStep+1
               !
-              DO iCp=1,SIZE(vCpn)
+              do iCp=1,size(vCpn)
                 !
-                IF(vStAdd(iCp)/=0) THEN
+                if(vStAdd(iCp)/=0) then
                   !
-                  IF(PathAdd) THEN
+                  if(PathAdd) then
                     tTmp(iCp,nStep)= tTmp(iCp,nStep-1) &
-                    + vStAdd(iCp)/REAL(vStAdd(0)) *rDelta !*(nStep-1)
-                  ELSE
+                    + vStAdd(iCp)/real(vStAdd(0)) *rDelta !*(nStep-1)
+                  else
                     tTmp(iCp,nStep)= tTmp(iCp,nStep-1) &
-                    + vStAdd(iCp)/REAL(vStAdd(0)) *rBegin *rRatio**(nStep-1)
+                    + vStAdd(iCp)/real(vStAdd(0)) *rBegin *rRatio**(nStep-1)
                     !AddedTot= AddedTot +rBegin *rRatio**(nStep-1)
-                  ENDIF
+                  end if
                   !
-                ELSE
+                else
                   tTmp(iCp,nStep)= tTmp(iCp,nStep-1)
-                ENDIF
+                end if
                 !
-                IF(iDebug>2) WRITE(61,'(G15.6,1X)',ADVANCE="no") tTmp(iCp,nStep)
+                if(iDebug>2) &
+                & write(fCheck,'(G15.6,1X)',advance="no") tTmp(iCp,nStep)
                 !
-              ENDDO
+              end do
               !
-              IF(iDebug>2) WRITE(61,*)
+              if(iDebug>2) write(fCheck,*)
+              if(iDebug>2) flush(fCheck)
               !
-              IF(PathAdd) THEN
+              if(PathAdd) then
                 AddedTot= AddedTot +rDelta
-              ELSE
+              else
                 AddedTot= AddedTot +rBegin *rRatio**(nStep-1)
-              ENDIF
+              end if
               !
-              IF(AddedTot>=rFinal) EXIT
+              if(AddedTot>=rFinal) exit
               !
-              IF(nStep>=DimMax) EXIT
+              if(nStep>=DimMax) exit
               !
-            ENDDO
-          ENDIF
+            end do
+          end if
           !
           DimPath= nStep
           !
-          ALLOCATE(tPathData(nCp,DimPath))
+          allocate(tPathData(nCp,DimPath))
           tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
           !
-          ALLOCATE(vTPpath(DimPath))
-          vTPpath(:)%TdgC= tTmp(nCp+1,:)
-          vTPpath(:)%Pbar= tTmp(nCp+2,:)
+          allocate(vTPpath(DimPath))
+          vTPpath(1:DimPath)%TdgC= tTmp(nCp+1,1:DimPath)
+          vTPpath(1:DimPath)%Pbar= tTmp(nCp+2,1:DimPath)
           !-----------------------------------------/ build tPathData --
           !
         !_ADD
-        !------------------------------------------------/ CASE "ADD" --
-        !!! CASE("MIX")
+        !------------------------------------------------/ case "ADD" --
+        !!! case("MIX")
         !!!   !
-        !!!   CALL Str_Append(W,3)
+        !!!   call Str_Append(W,3)
         !!!   I=Element_Index(W,vEle)
-        !!!   IF(I<1) THEN
-        !!!     CALL Stop_(TRIM(W)//"<-NOT in the current system !!!!")
-        !!!   ELSE 
-        !!!     CALL LinToWrd(L,W,EoL)
-        !!!     CALL WrdToReal(W,X1)
+        !!!   if(I<1) then
+        !!!     call Stop_(trim(W)//"<-NOT in the current system !!!!")
+        !!!   else 
+        !!!     call LinToWrd(L,W,EoL)
+        !!!     call WrdToReal(W,X1)
         !!!     vSys2(I)=X1
-        !!!   ENDIF
+        !!!   end if
         !!! !_MIX
         !
-        !------------------------------------------------ CASE "CHG" --
-        CASE("CHG","EVP")
+        !------------------------------------------------ case "CHG" --
+        case("CHG","EVP")
           !
-          SELECT CASE(TRIM(W))
+          select case(trim(W))
           !
-          CASE("TDGC")  ;  I= nCp+1
+          case("TDGC")  ;  I= nCp+1
           !
-          CASE("PBAR")  ;  I= nCp+2
+          case("PBAR")  ;  I= nCp+2
           !
-          CASE DEFAULT
-            CALL Str_Append(W,3)
+          case default
+            call Str_Append(W,3)
             !-- from component name (max 3 chars), find index in vCpn
             I= Component_Index(W,vCpn)
-            IF(I<=0) THEN
+            if(I<=0) then
               Ok=  .false.
-              Msg= "PATH CHANGE: Component "//TRIM(W)//" Not in the system .."
-              RETURN !==================================================
-            ENDIF
+              Msg= "PATH CHANGE: Component "//trim(W)//" Not in the system .."
+              return !--------------------------------------------------
+            end if
           !
-          END SELECT
+          end select
           !
-          vLPath(I)=.TRUE.
+          vLPath(I)=.true.
           !
-          IF(I<=nCp) THEN
+          if(I<=nCp) then
             J=    vCpn(I)%iSpc !-> find related species
             iMix= vCpn(I)%iMix !-> component is an end-member of mixture phase iMix
-          ELSE
+          else
             J= 0
             iMix= 0
-          ENDIF
+          end if
           !
           !----------- prim' mobile species is aqueous or pure phase --
-          IF(iMix==0) THEN
+          if(iMix==0) then
             !
             rBegin= Zero; rFinal= Zero
             rRatio= One;  rDelta= Zero
             !-------------------------------------------- read values --
-            DO
+            do
               !
-              IF(EoL) EXIT
-              CALL LinToWrd(L,W,EoL)
+              if(EoL) exit
+              call LinToWrd(L,W,EoL)
               !
-              SELECT CASE(W)
+              select case(W)
               !
-              CASE("INITIAL","FINAL","RATIO","DELTA")
+              case("INITIAL","FINAL","RATIO","DELTA")
                 BuildTable= .true.
-                SELECT CASE(W)
-                CASE("INITIAL")
-                  CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rBegin)
-                CASE("FINAL")
-                  CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rFinal)
-                CASE("RATIO")
-                  CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
-                CASE("DELTA")
-                  CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
-                END SELECT
+                select case(W)
+                case("INITIAL")
+                  call LinToWrd(L,W,EoL); call WrdToReal(W,rBegin)
+                case("FINAL")
+                  call LinToWrd(L,W,EoL); call WrdToReal(W,rFinal)
+                case("RATIO")
+                  call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
+                case("DELTA")
+                  call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
+                end select
               !
-              CASE DEFAULT
-                IF(BuildTable) THEN
+              case default
+                if(BuildTable) then
                   Ok=  .false.
-                  Msg=     TRIM(W)//"= unknown keyword in PATH CHANGE"
-                  RETURN !==============================================
-                ELSE
+                  Msg=     trim(W)//"= unknown keyword in PATH CHANGE"
+                  return !----------------------------------------------
+                else
                   nStep= 0
-                  DO
+                  do
                     nStep= nStep+1
-                    CALL WrdToReal(W,tTmp(I,nStep))
-                    IF(EoL) EXIT
-                    IF(nStep==DimMax) EXIT
-                    CALL LinToWrd(L,W,EoL)
-                  ENDDO
+                    call WrdToReal(W,tTmp(I,nStep))
+                    if(EoL) exit
+                    if(nStep==DimMax) exit
+                    call LinToWrd(L,W,EoL)
+                  end do
                   vNstep(I)= nStep
-                ENDIF
+                end if
                   
-              END SELECT
+              end select
               !
-            ENDDO
+            end do
             !-------------------------------------------/ read values --
             PathAdd= (rDelta>Zero)
             !
             !--------------------------------------------- BuildTable --
-            IF(BuildTable) THEN
-              IF(I<=nCp) THEN
+            if(BuildTable) then
+              if(I<=nCp) then
                 !---------------------------- case of chemical change --
-                IF(vCpn(I)%Statut=="INERT" .AND.(.NOT. PathAdd)) THEN
-                  !->  default CASE (geometric)
-                  IF(rRatio < 1.10D0 ) rRatio= 1.10D0
-                  IF(rRatio > 3.0D0  ) rRatio= 3.00D0
-                  IF(rFinal < rBegin ) rRatio= One/rRatio
-                ELSE !MOBILE or BUFFER or DELTA
-                  IF(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
-                  !-> default value, in CASE not in input
-                  IF(rFinal>rBegin) rDelta= ABS(rDelta)
-                  IF(rFinal<rBegin) rDelta=-ABS(rDelta)
-                ENDIF
+                if(vCpn(I)%Statut=="INERT" .and.(.not. PathAdd)) then
+                  !->  default case (geometric)
+                  if(rRatio < 1.10D0 ) rRatio= 1.10D0
+                  if(rRatio > 3.0D0  ) rRatio= 3.00D0
+                  if(rFinal < rBegin ) rRatio= One/rRatio
+                else !MOBILE or BUFFER or DELTA
+                  if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                  !-> default value, in case not in input
+                  if(rFinal>rBegin) rDelta= ABS(rDelta)
+                  if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                end if
                 !---/
-              ELSE
+              else
                 !------------------------------ case of (T,P) changes --
-                IF(.NOT. PathAdd) THEN
+                if(.not. PathAdd) then
                   Ok=  .false.
                   Msg=           "PATH CHANGE: for (T,P) only DELTA ..."
-                  RETURN !==============================================
-                ENDIF
-                IF(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
-                !-> default value, in CASE not in input
-                IF(rFinal>rBegin) rDelta= ABS(rDelta)
-                IF(rFinal<rBegin) rDelta=-ABS(rDelta)
+                  return !----------------------------------------------
+                end if
+                if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                !-> default value, in case not in input
+                if(rFinal>rBegin) rDelta= ABS(rDelta)
+                if(rFinal<rBegin) rDelta=-ABS(rDelta)
                 !---/
-              ENDIF
+              end if
               !
-              IF(iDebug>0) WRITE(fTrc,'(I3,A20,4G12.3)') &
+              if(iDebug>0) write(fTrc,'(I3,A20,4G12.3)') &
               & I," =Begin,Final,Step= ",rBegin,rFinal,rDelta,rRatio
               !
               nStep= 0
-              DO
+              do
                 !
                 nStep= nStep+1
-                IF(PathAdd) THEN
+                if(PathAdd) then
                   tTmp(I,nStep)= rBegin + (nStep-1) *rDelta
-                ELSE
+                else
                   tTmp(I,nStep)= rBegin *rRatio**(nStep-1)
-                ENDIF
+                end if
                 !
-                IF(rFinal>rBegin) THEN
-                  IF(tTmp(I,nStep) > rFinal) EXIT
-                ELSE
-                  IF(tTmp(I,nStep) < rFinal) EXIT
-                ENDIF
+                if(rFinal>rBegin) then
+                  if(tTmp(I,nStep) > rFinal) exit
+                else
+                  if(tTmp(I,nStep) < rFinal) exit
+                end if
                 !
-                IF(nStep==DimMax) EXIT
+                if(nStep==DimMax) exit
                 !
-              ENDDO
+              end do
               vNstep(I)= nStep-1
               !
-            ENDIF
+            end if
             !--------------------------------------------/ BuildTable --
             !
             ! print *,"unit change"
-            IF(I<=nCp) THEN
-              IF(vCpn(I)%Statut=="INERT") &
+            if(I<=nCp) then
+              if(vCpn(I)%Statut=="INERT") &
               & tTmp(I,1:vNstep(I))= tTmp(I,1:vNstep(I)) /vCpn(I)%Factor
-            ENDIF
+            end if
             !
             !----------------------------- add amounts in SYSTEM.ROCK --
-            IF(I<=nCp) THEN
-              IF(vCpn(I)%Statut=="INERT") THEN
-                DO J=1,vNstep(I)
-                  !! print *,"size(tTmp)=",size(tTmp,1),size(tTmp,2)
-                  !! print *,"size(vFas)=",size(vFas)  ;  pause
-                  DO K=1,SIZE(vFas)
+            if(I<=nCp) then
+              if(vCpn(I)%Statut=="INERT") then
+                do J=1,vNstep(I)
+                  !! print *,"SIZE(tTmp)=",size(tTmp,1),size(tTmp,2)
+                  !! print *,"SIZE(vFas)=",size(vFas)  ;  pause
+                  do K=1,size(vFas)
                     tTmp(I,J)= tTmp(I,J) + &
                     & tAlfFs(I,K) &
-                    & *vFas(K)%Mole
-                  ENDDO
-                ENDDO
-              ENDIF
-            ENDIF
+                    & *vFas(K)%MolFs
+                  end do
+                end do
+              end if
+            end if
             !-----------------------------/add amounts in SYSTEM.ROCK --
             !
-            IF(iDebug>0) THEN
-              WRITE(fTrc,'(I3,A1)',ADVANCE="no") I,t_
-              DO J= 1,vNstep(I)
-                WRITE(fTrc,'(G12.3,A1)',ADVANCE="no") tTmp(I,J),t_
-              ENDDO
-              WRITE(fTrc,*)
-            ENDIF
+            if(iDebug>0) then
+              write(fTrc,'(I3,A1)',advance="no") I,t_
+              do J= 1,vNstep(I)
+                write(fTrc,'(G12.3,A1)',advance="no") tTmp(I,J),t_
+              end do
+              write(fTrc,*)
+            end if
             !
-          ELSE
+          else
           !------ iMix/-0 -> species activity controlled by non-aqueous phase --
-            TestMixture= .TRUE.
+            TestMixture= .true.
             !-------------------------------------------- read values --
-            DO
+            do
               !
-              IF(EoL) EXIT
-              CALL LinToWrd(L,W,EoL)
+              if(EoL) exit
+              call LinToWrd(L,W,EoL)
               !
-              SELECT CASE(W)
+              select case(W)
                 !
-              CASE("INITIAL","FINAL")
+              case("INITIAL","FINAL")
                 !
-                CALL LinToWrd(L,W1,EoL) !-> name of initial phase
+                call LinToWrd(L,W1,EoL) !-> name of initial phase
                 K= MixPhase_Index(vMixFas,W1)
                 !
-                IF(K==0) THEN
+                if(K==0) then
                   Ok=  .false.
-                  Msg= TRIM(W1)//" = UNKNOWN PHASE in PATH CHANGE!!!"
-                  RETURN
-                ENDIF
+                  Msg= trim(W1)//" = UNKNOWN PHASE in PATH CHANGE!!!"
+                  return
+                end if
                 !
-                IF(vMixFas(K)%iModel /= vMixFas(iMix)%iModel)  THEN
+                if(vMixFas(K)%iModel /= vMixFas(iMix)%iModel)  then
                   Ok=  .false.
-                  Msg=                                  "Phase "//TRIM(W1)// &
-                  &   " should be of same model as "//TRIM(vMixFas(iMix)%Name)
-                  RETURN !============================================
-                ENDIF
+                  Msg=                                  "Phase "//trim(W1)// &
+                  &   " should be of same model as "//trim(vMixFas(iMix)%Name)
+                  return !----------------------------------------return
+                end if
                 !
-                SELECT CASE(W)
-                CASE("INITIAL")
+                select case(W)
+                case("INITIAL")
                   vPhasBegin(I)=K
                   
-                  IF(iDebug>0) WRITE(fTrc,'(4A)') &
+                  if(iDebug>0) write(fTrc,'(4A)') &
                   & "PhasBegin=",vMixFas(K)%Name, &
                   & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
                   
-                CASE("FINAL")
+                case("FINAL")
                   vPhasFinal(I)=K
                   
-                  IF(iDebug>0) WRITE(fTrc,'(4A)') &
+                  if(iDebug>0) write(fTrc,'(4A)') &
                   & "PhasFinal=",vMixFas(K)%Name, &
                   & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
                   
-                ENDSELECT
+                end select
                 !
-                !! CASE("RATIO")
+                !! case("RATIO")
                 !!   Ok=  .false.
-                !!   Msg=                             "ONLY DELTA IN THIS CASE !!!"
-                !!   RETURN !----------------------------------------------
-                !!   !CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
+                !!   Msg=                             "only DELTA IN THIS case !!!"
+                !!   return !----------------------------------------------
+                !!   !call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
                 !! !
-                !! CASE("DELTA")
-                !!   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
+                !! case("DELTA")
+                !!   call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
                 !!   !currently not used ...!!! (always on 100 steps)
                 !
-                CASE DEFAULT
+                case default
                   Ok=  .false.
-                  Msg=           TRIM(W)//"= unknown keyword in PATH CHANGE !!!"
-                  RETURN !==============================================
+                  Msg=           trim(W)//"= unknown keyword in PATH CHANGE !!!"
+                  return !----------------------------------------return
                 !  
-              END SELECT
+              end select
               !
-            ENDDO
+            end do
             !
-            IF(iDebug>1) THEN
-              PRINT '(4A)', &
+            if(iDebug>1) then
+              print '(4A)', &
               & "PhasBegin=",vMixFas(vPhasBegin(I))%Name, &
               & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
-              PRINT '(4A)', &
+              print '(4A)', &
               & "PhasFinal=",vMixFas(vPhasFinal(I))%Name, &
               & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
-            ENDIF
-            !-------------------------------------------/ read values --
+            end if
+            !----------------------------------------------/ read values
             !
-            IF(vPhasBegin(I)*vPhasFinal(I)==0) THEN
+            if(vPhasBegin(I)*vPhasFinal(I)==0) then
               Ok= .false.
               Msg=    "Problem in reading PATH conditions on solid solutions ??"
-              RETURN !==================================================
-            ENDIF
+              return !--------------------------------------------return
+            end if
             !
-          ENDIF
+          end if
           !-----/ iMix/-0 -> species activity controlled by non-aqueous phase --
-        ! END CASE CHANGE
-        !------------------------------------------------/ CASE "CHG" --
+        ! end case CHANGE
+        !---------------------------------------------------/ case "CHG"
         !
-        END SELECT
-      ENDDO DoBlock
-      !------------------------------------/ read the path parameters --
-      !! IF(iDebug>0) CALL Pause_
-    ENDIF !Cod=="PATH"
+        end select
+      end do DoBlock
+      !---------------------------------------/ read the path parameters
+      !! if(iDebug>0) call Pause_
+    end if !Cod=="PATH"
     !
-  ENDDO DoFile
-  CLOSE(f)
+  end do DoFile
+  close(f)
   !
-  !------------------------------------------------ !! DEVELOPMENT !! --
-  IF(TestMixture) THEN
+  !--------------------------------------------------- !! DEVELOPMENT !!
+  if(TestMixture) then
     DimPath= 99
-    ALLOCATE(vTPpath(DimPath))
+    allocate(vTPpath(DimPath))
     vTPpath(:)%TdgC= TdgK -T_CK
     vTPpath(:)%Pbar= Pbar
-  ENDIF
-  !------------------------------------------------/!! DEVELOPMENT !! --
+  end if
+  !---------------------------------------------------/!! DEVELOPMENT !!
   !
-  IF(COUNT(vNstep>0)>0) THEN
+  if(count(vNstep>0)>0) then
     !
     DimPath= MINVAL(vNstep(:),MASK=vNstep(:)>0)
-    ALLOCATE(tPathData(nCp,DimPath))
+    allocate(tPathData(nCp,DimPath))
     tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
-    !! PRINT *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)
-    !! PAUSE
+    !! print *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)
+    !! pause
     !
-    ALLOCATE(vTPpath(DimPath))
+    allocate(vTPpath(DimPath))
     vTPpath(:)%TdgC= tTmp(nCp+1,1:DimPath)
     vTPpath(:)%Pbar= tTmp(nCp+2,1:DimPath)
     !
-  ENDIF
+  end if
   !
-  DEALLOCATE(tTmp)
-  DEALLOCATE(vNstep)
+  deallocate(tTmp)
+  deallocate(vNstep)
   !
-  IF(ALLOCATED(vStAdd))  DEALLOCATE(vStAdd)
+  if(allocated(vStAdd))  deallocate(vStAdd)
   !
-  IF(iDebug>1) CALL Pause_
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Path_Read"
+  if(iDebug>1) call Pause_
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Path_ReadParam"
+  if(iDebug>0) flush(fTrc)
   
   ! do i= 1, size(tPathData,2)
   !   do j=1,nCp
@@ -742,9 +752,9 @@ SUBROUTINE Path_ReadParam( &
   !   write(11,*)
   ! end do
 
-END SUBROUTINE Path_ReadParam
+end subroutine Path_ReadParam
 
-SUBROUTINE Path_ReadParam_new( &
+subroutine Path_ReadParam_new( &
 & NamFInn,   &  !IN
 & PathMode,  &  !IN
 & vCpn,      &  !IN
@@ -758,61 +768,62 @@ SUBROUTINE Path_ReadParam_new( &
 !--   iLogK,vPathLogK
 !--   tPathData,DimPath
 !--
-  USE M_Dtb_Const,   ONLY: T_CK
-  USE M_IOTools
-  USE M_System_Tools,ONLY: System_TP_Update
-  USE M_T_Element,   ONLY: Formula_Read,Element_Index
-  USE M_T_Species,   ONLY: Species_Index
-  USE M_T_Component, ONLY: T_Component,Component_Index
-  USE M_Basis,       ONLY: Basis_Change
-  USE M_T_MixPhase,  ONLY: MixPhase_Index
+  use M_Dtb_Const,   only: T_CK
+  use M_IOTools
+  use M_System_Tools,only: System_TP_Update
+  use M_T_Element,   only: Formula_Read,Element_Index
+  use M_T_Species,   only: Species_Index
+  use M_T_Component, only: T_Component,Component_Index
+  use M_Basis,       only: Basis_Change
+  use M_T_MixPhase,  only: MixPhase_Index
   !
   !--- vars
-  USE M_Global_Vars, ONLY: vEle,vSpc,vFas,vMixFas,vMixModel
+  use M_Global_Vars, only: vEle,vSpc,vFas,vMixFas,vMixModel
   !
-  USE M_Path_Vars,   ONLY: vLPath,vTPpath
-  USE M_Path_Vars,   ONLY: vPhasBegin,vPhasFinal
-  USE M_Path_Vars,   ONLY: tPathData,DimPath
-  USE M_Path_Vars,   ONLY: iLogK,vPathLogK
+  use M_Path_Vars,   only: vLPath,vTPpath
+  use M_Path_Vars,   only: vPhasBegin,vPhasFinal
+  use M_Path_Vars,   only: tPathData,DimPath
+  use M_Path_Vars,   only: iLogK,vPathLogK
   !---/vars
 
-  CHARACTER(LEN=*), INTENT(IN)   :: NamFInn
-  CHARACTER(LEN=*), INTENT(IN)   :: PathMode
-  TYPE(T_Component),INTENT(IN)   :: vCpn(:)
-  REAL(dp),         INTENT(IN)   :: TdgK,Pbar
-  LOGICAL,          INTENT(OUT)  :: Ok
-  CHARACTER(LEN=*), INTENT(OUT)  :: Msg
+  character(len=*), intent(in)   :: NamFInn
+  character(len=*), intent(in)   :: PathMode
+  type(T_Component),intent(in)   :: vCpn(:)
+  real(dp),         intent(in)   :: TdgK,Pbar
+  logical,          intent(out)  :: Ok
+  character(len=*), intent(out)  :: Msg
   !
-  INTEGER,PARAMETER:: DimMax= 255
+  integer,parameter:: DimMax= 255
   !
-  CHARACTER(LEN=1024):: L
-  CHARACTER(LEN=80) :: W,W1
+  character(len=1024):: L
+  character(len=80) :: W,W1
   !
-  LOGICAL :: EoL, fOk, PathAdd, BuildTable, TestMixture
-  INTEGER :: ios, ieOx, Z, Zxs, nDiv, iMix
-  INTEGER :: I, J, K, f, iCp, nCp, nStep
-  REAL(dp):: rBegin,rFinal,rRatio,rDelta,AddedTot,X
+  logical :: EoL, fOk, PathAdd, BuildTable, TestMixture
+  integer :: ios, ieOx, Z, Zxs, nDiv, iMix
+  integer :: I, J, K, f, iCp, nCp, nStep
+  integer :: fCheck
+  real(dp):: rBegin,rFinal,rRatio,rDelta,AddedTot,X
   !
-  INTEGER,DIMENSION(1:SIZE(vCpn))::vStoik !for PathAdd
-  ! REAL(dp):: TdgKAdd,PbarAdd
+  integer,dimension(1:size(vCpn))::vStoik !for PathAdd
+  ! real(dp):: TdgKAdd,PbarAdd
   !
-  ! TYPE(T_Component),ALLOCATABLE:: vCpnAdd(:)
+  ! type(T_Component),allocatable:: vCpnAdd(:)
   !
-  REAL(dp):: vTmp(1:DimMax)
-  REAL(dp):: tTmp(1:SIZE(vCpn)+2,1:DimMax)
+  real(dp):: vTmp(1:DimMax)
+  real(dp):: tTmp(1:size(vCpn)+2,1:DimMax)
   
-  INTEGER, ALLOCATABLE:: vNstep(:)
-  REAL(dp),ALLOCATABLE:: vStAdd(:)
+  integer, allocatable:: vNstep(:)
+  real(dp),allocatable:: vStAdd(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Path_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Path_Read"
   !
-  !IF(iDebug==4) PRINT '(A)',"Path_Read"
+  !if(iDebug==4) print '(A)',"Path_Read"
   !
-  Ok=.FALSE.
+  Ok=.false.
   Msg= ""
-  TestMixture= .FALSE.
+  TestMixture= .false.
   !
-  nCp=SIZE(vCpn)
+  nCp=size(vCpn)
   !
   ! 1:nCp = components
   ! nCp+1 = TdgC
@@ -821,202 +832,202 @@ SUBROUTINE Path_ReadParam_new( &
   tTmp(nCp+1,:)= TdgK -T_CK
   tTmp(nCp+2,:)= Pbar
   !
-  ALLOCATE(vNstep(nCp+2))  ;  vNstep(:)= 0
+  allocate(vNstep(nCp+2))  ;  vNstep(:)= 0
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
   !
-  IF(iDebug>2) THEN
-    DO I=1,SIZE(vCpn)
-      !PRINT '(I3,1X,3A)',I,vEle(vCpn(I)%iEle)%NamEl," -> STATUT=",vCpn(I)%Statut
-      PRINT '(I3,1X,3A)', &
+  if(iDebug>2) then
+    do I=1,size(vCpn)
+      !print '(I3,1X,3A)',I,vEle(vCpn(I)%iEle)%NamEl," -> STATUT=",vCpn(I)%Statut
+      print '(I3,1X,3A)', &
       & I,vCpn(I)%NamCp," -> STATUT=",vCpn(I)%Statut
-    ENDDO
-    CALL Pause_
-  ENDIF
+    end do
+    call Pause_
+  end if
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile !============================< end of file ==
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile !---------------------------------end of file
     !
-    CALL LinToWrd(L,W,EoL)
+    call LinToWrd(L,W,EoL)
     !
-    IF(W(1:1)=='!') CYCLE DoFile !===============< skip comment lines ==
-    CALL AppendToEnd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !--------------------skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
     BuildTable= .false.
     !
-    IF(W=="PATH") THEN
+    if(W=="PATH") then
       !
-      Ok=.TRUE.
+      Ok=.true.
       !
-      !---------------- allocate variables according to the Path mode --
-      SELECT CASE(PathMode)
+      !------------------- allocate variables according to the Path mode
+      select case(PathMode)
       
-      CASE("ADD","ADA")
-        ALLOCATE(vStAdd(1:nCp))  ; vStAdd= 0.D0
+      case("ADD","ADA")
+        allocate(vStAdd(1:nCp))  ; vStAdd= 0.D0
         !
-      CASE("CHG")
-        ALLOCATE(vLPath(1:nCp+2))  ;  vLPath=.FALSE.
+      case("CHG")
+        allocate(vLPath(1:nCp+2))  ;  vLPath=.false.
         !
-        ALLOCATE(vPhasBegin(1:nCp))  ;  vPhasBegin=0
-        ALLOCATE(vPhasFinal(1:nCp))  ;  vPhasFinal=0
+        allocate(vPhasBegin(1:nCp))  ;  vPhasBegin=0
+        allocate(vPhasFinal(1:nCp))  ;  vPhasFinal=0
         !
-      END SELECT
-      !----------------------------------------------------/ allocate --
+      end select
+      !-------------------------------------------------------/ allocate
       !
       if(iDebug>2) then
         print *,'Path_ReadParam'
-        do i=1,SIZE(vCpn)
+        do i=1,size(vCpn)
           print *,i,vCpn(i)%Mole
         end do
         call pause_
-      endif
+      end if
 
-      !~ DO I=1,SIZE(vCpn)
-        !~ IF(vCpn(I)%Statut=="INERT") tTmp(I,:)= vCpn(:)%Mole
-        !~ !IF() tTmp(I,:)= vCpn(:)%Mole
-      !~ END DO
+      !~ do I=1,size(vCpn)
+        !~ if(vCpn(I)%Statut=="INERT") tTmp(I,:)= vCpn(:)%Mole
+        !~ !if() tTmp(I,:)= vCpn(:)%Mole
+      !~ end do
       !
-      !------------------------------------- read the path parameters --
-      DoBlock: DO
+      !---------------------------------------- read the path parameters
+      DoBlock: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!')   CYCLE DoBlock !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!')   cycle DoBlock !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        IF(W=="ENDINPUT") EXIT  DoFile
-        IF(W=="END" .OR. W=="ENDPATH") EXIT  DoFile
-        !-> READ ONLY the first PATH block found !!
+        if(W=="ENDINPUT") exit  DoFile
+        if(W=="END" .or. W=="ENDPATH") exit  DoFile
+        !-> read only the first PATH block found !!
         !
-        SELECT CASE(TRIM(PathMode))
-        !----------------------------------------- CASE "LGK" (-LOGK) --
-        CASE("LGK")
+        select case(trim(PathMode))
+        !-------------------------------------------- case "LGK" (-LOGK)
+        case("LGK")
           !
-          iLogK= Species_Index(TRIM(W),vSpc)
-          IF(iLogK==0) THEN
+          iLogK= Species_Index(trim(W),vSpc)
+          if(iLogK==0) then
             Ok=  .false.
-            Msg=      "In PATH LOGK, "//TRIM(W)//"= unknown species !!!"
-            IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-            RETURN !====================================================
-          ENDIF
-          !---------------------------------------------- read values --
+            Msg=      "In PATH LOGK, "//trim(W)//"= unknown species !!!"
+            if(iDebug>0) write(fTrc,'(A)') Msg
+            return !----------------------------------------------return
+          end if
+          !------------------------------------------------- read values
           rBegin=Zero; rFinal=Zero; rDelta=Zero
-          DO
-            IF(EoL) EXIT
+          do
+            if(EoL) exit
             !
-            CALL LinToWrd(L,W1,EoL)
-            SELECT CASE(W1)
+            call LinToWrd(L,W1,EoL)
+            select case(W1)
               !
-              CASE("INITIAL")
-                CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rBegin)
-              CASE("FINAL")
-                CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rFinal)
-              CASE("DELTA")
-                CALL LinToWrd(L,W1,EoL); CALL WrdToReal(W1,rDelta)
-              CASE DEFAULT
+              case("INITIAL")
+                call LinToWrd(L,W1,EoL); call WrdToReal(W1,rBegin)
+              case("FINAL")
+                call LinToWrd(L,W1,EoL); call WrdToReal(W1,rFinal)
+              case("DELTA")
+                call LinToWrd(L,W1,EoL); call WrdToReal(W1,rDelta)
+              case default
                 Ok=  .false.
-                Msg= "In PATH LOGK, "//TRIM(W1)//"= invalid keyword !!!"
-                IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-                RETURN !================================================
+                Msg= "In PATH LOGK, "//trim(W1)//"= invalid keyword !!!"
+                if(iDebug>0) write(fTrc,'(A)') Msg
+                return !------------------------------------------return
               !
-            END SELECT
+            end select
             !
-          ENDDO
+          end do
           !
-          IF(ABS(rDelta)<Epsilon(rDelta)) THEN
+          if(ABS(rDelta)<Epsilon(rDelta)) then
             Ok=  .false.
             Msg=                       "In PATH LOGK, Delta not defined"
-            IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-            RETURN !====================================================
-          ENDIF
-          IF(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
+            if(iDebug>0) write(fTrc,'(A)') Msg
+            return !----------------------------------------------return
+          end if
+          if(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
           rDelta= SIGN(rDelta,rFinal-rBegin)
           !-- function SIGN(a,b) returns abs(a)*sign(b) --
           !
-          !---------------------------------------------/ read values --
+          !------------------------------------------------/ read values
           !
-          !------------------------------------------ build vPathLogK --
+          !--------------------------------------------- build vPathLogK
           I= 1
           vTmp(I)= rBegin
-          DO
-            IF(I>DimMax) EXIT
-            IF(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) EXIT
+          do
+            if(I>DimMax) exit
+            if(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) exit
             I=I+1
             vTmp(I)= vTmp(I-1) + rDelta
             !!print '(I3,G15.6)',I,vTmp(i)
-          ENDDO
+          end do
           !!pause
           !
           DimPath= I
-          ALLOCATE(vPathLogK(1:I))
+          allocate(vPathLogK(1:I))
           vPathLogK(1:I)= vTmp(1:I)
-          !-----------------------------------------/ build vPathLogK --
+          !--------------------------------------------/ build vPathLogK
           !
-        !----------------------------------------/ CASE "LGK" (-LOGK) --
+        !-------------------------------------------/ case "LGK" (-LOGK)
         !
-        !------------------------------------------------- CASE "ADD" --
-        CASE("ADD","ADA")
+        !---------------------------------------------------- case "ADD"
+        case("ADD","ADA")
           !
-          ! IF(TRIM(W)=="MIX") THEN
+          ! if(trim(W)=="MIX") then
           !
-          !   ALLOCATE(vCpnAdd(1:SIZE(vCpn)))
+          !   allocate(vCpnAdd(1:size(vCpn)))
           !   vCpnAdd= vCpn
           !
-          !   CALL Path_Calc_Fluid( &
+          !   call Path_Calc_Fluid( &
           !   & "SYSTEM.MIX",vCpnAdd, &
           !   & TdgKAdd,PbarAdd,Ok)
           !
-          !   IF(.NOT. Ok) THEN
-          !     !~ CALL Warning_("SYSTEM.MIX NOT FOUND")
-          !     DEALLOCATE(vCpnAdd)
+          !   if(.not. Ok) then
+          !     !~ call Warning_("SYSTEM.MIX NOT FOUND")
+          !     deallocate(vCpnAdd)
           !     Msg= "SYSTEM.MIX NOT FOUND"
-          !     RETURN
-          !   ENDIF
+          !     return
+          !   end if
           !
           !   vStAdd(1:nCp)= vCpnAdd(1:nCp)%Mole
           !
-          !   DEALLOCATE(vCpnAdd)
+          !   deallocate(vCpnAdd)
           !
-          ! ELSE
+          ! else
 
-            !------------------------- read stoichio of added material --
-            CALL Formula_Read(W,vEle,Z,nDiv,fOk,vStoik)
+            !--------------------------- read stoichio of added material
+            call Formula_Read(W,vEle,Z,nDiv,fOk,vStoik)
             !
-            IF(Z/=0) THEN
+            if(Z/=0) then
               Ok=  .false.
-              Msg=     "In PATH ADD, "//TRIM(W)//"= should be neutral !!!"
-              IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-              RETURN !====================================================
-            ENDIF
+              Msg=     "In PATH ADD, "//trim(W)//"= should be neutral !!!"
+              if(iDebug>0) write(fTrc,'(A)') Msg
+              return !--------------------------------------------return
+            end if
             !
-            !----------------- compute stoikio coeff of redox component --
+            !------------------ compute stoikio coeff of redox component
             ieOx= Element_Index("OX_",vEle)
-            Zxs= DOT_PRODUCT(vStoik(:),vEle(:)%Z)
+            Zxs= dot_product(vStoik(:),vEle(:)%Z)
             !-- -> oxidation state
-            IF(Zxs/=Z) THEN
-              IF(ieOx/=0) THEN
+            if(Zxs/=Z) then
+              if(ieOx/=0) then
                 vStoik(ieOx)= Z - Zxs
-                fOk= .TRUE.
-              ELSE
-                fOk= .FALSE.
-              ENDIF
-            ENDIF
+                fOk= .true.
+              else
+                fOk= .false.
+              end if
+            end if
             !----------------/ compute stoikio coeff of redox component --
             !
-            IF(.NOT.fOk) THEN
+            if(.not.fOk) then
               Ok=  .false.
-              Msg= "In PATH ADD, "//TRIM(W)//"= problem in stoikiometry ?"
-              IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-              RETURN !====================================================
-            ENDIF
+              Msg= "In PATH ADD, "//trim(W)//"= problem in stoikiometry ?"
+              if(iDebug>0) write(fTrc,'(A)') Msg
+              return !--------------------------------------------return
+            end if
             !
-            vStAdd(1:nCp)= vStoik(vCpn(1:nCp)%iEle) /REAL(nDiv)
-            !------------ vStAdd(1:nCp)/vStAdd(0) is the stoikio'vector --
-          ! ENDIF
-          !-------------------------/ read stoichio of added material --
+            vStAdd(1:nCp)= vStoik(vCpn(1:nCp)%iEle) /real(nDiv)
+            !------------- vStAdd(1:nCp)/vStAdd(0) is the stoikio'vector
+          ! end if
+          !----------------------------/ read stoichio of added material
           !
           rBegin=  1.D-6
           rFinal=  1.0D0
@@ -1027,425 +1038,434 @@ SUBROUTINE Path_ReadParam_new( &
           AddedTot= Zero
           tTmp(1:nCp,1)= vCpn(:)%Mole
           !
-          !---------------------------------------------- read values --
-          DO
-            IF(EoL) EXIT
+          !------------------------------------------------- read values
+          do
+            if(EoL) exit
             !
-            CALL LinToWrd(L,W,EoL)
-            SELECT CASE(W)
+            call LinToWrd(L,W,EoL)
+            select case(W)
 
-            CASE("INITIAL","FINAL","RATIO","DELTA")
+            case("INITIAL","FINAL","RATIO","DELTA")
               BuildTable= .true.
-              SELECT CASE(W)
-                CASE("INITIAL"); CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rBegin)
-                CASE("FINAL");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rFinal)
-                CASE("RATIO");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
-                CASE("DELTA");   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
-              END SELECT
+              select case(W)
+                case("INITIAL"); call LinToWrd(L,W,EoL); call WrdToReal(W,rBegin)
+                case("FINAL");   call LinToWrd(L,W,EoL); call WrdToReal(W,rFinal)
+                case("RATIO");   call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
+                case("DELTA");   call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
+              end select
 
-            CASE DEFAULT
-              IF(BuildTable) THEN
+            case default
+              if(BuildTable) then
                 Ok=  .false.
-                Msg=          TRIM(W)//"= unknown keyword in PATH ADD"
-                IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-                RETURN !==============================================
-              ELSE
-                DO
+                Msg=          trim(W)//"= unknown keyword in PATH ADD"
+                if(iDebug>0) write(fTrc,'(A)') Msg
+                return !------------------------------------------return
+              else
+                do
                   nStep= nStep+1
-                  CALL WrdToReal(W,X)
+                  call WrdToReal(W,X)
                   !
-                  DO iCp=1,SIZE(vCpn)
+                  do iCp=1,size(vCpn)
                     tTmp(iCp,nStep)= tTmp(iCp,1) + vStAdd(iCp) *X
-                  ENDDO
+                  end do
                   !
-                  IF(EoL) EXIT
-                  IF(nStep==DimMax) EXIT
-                  CALL LinToWrd(L,W,EoL)
-                ENDDO
+                  if(EoL) exit
+                  if(nStep==DimMax) exit
+                  call LinToWrd(L,W,EoL)
+                end do
                 !vNstep(I)= nStep
-              ENDIF
+              end if
 
-            END SELECT
-          ENDDO
-          !---------------------------------------------/ read values --
+            end select
+          end do
+          !------------------------------------------------/ read values
           !
-          !------------------------------------------ build tPathData --
-          PathAdd= (rDelta>Zero) !.FALSE.
+          !--------------------------------------------- build tPathData
+          PathAdd= (rDelta>Zero) !.false.
           !
-          !--- debug
-          IF(iDebug>2) THEN
-            PRINT '(A)',"conditions for PATH ADD"
-            PRINT '(A)',"stoikiometry vStAdd" ; CALL Pause_
-            DO I=1,nCp
-              IF(vStAdd(I)/=0.D0) PRINT '(I3,G15.6)',I,vStAdd(I)
-            ENDDO
-            !~ PRINT '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
+          !------------------------------------------------------- debug
+          if(iDebug>2) then
+            print '(A)',"conditions for PATH ADD"
+            print '(A)',"stoikiometry vStAdd" ; call Pause_
+            do I=1,nCp
+              if(vStAdd(I)/=0.D0) print '(I3,G15.6)',I,vStAdd(I)
+            end do
+            !~ print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
             !~ & rAddBegin,rAddFinal,rAddRatio,rAddDelta
-            CALL Pause_
-          ENDIF
-          !---/debug
+            call Pause_
+          end if
+          !-------------------------------------------------------/debug
           !
-          IF(BuildTable) THEN
-            DO
+          if(BuildTable) then
+            !
+            if(iDebug>2) then
+              call GetUnit(fCheck)
+              open(fCheck,file="debug_pathadd_table.restab")
+            end if
+            !
+            do
               nStep= nStep+1
               !
-              DO iCp=1,SIZE(vCpn)
+              do iCp=1,size(vCpn)
                 !
-                IF(vStAdd(iCp)/=0.D0) THEN
+                if(vStAdd(iCp)/=0.D0) then
                   !
-                  IF(PathAdd) THEN
+                  if(PathAdd) then
                     tTmp(iCp,nStep)= tTmp(iCp,nStep-1) &
                     + vStAdd(iCp) *rDelta !*(nStep-1)
-                  ELSE
+                  else
                     tTmp(iCp,nStep)= tTmp(iCp,nStep-1) &
                     + vStAdd(iCp) *rBegin *rRatio**(nStep-1)
                     !AddedTot= AddedTot +rBegin *rRatio**(nStep-1)
-                  ENDIF
+                  end if
                   !
-                ELSE
+                else
                   tTmp(iCp,nStep)= tTmp(iCp,nStep-1)
-                ENDIF
+                end if
                 !
-                IF(iDebug>2) WRITE(61,'(G15.6,1X)',ADVANCE="no") tTmp(iCp,nStep)
+                if(iDebug>2) &
+                & write(fCheck,'(G15.6,1X)',advance="no") tTmp(iCp,nStep)
                 !
-              ENDDO
+              end do
               !
-              IF(iDebug>2) WRITE(61,*)
+              if(iDebug>2) write(fCheck,*)
+              if(iDebug>2) flush(fCheck)
               !
-              IF(PathAdd) THEN ;  AddedTot= AddedTot +rDelta
-              ELSE             ;  AddedTot= AddedTot +rBegin *rRatio**(nStep-1)
-              ENDIF
+              if(PathAdd) then ;  AddedTot= AddedTot +rDelta
+              else             ;  AddedTot= AddedTot +rBegin *rRatio**(nStep-1)
+              end if
               !
-              IF(AddedTot>=rFinal) EXIT
+              if(AddedTot>=rFinal) exit
               !
-              IF(nStep>=DimMax) EXIT
+              if(nStep>=DimMax) exit
               !
-            ENDDO
-          ENDIF
+            end do
+            !
+          end if !if(BuildTable)
           !
           DimPath= nStep
           !
-          IF(ALLOCATED(tPathData)) DEALLOCATE(tPathData)
-          ALLOCATE(tPathData(nCp,DimPath))
+          if(allocated(tPathData)) deallocate(tPathData)
+          allocate(tPathData(nCp,DimPath))
           tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
           !
-          IF(ALLOCATED(vTPpath)) DEALLOCATE(vTPpath)
-          ALLOCATE(vTPpath(DimPath))
+          if(allocated(vTPpath)) deallocate(vTPpath)
+          allocate(vTPpath(DimPath))
           vTPpath(:)%TdgC= tTmp(nCp+1,:)
           vTPpath(:)%Pbar= tTmp(nCp+2,:)
-          !-----------------------------------------/ build tPathData --
+          !--------------------------------------------/ build tPathData
           !
         !_ADD
-        !------------------------------------------------/ CASE "ADD" --
-        !!! CASE("MIX")
+        !---------------------------------------------------/ case "ADD"
+        !!! case("MIX")
         !!!   !
-        !!!   CALL Str_Append(W,3)
+        !!!   call Str_Append(W,3)
         !!!   I=Element_Index(W,vEle)
-        !!!   IF(I<1) THEN
-        !!!     CALL Stop_(TRIM(W)//"<-NOT in the current system !!!!")
-        !!!   ELSE
-        !!!     CALL LinToWrd(L,W,EoL)
-        !!!     CALL WrdToReal(W,X1)
+        !!!   if(I<1) then
+        !!!     call Stop_(trim(W)//"<-NOT in the current system !!!!")
+        !!!   else
+        !!!     call LinToWrd(L,W,EoL)
+        !!!     call WrdToReal(W,X1)
         !!!     vSys2(I)=X1
-        !!!   ENDIF
+        !!!   end if
         !!! !_MIX
         !
-        !------------------------------------------------- CASE "CHG" --
-        CASE("CHG","EVP")
+        !------------------------------------------------- case "CHG" --
+        case("CHG","EVP")
           !
-          SELECT CASE(TRIM(W))
+          select case(trim(W))
           !
-          CASE("TDGC")  ;  I= nCp+1
+          case("TDGC")  ;  I= nCp+1
           !
-          CASE("PBAR")  ;  I= nCp+2
+          case("PBAR")  ;  I= nCp+2
           !
-          CASE DEFAULT
-            CALL Str_Append(W,3)
+          case default
+            call Str_Append(W,3)
             !-- from component name (max 3 chars), find index in vCpn
             I= Component_Index(W,vCpn)
-            IF(I<=0) THEN
+            if(I<=0) then
               Ok=  .false.
-              Msg= "PATH CHANGE: Component "//TRIM(W)//" Not in the system .."
-              IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-              RETURN !--------------------------------------------return
-            ENDIF
+              Msg= "PATH CHANGE: Component "//trim(W)//" Not in the system .."
+              if(iDebug>0) write(fTrc,'(A)') Msg
+              return !--------------------------------------------return
+            end if
           !
-          END SELECT
+          end select
           !
-          vLPath(I)=.TRUE.
+          vLPath(I)=.true.
           !
-          IF(I<=nCp) THEN
+          if(I<=nCp) then
             J=    vCpn(I)%iSpc !-> find related species
             iMix= vCpn(I)%iMix !-> component is an end-member of mixture phase iMix
-          ELSE
+          else
             J= 0
             iMix= 0
-          ENDIF
+          end if
           !
           ! if(iDebug>2) then
           !   if(I<=nCp) print *,vCpn(I)%NamCp
           !   print *,'Path_ReadParam, iMix=',iMix
-          ! endif
-          !----------- prim' mobile species is aqueous or pure phase --
-          IF(iMix==0) THEN
+          ! end if
+          !--------------- prim' mobile species is aqueous or pure phase
+          if(iMix==0) then
           
             rBegin= Zero; rFinal= Zero
             rRatio= One;  rDelta= Zero
             
-            !-------------------------------------------- read values --
-            DO
-              IF(EoL) EXIT
-              CALL LinToWrd(L,W,EoL)
-              SELECT CASE(W)
+            !----------------------------------------------- read values
+            do
+              if(EoL) exit
+              call LinToWrd(L,W,EoL)
+              select case(W)
 
-                CASE("INITIAL","FINAL","RATIO","DELTA")
+                case("INITIAL","FINAL","RATIO","DELTA")
                   BuildTable= .true.
-                  SELECT CASE(W)
-                    CASE("INITIAL"); CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rBegin)
-                    CASE("FINAL")  ; CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rFinal)
-                    CASE("RATIO")  ; CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
-                    CASE("DELTA")  ; CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
-                  END SELECT
+                  select case(W)
+                    case("INITIAL"); call LinToWrd(L,W,EoL); call WrdToReal(W,rBegin)
+                    case("FINAL")  ; call LinToWrd(L,W,EoL); call WrdToReal(W,rFinal)
+                    case("RATIO")  ; call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
+                    case("DELTA")  ; call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
+                  end select
 
-                CASE DEFAULT
-                  IF(BuildTable) THEN
+                case default
+                  if(BuildTable) then
                     Ok=  .false.
-                    Msg=     TRIM(W)//"= unknown keyword in PATH CHANGE"
-                    IF(iDebug>0) WRITE(fTrc,'(A)') Msg
-                    RETURN !============================================
-                  ELSE
+                    Msg=     trim(W)//"= unknown keyword in PATH CHANGE"
+                    if(iDebug>0) write(fTrc,'(A)') Msg
+                    return !--==========================================
+                  else
                     nStep= 0
-                    DO
+                    do
                       nStep= nStep+1
-                      CALL WrdToReal(W,tTmp(I,nStep))
-                      IF(EoL) EXIT
-                      IF(nStep==DimMax) EXIT
-                      CALL LinToWrd(L,W,EoL)
-                    ENDDO
+                      call WrdToReal(W,tTmp(I,nStep))
+                      if(EoL) exit
+                      if(nStep==DimMax) exit
+                      call LinToWrd(L,W,EoL)
+                    end do
                     vNstep(I)= nStep
-                  ENDIF
+                  end if
 
-              END SELECT
-            ENDDO
-            !-------------------------------------------/ read values --
+              end select
+            end do
+            !----------------------------------------------/ read values
             !
             PathAdd= (rDelta>Zero)
             !
-            !--------------------------------------------- BuildTable --
-            IF(BuildTable) THEN
-              IF(I<=nCp) THEN
-                !---------------------------- case of chemical change --
-                IF(vCpn(I)%Statut=="INERT" .AND.(.NOT. PathAdd)) THEN
-                  !->  default CASE (geometric)
-                  IF(rRatio < 1.10D0 ) rRatio= 1.10D0
-                  IF(rRatio > 3.0D0  ) rRatio= 3.00D0
-                  IF(rFinal < rBegin ) rRatio= One/rRatio
-                ELSE !MOBILE or BUFFER or DELTA
-                  IF(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
-                  !-> default value, in CASE not in input
-                  IF(rFinal>rBegin) rDelta= ABS(rDelta)
-                  IF(rFinal<rBegin) rDelta=-ABS(rDelta)
-                ENDIF
-                !---/
-              ELSE
-                !------------------------------ case of (T,P) changes --
-                IF(.NOT. PathAdd) THEN
+            !------------------------------------------------ BuildTable
+            if(BuildTable) then
+              if(I<=nCp) then
+                !------------------------------- case of chemical change
+                if(vCpn(I)%Statut=="INERT" .and.(.not. PathAdd)) then
+                  !->  default case (geometric)
+                  if(rRatio < 1.10D0 ) rRatio= 1.10D0
+                  if(rRatio > 3.0D0  ) rRatio= 3.00D0
+                  if(rFinal < rBegin ) rRatio= One/rRatio
+                else !MOBILE or BUFFER or DELTA
+                  if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                  !-> default value, in case not in input
+                  if(rFinal>rBegin) rDelta= ABS(rDelta)
+                  if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                end if
+                !------------------------------------------------------/
+              else
+                !--------------------------------- case of (T,P) changes
+                if(.not. PathAdd) then
                   Ok=  .false.
                   Msg=           "PATH CHANGE: for (T,P) only DELTA ..."
-                  RETURN !==============================================
-                ENDIF
-                IF(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
-                !-> default value, in CASE not in input
-                IF(rFinal>rBegin) rDelta= ABS(rDelta)
-                IF(rFinal<rBegin) rDelta=-ABS(rDelta)
-                !---/
-              ENDIF
+                  return !----------------------------------------return
+                end if
+                if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                !-> default value, in case not in input
+                if(rFinal>rBegin) rDelta= ABS(rDelta)
+                if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                !------------------------------------------------------/
+              end if
               !
-              IF(iDebug>0) WRITE(fTrc,'(I3,A20,4G12.3)') &
+              if(iDebug>0) write(fTrc,'(I3,A20,4G12.3)') &
               & I," =Begin,Final,Step= ",rBegin,rFinal,rDelta,rRatio
               !
               nStep= 0
-              DO
+              do
                 !
                 nStep= nStep+1
-                IF(PathAdd) THEN
+                if(PathAdd) then
                   tTmp(I,nStep)= rBegin + (nStep-1) *rDelta
-                ELSE
+                else
                   tTmp(I,nStep)= rBegin *rRatio**(nStep-1)
-                ENDIF
+                end if
                 !
-                IF(rFinal>rBegin) THEN
-                  IF(tTmp(I,nStep) > rFinal) EXIT
-                ELSE
-                  IF(tTmp(I,nStep) < rFinal) EXIT
-                ENDIF
+                if(rFinal>rBegin) then
+                  if(tTmp(I,nStep) > rFinal) exit
+                else
+                  if(tTmp(I,nStep) < rFinal) exit
+                end if
                 !
-                IF(nStep==DimMax) EXIT
+                if(nStep==DimMax) exit
                 !
-              ENDDO
+              end do
               vNstep(I)= nStep-1
-            ENDIF
+            end if
             !--------------------------------------------/ BuildTable --
             !
-            IF(I<=nCp) THEN
-              !IF(vCpn(I)%Statut=="INERT") THEN
-                DO J=1,vNstep(I)
+            if(I<=nCp) then
+              !if(vCpn(I)%Statut=="INERT") then
+                do J=1,vNstep(I)
                   tTmp(I,J)= tTmp(I,J) /vCpn(I)%Factor
                   !if (iDebug>2) then
                   !  print *,"unit change"
                   !  print *,tTmp(I,J)
                   !  call pause_
-                  !endif
-                ENDDO
-              !ENDIF
-            ENDIF
+                  !end if
+                end do
+              !end if
+            end if
             !
             !----------------------------- add amounts in SYSTEM.ROCK --
-            ! IF(I<=nCp .AND. vCpn(I)%Statut=="INERT") THEN
-            !   DO J=1,vNstep(I)
-            !     print *,"size(tTmp)=",size(tTmp,1),size(tTmp,2)
-            !     print *,"size(vFas)=",size(vFas)  ;  pause
-            !     DO K=1,SIZE(vFas)
+            ! if(I<=nCp .and. vCpn(I)%Statut=="INERT") then
+            !   do J=1,vNstep(I)
+            !     print *,"SIZE(tTmp)=",size(tTmp,1),size(tTmp,2)
+            !     print *,"SIZE(vFas)=",size(vFas)  ;  pause
+            !     do K=1,size(vFas)
             !       tTmp(I,J)= tTmp(I,J) + &
             !       & tAlfFs(I,K) &
             !       & *vFas(K)%Mole
-            !     ENDDO
-            !   ENDDO
-            ! ENDIF
+            !     end do
+            !   end do
+            ! end if
             !-----------------------------/add amounts in SYSTEM.ROCK --
             !
-            IF(iDebug>0) THEN
-              WRITE(fTrc,'(I3,A1)',ADVANCE="no") I,t_
-              DO J= 1,vNstep(I)
-                WRITE(fTrc,'(G12.3,A1)',ADVANCE="no") tTmp(I,J),t_
-              ENDDO
-              WRITE(fTrc,*)
-            ENDIF
+            if(iDebug>0) then
+              write(fTrc,'(I3,A1)',advance="no") I,t_
+              do J= 1,vNstep(I)
+                write(fTrc,'(G12.3,A1)',advance="no") tTmp(I,J),t_
+              end do
+              write(fTrc,*)
+            end if
             !
-          ELSE
-          !------ iMix/-0 -> species activity controlled by non-aqueous phase --
-            TestMixture= .TRUE.
-            !-------------------------------------------- read values --
-            DO
+          else
+          !- iMix/-0 -> species activity controlled by non-aqueous phase
+            TestMixture= .true.
+            !----------------------------------------------- read values
+            do
               !
-              IF(EoL) EXIT
-              CALL LinToWrd(L,W,EoL)
+              if(EoL) exit
+              call LinToWrd(L,W,EoL)
               !
-              SELECT CASE(W)
+              select case(W)
                 !
-                CASE("INITIAL","FINAL")
+                case("INITIAL","FINAL")
                   !
-                  CALL LinToWrd(L,W1,EoL) !-> name of initial phase
+                  call LinToWrd(L,W1,EoL) !-> name of initial phase
                   K= MixPhase_Index(vMixFas,W1)
                   !
-                  IF(K==0) THEN
+                  if(K==0) then
                     Ok=  .false.
-                    Msg= TRIM(W1)//" = UNKNOWN PHASE in PATH CHANGE!!!"
-                    RETURN
-                  ENDIF
+                    Msg= trim(W1)//" = UNKNOWN PHASE in PATH CHANGE!!!"
+                    return
+                  end if
                   !
-                  IF(vMixFas(K)%iModel /= vMixFas(iMix)%iModel)  THEN
+                  if(vMixFas(K)%iModel /= vMixFas(iMix)%iModel)  then
                     Ok=  .false.
-                    Msg=                                  "Phase "//TRIM(W1)// &
-                    &   " should be of same model as "//TRIM(vMixFas(iMix)%Name)
-                    RETURN !============================================
-                  ENDIF
+                    Msg=                                  "Phase "//trim(W1)// &
+                    &   " should be of same model as "//trim(vMixFas(iMix)%Name)
+                    return !--------------------------------------return
+                  end if
                   !
-                SELECT CASE(W)
-                  CASE("INITIAL")
+                select case(W)
+                  case("INITIAL")
                     vPhasBegin(I)=K
 
-                    IF(iDebug>0) WRITE(fTrc,'(4A)') &
+                    if(iDebug>0) write(fTrc,'(4A)') &
                     & "PhasBegin=",vMixFas(K)%Name, &
                     & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
 
-                  CASE("FINAL")
+                  case("FINAL")
                     vPhasFinal(I)=K
 
-                    IF(iDebug>0) WRITE(fTrc,'(4A)') &
+                    if(iDebug>0) write(fTrc,'(4A)') &
                     & "PhasFinal=",vMixFas(K)%Name, &
                     & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
 
-                ENDSELECT
+                end select
                 !
-                ! CASE("RATIO")
+                ! case("RATIO")
                 !   Ok=  .false.
-                !   Msg=                             "ONLY DELTA IN THIS CASE !!!"
-                !   RETURN !----------------------------------------------
-                !   !CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rRatio)
+                !   Msg=                             "only DELTA IN THIS case !!!"
+                !   return !----------------------------------------------
+                !   !call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
                 ! !
-                ! CASE("DELTA")
-                !   CALL LinToWrd(L,W,EoL); CALL WrdToReal(W,rDelta)
+                ! case("DELTA")
+                !   call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
                 !   !currently not used ...!!! (always on 100 steps)
                 ! !
-                ! CASE DEFAULT
+                ! case default
                 !   Ok=  .false.
-                !   Msg=           TRIM(W)//"= unknown keyword in PATH CHANGE !!!"
-                !   RETURN !----------------------------------------------
+                !   Msg=           trim(W)//"= unknown keyword in PATH CHANGE !!!"
+                !   return !----------------------------------------------
                 !
-              END SELECT
-            ENDDO
+              end select
+            end do
             !
-            IF(iDebug>1) THEN
-              PRINT '(4A)', &
+            if(iDebug>1) then
+              print '(4A)', &
               & "PhasBegin=",vMixFas(vPhasBegin(I))%Name, &
               & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
-              PRINT '(4A)', &
+              print '(4A)', &
               & "PhasFinal=",vMixFas(vPhasFinal(I))%Name, &
               & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
-            ENDIF
-            !-------------------------------------------/ read values --
+            end if
+            !------------------------___-------------------/ read values
             !
-            IF(vPhasBegin(I)*vPhasFinal(I)==0) THEN
+            if(vPhasBegin(I)*vPhasFinal(I)==0) then
               Ok= .false.
               Msg=    "Problem in reading PATH conditions on solid solutions ??"
-              RETURN !==================================================
-            ENDIF
+              return !--------------------------------------------return
+            end if
             !
-          ENDIF
-          !-----/ iMix/-0 -> species activity controlled by non-aqueous phase --
+          end if
+          !/ iMix/-0 -> species activity controlled by non-aqueous phase
         !_CHANGE
-        !------------------------------------------------/ CASE "CHG" --
+        !---------------------------------------------------/ case "CHG"
         !
-        END SELECT
-      ENDDO DoBlock
-      !------------------------------------/ read the path parameters --
-      !! IF(iDebug>0) CALL Pause_
-    ENDIF !Cod=="PATH"
+        end select
+      end do DoBlock
+      !---------------------------------------/ read the path parameters
+      !! if(iDebug>0) call Pause_
+    end if !Cod=="PATH"
     !
-  ENDDO DoFile
-  CLOSE(f)
+  end do DoFile
+  close(f)
   !
-  !------------------------------------------------ !! DEVELOPMENT !! --
-  IF(TestMixture) THEN
+  !--------------------------------------------------- !! DEVELOPMENT !!
+  if(TestMixture) then
     DimPath= 99
-    ALLOCATE(vTPpath(DimPath))
+    allocate(vTPpath(DimPath))
     vTPpath(:)%TdgC= TdgK -T_CK
     vTPpath(:)%Pbar= Pbar
-  ENDIF
-  !------------------------------------------------/!! DEVELOPMENT !! --
+  end if
+  !---------------------------------------------------/!! DEVELOPMENT !!
   !
-  IF(COUNT(vNstep>0)>0) THEN
+  if(count(vNstep>0)>0) then
     !
     DimPath= MINVAL(vNstep,MASK=vNstep>0)
-    ALLOCATE(tPathData(nCp,DimPath))
+    allocate(tPathData(nCp,DimPath))
     tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
-    !! PRINT *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)
-    !! PAUSE
+    !! print *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)
+    !! pause
     !
-    ALLOCATE(vTPpath(DimPath))
+    allocate(vTPpath(DimPath))
     vTPpath(:)%TdgC= tTmp(nCp+1,1:DimPath)
     vTPpath(:)%Pbar= tTmp(nCp+2,1:DimPath)
     !
-  ENDIF
+  end if
   !
-  DEALLOCATE(vNstep)
+  deallocate(vNstep)
   !
-  IF(ALLOCATED(vStAdd))  DEALLOCATE(vStAdd)
+  if(allocated(vStAdd))  deallocate(vStAdd)
   !
-  IF(iDebug>1) CALL Pause_
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Path_Read"
+  if(iDebug>1) call Pause_
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Path_Read"
   
-END SUBROUTINE Path_ReadParam_new
+end subroutine Path_ReadParam_new
 
-END MODULE M_Path_Read
+end module M_Path_Read

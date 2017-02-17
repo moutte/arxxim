@@ -1,82 +1,87 @@
-MODULE M_T_Phase
-  USE M_Kinds
-  IMPLICIT NONE
+module M_T_Phase
+  use M_Kinds
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: T_Phase
+  public:: T_Phase
   !
-  PUBLIC:: Phase_Zero
-  PUBLIC:: Phase_Index
-  PUBLIC:: Phase_Calc
+  public:: Phase_Zero
+  public:: Phase_Index
+  public:: Phase_Calc
   !
-  TYPE:: T_Phase
+  type:: T_Phase
   ! describes a phase, including pure phases and mixture or solution phases
-    CHARACTER(LEN=23):: NamFs
-    !! CHARACTER(LEN=4) :: Typ !"PURE","AQUEOUS","MIXTURE"
+    character(len=23):: NamFs
+    !! character(len=4) :: Typ !"PURE","AQUEOUS","MIXTURE"
     !! ! "PURE" includes also "DISCRET" 
     !! ! Typ is redundant with the values of iSpc/iMix/iSol
     !! ! -> should not be included in the type declaration
-    !! ! PURE     == (iSpc/=0, iMix=0,  iSol=0 )
+    !! ! pure     == (iSpc/=0, iMix=0,  iSol=0 )
     !! ! MIXTURE  == (iSpc=0,  iMix/=0, iSol=0 )
     !! ! SOLUTION == (iSpc=0,  iMix=0,  iSol/=0)
-    INTEGER :: iSpc != index of species in vSpc, in case of pure phase 
-    INTEGER :: iMix != index of mixture in vMixFas, in case of mixture phase
-    INTEGER :: iSol != index of solution in vSolFas, in case of solution phase
+    integer :: iSpc != index of species in vSpc     -> for pure phase 
+    integer :: iMix != index of mixture in vMixFas  -> for mixture phase
+    integer :: iSol != index of solution in vSolFas -> for solution phase
     !
     ! variable parameters (intensive, e.g. molar, or specific)
-    REAL(dp):: Grt,VolM3,WeitKg !,H,S,Cp !molar values at current (T,P), for the phase
+    real(dp):: Grt,VolM3,WeitKg !,H,S,Cp 
+    ! molar values at current (T,P), for the phase
     ! Grt=    G/RT
-    ! V=      molar volume, M3/Mole
+    ! VolM3=  molar volume, M3/Mole
     ! WeitKg= molar weight, Kg/Mole
     !
-    REAL(dp):: Mole !extensive, mole number of phase in system
+    real(dp):: MolFs !extensive, mole number of phase in system
     !-> should be "outside" the structure ??
-  ENDTYPE T_Phase
+  end type T_Phase
   !
-  !TYPE:: T_PhaseDat
-  !  REAL(dp):: Grt,VolM3,WeitKg
-  !  REAL(dp):: Mole
-  !ENDTYPE T_FasData
+  !type:: T_PhaseDat
+  !  real(dp):: Grt,VolM3,WeitKg
+  !  real(dp):: Mole
+  !end type T_FasData
   !
-  TYPE(T_Phase):: Phase_Zero= T_Phase( &
+  type(T_Phase):: Phase_Zero= T_Phase( &
   & "Z",          & !Name,Typ
   & 0,0,0,        & !iSpc,iMix,iSol
   & Zero,One,One, & !Grt,V,WeitKg
   & Zero)           !Mole
   !
-CONTAINS
+contains
 
-!SUBROUTINE Phase_Discrete_Init(vDisFas)
-!  TYPE(T_Phase),INTENT(OUT):: vDisFas(:)
+!subroutine Phase_Discrete_Init(vDisFas)
+!  type(T_Phase),intent(out):: vDisFas(:)
 !  !
-!ENDSUBROUTINE Phase_Discrete_Init
+!end subroutine Phase_Discrete_Init
 
-SUBROUTINE Phase_Calc(TdgK,Pbar,vSpc,vMixModel,vMixFas,Fas)
+subroutine Phase_Calc( &
+& TdgK,Pbar,vSpc,vMixModel,vMixFas, &
+& Fas)
 !--
 !-- calculate molar properties (weight, volume, Gibbs, ...) of phase Fas
 !--
-  USE M_T_Species, ONLY: T_Species
-  USE M_T_MixModel,ONLY: T_MixModel
-  USE M_T_MixPhase,ONLY: T_MixPhase
-  USE M_T_MixPhase,ONLY: MixPhase_Weit,MixPhase_GibbsRT,MixPhase_Volume
+  use M_T_Species, only: T_Species
+  use M_T_MixModel,only: T_MixModel
+  use M_T_MixPhase,only: T_MixPhase
+  use M_T_MixPhase,only: MixPhase_Weit,MixPhase_GibbsRT,MixPhase_Volume
   !
-  REAL(dp),        INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_Species), INTENT(IN)   :: vSpc(:)
-  TYPE(T_MixModel),INTENT(IN)   :: vMixModel(:)
-  TYPE(T_MixPhase),INTENT(IN)   :: vMixFas(:)
-  TYPE(T_Phase),   INTENT(INOUT):: Fas
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_Species), intent(in)   :: vSpc(:)
+  type(T_MixModel),intent(in)   :: vMixModel(:)
+  type(T_MixPhase),intent(in)   :: vMixFas(:)
+  type(T_Phase),   intent(inout):: Fas
   !
-  INTEGER :: I
+  integer :: I
   
-  IF(Fas%iSpc /= 0) THEN
+  if(Fas%iSpc /= 0) then !----------------------------update pure phases
     !
     I=Fas%iSpc
     Fas%WeitKg= vSpc(I)%WeitKg
     Fas%Grt=    vSpc(I)%G0rt
     Fas%VolM3=  vSpc(I)%V0
+    !print *,"NamFs,iSpc,V0=", &
+    !& trim(Fas%NamFs)," ",Fas%iSpc," ",vSpc(I)%V0*1.D6
     !
-  ELSE IF(Fas%iMix /= 0) THEN
+  else if(Fas%iMix /= 0) then !------------------------update mix phases
     !
     I=Fas%iMix !-> index in list of mixture phases
     !
@@ -90,20 +95,20 @@ SUBROUTINE Phase_Calc(TdgK,Pbar,vSpc,vMixModel,vMixFas,Fas)
     Fas%VolM3= MixPhase_Volume( &
     & vSpc,vMixModel(vMixFas(I)%iModel),vMixFas(I))
     !
-  ELSE IF (Fas%iSol /= 0) THEN
-    ! TODO
-  END IF
+  else if (Fas%iSol /= 0) then
+    ! todo
+  end if
   
-  !! SELECT CASE(Fas%Typ)
+  !! select case(Fas%Typ)
   !! 
-  !! CASE("PURE") !,"DISCRET")
+  !! case("PURE") !,"DISCRET")
   !!   I=Fas%iSpc
   !!   
   !!   Fas%WeitKg= vSpc(I)%WeitKg
   !!   Fas%Grt=    vSpc(I)%G0rt
   !!   Fas%VolM3=  vSpc(I)%V0
   !! 
-  !! CASE("MIXT") 
+  !! case("MIXT") 
   !!   I=Fas%iMix !-> index in list of mixture phases
   !!   !
   !!   Fas%WeitKg= MixPhase_Weit( &
@@ -116,14 +121,14 @@ SUBROUTINE Phase_Calc(TdgK,Pbar,vSpc,vMixModel,vMixFas,Fas)
   !!   Fas%VolM3= MixPhase_Volume( &
   !!   & vSpc,vMixModel(vMixFas(I)%iModel),vMixFas(I))
   !! 
-  !! END SELECT
+  !! end select
   
-  RETURN
-ENDSUBROUTINE Phase_Calc
+  return
+end subroutine Phase_Calc
 
-!! SUBROUTINE Phase_Zero(Fas)
+!! subroutine Phase_Zero(Fas)
 !!   !
-!!   TYPE(T_Phase),INTENT(OUT):: Fas
+!!   type(T_Phase),intent(out):: Fas
 !!   !
 !!   Fas%Name=   "Z"
 !!   Fas%Typ=    "PURE"
@@ -138,31 +143,31 @@ ENDSUBROUTINE Phase_Calc
 !!   !Fas%H=      Zero
 !!   !Fas%S=      Zero
 !!   !Fas%Cp=     Zero
-!! ENDSUBROUTINE Phase_Zero
+!! end subroutine Phase_Zero
 
-INTEGER FUNCTION Phase_Index(Str,V)
+integer function Phase_Index(Str,V)
 !--
-!-- position of phase named Str in V(1:SIZE(V))
+!-- position of phase named Str in V(1:size(V))
 !--
-  TYPE(T_Phase),INTENT(IN)::V(:)
-  CHARACTER(*), INTENT(IN)::Str
+  type(T_Phase),intent(in)::V(:)
+  character(*), intent(in)::Str
   !
-  INTEGER     ::I
+  integer     ::I
   
-  Phase_Index=0  !IF Str not found -> I=0
-  IF(SIZE(V)==0) RETURN
+  Phase_Index=0  !if Str not found -> I=0
+  if(size(V)==0) return
   
   I=0
-  DO
+  do
     I=I+1
-    IF(TRIM(Str)==TRIM(V(I)%NamFs)) THEN
-      Phase_Index=I ; EXIT
-    ENDIF
-    IF(I==SIZE(V)) EXIT
-  ENDDO
+    if(trim(Str)==trim(V(I)%NamFs)) then
+      Phase_Index=I ; exit
+    end if
+    if(I==size(V)) exit
+  end do
   
-  RETURN
-ENDFUNCTION Phase_Index
+  return
+end function Phase_Index
 
-ENDMODULE M_T_Phase
+end module M_T_Phase
 

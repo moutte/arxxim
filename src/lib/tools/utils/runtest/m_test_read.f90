@@ -1,163 +1,163 @@
-MODULE M_Test_Read
+module M_Test_Read
 !==================================================================
 ! Read Block Test and Options
 !==================================================================
-  USE M_Trace,ONLY: iDebug,fTrc,Stop_,T_
-  USE M_Kinds
+  use M_Trace,only: iDebug,fTrc,Stop_,T_
+  use M_Kinds
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  INTEGER :: OptComputeSize
-  CHARACTER(LEN=10), ALLOCATABLE :: OptCompute(:)
-  LOGICAL :: Ok_Initialized = .FALSE.
+  integer :: OptComputeSize
+  character(len=10), allocatable :: OptCompute(:)
+  logical :: Ok_Initialized = .false.
   
-  PUBLIC:: Test_Read_Init
-  PUBLIC:: Test_Read_OptCompute
+  public:: Test_Read_Init
+  public:: Test_Read_OptCompute
   
-CONTAINS
+contains
 
-  FUNCTION Test_Read_OptCompute(I, Value) result (Ok)
+  function Test_Read_OptCompute(I, Value) result (Ok)
   !================================================== 
   ! Get the COMPUTE Field number i from block TEST
   !==================================================
-    IMPLICIT NONE
-    LOGICAL :: Ok
-    INTEGER, INTENT(IN) :: I
-    CHARACTER(LEN=*), INTENT(OUT) :: Value
+    implicit none
+    logical :: Ok
+    integer, intent(in) :: I
+    character(len=*), intent(out) :: Value
     !---
-    IF (I>OptComputeSize) THEN
+    if (I>OptComputeSize) then
       Ok = .false.
-      Value = "NONE"
-    ELSE
+      Value = "none"
+    else
       Ok = .true.
       Value = OptCompute(I)
-    END IF
+    end if
     
-  END FUNCTION Test_Read_OptCompute
+  end function Test_Read_OptCompute
 
   !---
   
-  SUBROUTINE Test_Read_Init(Ok)
+  subroutine Test_Read_Init(Ok)
   !================================================== 
   ! Init Test Block => Reinit if Necessary
   !==================================================
-    IMPLICIT NONE
-    LOGICAL,INTENT(OUT) :: Ok
+    implicit none
+    logical,intent(out) :: Ok
     !--
-    IF (.NOT. Ok_Initialized) CALL Test_Read_ReInit(Ok)
+    if (.not. Ok_Initialized) call Test_Read_ReInit(Ok)
   
-  END SUBROUTINE Test_Read_Init
+  end subroutine Test_Read_Init
   
   !---
 
-  SUBROUTINE Test_Read_ReInit(Ok)
+  subroutine Test_Read_ReInit(Ok)
   !================================================== 
   ! Reinit Test block = Read Test Block
   !==================================================
-    USE M_Files_Vars,ONLY:NamFInn
-    USE M_IOTools 
-    IMPLICIT NONE
+    use M_Files_Vars,only:NamFInn
+    use M_IOTools 
+    implicit none
     !-----
-    LOGICAL,INTENT(OUT) :: Ok
+    logical,intent(out) :: Ok
     !-----
-    LOGICAL :: sEOL,EoL
-    INTEGER :: nCompute
-    CHARACTER(LEN=512):: L,W
-    INTEGER :: ios,F
-    INTEGER :: i
+    logical :: sEOL,EoL
+    integer :: nCompute
+    character(len=512):: L,W
+    integer :: ios,F
+    integer :: i
     !-----
-    Ok = .FALSE.
+    Ok = .false.
     nCompute =0
 
-    IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "< Test_ReadInput"
+    if(iDebug>0) write(fTrc,'(/,A,/)') "< Test_ReadInput"
 
     !// Estimate the maximal number of values to store
-    CALL GetUnit(f)
-    OPEN(f,FILE=TRIM(NamFInn),STATUS='OLD')
+    call GetUnit(f)
+    open(f,file=trim(NamFInn),STATUS='OLD')
 
     nCompute = 0
-    DO 
-      READ(f,'(A)',IOSTAT=ios) L
-      IF(ios/=0) EXIT
-      CALL LinToWrd(L,W,EoL)
-      IF(W(1:1)=='!') CYCLE
-      IF(TRIM(W)=="ENDINPUT") EXIT
-      IF(TRIM(W)=="COMPUTE") nCompute = nCompute +1
-    ENDDO
-    CLOSE(f)
+    do 
+      read(f,'(A)',iostat=ios) L
+      if(ios/=0) exit
+      call LinToWrd(L,W,EoL)
+      if(W(1:1)=='!') cycle
+      if(trim(W)=="ENDINPUT") exit
+      if(trim(W)=="COMPUTE") nCompute = nCompute +1
+    end do
+    close(f)
     
     !~ print *,'nCompute=',nCompute
     !~ print *,'..DEBBUGG'  ;  pause
     
     !// Allocate the table
-    IF(ALLOCATED(OptCompute)) DEALLOCATE(OptCompute)
-    ALLOCATE(OptCompute(10))
+    if(allocated(OptCompute)) deallocate(OptCompute)
+    allocate(OptCompute(10))
 
     !// Read the File and store the values
-    CALL GetUnit(f)
-    OPEN(f,FILE=TRIM(NamFInn),STATUS='OLD')
+    call GetUnit(f)
+    open(f,file=trim(NamFInn),STATUS='OLD')
     !
     nCompute = 0
     !
-    DoFile: DO
+    DoFile: do
       !
-      READ(f,'(A)',IOSTAT=ios) L
-      IF(ios/=0) EXIT DoFile
-      CALL LinToWrd(L,W,EoL)
-      IF(W(1:1)=='!') CYCLE DoFile
-      CALL AppendToEnd(L,W,EoL)
+      read(f,'(A)',iostat=ios) L
+      if(ios/=0) exit DoFile
+      call LinToWrd(L,W,EoL)
+      if(W(1:1)=='!') cycle DoFile
+      call AppendToEnd(L,W,EoL)
       
-      SELECT CASE(TRIM(W))
+      select case(trim(W))
           
-      CASE("ENDINPUT") ; EXIT DoFile
+      case("ENDINPUT") ; exit DoFile
       
-      CASE("TEST")
-        Ok= .TRUE.
+      case("TEST")
+        Ok= .true.
         !
-        DoTest: DO
+        DoTest: do
           !
-          READ(F,'(A)',IOSTAT=ios) L
-          IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W,EoL)
-          IF(W(1:1)=='!') CYCLE DoTest
-          CALL AppendToEnd(L,W,EoL)
+          read(F,'(A)',iostat=ios) L
+          if(ios/=0) exit DoFile
+          call LinToWrd(L,W,EoL)
+          if(W(1:1)=='!') cycle DoTest
+          call AppendToEnd(L,W,EoL)
           
-          SELECT CASE(TRIM(W))
+          select case(trim(W))
           
-          CASE("ENDINPUT")
-            EXIT DoFile
-          CASE("END","ENDTEST")
-            EXIT DoTest
+          case("ENDINPUT")
+            exit DoFile
+          case("END","ENDTEST")
+            exit DoTest
           
-          CASE("COMPUTE")
-            CALL LinToWrd(L,W,sEol) 
+          case("COMPUTE")
+            call LinToWrd(L,W,sEol) 
             nCompute = nCompute + 1
-            OptCompute(nCompute)= TRIM(W)
+            OptCompute(nCompute)= trim(W)
           
-          CASE DEFAULT
-            Ok= .FALSE.
-            PRINT *,TRIM(W)//" =INVALID keyword in TEST block"
+          case default
+            Ok= .false.
+            print *,trim(W)//" =INVALID keyword in TEST block"
           
-          END SELECT
+          end select
           !
-        ENDDO Dotest
+        end do Dotest
         !
-      END SELECT
+      end select
       !
-    ENDDO DoFile
-    CLOSE(f)
+    end do DoFile
+    close(f)
     !
     OptComputeSize = nCompute
     Ok_Initialized = .true.
     
     do nCompute=1,OptComputeSize
-      WRITE(fTrc,'(2X,A)') OptCompute(nCompute)
-    enddo
+      write(fTrc,'(2X,A)') OptCompute(nCompute)
+    end do
     !
-    IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "</ Test_ReadInput"
+    if(iDebug>0) write(fTrc,'(/,A,/)') "</ Test_ReadInput"
 
-  ENDSUBROUTINE Test_Read_ReInit
+  end subroutine Test_Read_ReInit
 
-END MODULE M_Test_Read
+end module M_Test_Read

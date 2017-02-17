@@ -1,597 +1,597 @@
-MODULE M_Equil_1
+module M_Equil_1
 !--
 !-- calculate equilibrium speciation --
 !-- considering saturation with minerals or gases --
 !-- this version considers pure phases and mixtures --
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_,Pause_
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Equil_Eq1
+  public:: Equil_Eq1
   !
-  REAL(dp),PARAMETER:: MixMinim_TolX= 1.D-4
+  real(dp),parameter:: MixMinim_TolX= 1.D-4
   != parameter for Mixture_Minimize
   !
-  REAL(dp),PARAMETER:: FasMinim= 1.D-9
+  real(dp),parameter:: FasMinim= 1.D-9
   ! FasMinim= mimim' amount of phase
   !
-  REAL(dp),PARAMETER:: AffinIota= 1.D-6
+  real(dp),parameter:: AffinIota= 1.D-6
   ! AffinIota= tolerance for equilibrium condition
   ! ( equilibrium == ABS(Affinity)<AffinIota )
   !
-  REAL(dp),PARAMETER:: dXi_Minim= 1.D-16
-  REAL(dp),PARAMETER:: dXi_Maxim= 1.D+12
+  real(dp),parameter:: dXi_Minim= 1.D-16
+  real(dp),parameter:: dXi_Maxim= 1.D+12
   !
-  INTEGER, ALLOCATABLE:: tIPole(:,:)
-  CHARACTER(LEN=30):: sFMT
+  integer, allocatable:: tIPole(:,:)
+  character(len=30):: sFMT
 
-CONTAINS
+contains
 
-SUBROUTINE Equil_Eq1(NoMixture,iErr)
+subroutine Equil_Eq1(NoMixture,iErr)
 !--
 !-------------------- this version considers pure phases and mixtures --
 !--
-  USE M_IOTools,      ONLY: GetUnit
-  USE M_Files,        ONLY: DirOut
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_Numeric_Tools,ONLY: iMinLoc_R
-  USE M_Dtb_Const,    ONLY: T_CK
-  USE M_IoTools,      ONLY: OutStrVec
-  USE M_T_MixModel,   ONLY: MaxPole
-  USE M_T_MixPhase,   ONLY: T_MixPhase
-  USE M_T_Phase,      ONLY: T_Phase
+  use M_IOTools,      only: GetUnit
+  use M_Files,        only: DirOut
+  use M_Numeric_Const,only: Ln10
+  use M_Numeric_Tools,only: iMinLoc_R
+  use M_Dtb_Const,    only: T_CK
+  use M_IoTools,      only: OutStrVec
+  use M_T_MixModel,   only: MaxPole
+  use M_T_MixPhase,   only: T_MixPhase
+  use M_T_Phase,      only: T_Phase
   !
-  USE M_Equil_Solve,  ONLY: Equil_Solve
-  USE M_Equil_Tools,  ONLY: Equil_FasTrace_EnTete,Equil_FasTrace_Write
+  use M_Equil_Solve,  only: Equil_Solve
+  use M_Equil_Tools,  only: Equil_FasTrace_EnTete,Equil_FasTrace_Write
   !
-  USE M_Global_Vars,  ONLY: vSpc,vFas
-  USE M_Global_Vars,  ONLY: vMixModel
-  USE M_Basis_Vars,   ONLY: nCi,nAs,isW
-  USE M_Basis_Vars,   ONLY: tNuFas,vOrdPr
-  USE M_Equil_Vars,   ONLY: cEquMode,dXi
-  USE M_Equil_Vars,   ONLY: vYesList
-  USE M_Equil_Vars,   ONLY: vDeltaG_Fs,vAffScale,vLnAct,vFasMole
-  USE M_Equil_Vars,   ONLY: vEquFas,nEquFas,T_EquPhase
-  USE M_Equil_Vars,   ONLY: iCountEq,fTrcEq
+  use M_Global_Vars,  only: vSpc,vFas
+  use M_Global_Vars,  only: vMixModel
+  use M_Basis_Vars,   only: nCi,nAs,isW
+  use M_Basis_Vars,   only: tNuFas,vOrdPr
+  use M_Equil_Vars,   only: cEquMode,dXi
+  use M_Equil_Vars,   only: vYesList
+  use M_Equil_Vars,   only: vDeltaG_Fs,vAffScale,vLnAct,vFasMole
+  use M_Equil_Vars,   only: vEquFas,nEquFas,T_EquPhase
+  use M_Equil_Vars,   only: iCountEq,fTrcEq
   !
-  LOGICAL,INTENT(IN) :: NoMixture
-  INTEGER,INTENT(OUT):: iErr
+  logical,intent(in) :: NoMixture
+  integer,intent(out):: iErr
   !
-  INTEGER :: nCp,nFs,nPur,nSol
-  INTEGER :: iFs,iMix,iPur
-  INTEGER :: FF
-  INTEGER :: nCheck,I,J,K
-  INTEGER :: nMix,nP
-  INTEGER :: iPrecip,iElimin
-  INTEGER :: nIts,iDo0,iDo1
-  ! REAL(dp):: rDum= One
-  ! INTEGER :: vIPole(MaxPole)
-  LOGICAL :: dXiTooLow
-  LOGICAL :: Use_nIts= .TRUE.  ! .FALSE. !
+  integer :: nCp,nFs,nPur,nSol
+  integer :: iFs,iMix,iPur
+  integer :: FF
+  integer :: nCheck,I,J,K
+  integer :: nMix,nP
+  integer :: iPrecip,iElimin
+  integer :: nIts,iDo0,iDo1
+  ! real(dp):: rDum= One
+  ! integer :: vIPole(MaxPole)
+  logical :: dXiTooLow
+  logical :: Use_nIts= .true.  ! .false. !
 
-  LOGICAL, ALLOCATABLE:: vYesFas(:) ! phase is in current equil.phase list
-  REAL(dp),ALLOCATABLE:: vFasAff0(:)
+  logical, allocatable:: vYesFas(:) ! phase is in current equil.phase list
+  real(dp),allocatable:: vFasAff0(:)
 
-  TYPE(T_EquPhase),ALLOCATABLE:: vEquFas0(:)
-  TYPE(T_MixPhase),ALLOCATABLE:: vMixFas0(:)
-  TYPE(T_Phase),   ALLOCATABLE:: vFas0(:)
-  TYPE(T_EquPhase):: EquFasNew
-  ! TYPE(T_MixPhase):: MixFas
+  type(T_EquPhase),allocatable:: vEquFas0(:)
+  type(T_MixPhase),allocatable:: vMixFas0(:)
+  type(T_Phase),   allocatable:: vFas0(:)
+  type(T_EquPhase):: EquFasNew
+  ! type(T_MixPhase):: MixFas
 
-  !~ TYPE:: T_EquPhase
-    !~ CHARACTER(LEN=23):: NamEq
-    !~ INTEGER :: iSpc
-    !~ INTEGER :: iMix
-    !~ REAL(dp):: vXPole(1:MaxPole)
-    !~ !REAL(dp):: Grt
-    !~ REAL(dp):: Mole
-  !~ END TYPE T_EquPhase
+  !~ type:: T_EquPhase
+    !~ character(len=23):: NamEq
+    !~ integer :: iSpc
+    !~ integer :: iMix
+    !~ real(dp):: vXPole(1:MaxPole)
+    !~ !real(dp):: Grt
+    !~ real(dp):: Mole
+  !~ end type T_EquPhase
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Equil_Eq1_Mix"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Eq1_Mix"
 
   FF=0
-  IF(iDebug>1 .AND. (FF==0)) THEN
+  if(iDebug>1 .and. (FF==0)) then
     !~ iCountEq=0
-    !CALL Equil_FasTrace_EnTete(vFas,vYesList,FF)
-    CALL GetUnit(FF)
-    OPEN(FF,FILE=TRIM(DirOut)//"_equil.log")
-  ENDIF
+    !call Equil_FasTrace_EnTete(vFas,vYesList,FF)
+    call GetUnit(FF)
+    open(FF,file=trim(DirOut)//"_equil.log")
+  end if
 
   cEquMode="EQ1" !-> flag in Equil_Solve
   dXi=       One !1.D3 !1.D-6 !reaction increment
-  dXiTooLow= .FALSE.
+  dXiTooLow= .false.
 
   nCheck= 0
 
-  nCp= SIZE(vOrdPr)
-  !! nPur= COUNT(vFas(:)%Typ=="PURE")
-  nPur= COUNT(vFas(:)%iSpc/=0)
-  nMix= SIZE(vMixModel)
-  nSol= 1 !! SIZE(vSolFas)
+  nCp= size(vOrdPr)
+  !! nPur= count(vFas(:)%Typ=="PURE")
+  nPur= count(vFas(:)%iSpc/=0)
+  nMix= size(vMixModel)
+  nSol= 1 !! size(vSolFas)
 
-  IF(NoMixture) nMix= 0
+  if(NoMixture) nMix= 0
 
   nFs= nPur + nMix + nSol
 
-  ALLOCATE(vYesFas(nFs)) ; vYesFas(:)= .FALSE.
-  ALLOCATE(vFasAff0(nFs))
-  ALLOCATE(vEquFas0(nCp))
+  allocate(vYesFas(nFs)) ; vYesFas(:)= .false.
+  allocate(vFasAff0(nFs))
+  allocate(vEquFas0(nCp))
 
-  IF(nMix>0) THEN
+  if(nMix>0) then
 
-    ALLOCATE(vFas0(nPur))
+    allocate(vFas0(nPur))
     vFas0(:)= vFas(1:nPur)
-    DEALLOCATE(vFas)
-    ALLOCATE(vFas(nFs))
+    deallocate(vFas)
+    allocate(vFas(nFs))
     vFas(1:nPur)= vFas0(1:nPur)
-    DO K=1,nMix
+    do K=1,nMix
       vFas(nPur+K)%NamFs= vMixModel(K)%Name
-    ENDDO
-    DEALLOCATE(vFas0)
+    end do
+    deallocate(vFas0)
 
-    ALLOCATE(vMixFas0(nMix))
-    DO K=1,nMix
+    allocate(vMixFas0(nMix))
+    do K=1,nMix
       vMixFas0(K)%Name= vMixModel(K)%Name
       vMixFas0(K)%iModel= K
       vMixFas0(K)%vXPole(:)= Zero
-    ENDDO
+    end do
     !
-    ALLOCATE(tIPole(nMix,MaxPole))
-    CALL MixModel_Init(nPur,vFas,vMixModel)
+    allocate(tIPole(nMix,MaxPole))
+    call MixModel_Init(nPur,vFas,vMixModel)
 
-    !~ CALL MixPhase_XPole_Init(vMixModel,vMixFas_Xpole_Init)
+    !~ call MixPhase_XPole_Init(vMixModel,vMixFas_Xpole_Init)
     !
-    !~ ALLOCATE(vDeltaGPole(nPur))
-    !~ DO iFs= 1,nPur
+    !~ allocate(vDeltaGPole(nPur))
+    !~ do iFs= 1,nPur
       !~ vDeltaGPole(iFs)= vFas(iFs)%Grt &
-      !~ &               - DOT_PRODUCT(tNuFas(iFs,:),vSpc(vOrdPr(:))%G0rt)
-    !~ ENDDO
+      !~ &               - dot_product(tNuFas(iFs,:),vSpc(vOrdPr(:))%G0rt)
+    !~ end do
 
-  ENDIF
+  end if
   !
   I=0
-  DO iPur=1,nPur
-    IF(vFas(iPur)%Mole>FasMinim) THEN
-      vYesFas(iPur)= .TRUE.
+  do iPur=1,nPur
+    if(vFas(iPur)%MolFs>FasMinim) then
+      vYesFas(iPur)= .true.
       I=I+1
       vEquFas(I)%iPur= iPur
-      vEquFas(I)%NamEq= TRIM(vFas(iPur)%NamFs)
+      vEquFas(I)%NamEq= trim(vFas(iPur)%NamFs)
       vEquFas(I)%iMix= 0
-      vEquFas(I)%Mole= vFas(iPur)%Mole
-    ENDIF
-  ENDDO
+      vEquFas(I)%MolFs= vFas(iPur)%MolFs
+    end if
+  end do
   nEquFas= I
   !
   !-------------------------------------- loop on mineral saturation, --
-  !------------------------ EXIT when all minerals have vPurYes false --
+  !------------------------ exit when all minerals have vPurYes false --
   iDo0= 0
-  Do0: DO
+  Do0: do
     iDo0= iDo0 +1
 
     iDo1= 0
     !---------------------- solve the system until no negative phases --
-    Do1: DO
+    Do1: do
       iDo1= iDo1 +1
 
-      !~ IF(iDebug>2) THEN
-        !~ WRITE(6,'(A)') "<-- CURRENT --"
-        !~ DO I=1,nEquFas
-          !~ WRITE(6,'(2X,A)') vEquFas(I)%NamEq
-        !~ ENDDO
-        !~ WRITE(6,'(A)') "</- CURRENT --"
-      !~ ENDIF
+      !~ if(iDebug>2) then
+        !~ write(6,'(A)') "<-- CURRENT --"
+        !~ do I=1,nEquFas
+          !~ write(6,'(2X,A)') vEquFas(I)%NamEq
+        !~ end do
+        !~ write(6,'(A)') "</- CURRENT --"
+      !~ end if
 
-      IF(nEquFas>0) THEN
-        CALL EquFas_Clean
-        CALL EquFas_Alloc(nCp,nEquFas)
-        CALL EquFas_Update(nCp,nEquFas,vEquFas)
-      ENDIF
+      if(nEquFas>0) then
+        call EquFas_Clean
+        call EquFas_Alloc(nCp,nEquFas)
+        call EquFas_Update(nCp,nEquFas,vEquFas)
+      end if
 
       !-------------------------------------------------- loop on dXi --
-      Do2: DO
+      Do2: do
 
         !------------------------------------------- solve the system --
-        CALL Equil_Solve(nIts,iErr)
+        call Equil_Solve(nIts,iErr)
         !------------------------------------------/ solve the system --
 
-        IF(iErr==0) EXIT Do2 !when system solved-> EXIT
+        if(iErr==0) exit Do2 !when system solved-> exit
 
-        !IF necessary, try smaller dXi
-        dXi= dXi /2.0_dp  !ELSE DO again with smaller step
-        IF(dXi<dXi_Minim) dXiTooLow=.TRUE.
-        IF(dXiTooLow) EXIT Do0 !-> zannennagara,  found no solution ...
+        !if necessary, try smaller dXi
+        dXi= dXi /2.0_dp  !else do again with smaller step
+        if(dXi<dXi_Minim) dXiTooLow=.true.
+        if(dXiTooLow) exit Do0 !-> zannennagara,  found no solution ...
 
-      ENDDO Do2
+      end do Do2
       !--------------------------------------------------/loop on dXi --
       !
-      IF(nEquFas==0) EXIT Do1
+      if(nEquFas==0) exit Do1
       !
-      IF(Use_Nits) THEN
-        IF(nIts>12 .AND. dXi<dXi_Minim) dXi= dXi /2.0_dp
-        IF(nIts<6  .AND. dXi<dXi_Maxim) dXi= dXi *2.0_dp
-      ENDIF
+      if(Use_Nits) then
+        if(nIts>12 .and. dXi<dXi_Minim) dXi= dXi /2.0_dp
+        if(nIts<6  .and. dXi<dXi_Maxim) dXi= dXi *2.0_dp
+      end if
       !
-      IF(iDebug>3) CALL Trace_1
+      if(iDebug>3) call Trace_1
       !
       !----------------------------------- exclude "near zero" phases --
       vEquFas0= vEquFas
       J= 0
-      DO I=1,nEquFas
-        IF(ABS(vEquFas0(I)%Mole)>FasMinim) THEN
+      do I=1,nEquFas
+        if(ABS(vEquFas0(I)%MolFs)>FasMinim) then
           J=J+1
           vEquFas(J)= vEquFas0(I)
-          IF(vEquFas0(I)%iPur>0) vYesFas(vEquFas0(I)%iPur)= .TRUE.
-          IF(vEquFas0(I)%iMix>0) vYesFas(nPur+vEquFas0(I)%iPur)= .TRUE.
-        ENDIF
-      ENDDO
+          if(vEquFas0(I)%iPur>0) vYesFas(vEquFas0(I)%iPur)= .true.
+          if(vEquFas0(I)%iMix>0) vYesFas(nPur+vEquFas0(I)%iPur)= .true.
+        end if
+      end do
       nEquFas= J
 
-      vYesFas(:)= .FALSE.
-      vYesFas(vEquFas(1:nEquFas)%iPur)= .TRUE.
+      vYesFas(:)= .false.
+      vYesFas(vEquFas(1:nEquFas)%iPur)= .true.
       !----------------------------------/ exclude "near zero" phases --
       !
       !------------------------ check for phases with negative amount --
-      IF(nEquFas>0) THEN
+      if(nEquFas>0) then
         !
-        !~ !------------------------------------------------------ trace --
-        !~ IF(iDebug>2) THEN
-          !~ WRITE(6,'(A)') "<-- CURRENT --"
-          !~ DO I=1,nEquFas
-            !~ WRITE(6,'(G15.6,1X,A15,1X)',ADVANCE="NO") &
-            !~ & vEquFas(I)%Mole,TRIM(vEquFas(I)%NamEq)
-            !~ IF(vEquFas(I)%iMix>0) THEN
-              !~ DO J=1,vEquFas(I)%nPole
-                !~ WRITE(6,'(G15.6,1X)',ADVANCE="NO") vEquFas(I)%vXPole(J)
-              !~ ENDDO
-            !~ ENDIF
-            !~ WRITE(6,*)
-          !~ ENDDO
-          !~ WRITE(6,'(A)') "</- CURRENT --"
-        !~ ENDIF
-        !~ !------------------------------------------------------/trace --
+        !------------------------------------------------------ trace --
+        ! if(iDebug>2) then
+        !   write(6,'(A)') "<-- CURRENT --"
+        !   do I=1,nEquFas
+        !     write(6,'(G15.6,1X,A15,1X)',advance="NO") &
+        !     & vEquFas(I)%Mole,trim(vEquFas(I)%NamEq)
+        !     if(vEquFas(I)%iMix>0) then
+        !       do J=1,vEquFas(I)%nPole
+        !         write(6,'(G15.6,1X)',advance="NO") vEquFas(I)%vXPole(J)
+        !       end do
+        !     end if
+        !     write(6,*)
+        !   end do
+        !   write(6,'(A)') "</- CURRENT --"
+        ! end if
+        !------------------------------------------------------/trace --
         !
-        IF(MINVAL(vEquFas(1:nEquFas)%Mole)<-FasMinim) THEN
-          iElimin= iMinLoc_R(vEquFas(1:nEquFas)%Mole)
-          IF(iDebug>2) THEN
-            DO I=1,nEquFas
-              WRITE(6,'(2X,A)') vEquFas(I)%NamEq
-            ENDDO
-            WRITE(6,'(16X,2A)') "NEG= ", TRIM(vEquFas(iElimin)%NamEq)
-          ENDIF
-          CALL EquFas_Remove(iElimin)
+        if(MINVAL(vEquFas(1:nEquFas)%MolFs)<-FasMinim) then
+          iElimin= iMinLoc_R(vEquFas(1:nEquFas)%MolFs)
+          if(iDebug>2) then
+            do I=1,nEquFas
+              write(6,'(2X,A)') vEquFas(I)%NamEq
+            end do
+            write(6,'(16X,2A)') "NEG= ", trim(vEquFas(iElimin)%NamEq)
+          end if
+          call EquFas_Remove(iElimin)
 
-          IF(vEquFas(iElimin)%iPur>0) &
-          & vYesFas(vEquFas(iElimin)%iPur)= .FALSE.
-          IF(vEquFas(iElimin)%iMix>0) &
-          & vYesFas(nPur+vEquFas(iElimin)%iMix)= .FALSE.
+          if(vEquFas(iElimin)%iPur>0) &
+          & vYesFas(vEquFas(iElimin)%iPur)= .false.
+          if(vEquFas(iElimin)%iMix>0) &
+          & vYesFas(nPur+vEquFas(iElimin)%iMix)= .false.
 
-          CYCLE Do1 !========< remove most "negative" phase and CYCLE ==
-        ENDIF
+          cycle Do1 !--======< remove most "negative" phase and cycle ==
+        end if
         !
-      ENDIF
+      end if
       !
-      EXIT Do1
+      exit Do1
       !-----------------------/ check for phases with negative amount --
       !
-    ENDDO Do1
+    end do Do1
     !---------------------/ solve the system until no negative phases --
     !
-    IF(iErr<0) EXIT Do0 != error in Newton -> EXIT
+    if(iErr<0) exit Do0 != error in Newton -> exit
     !
     vFasAff0= Zero
-    DO iPur=1,nPur
-      IF(vYesList(iPur)) &
+    do iPur=1,nPur
+      if(vYesList(iPur)) &
       & vFasAff0(iPur)= &
       & (  vDeltaG_Fs(iPur) &
-      &  - DOT_PRODUCT(tNuFas(iPur,1:nCp),vLnAct(vOrdPr(1:nCp))) ) &
+      &  - dot_product(tNuFas(iPur,1:nCp),vLnAct(vOrdPr(1:nCp))) ) &
       & /vAffScale(iPur) !scaling ala EQ3/6
-    ENDDO
+    end do
     !
-    IF(nMix>0) THEN
-      !!CALL Mixture_Minimize(vFasAff0,vMixModel,vMixFas0)
-      DO iMix=1,nMix
+    if(nMix>0) then
+      !!call Mixture_Minimize(vFasAff0,vMixModel,vMixFas0)
+      do iMix=1,nMix
         !vIPole(:)= tIPole(iMix,:)
-        CALL Mixture_Minimize( &
+        call Mixture_Minimize( &
         & vFasAff0,tIPole(iMix,:),vMixModel(iMix), &
         & vMixFas0(iMix))
-      ENDDO
+      end do
       vFasAff0(nPur+1:nPur+nMix)= vMixFas0(1:nMix)%Grt
-    ENDIF
+    end if
     !
-    IF(iDebug>3) CALL Trace_2
+    if(iDebug>3) call Trace_2
     !
     !---------------------------------------------------------- trace --
-    !~ IF(iDebug>2) THEN
-      !~ WRITE(6,'(A)') "<-- OVERSAT --"
-      !~ DO I=1,SIZE(vFasAff0)
-        !~ IF (vFasAff0(I)<AffinIota) THEN
-          !~ IF(I<nPur) THEN
-            !~ WRITE(6,'(G15.6,1X,A15,1X)') vFasAff0(I),vFas(I)%NamFs
-          !~ ELSE
-            !~ WRITE(6,'(G15.6,1X,A15,1X)') vFasAff0(I),vFas(I)%NamFs
-          !~ ENDIF
-        !~ ENDIF
-      !~ ENDDO
-      !~ WRITE(6,'(A)') "</- OVERSAT --"
-    !~ ENDIF
+    !~ if(iDebug>2) then
+      !~ write(6,'(A)') "<-- OVERSAT --"
+      !~ do I=1,size(vFasAff0)
+        !~ if (vFasAff0(I)<AffinIota) then
+          !~ if(I<nPur) then
+            !~ write(6,'(G15.6,1X,A15,1X)') vFasAff0(I),vFas(I)%NamFs
+          !~ else
+            !~ write(6,'(G15.6,1X,A15,1X)') vFasAff0(I),vFas(I)%NamFs
+          !~ end if
+        !~ end if
+      !~ end do
+      !~ write(6,'(A)') "</- OVERSAT --"
+    !~ end if
     !----------------------------------------------------------/trace --
     !
     !----------------- add phase with highest supersaturation, if any --
-    IF(MINVAL(vFasAff0)<-AffinIota) THEN
+    if(MINVAL(vFasAff0)<-AffinIota) then
       iPrecip= iMinLoc_R(vFasAff0)
       !-> the saturated phase with lowest vFasAff
-      IF(vYesFas(iPrecip)) iPrecip= 0
-    ELSE
+      if(vYesFas(iPrecip)) iPrecip= 0
+    else
       iPrecip= 0 != there is no saturated phase ==
-      EXIT Do0 ! no phase found with affinity below -AffinIota > EXIT ==
-    ENDIF
+      exit Do0 ! no phase found with affinity below -AffinIota > exit ==
+    end if
 
-    IF(iPrecip>0) THEN
+    if(iPrecip>0) then
 
-      IF(iPrecip<=nPur) THEN
+      if(iPrecip<=nPur) then
 
-        vYesFas(iPrecip)= .TRUE.
+        vYesFas(iPrecip)= .true.
 
         EquFasNew%iPur= iPrecip
-        EquFasNew%NamEq= TRIM(vFas(iPrecip)%NamFs)
+        EquFasNew%NamEq= trim(vFas(iPrecip)%NamFs)
         EquFasNew%iMix= 0
-        EquFasNew%Mole= Zero
+        EquFasNew%MolFs= Zero
 
-      ELSE
+      else
 
         iMix= iPrecip -nPur
 
         EquFasNew%iPur= 0
         EquFasNew%iMix= iMix
-        EquFasNew%NamEq= TRIM(vMixModel(iMix)%Name)
+        EquFasNew%NamEq= trim(vMixModel(iMix)%Name)
         nP= vMixModel(iMix)%NPole
         EquFasNew%nPole= nP
         EquFasNew%vIPole(1:nP)= tIPole(iMix,1:nP)
 
         EquFasNew%vXPole(1:nP)= vMixFas0(iMix)%vXPole(1:nP)
         EquFasNew%vLnAct(1:nP)= vMixFas0(iMix)%vLnAct(1:nP)
-        EquFasNew%Mole= Zero
+        EquFasNew%MolFs= Zero
         
-      ENDIF
+      end if
 
-      !~ CALL CheckAssemblage(FF,nEquFas,EquFasNew,vEquFas,iElimin)
+      !~ call CheckAssemblage(FF,nEquFas,EquFasNew,vEquFas,iElimin)
       !
-      !~ IF(iElimin>0) THEN
+      !~ if(iElimin>0) then
         !~ iPur= vEquFas(iElimin)%iPur
         !~ iMix= vEquFas(iElimin)%iMix
-        !~ IF(iPur > 0) vFas(iPur)%Mole= Zero
-        !~ IF(iMix > 0) vFas(nPur+iMix)%Mole= Zero
-        !~ IF(iDebug>2) &
-        !~ & WRITE(6,'(16X,2A)') "OUT= ",TRIM(vEquFas(iElimin)%NamEq)
-        !~ CALL EquFas_Remove(iElimin)
-      !~ ENDIF
+        !~ if(iPur > 0) vFas(iPur)%Mole= Zero
+        !~ if(iMix > 0) vFas(nPur+iMix)%Mole= Zero
+        !~ if(iDebug>2) &
+        !~ & write(6,'(16X,2A)') "OUT= ",trim(vEquFas(iElimin)%NamEq)
+        !~ call EquFas_Remove(iElimin)
+      !~ end if
 
-      IF(iDebug>2) THEN
-        DO I=1,nEquFas
-          WRITE(6,'(2X,A)') vEquFas(I)%NamEq
-        ENDDO
-        WRITE(6,'(16X,2A)') "ADD= ",TRIM(EquFasNew%NamEq)
-      ENDIF
+      if(iDebug>2) then
+        do I=1,nEquFas
+          write(6,'(2X,A)') vEquFas(I)%NamEq
+        end do
+        write(6,'(16X,2A)') "ADD= ",trim(EquFasNew%NamEq)
+      end if
 
-      IF(nEquFas < SIZE(vEquFas)) THEN
+      if(nEquFas < size(vEquFas)) then
         vEquFas(nEquFas+1)= EquFasNew
         nEquFas= nEquFas +1
-      ENDIF
+      end if
 
-    ENDIF
+    end if
 
-    IF(iDebug>3) THEN !=======================================< trace ==
-      DO I=1,nEquFas
+    if(iDebug>3) then !--=====================================< trace ==
+      do I=1,nEquFas
         iFs= vEquFas(I)%iPur
-        IF(iFs>0) THEN
-          WRITE(6,'(A,I4,1X,A15,2(A,G15.6))') &
+        if(iFs>0) then
+          write(6,'(A,I4,1X,A15,2(A,G15.6))') &
           & "Do0",iDo0, &
           & vFas(iFs)%NamFs, &
           & "/ lQsK=", -vFasAff0(iFs)/Ln10 ,&
-          & "/ Mole=",vEquFas(I)%Mole
-        ENDIF
-      ENDDO
-      IF(iDebug==4) CALL Pause_
-    ENDIF !==================================================</ trace ==
+          & "/ Mole=",vEquFas(I)%MolFs
+        end if
+      end do
+      if(iDebug==4) call Pause_
+    end if !==================================================</ trace ==
 
     !----------------/ add phase with highest supersaturation, if any --
 
-    IF(nEquFas==0) EXIT Do0
+    if(nEquFas==0) exit Do0
 
-    !~ IF(iDebug>2) PAUSE
-  ENDDO Do0
+    !~ if(iDebug>2) pause
+  end do Do0
   !-------------------------------------/ loop on mineral saturation, --
   !
   !--- save mineral mole numbers in vFas
-  !~ CALL Save_EquPhase
+  !~ call Save_EquPhase
   !
-  DEALLOCATE(vFasMole)
-  ALLOCATE(vFasMole(nPur+nMix))
+  deallocate(vFasMole)
+  allocate(vFasMole(nPur+nMix))
   vFasMole(:)= Zero
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iPur>0) vFasMole(vEquFas(I)%iPur)= vEquFas(I)%Mole
-    IF(vEquFas(I)%iMix>0) vFasMole(vEquFas(I)%iMix+nPur)= vEquFas(I)%Mole
-  ENDDO
+  do I=1,nEquFas
+    if(vEquFas(I)%iPur>0) vFasMole(vEquFas(I)%iPur)= vEquFas(I)%MolFs
+    if(vEquFas(I)%iMix>0) vFasMole(vEquFas(I)%iMix+nPur)= vEquFas(I)%MolFs
+  end do
   !~ pause
   !---/
   !
-  CALL EquFas_Clean
+  call EquFas_Clean
   !
-  !~ DEALLOCATE(vNewFas)
-  DEALLOCATE(vFasAff0)
-  DEALLOCATE(vEquFas0)
-  IF(nMix>0) THEN
-    DEALLOCATE(vMixFas0)
-    DEALLOCATE(tIPole)
-  ENDIF
+  !~ deallocate(vNewFas)
+  deallocate(vFasAff0)
+  deallocate(vEquFas0)
+  if(nMix>0) then
+    deallocate(vMixFas0)
+    deallocate(tIPole)
+  end if
   !
-  IF(FF>0) CLOSE(FF)
+  if(FF>0) close(FF)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Equil_Eq1_Mix"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Eq1_Mix"
   !
-CONTAINS
+contains
 
-SUBROUTINE EquFas_Remove(N)
-  INTEGER,INTENT(IN):: N
-  INTEGER:: I,J
+subroutine EquFas_Remove(N)
+  integer,intent(in):: N
+  integer:: I,J
   vEquFas0= vEquFas
   J= 0
-  DO I=1,nEquFas
-    IF(I/=N) THEN
+  do I=1,nEquFas
+    if(I/=N) then
       J=J+1
       vEquFas(J)= vEquFas0(I)
-    ENDIF
-  ENDDO
+    end if
+  end do
   nEquFas= J
-END SUBROUTINE EquFas_Remove
+end subroutine EquFas_Remove
 
-SUBROUTINE Trace_1
-  WRITE(6,'(A)') "_"
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iPur>0) &
-    WRITE(6,'(A,2(A,G15.6))') &
+subroutine Trace_1
+  write(6,'(A)') "_"
+  do I=1,nEquFas
+    if(vEquFas(I)%iPur>0) &
+    write(6,'(A,2(A,G15.6))') &
     & vFas(vEquFas(I)%iPur)%NamFs, &
     & "/ lQsK=",-vFasAff0(vEquFas(I)%iPur)/Ln10, &
-    & "/ Mole=",vEquFas(I)%Mole
-  ENDDO
-ENDSUBROUTINE Trace_1
+    & "/ Mole=",vEquFas(I)%MolFs
+  end do
+end subroutine Trace_1
 
-SUBROUTINE Trace_2
-  WRITE(6,'(6X,A)') "Do0"
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iPur>0) &
-    WRITE(6,'(A,2(A,G15.6))') &
+subroutine Trace_2
+  write(6,'(6X,A)') "Do0"
+  do I=1,nEquFas
+    if(vEquFas(I)%iPur>0) &
+    write(6,'(A,2(A,G15.6))') &
     & vFas(vEquFas(I)%iPur)%NamFs, &
     & "/ lQsK=",-vFasAff0(vEquFas(I)%iPur)/Ln10, &
-    & "/ Mole=",vEquFas(I)%Mole
-  ENDDO
-ENDSUBROUTINE Trace_2
+    & "/ Mole=",vEquFas(I)%MolFs
+  end do
+end subroutine Trace_2
 
-ENDSUBROUTINE Equil_Eq1
+end subroutine Equil_Eq1
 
-SUBROUTINE MixModel_Init(nPur,vFas,vMixModel)
+subroutine MixModel_Init(nPur,vFas,vMixModel)
 !--
 !-- initialize tIPole(iMix,iP),
 !-- - address of e-m iP of mixture iMix in vSpc or vFas
 !--
-  USE M_T_Phase,    ONLY: T_Phase
-  USE M_T_MixModel, ONLY: T_MixModel
+  use M_T_Phase,    only: T_Phase
+  use M_T_MixModel, only: T_MixModel
 
-  INTEGER,         INTENT(IN):: nPur
-  TYPE(T_Phase),   INTENT(IN):: vFas(:)
-  TYPE(T_MixModel),INTENT(IN):: vMixModel(:)
+  integer,         intent(in):: nPur
+  type(T_Phase),   intent(in):: vFas(:)
+  type(T_MixModel),intent(in):: vMixModel(:)
 
-  INTEGER:: iModel,P,P1,P2,iPur,nP
+  integer:: iModel,P,P1,P2,iPur,nP
   !
-  DO iModel=1,SIZE(vMixModel)
+  do iModel=1,size(vMixModel)
 
     nP= vMixModel(iModel)%NPole
 
     ! find the indices of end-members of mixture vMixFas(iMix)
     ! in the pure phase list vFas(1:nPur)
     ! -> indices in tIPole(iMix,:)
-    DO P=1,nP
+    do P=1,nP
       P1= vMixModel(iModel)%vIPole(P)
       !-> index in vSpc
       !-> find the pure phases that points to this species
       P2= 0
-      DO iPur=1,nPur
-        IF(vFas(iPur)%iSpc==P1) THEN
+      do iPur=1,nPur
+        if(vFas(iPur)%iSpc==P1) then
           P2= iPur
-          EXIT
-        ENDIF
-      ENDDO
+          exit
+        end if
+      end do
       tIPole(iModel,P)= P2
       !
-    ENDDO
+    end do
 
-  ENDDO
+  end do
 
-  RETURN
-ENDSUBROUTINE MixModel_Init
+  return
+end subroutine MixModel_Init
 
-SUBROUTINE EquFas_Alloc(nC,nEq)
-  USE M_Equil_Vars,ONLY: vDeltaG_Eq,tAlfEq,tNuEq
+subroutine EquFas_Alloc(nC,nEq)
+  use M_Equil_Vars,only: vDeltaG_Eq,tAlfEq,tNuEq
   !
-  INTEGER,INTENT(IN):: nC,nEq
+  integer,intent(in):: nC,nEq
   !
-  ALLOCATE(vDeltaG_Eq(nEq))
-  ALLOCATE(tAlfEq(nC,nEq))
-  ALLOCATE(tNuEq(nEq,nC))
+  allocate(vDeltaG_Eq(nEq))
+  allocate(tAlfEq(nC,nEq))
+  allocate(tNuEq(nEq,nC))
   !
-  RETURN
-ENDSUBROUTINE EquFas_Alloc
+  return
+end subroutine EquFas_Alloc
 
-SUBROUTINE EquFas_Update(nCp,nEquFas,vEquFas)
-  USE M_T_MixModel, ONLY: MaxPole
-  USE M_Global_Vars,ONLY: vMixModel
-  USE M_Basis_Vars, ONLY: tAlfFs,tNuFas
-  USE M_Equil_Vars, ONLY: vDeltaG_Eq,tAlfEq,tNuEq
-  USE M_Equil_Vars, ONLY: vDeltaG_Fs,T_EquPhase
+subroutine EquFas_Update(nCp,nEquFas,vEquFas)
+  use M_T_MixModel, only: MaxPole
+  use M_Global_Vars,only: vMixModel
+  use M_Basis_Vars, only: tAlfFs,tNuFas
+  use M_Equil_Vars, only: vDeltaG_Eq,tAlfEq,tNuEq
+  use M_Equil_Vars, only: vDeltaG_Fs,T_EquPhase
   !
-  INTEGER,INTENT(IN):: nCp
-  INTEGER,INTENT(IN):: nEquFas
-  TYPE(T_EquPhase),INTENT(IN):: vEquFas(:)
-  INTEGER:: iPur,iMix,I,C
-  INTEGER:: nP
-  INTEGER:: vIPole(MaxPole)
+  integer,intent(in):: nCp
+  integer,intent(in):: nEquFas
+  type(T_EquPhase),intent(in):: vEquFas(:)
+  integer:: iPur,iMix,I,C
+  integer:: nP
+  integer:: vIPole(MaxPole)
   !
-  DO I=1,nEquFas
+  do I=1,nEquFas
     !
     iPur= vEquFas(I)%iPur
     iMix= vEquFas(I)%iMix
     !
-    IF(iPur>0) THEN
+    if(iPur>0) then
       vDeltaG_Eq(I)= vDeltaG_Fs(iPur)
       tAlfEq(:,I)= tAlfFs(:,iPur)
       tNuEq(I,:)= tNuFas(iPur,:)
-    ENDIF
+    end if
     !
-    IF(iMix>0) THEN
+    if(iMix>0) then
       nP= vEquFas(I)%NPole
       vIPole(1:nP)= vEquFas(I)%vIPole(1:nP)
       vDeltaG_Eq(I)= SUM( vEquFas(I)%vXPole(1:nP) &
       &                 * vDeltaG_Fs(vIPole(1:nP)) ) &
       &            + SUM( vEquFas(I)%vXPole(1:nP) &
       &                 * vEquFas(I)%vLnAct(1:nP) )
-      DO C=1,nCp
+      do C=1,nCp
         tAlfEq(C,I)= SUM( vEquFas(I)%vXPole(1:nP) &
         &               * tAlfFs(C,vIPole(1:nP)) )
         tNuEq(I,C)= SUM( vEquFas(I)%vXPole(1:nP) &
         &              * tNuFas(vIPole(1:nP),C) )
-      ENDDO
-    ENDIF
+      end do
+    end if
     !
-  ENDDO
+  end do
   !
-  WRITE(sFMT,'(a,i3,a)') '(A,1X,',nCp,'(G12.3,1X))'
-  DO I=1,nEquFas
-    WRITE(73,'(A,G15.6,1X,A)') "DeltaG_Eq= ",vDeltaG_Eq(I),TRIM(vEquFas(I)%NamEq)
-    WRITE(73,sFMT)        "tAlfEq=    ",(tAlfEq(C,I),C=1,nCp)
-    WRITE(73,sFMT)        "tNuEq=     ",(tNuEq(I,C),C=1,nCp)
-  ENDDO
-  WRITE(73,'(A)') "===================================================="
+  write(sFMT,'(a,i3,a)') '(A,1X,',nCp,'(G12.3,1X))'
+  do I=1,nEquFas
+    write(73,'(A,G15.6,1X,A)') "DeltaG_Eq= ",vDeltaG_Eq(I),trim(vEquFas(I)%NamEq)
+    write(73,sFMT)        "tAlfEq=    ",(tAlfEq(C,I),C=1,nCp)
+    write(73,sFMT)        "tNuEq=     ",(tNuEq(I,C),C=1,nCp)
+  end do
+  write(73,'(A)') "===================================================="
   !
-  RETURN
-ENDSUBROUTINE EquFas_Update
+  return
+end subroutine EquFas_Update
 
-SUBROUTINE EquFasMix_Update(nCp,I,EquFas)
-  USE M_T_MixModel, ONLY: MaxPole
-  USE M_Global_Vars,ONLY: vMixModel
-  USE M_Basis_Vars, ONLY: tAlfFs,tNuFas
-  USE M_Equil_Vars, ONLY: vDeltaG_Eq,tAlfEq,tNuEq
-  USE M_Equil_Vars, ONLY: vDeltaG_Fs,T_EquPhase
+subroutine EquFasMix_Update(nCp,I,EquFas)
+  use M_T_MixModel, only: MaxPole
+  use M_Global_Vars,only: vMixModel
+  use M_Basis_Vars, only: tAlfFs,tNuFas
+  use M_Equil_Vars, only: vDeltaG_Eq,tAlfEq,tNuEq
+  use M_Equil_Vars, only: vDeltaG_Fs,T_EquPhase
   !
-  INTEGER,INTENT(IN):: nCp
-  INTEGER,INTENT(IN):: I
-  TYPE(T_EquPhase),INTENT(IN):: EquFas
+  integer,intent(in):: nCp
+  integer,intent(in):: I
+  type(T_EquPhase),intent(in):: EquFas
   !
-  INTEGER:: C
-  INTEGER:: nP
-  INTEGER:: vIPole(MaxPole)
+  integer:: C
+  integer:: nP
+  integer:: vIPole(MaxPole)
   !
   nP= EquFas%NPole
   vIPole(1:nP)= EquFas%vIPole(1:nP)
@@ -599,76 +599,76 @@ SUBROUTINE EquFasMix_Update(nCp,I,EquFas)
   &                 * vDeltaG_Fs(vIPole(1:nP)) ) &
   &            + SUM( EquFas%vXPole(1:nP) &
   &                 * EquFas%vLnAct(1:nP) )
-  DO C=1,nCp
+  do C=1,nCp
     tAlfEq(C,I)= SUM( EquFas%vXPole(1:nP) &
     &               * tAlfFs(C,vIPole(1:nP)) )
     tNuEq(I,C)= SUM( EquFas%vXPole(1:nP) &
     &              * tNuFas(vIPole(1:nP),C) )
-  ENDDO
+  end do
   !
-  RETURN
-ENDSUBROUTINE EquFasMix_Update
+  return
+end subroutine EquFasMix_Update
 
-SUBROUTINE EquFas_Clean
-  USE M_Equil_Vars,ONLY: vDeltaG_Eq,tAlfEq,tNuEq
+subroutine EquFas_Clean
+  use M_Equil_Vars,only: vDeltaG_Eq,tAlfEq,tNuEq
   
-  IF(ALLOCATED(vDeltaG_Eq)) DEALLOCATE(vDeltaG_Eq)
-  IF(ALLOCATED(tAlfEq))     DEALLOCATE(tAlfEq)
-  IF(ALLOCATED(tNuEq))      DEALLOCATE(tNuEq)
+  if(allocated(vDeltaG_Eq)) deallocate(vDeltaG_Eq)
+  if(allocated(tAlfEq))     deallocate(tAlfEq)
+  if(allocated(tNuEq))      deallocate(tNuEq)
   
-  RETURN
-ENDSUBROUTINE EquFas_Clean
+  return
+end subroutine EquFas_Clean
 
-SUBROUTINE Save_EquPhase
-  USE M_Equil_Vars, ONLY: T_EquPhase
-  USE M_Global_Vars,ONLY: vMixModel,vMixFas,vFas
-  USE M_Equil_Vars, ONLY: nEquFas,vEquFas
+subroutine Save_EquPhase
+  use M_Equil_Vars, only: T_EquPhase
+  use M_Global_Vars,only: vMixModel,vMixFas,vFas
+  use M_Equil_Vars, only: nEquFas,vEquFas
   !
-  !~ INTEGER,INTENT(IN):: nEquFas
-  !~ TYPE(T_EquPhase),INTENT(IN):: vEquFas(:)
+  !~ integer,intent(in):: nEquFas
+  !~ type(T_EquPhase),intent(in):: vEquFas(:)
   !
-  INTEGER:: nPur,I,K,nP
+  integer:: nPur,I,K,nP
   
-  nPur= COUNT(vFas(:)%iSpc>0)
+  nPur= count(vFas(:)%iSpc>0)
   !
-  vFas(:)%Mole= Zero
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iPur>0) vFas(vEquFas(I)%iPur)%Mole= vEquFas(I)%Mole
-    IF(vEquFas(I)%iMix>0) vFas(vEquFas(I)%iMix+nPur)%Mole= vEquFas(I)%Mole
-  ENDDO
+  vFas(:)%MolFs= Zero
+  do I=1,nEquFas
+    if(vEquFas(I)%iPur>0) vFas(vEquFas(I)%iPur)%MolFs= vEquFas(I)%MolFs
+    if(vEquFas(I)%iMix>0) vFas(vEquFas(I)%iMix+nPur)%MolFs= vEquFas(I)%MolFs
+  end do
   !
   K=0
-  DO I=1,nEquFas
-    IF(vEquFas(I)%iMix>0) K= K+1
-  ENDDO
-  DEALLOCATE(vMixFas)
-  ALLOCATE(vMixFas(K))
+  do I=1,nEquFas
+    if(vEquFas(I)%iMix>0) K= K+1
+  end do
+  deallocate(vMixFas)
+  allocate(vMixFas(K))
   !
   K=0
-  IF(SIZE(vMixFas)>0) THEN
-    DO I=1,nEquFas
-      IF(vEquFas(I)%iMix>0) THEN
+  if(size(vMixFas)>0) then
+    do I=1,nEquFas
+      if(vEquFas(I)%iMix>0) then
         K= K+1
         !
         nP= vMixModel(vEquFas(I)%iMix)%nPole
-        vMixFas(K)%Name= TRIM(vEquFas(I)%NamEq)
+        vMixFas(K)%Name= trim(vEquFas(I)%NamEq)
         vMixFas(K)%iModel= vEquFas(I)%iMix
         vMixFas(K)%vXPole(1:nP)= vEquFas(I)%vXPole(1:nP)
         !
-        vFas(nPur+K)%NamFs= TRIM(vEquFas(I)%NamEq)
+        vFas(nPur+K)%NamFs= trim(vEquFas(I)%NamEq)
         !! vFas(nPur+K)%Typ=   "MIXT"
         vFas(nPur+K)%iSpc=  0
         vFas(nPur+K)%iSol=  0
         vFas(nPur+K)%iMix=  K
         !
-      ENDIF
-    ENDDO
-  ENDIF
+      end if
+    end do
+  end if
   
-  RETURN
-ENDSUBROUTINE Save_EquPhase
+  return
+end subroutine Save_EquPhase
 
-SUBROUTINE Mixture_Minimize( &
+subroutine Mixture_Minimize( &
 & vAffPole,vIPole,MixModel, &
 & MixFas) !,nFmix)
 !--
@@ -680,42 +680,42 @@ SUBROUTINE Mixture_Minimize( &
 !-- if there is no phase with negative G,
 !-- then the current phase assemblage is stable
 !--
-  USE M_Numeric_Const, ONLY: Ln10
-  USE M_Safe_Functions,ONLY: FSafe_Exp
-  USE M_System_Vars,   ONLY: TdgK,Pbar
+  use M_Numeric_Const, only: Ln10
+  use M_Safe_Functions,only: FSafe_Exp
+  use M_System_Vars,   only: TdgK,Pbar
   !
-  USE M_T_Phase,   ONLY: T_Phase
-  USE M_T_MixPhase,ONLY: T_MixPhase
-  USE M_T_MixModel,ONLY: T_MixModel,MaxPole
+  use M_T_Phase,   only: T_Phase
+  use M_T_MixPhase,only: T_MixPhase
+  use M_T_MixModel,only: T_MixModel,MaxPole,Mix_Molecular
   !
-  USE M_Optimsolver_Theriak
-  USE M_MixModel_Optim
+  use M_Optimsolver_Theriak
+  use M_MixModel_Optim
   !
-  USE M_Global_Vars,ONLY: vFas
+  use M_Global_Vars,only: vFas
   !
-  REAL(dp),        INTENT(IN)   :: vAffPole(:)
-  INTEGER,         INTENT(IN)   :: vIPole(:)
-  TYPE(T_MixModel),INTENT(IN)   :: MixModel
-  TYPE(T_MixPhase),INTENT(INOUT):: MixFas
+  real(dp),        intent(in)   :: vAffPole(:)
+  integer,         intent(in)   :: vIPole(:)
+  type(T_MixModel),intent(in)   :: MixModel
+  type(T_MixPhase),intent(inout):: MixFas
   !
-  TYPE(T_MixModel):: MM
-  REAL(dp):: vX(MaxPole),vMu(MaxPole),vLnAct(MaxPole)
-  REAL(dp):: vXmin(MaxPole),vMuMin(MaxPole)
-  REAL(dp):: G,Gmin
-  INTEGER :: nP,K,P
-  INTEGER :: FF
-  INTEGER :: Multi
-  REAL(dp):: S
+  type(T_MixModel):: MM
+  real(dp):: vX(MaxPole),vMu(MaxPole),vLnAct(MaxPole)
+  real(dp):: vXmin(MaxPole),vMuMin(MaxPole)
+  real(dp):: G,Gmin
+  integer :: nP,K,P
+  integer :: FF
+  integer :: Multi
+  real(dp):: S
   !
-  REAL(dp):: TolX,DeltaInit
-  INTEGER :: its,nCallG
-  LOGICAL :: OkConverge
+  real(dp):: TolX,DeltaInit
+  integer :: its,nCallG
+  logical :: OkConverge
   !
   FF= 0 ! log file
   TolX= MixMinim_TolX
   DeltaInit= 0.05D0
   !
-  !! DO I=1,SIZE(vMixFas0)
+  !! do I=1,size(vMixFas0)
     !
     !! iModel= vMixFas0(I)%iModel
     !! iModel= MixFas%iModel
@@ -726,70 +726,70 @@ SUBROUTINE Mixture_Minimize( &
     Multi= MM%vMulti(1)
     !
     !~ !---- compute affin' of all reactions between end-memb' and water --
-    !~ DO P= 1,nP
+    !~ do P= 1,nP
       !~ ! index of pole P in pure phase list
       !~ ! K= tIPole(iModel,P)
       !~ K= MM%vIPole(P)
       !~ ! compute affinity of reaction (pole P <> water )
       !~ !vAffPole(P)= vFas(K)%Grt &
-      !~ !&          - DOT_PRODUCT(tNuFas(K,:), vSpc(vOrdPr(:))%G0rt) &
-      !~ !&          - DOT_PRODUCT(tNuFas(K,:), vLnAct(vOrdPr(:)))
+      !~ !&          - dot_product(tNuFas(K,:), vSpc(vOrdPr(:))%G0rt) &
+      !~ !&          - dot_product(tNuFas(K,:), vLnAct(vOrdPr(:)))
       !~ vAffPole(P)= vDeltaGPole(K) &
-      !~ &          - DOT_PRODUCT(tNuFas(K,:), vLnAct(vOrdPr(:)))
-    !~ ENDDO
+      !~ &          - dot_product(tNuFas(K,:), vLnAct(vOrdPr(:)))
+    !~ end do
     !~ !---
     !
-    IF( TRIM(MM%Model)=="IDEAL" .AND. MM%NMarg==0 ) THEN
+    if( MM%Model==Mix_Molecular .and. MM%NMarg==0 ) then
       !--------------------------------------------- analytic minimum --
       !
       Multi=  MM%vMulti(1)
       !
       S= Zero
-      DO P=1,nP
+      do P=1,nP
         ! K= MM%vIPole(P)
-        ! vXmin(P)= FSafe_Exp(-vFasPur(MM%vIPole(P))%Grt /REAL(Multi))
-        vXmin(P)= FSafe_Exp(-vAffPole(vIPole(P)) /REAL(Multi))
+        ! vXmin(P)= FSafe_Exp(-vFasPur(MM%vIPole(P))%Grt /real(Multi))
+        vXmin(P)= FSafe_Exp(-vAffPole(vIPole(P)) /real(Multi))
         S= S + vXmin(P)
-      ENDDO
+      end do
       vXmin(1:nP)=  vXmin(1:nP) /S
-      vLnAct(1:nP)= Multi*LOG(vXmin(1:nP))
+      vLnAct(1:nP)= Multi*log(vXmin(1:nP))
       vMuMin(1:nP)= vAffPole(vIPole(1:nP)) + vLnAct(1:nP)
-      DO P=1,nP
-        WRITE(74,'(A,2G15.6,1X,A)') &
+      do P=1,nP
+        write(74,'(A,2G15.6,1X,A)') &
         & "vAffPole(P),vXmin(P)= ",&
         & vAffPole(vIPole(P)), &
         & vXmin(P), &
-        & TRIM(vFas(vIPole(P))%NamFs)
-      ENDDO
+        & trim(vFas(vIPole(P))%NamFs)
+      end do
       !pause
       Gmin= SUM(vXmin(1:nP) * vMuMin(1:nP))
       !
-    ELSE
+    else
       !----------------------------------------- numerical minimum(s) --
       !
-      CALL MixModel_Optim_SetParams(TdgK,Pbar,MM)
-      ALLOCATE(Mixmodel_Optim_vMu0rt(nP))
-      ALLOCATE(Mixmodel_Optim_vLPole(nP))
+      call MixModel_Optim_SetParams(TdgK,Pbar,MM)
+      allocate(Mixmodel_Optim_vMu0rt(nP))
+      allocate(Mixmodel_Optim_vLPole(nP))
       ! Mixmodel_Optim_vMu0rt(1:nP)= vFasPur(MM%vIPole(1:nP))%Grt
       Mixmodel_Optim_vMu0rt(1:nP)= vAffPole(vIPole(1:nP))
-      Mixmodel_Optim_vLPole(1:nP)= .TRUE.
+      Mixmodel_Optim_vLPole(1:nP)= .true.
       !
       Gmin= 1.0D30
       !
-      DO P=1,nP
+      do P=1,nP
         !
         !--- start from compos'nP close to end-member P
         vX(P)= One - 1.0D-3
-        DO K=1,nP
-          IF(K/=P) vX(K)= 1.0D-3/REAL(nP-1)
-        ENDDO
+        do K=1,nP
+          if(K/=P) vX(K)= 1.0D-3/real(nP-1)
+        end do
         !
         !~ vX(1:nP)= vMixFas_Xpole_Init(I)%tXPole(P,1:nP)
         !
-        CALL Optimsolver_Theriak( & !
+        call Optimsolver_Theriak( & !
         !& MixModel_Optim_GetGibbs,      & !
         !& MixModel_Optim_GetPotentials, & !
-        & MixModel_Optim_GetMu, & ! INTERFACE
+        & MixModel_Optim_GetMu, & ! interface
         & FF,                   & ! IN
         & DeltaInit,            & ! IN
         & TolX,                 & ! IN
@@ -801,71 +801,71 @@ SUBROUTINE Mixture_Minimize( &
         !
         !vMixFas_Xpole_Init(I)%tXPole(P,1:nP)= vX(1:nP)
         !
-        IF(G<Gmin) THEN
+        if(G<Gmin) then
           Gmin= G
           vXmin(1:nP)= vX(1:nP)
           vMuMin(1:nP)= vMu(1:nP)
-        ENDIF
+        end if
         !
-      END DO
-      !PAUSE
+      end do
+      !pause
       !
-      DEALLOCATE(Mixmodel_Optim_vMu0rt)
-      DEALLOCATE(Mixmodel_Optim_vLPole)
+      deallocate(Mixmodel_Optim_vMu0rt)
+      deallocate(Mixmodel_Optim_vLPole)
       !
-    ENDIF
+    end if
     !
-    !!vMixFas0(i)%vLPole(:)= .TRUE.
+    !!vMixFas0(i)%vLPole(:)= .true.
     !!vMixFas0(i)%vXPole(:)= vXmin(:)
     !!vMixFas0(i)%Grt= Gmin
     !!vMixFas0(i)%vLnAct(1:nP)= vMuMin(1:nP) -vAffPole(vIPole(1:nP))
     !
-    MixFas%vLPole(:)= .TRUE.
+    MixFas%vLPole(:)= .true.
     MixFas%vXPole(:)= vXmin(:)
     MixFas%Grt= Gmin
     MixFas%vLnAct(1:nP)= vMuMin(1:nP) -vAffPole(vIPole(1:nP))
     !
-  !! ENDDO
+  !! end do
   !
   !~ !-------------------------------------------------------- log files --
-  !~ IF(F1>0) THEN
-    !~ WRITE(F1,'(/,A,/)') "Mixture_Minimize,EndMember,Xi,Gi"
-    !~ DO I=1,SIZE(vMixModel)
-      !~ !IF(vMixFas0(I)%Grt > 1.D-3) CYCLE
+  !~ if(F1>0) then
+    !~ write(F1,'(/,A,/)') "Mixture_Minimize,EndMember,Xi,Gi"
+    !~ do I=1,size(vMixModel)
+      !~ !if(vMixFas0(I)%Grt > 1.D-3) cycle
       !~ MM= vMixModel(I)
-      !~ WRITE(F1,'(2A)') "MODEL= ",MM%Name
-      !~ DO K=1,MM%NPole
-        !~ WRITE(F1,'(A,1X,G15.6)') &
+      !~ write(F1,'(2A)') "MODEL= ",MM%Name
+      !~ do K=1,MM%NPole
+        !~ write(F1,'(A,1X,G15.6)') &
         !~ & MM%vNamPole(K),        &
         !~ & vMixFas0(I)%vXPole(K)
-      !~ ENDDO
-      !~ WRITE(F1,'(A15,G15.6)') "G Mimim= ",vMixFas0(I)%Grt/Ln10
-      !~ WRITE(F1,*)
-    !~ ENDDO
-    !~ WRITE(F1,*)
-  !~ ENDIF
+      !~ end do
+      !~ write(F1,'(A15,G15.6)') "G Mimim= ",vMixFas0(I)%Grt/Ln10
+      !~ write(F1,*)
+    !~ end do
+    !~ write(F1,*)
+  !~ end if
   !~ !
-  !~ IF(F2>0) THEN
-    !~ DO I=1,SIZE(vMixModel)
-    !~ !IF(vMixFas0(I)%Grt < Zero) THEN
+  !~ if(F2>0) then
+    !~ do I=1,size(vMixModel)
+    !~ !if(vMixFas0(I)%Grt < Zero) then
       !~ MM= vMixModel(I)
       !~ !
-      !~ WRITE(F2,'(A,A1)',ADVANCE="NO") MM%Name,T_
-      !~ DO K=1,MM%NPole
-        !~ WRITE(F2,'(G15.6,A1)',ADVANCE="NO") vMixFas0(I)%vXPole(K),T_
-      !~ ENDDO
-      !~ !DO K=1,MM%NPole
-      !~ !  WRITE(F2,'(G15.6,A1)',ADVANCE="NO") vFasPur(MM%vIPole(K))%Grt,T_
-      !~ !ENDDO
-      !~ WRITE(F2,'(G15.6,A1)',ADVANCE="NO") vMixFas0(I)%Grt,T_
+      !~ write(F2,'(A,A1)',advance="NO") MM%Name,T_
+      !~ do K=1,MM%NPole
+        !~ write(F2,'(G15.6,A1)',advance="NO") vMixFas0(I)%vXPole(K),T_
+      !~ end do
+      !~ !do K=1,MM%NPole
+      !~ !  write(F2,'(G15.6,A1)',advance="NO") vFasPur(MM%vIPole(K))%Grt,T_
+      !~ !end do
+      !~ write(F2,'(G15.6,A1)',advance="NO") vMixFas0(I)%Grt,T_
       !~ !
-    !~ !ENDIF
-    !~ ENDDO
-    !~ WRITE(F2,*)
-  !~ ENDIF
+    !~ !end if
+    !~ end do
+    !~ write(F2,*)
+  !~ end if
   !~ !-------------------------------------------------------/ log files --
   !
-END SUBROUTINE Mixture_Minimize
+end subroutine Mixture_Minimize
 
-ENDMODULE M_Equil_1
+end module M_Equil_1
 

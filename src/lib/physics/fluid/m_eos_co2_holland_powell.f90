@@ -1,4 +1,4 @@
-MODULE M_Eos_CO2_Holland_Powell
+module M_Eos_CO2_Holland_Powell
 !! was M_Holland_Powell_CO2
 
 !-----------------------------------------------------------------------
@@ -13,34 +13,35 @@ MODULE M_Eos_CO2_Holland_Powell
 ! Arxim Integration : J.Moutte
 !-----------------------------------------------------------------------
 
-  USE M_Kinds
+  use M_Kinds
 
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  !// PUBLIC FUNCTIONS
-  PUBLIC::  Eos_CO2_HolPow91 ! was CalcGCO2_HP91
+  !// public functionS
+  public::  Eos_CO2_HolPow91 ! was CalcGCO2_HP91
 
-  PRIVATE:: CalcGT_CO2_HP91
+  private:: CalcGT_CO2_HP91
   
-CONTAINS
+contains
 
-SUBROUTINE Eos_CO2_HolPow91(TdgK,Pbar,G,V_m3)
+subroutine Eos_CO2_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
 !-----------------------------------------------------------------------
 !.Holland and Powell (1991,1998), from CdeCapitani codes
 !-----------------------------------------------------------------------
-  USE M_Eos_Utils,ONLY: CUBIC
+  use M_Eos_Utils,only: CUBIC
   !
-  REAL(dp),INTENT(IN) :: TdgK,Pbar
-  REAL(dp),INTENT(OUT):: G,V_m3
+  real(dp),intent(in) :: TdgK,Pbar
+  real(dp),intent(out):: Grt,V_m3,LnFug
   !
-  REAL(dp):: T,P0,R,RT
-  REAL(dp):: AVir,AVir0,AVirT,BVir,BVir0,BVirT,CVir
-  REAL(dp):: B,A,A0,A1,A2,A3,GT,SQT,P,VMRK
-  REAL(dp):: CubB,CubC,CubD
-  REAL(dp):: X1,X2,X2I,X3
-  REAL(dp):: dGGas3,dGGas,VREF,Pref,Vcm3
+  real(dp):: T,P0,R,RT
+  real(dp):: AVir,AVir0,AVirT,BVir,BVir0,BVirT,CVir
+  real(dp):: B,A,A0,A1,A2,A3,GT,SQT,P,VMRK
+  real(dp):: CubB,CubC,CubD
+  real(dp):: X1,X2,X2I,X3
+  real(dp):: dGGas3,dGGas,VREF,Pref,Vol
+  real(dp):: G,S0Ele
   !
   !C,C0,C1,D,D0,D1,RTLNP
   AVir0= 5.40776D-3  ;  AVirT=-1.59046D-6
@@ -51,8 +52,8 @@ SUBROUTINE Eos_CO2_HolPow91(TdgK,Pbar,G,V_m3)
   A0=    741.2D0     ;  B=     3.057D0
   A1=   -0.10891D0   ;  A2=   -3.4203D-4    ;  A3=Zero
   !
-  !Chp91 DATA C0,C1/-2.26924D-1,7.73793D-5/
-  !Chp91 DATA D0,D1/1.33790D-2,-1.01740D-5/
+  !Chp91 data C0,C1/-2.26924D-1,7.73793D-5/
+  !Chp91 data D0,D1/1.33790D-2,-1.01740D-5/
   
   T=     TdgK
   P=     Pbar/1000.0D0 !P in kbar
@@ -64,68 +65,74 @@ SUBROUTINE Eos_CO2_HolPow91(TdgK,Pbar,G,V_m3)
   RT=    R*T
   SQT=   SQRT(T)
   
-  AVir=  AVir0 + AVirT*T !                            Chp91 AVir=D0+D1*T
-  BVir=  BVir0 + BVirT*T !                            Chp91 BVir=C0+C1*T
+  AVir=  AVir0 + AVirT*T !----------------------------Chp91 AVir=D0+D1*T
+  BVir=  BVir0 + BVirT*T !----------------------------Chp91 BVir=C0+C1*T
   A=     A0+ A1*T +A2*T*T +A3*T*T*T
   
-  VRef=  RT/Pref !                       reference volume at 1 Bar and T
+  VRef=  RT/Pref !-----------------------reference volume at 1 Bar and T
   
-  !                                               calc volume at P and T
+  !-----------------------------------------------calc volume at P and T
   CubB= -RT/P
   CubC= -(B*RT+B*B*P-A/SQT)/P
   CubD= -A*B/SQT/P
   
-  CALL CUBIC(CubB,CubC,CubD,X1,X2,X2I,X3)
+  call CUBIC(CubB,CubC,CubD,X1,X2,X2I,X3)
   
-  IF (X2I/=Zero) THEN
+  if (X2I/=Zero) then
     VMRK=X1
-  ELSE
+  else
     VMRK=MIN(X1,X2,X3)
-    IF (VMRK<B) VMRK=MAX(X1,X2,X3)
-  ENDIF
+    if (VMRK<B) VMRK=MAX(X1,X2,X3)
+  end if
   
-  IF (P>P0) THEN
-    Vcm3= VMRK + AVir*(P-P0) + BVir*SQRT(P-P0) + CVir*(P-P0)**0.25D0
-  ELSE
-    Vcm3= VMRK
-  ENDIF
+  if (P>P0) then
+    Vol= VMRK + AVir*(P-P0) + BVir*SQRT(P-P0) + CVir*(P-P0)**0.25D0
+  else
+    Vol= VMRK
+  end if
   
-  V_m3= Vcm3 /1.0D6
+  V_m3= Vol *1.0D-5
   
   dGGas3= VMRK*P-VREF*Pref &
-  &     - RT*LOG((VMRK-B)/(VREF-B)) &
-  &     + A/SQT/B *LOG(VMRK*(VREF+B)/VREF/(VMRK+B))
+  &     - RT*log((VMRK-B)/(VREF-B)) &
+  &     + A/SQT/B *log(VMRK*(VREF+B)/VREF/(VMRK+B))
   
-  IF (P>P0) &
+  if (P>P0) &
   & dGGas3=  dGGas3 &
   &       + AVir/Two       *(P-P0)**2 &
   &       + BVir*Two/3.0D0 *(P-P0)**1.5D0 &
   &       + CVir*0.8D0     *(P-P0)**1.25D0
   
-  dGGas= dGGas3 *1.0D3
+  dGGas= dGGas3*1.0D3
   
-  CALL CalcGT_CO2_HP91(T,GT)
+  call CalcGT_CO2_HP91(T,GT)
   
-  !RTLNP=1D3*RT*LOG(P*1D3)
+  !RTLNP=1D3*RT*log(P*1D3)
   G=    GT +dGGas
   
-  RETURN
-ENDSUBROUTINE Eos_CO2_HolPow91
+  ! Benson convention
+  S0Ele= 5.74D0  + 102.575D0 *2.0D0
+  G= G + S0Ele*298.15D0
+  Grt= G/8.314502D0/TdgK
+  LnFug= dGGas/8.314502D0/TdgK
+  
+  return
+end subroutine Eos_CO2_HolPow91
 
 !---
 
-SUBROUTINE CalcGT_CO2_HP91(T,GT) 
+subroutine CalcGT_CO2_HP91(T,GT) 
 !-----------------------------------------------------------------------
 !Holland and Powell (1991), from CdeCapitani codes
 !-----------------------------------------------------------------------
-  REAL(dp),INTENT(IN) :: T
-  REAL(dp),INTENT(OUT):: GT
+  real(dp),intent(in) :: T
+  real(dp),intent(out):: GT
   !
-  REAL(dp):: CPRDT,CPRTDT
-  REAL(dp):: TT,SQT,SQT0
-  REAL(dp):: H0=-393.51D0, S0=  213.70D-3
-  REAL(dp):: K1= 0.0878D0, K2= -0.2644D-5,   K3= 706.4D0, K4=-0.9989D0
-  REAL(dp):: T0= 298.15D0, TT0= 88893.4225D0
+  real(dp):: CPRDT,CPRTDT
+  real(dp):: TT,SQT,SQT0
+  real(dp):: H0=-393.51D0, S0=  213.70D-3
+  real(dp):: K1= 0.0878D0, K2= -0.2644D-5,   K3= 706.4D0, K4=-0.9989D0
+  real(dp):: T0= 298.15D0, TT0= 88893.4225D0
   
   SQT0=SQRT(T0)
   TT=T*T
@@ -135,14 +142,14 @@ SUBROUTINE CalcGT_CO2_HP91(T,GT)
   &     + K2 *(TT    -TT0   )/Two &
   &     - K3 *(One/T -One/T0)     &
   &     + K4 *(SQT   -SQT0  )*Two
-  CPRTDT= K1 *LOG(T    /T0)       &
+  CPRTDT= K1 *log(T    /T0)       &
   &     + K2 *(T       -T0      ) &
   &     - K3 *(One/TT  -One/TT0 )/Two &
   &     - K4 *(One/SQT -One/SQT0)*Two
   !
   GT= (H0+CPRDT-T*(S0+CPRTDT)) *1.0D3
   
-  RETURN
-ENDSUBROUTINE CalcGT_CO2_HP91
+  return
+end subroutine CalcGT_CO2_HP91
 
-END MODULE M_Eos_CO2_Holland_Powell
+end module M_Eos_CO2_Holland_Powell

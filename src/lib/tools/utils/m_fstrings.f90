@@ -5,12 +5,12 @@
 ! Mark Showalter, PDS Rings Node, September 2002
 !*******************************************************************************
 
-MODULE M_FStrings
+module M_FStrings
 
-  PUBLIC :: Fort_CString
-  PUBLIC :: Fort_FString
+  public :: Fort_CString
+  public :: Fort_FString
 
-CONTAINS
+contains
 
   !
   !*******************************************************************************
@@ -21,7 +21,7 @@ CONTAINS
   !	for passage to a C function.
   !$ Keywords:
   !	UTILITY, FORTRAN_C
-  !	FORTRAN, INTERNAL, SUBROUTINE
+  !	FORTRAN, INTERNAL, subroutine
   !$ Declarations:
   !	subroutine	FORT_CSTRING(string, array, nbytes)
   !	character*(*)	string
@@ -55,34 +55,34 @@ CONTAINS
   !	1.0: January 1994
   !	1.1: September 2002
   !$ Change_history:
-  !	1.1: Modified for compatibility with Absoft FORTRAN for Macintosh OS X.
+  !	1.1: MODIFIED for compatibility with Absoft FORTRAN for Macintosh OS X.
   !*******************************************************************************
 
-  SUBROUTINE Fort_CString(string, array, nbytes)
-    CHARACTER*(*), intent(in)    :: string
-    INTEGER(kind=4), intent(in)  :: nbytes
-    INTEGER(kind=1), intent(out) :: array(*)
+  subroutine Fort_CString(string, array, nbytes)
+    character*(*), intent(in)    :: string
+    integer(kind=4), intent(in)  :: nbytes
+    integer(kind=1), intent(out) :: array(*)
 
-    INTEGER :: last, i
+    integer :: last, i
 
     ! Search for the last character actually used.
-    DO last = LEN(string), 1, -1
-      IF (string(last:last) .NE. ' ') EXIT
-    END DO
+    do last = len(string), 1, -1
+      if (string(last:last) .NE. ' ') exit
+    end do
 
     ! Truncate string if necessary
-    IF (last .GT. nbytes-1) last = nbytes-1
+    if (last .GT. nbytes-1) last = nbytes-1
 
     ! Copy bytes from character string
-    DO i = 1, last
-      array(i) = ICHAR( string(i:i) )
-    END DO
+    do i = 1, last
+      array(i) = ichar( string(i:i) )
+    end do
 
     ! Append null terminator
     array(last+1) = 0
 
-    RETURN
-  END SUBROUTINE Fort_CString
+    return
+  end subroutine Fort_CString
 
   !
   !*******************************************************************************
@@ -93,7 +93,7 @@ CONTAINS
   !	FORTRAN character string.
   !$ Keywords:
   !	UTILITY, FORTRAN_C
-  !	FORTRAN, INTERNAL, SUBROUTINE
+  !	FORTRAN, INTERNAL, subroutine
   !$ Declarations:
   !	subroutine	FORT_FSTRING(array, string)
   !	integer*1	array(*)
@@ -125,24 +125,24 @@ CONTAINS
   !	none
   !*******************************************************************************
 
-  SUBROUTINE Fort_FString(array, string)
-    INTEGER(kind=1), intent(in) :: array(*)
-    CHARACTER*(*), intent(out) :: string
+  subroutine Fort_FString(array, string)
+    integer(kind=1), intent(in) :: array(*)
+    character*(*), intent(out) :: string
 
-    INTEGER :: i
+    integer :: i
 
     ! Copy bytes into string, one by one
-    DO  i = 1, LEN(string)
-      IF (array(i) .EQ. 0) THEN
+    do  i = 1, len(string)
+      if (array(i) .EQ. 0) then
         ! Pad remainder of string with blanks
         string(i:) = ' '
-        RETURN
-      END IF
-      string(i:i) = CHAR(array(i))
-    END DO
-    RETURN
+        return
+      end if
+      string(i:i) = char(array(i))
+    end do
+    return
 
-  END SUBROUTINE Fort_FString
+  end subroutine Fort_FString
   !*******************************************************************************
   !
-END MODULE M_FStrings
+end module M_FStrings

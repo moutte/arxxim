@@ -1,24 +1,24 @@
-MODULE M_Optimsolver_Theriak
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_
-  IMPLICIT NONE
+module M_Optimsolver_Theriak
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Optimsolver_Theriak
+  public:: Optimsolver_Theriak
   !
-  REAL(dp), PARAMETER:: XMin= 1.0D-9     !enforce vX(:)>Xmin
-  REAL(dp), PARAMETER:: DeltaMin= 1.0D-6 !min delta criteria in Theriak_Linesearch
-  INTEGER,  PARAMETER:: m_max= 20        !max iter in Theriak_Linesearch
+  real(dp), parameter:: XMin= 1.0D-9     !enforce vX(:)>Xmin
+  real(dp), parameter:: DeltaMin= 1.0D-6 !min delta criteria in Theriak_Linesearch
+  integer,  parameter:: m_max= 20        !max iter in Theriak_Linesearch
   !
-  LOGICAL,PARAMETER:: Debug= .TRUE.  !! .FALSE.  !! 
-  INTEGER,PARAMETER:: IterMax= 100   !max iter in main loop
+  logical,parameter:: Debug= .true.  !! .false.  !! 
+  integer,parameter:: IterMax= 100   !max iter in main loop
   !
-  INTEGER:: IterTot
+  integer:: IterTot
   !
-CONTAINS
+contains
 
-SUBROUTINE Optimsolver_Theriak( & !
+subroutine Optimsolver_Theriak( & !
 & ComputeMu,  & !
 & ff,         & ! IN, log file index
 & DeltaInit,  & ! IN
@@ -29,34 +29,34 @@ SUBROUTINE Optimsolver_Theriak( & !
 & Converged,  & ! OUT
 & Iter,nCallG)  ! OUT
   
-  INTERFACE
-    SUBROUTINE ComputeMu(vA,vB)
-      USE M_Kinds
-      REAL(dp), INTENT(IN) :: vA(:)
-      REAL(dp), INTENT(OUT):: vB(:)
-    END SUBROUTINE ComputeMu
-  END INTERFACE
+  interface
+    subroutine ComputeMu(vA,vB)
+      use M_Kinds
+      real(dp), intent(in) :: vA(:)
+      real(dp), intent(out):: vB(:)
+    end subroutine ComputeMu
+  end interface
   
-  INTEGER, INTENT(IN)   :: ff
-  REAL(dp),INTENT(IN)   :: DeltaInit
-  REAL(dp),INTENT(IN)   :: TolX
-  REAL(dp),INTENT(INOUT):: vX(:)  ! composition
-  REAL(dp),INTENT(OUT)  :: vMu(:) ! potentials
-  REAL(dp),INTENT(OUT)  :: G      ! free energy
-  LOGICAL, INTENT(OUT)  :: Converged
-  INTEGER, INTENT(OUT)  :: Iter,nCallG
+  integer, intent(in)   :: ff
+  real(dp),intent(in)   :: DeltaInit
+  real(dp),intent(in)   :: TolX
+  real(dp),intent(inout):: vX(:)  ! composition
+  real(dp),intent(out)  :: vMu(:) ! potentials
+  real(dp),intent(out)  :: G      ! free energy
+  logical, intent(out)  :: Converged
+  integer, intent(out)  :: Iter,nCallG
   !---------------------------------------------------------------------
-  REAL(dp),ALLOCATABLE:: vXlast1(:), vXlast2(:) ! former composition points
-  REAL(dp),ALLOCATABLE:: vV(:),vVSteep(:)
-  REAL(dp),ALLOCATABLE:: vXDif(:)
-  !REAL(dp),ALLOCATABLE:: vMu(:) !
-  REAL(dp):: Gsav,DeltaG
-  REAL(dp):: MuTilde,Slope
-  REAL(dp):: Delta
-  REAL(dp):: DeltaX
-  INTEGER :: N
+  real(dp),allocatable:: vXlast1(:), vXlast2(:) ! former composition points
+  real(dp),allocatable:: vV(:),vVSteep(:)
+  real(dp),allocatable:: vXDif(:)
+  !real(dp),allocatable:: vMu(:) !
+  real(dp):: Gsav,DeltaG
+  real(dp):: MuTilde,Slope
+  real(dp):: Delta
+  real(dp):: DeltaX
+  integer :: N
   !---------------------------------------------------------------------
-  IF(iDebug>2) WRITE(fTrc,'(/,A)') "< Optimsolver_Theriak"
+  if(iDebug>2) write(fTrc,'(/,A)') "< Optimsolver_Theriak"
   !
   !-- ALGORITHM THERIAK
   !--
@@ -75,130 +75,130 @@ SUBROUTINE Optimsolver_Theriak( & !
   !
   N= size(vX)
   !
-  ALLOCATE(vXlast1(N))
-  ALLOCATE(vXlast2(N))
-  ALLOCATE(vVSteep(N))
-  ALLOCATE(vV(N))
-  ALLOCATE(vXDif(N))
-  !ALLOCATE(vMu(N))
+  allocate(vXlast1(N))
+  allocate(vXlast2(N))
+  allocate(vVSteep(N))
+  allocate(vV(N))
+  allocate(vXDif(N))
+  !allocate(vMu(N))
   !
   vXlast1(:)= vX(:)
   vXlast2(:)= vX(:)
   !
-  IF(FF>0) WRITE(ff,'(/,A)') "========================"
+  if(FF>0) write(ff,'(/,A)') "========================"
   !
-  Converged= .FALSE.
+  Converged= .false.
   !
   nCallG= 0
   IterTot= 0
   Iter= 0
-  CALL ComputeMu(vX,vMu)
-  G= DOT_PRODUCT(vX,vMu)
+  call ComputeMu(vX,vMu)
+  G= dot_product(vX,vMu)
   !
-  DO
+  do
   
     Iter= Iter+1
     
     !--- direction of steepest descent, normalized to |vVSteep|-1
-    CALL ComputeMu(vX,vMu)
-    MuTilde= SUM(vMu(:)) /REAL(N)
+    call ComputeMu(vX,vMu)
+    MuTilde= SUM(vMu(:)) /real(N)
     vVSteep(:)= MuTilde -vMu(:)
-    CALL Normalize(vVSteep)
+    call Normalize(vVSteep)
     !---/
     
-    IF(Iter<3) THEN
+    if(Iter<3) then
       vV(:)= vVSteep(:)
-    ELSE
+    else
       vXDif(:)= vX(:) -vXlast2(:)
       Delta= Norm_L2(vXDif) *0.5D0
-      Slope= DOT_PRODUCT(vXlast2(:),vMu(:)) - G
-      !IF(G > DOT_PRODUCT(vXlast2(:),vMu(:))) THEN
-      IF(Slope<Zero) THEN
+      Slope= dot_product(vXlast2(:),vMu(:)) - G
+      !if(G > dot_product(vXlast2(:),vMu(:))) then
+      if(Slope<Zero) then
         vV(:)= vVSteep(:)
-      ELSE
+      else
         vV(:)= vXDif(:) /Delta *0.5D0
-      ENDIF
-      !PRINT '(A,G12.3)',"Delta2=",Delta
-    ENDIF
+      end if
+      !print '(A,G12.3)',"Delta2=",Delta
+    end if
     !
     vXlast2(:)= vXlast1(:)
     vXlast1(:)= vX(:)
     !
     Gsav= G
-    CALL Theriak_Linesearch( &
+    call Theriak_Linesearch( &
     & ComputeMu,ff,Iter,N,Delta,vV, &
     & vX,vMu,G,nCallG)
     DeltaG= G-Gsav
     !
-    IF(Iter>2) THEN
+    if(Iter>2) then
       DeltaG= G-Gsav
       DeltaX= Norm_LInf(vX(:) -vXlast1(:))
-      IF(iDebug>2) WRITE(fTrc,'(A,2G15.6)') "DeltaX_DeltaG=",DeltaX,DeltaG
-      IF(DeltaX < TolX) THEN
-        IF(iDebug>2) WRITE(fTrc,'(A)') "==converged=YES=="
-        Converged= .TRUE.
-        EXIT
-      ENDIF
-    ENDIF
+      if(iDebug>2) write(fTrc,'(A,2G15.6)') "DeltaX_DeltaG=",DeltaX,DeltaG
+      if(DeltaX < TolX) then
+        if(iDebug>2) write(fTrc,'(A)') "==converged=YES=="
+        Converged= .true.
+        exit
+      end if
+    end if
     
-    IF(Iter>IterMax) THEN
-      IF(iDebug>2) WRITE(fTrc,'(A,/)') "==converged=NO=="
-      EXIT
-    ENDIF
+    if(Iter>IterMax) then
+      if(iDebug>2) write(fTrc,'(A,/)') "==converged=NO=="
+      exit
+    end if
   
-  ENDDO
+  end do
   !
-  !PRINT '(A,2F7.3)',"vXlast2",vXlast2(1),vXlast2(2)
-  !PRINT '(A,2F7.3)',"vXlast1",vXlast1(1),vXlast1(2)
-  !PRINT '(A,2F7.3)',"vX      ",vX(1),      vX(2)
+  !print '(A,2F7.3)',"vXlast2",vXlast2(1),vXlast2(2)
+  !print '(A,2F7.3)',"vXlast1",vXlast1(1),vXlast1(2)
+  !print '(A,2F7.3)',"vX      ",vX(1),      vX(2)
   !
-  DEALLOCATE(vXlast1)
-  DEALLOCATE(vXlast2)
-  DEALLOCATE(vVSteep)
-  DEALLOCATE(vV)
-  DEALLOCATE(vXDif)
-  !DEALLOCATE(vMu)
+  deallocate(vXlast1)
+  deallocate(vXlast2)
+  deallocate(vVSteep)
+  deallocate(vV)
+  deallocate(vXDif)
+  !deallocate(vMu)
   !
-  IF(iDebug>2) WRITE(fTrc,'(A,/)') "</ Optimsolver_Theriak"
+  if(iDebug>2) write(fTrc,'(A,/)') "</ Optimsolver_Theriak"
   
-  RETURN
-END SUBROUTINE Optimsolver_Theriak
+  return
+end subroutine Optimsolver_Theriak
 
-SUBROUTINE Theriak_Linesearch( &
+subroutine Theriak_Linesearch( &
 & ComputeMu,ff,Iter,N,Delta,vV, &
 & vX,vMu,G,nCallG)
   !---------------------------------------------------------------------
-  INTERFACE
-    SUBROUTINE ComputeMu(vA,vB)
-      USE M_Kinds
-      REAL(dp), INTENT(IN) :: vA(:)
-      REAL(dp), INTENT(OUT):: vB(:)
-    END SUBROUTINE ComputeMu
-  END INTERFACE
-  INTEGER, INTENT(IN):: ff
-  INTEGER, INTENT(IN):: Iter
-  INTEGER, INTENT(IN):: N
-  REAL(dp),INTENT(IN):: Delta
-  REAL(dp),INTENT(IN):: vV(:)
-  REAL(dp),INTENT(INOUT):: vX(:)
-  REAL(dp),INTENT(OUT)  :: vMu(:)
-  REAL(dp),INTENT(INOUT):: G
-  INTEGER, INTENT(INOUT):: nCallG
+  interface
+    subroutine ComputeMu(vA,vB)
+      use M_Kinds
+      real(dp), intent(in) :: vA(:)
+      real(dp), intent(out):: vB(:)
+    end subroutine ComputeMu
+  end interface
+  integer, intent(in):: ff
+  integer, intent(in):: Iter
+  integer, intent(in):: N
+  real(dp),intent(in):: Delta
+  real(dp),intent(in):: vV(:)
+  real(dp),intent(inout):: vX(:)
+  real(dp),intent(out)  :: vMu(:)
+  real(dp),intent(inout):: G
+  integer, intent(inout):: nCallG
   !---------------------------------------------------------------------
-  INTEGER:: m
-  INTEGER:: i
-  REAL(dp):: G_Old,G_New,G_Last
-  REAL(dp):: Delta_new
-  CHARACTER(LEN=80):: cForm
+  integer:: m
+  integer:: i
+  real(dp):: G_Old,G_New,G_Last
+  real(dp):: Delta_new
+  character(len=80):: cForm
   !---------------------------------------------------------------------
-  REAL(dp):: vXnew(N),vXlast(N)
-  !REAL(dp):: vMu(N)
+  real(dp):: vXnew(N),vXlast(N)
+  !real(dp):: vMu(N)
   !
-  IF(iDebug>2) WRITE(cForm,'(a,i3,a)') '(A,A1,2(I3,A1),',N,'(G15.6,A1),G12.3)'
+  if(iDebug>2) write(cForm,'(a,i3,a)') '(A,A1,2(I3,A1),',N,'(G15.6,A1),G12.3)'
   !
   !---------------------------------------------- Additive linesearch --
   G_New= G
-  DO m=0,m_max
+  do m=0,m_max
     !
     !--- increase step size
     !--- ( continue increase until G(vX +(m+1)*Delta)) > G(vX +m+*Delta) )
@@ -208,118 +208,118 @@ SUBROUTINE Theriak_Linesearch( &
     !
     !--- compute new vX(:)
     vXnew(:)= vX(:) + vV(:) *Delta_new
-    CALL Project(Xmin,vXnew)
+    call Project(Xmin,vXnew)
     !
     G_Old= G_New
-    CALL ComputeMu(vXnew,vMu)
-    G_New= DOT_PRODUCT(vXnew,vMu)
+    call ComputeMu(vXnew,vMu)
+    G_New= dot_product(vXnew,vMu)
     nCallG= nCallG +1
     !
     IterTot= IterTot+1
-    IF(FF>0) WRITE(ff,cForm) "A",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
+    if(FF>0) write(ff,cForm) "A",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
     !
-    IF(G_New > G_Old) EXIT
+    if(G_New > G_Old) exit
     !
-  ENDDO
+  end do
   !---------------------------------------------/ Additive linesearch --
   !
   !---------------------------------------------- Division linesearch --
   !--- ( case where G(vX+Delta)>G(vX) )
-  IF(m==0) THEN
+  if(m==0) then
     
     G_Old= G
     !
-    DO m= 0,m_max
+    do m= 0,m_max
       
-      Delta_new= Delta /REAL(m+1)
+      Delta_new= Delta /real(m+1)
       !
       vXnew(:)= vX(:) + vV(:) *Delta_new
-      CALL Project(Xmin,vXnew)
+      call Project(Xmin,vXnew)
       !
       vXlast(:)= vXnew(:)
-      CALL ComputeMu(vXnew,vMu)
-      G_New= DOT_PRODUCT(vXnew,vMu)
+      call ComputeMu(vXnew,vMu)
+      G_New= dot_product(vXnew,vMu)
       nCallG= nCallG +1
       G_Last= G_New
       !
       IterTot= IterTot+1
-      IF(FF>0) WRITE(ff,cForm) &
+      if(FF>0) write(ff,cForm) &
       & "B",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
       !
-      IF(        G_New < G_Old   &
-      & .OR. Delta_new < DeltaMin) EXIT
+      if(        G_New < G_Old   &
+      & .or. Delta_new < DeltaMin) exit
       
-    ENDDO
+    end do
     
-  ENDIF
+  end if
   !---------------------------------------------/ Division linesearch --
   !
   vX(:)= vXlast(:)
   G= G_Last
   !
-END SUBROUTINE Theriak_Linesearch
+end subroutine Theriak_Linesearch
 
-SUBROUTINE Normalize(vX)
+subroutine Normalize(vX)
   !--- vX - vX / Norm(vX)
-  REAL(dp),INTENT(INOUT):: vX(:)
-  REAL(dp):: NormvX
+  real(dp),intent(inout):: vX(:)
+  real(dp):: NormvX
   !---
   NormvX= Norm_L2(vX)
-  IF(NormVX < 1.D-20 ) THEN
+  if(NormVX < 1.D-20 ) then
     vX= One
     NormvX= Norm_L2(vX)
   end if
   vX= vX /NormvX
   !
-END SUBROUTINE Normalize
+end subroutine Normalize
   
-SUBROUTINE Project(Xminim,vX)
+subroutine Project(Xminim,vX)
   !--
   !--- Project vX on {sum(vX) - 1, vX >-0}
   !--
-  REAL(dp),INTENT(IN)   :: Xminim
-  REAL(dp),INTENT(INOUT):: vX(:)
+  real(dp),intent(in)   :: Xminim
+  real(dp),intent(inout):: vX(:)
   !
-  REAL(dp):: SumV
-  INTEGER :: i
+  real(dp):: SumV
+  integer :: i
   !--
   !--- project on x >- Xminim
-  DO i=1,SIZE(vX)
-    IF (vX(i)< Xminim) vX(i) = Xminim
-  ENDDO
+  do i=1,size(vX)
+    if (vX(i)< Xminim) vX(i) = Xminim
+  end do
   !--- project on sum(xi) - 1 
   SumV= SUM(vX(:))
   vX(:)= vX(:) /SumV
   !
-END SUBROUTINE Project
+end subroutine Project
 
-REAL(dp) FUNCTION norm_L1(vX)
+real(dp) function norm_L1(vX)
   !--- Compute Discrete L1 Norm
-  REAL(dp),INTENT(IN):: vX(:)
+  real(dp),intent(in):: vX(:)
   !
   norm_L1 = SUM(ABS(vX(:)))
   !
-END FUNCTION norm_L1
+end function norm_L1
 
-REAL(dp) FUNCTION norm_L2(vX)
+real(dp) function norm_L2(vX)
   !-- -Compute Discrete L2 Norm
-  REAL(dp),INTENT(IN):: vX(:)
+  real(dp),intent(in):: vX(:)
   !
-  norm_L2= SQRT(DOT_PRODUCT(vX,vX) )
+  norm_L2= SQRT(dot_product(vX,vX) )
   !
-END FUNCTION norm_L2
+end function norm_L2
 
-REAL(dp) FUNCTION norm_LInf(vX)
+real(dp) function norm_LInf(vX)
   !--- Compute Discrete LInfinity Norm
-  REAL(dp),INTENT(IN) :: vX(:)
+  real(dp),intent(in) :: vX(:)
   !
   norm_LInf= MAXVAL(ABS(vX))
   !
-END FUNCTION norm_LInf
+end function norm_LInf
 
-END MODULE M_Optimsolver_Theriak
+end module M_Optimsolver_Theriak
 
-! SUBROUTINE Optimsolver_Theriak_2( & !
+! subroutine Optimsolver_Theriak_2( & !
 ! & Objective,  & !
 ! & ComputeMu,  & !
 ! & ff,         & ! IN, log file index
@@ -331,161 +331,161 @@ END MODULE M_Optimsolver_Theriak
 ! & Iter,nCallG)  ! OUT
 ! !--
 ! !-- this version use routine Objective to compute Gibbs directly
-! !-- and not as G- DOT_PRODUCT(vXnew,vMu)
+! !-- and not as G- dot_product(vXnew,vMu)
 ! !-- -> Theriak_Linesearch_2 should be quicker
 ! !--
-!   INTERFACE
-!     REAL(dp) FUNCTION Objective(vA)
-!       USE m_kinds
-!       REAL(dp), INTENT(IN) :: vA(:)
-!     END FUNCTION Objective
-!     SUBROUTINE ComputeMu(X,vA,vB)
-!       USE M_Kinds
-!       REAL(dp), INTENT(IN) :: X
-!       REAL(dp), INTENT(IN) :: vA(:)
-!       REAL(dp), INTENT(OUT):: vB(:)
-!     END SUBROUTINE ComputeMu
-!   END INTERFACE
-!   INTEGER, INTENT(IN)   :: ff
-!   REAL(dp),INTENT(IN)   :: DeltaInit
-!   REAL(dp),INTENT(IN)   :: TolX
-!   REAL(dp),INTENT(INOUT):: vX(:) ! composition
-!   REAL(dp),INTENT(OUT)  :: G
-!   LOGICAL, INTENT(OUT)  :: Converged
-!   INTEGER, INTENT(OUT)  :: Iter,nCallG
+!   interface
+!     real(dp) function Objective(vA)
+!       use m_kinds
+!       real(dp), intent(in) :: vA(:)
+!     end function Objective
+!     subroutine ComputeMu(X,vA,vB)
+!       use M_Kinds
+!       real(dp), intent(in) :: X
+!       real(dp), intent(in) :: vA(:)
+!       real(dp), intent(out):: vB(:)
+!     end subroutine ComputeMu
+!   end interface
+!   integer, intent(in)   :: ff
+!   real(dp),intent(in)   :: DeltaInit
+!   real(dp),intent(in)   :: TolX
+!   real(dp),intent(inout):: vX(:) ! composition
+!   real(dp),intent(out)  :: G
+!   logical, intent(out)  :: Converged
+!   integer, intent(out)  :: Iter,nCallG
 !   !
-!   REAL(dp),ALLOCATABLE:: vXlast1(:), vXlast2(:) ! former composition points
-!   REAL(dp),ALLOCATABLE:: vV(:),vVSteep(:)
-!   REAL(dp),ALLOCATABLE:: vXDif(:)
-!   REAL(dp),ALLOCATABLE:: vMu(:) !
-!   REAL(dp):: Gsav,DeltaG
-!   REAL(dp):: MuTilde,Slope
-!   REAL(dp):: Delta
-!   REAL(dp):: DeltaX
-!   INTEGER:: i,N
+!   real(dp),allocatable:: vXlast1(:), vXlast2(:) ! former composition points
+!   real(dp),allocatable:: vV(:),vVSteep(:)
+!   real(dp),allocatable:: vXDif(:)
+!   real(dp),allocatable:: vMu(:) !
+!   real(dp):: Gsav,DeltaG
+!   real(dp):: MuTilde,Slope
+!   real(dp):: Delta
+!   real(dp):: DeltaX
+!   integer:: i,N
 !   !
-!   IF(iDebug>2) WRITE(fTrc,'(/,A)') "< Optimsolver_Theriak"
+!   if(iDebug>2) write(fTrc,'(/,A)') "< Optimsolver_Theriak"
 !   !
 !   Delta= DeltaInit
 !   !
 !   N= size(vX)
 !   !
-!   ALLOCATE(vXlast1(N))
-!   ALLOCATE(vXlast2(N))
-!   ALLOCATE(vVSteep(N))
-!   ALLOCATE(vV(N))
-!   ALLOCATE(vXDif(N))
-!   ALLOCATE(vMu(N))
+!   allocate(vXlast1(N))
+!   allocate(vXlast2(N))
+!   allocate(vVSteep(N))
+!   allocate(vV(N))
+!   allocate(vXDif(N))
+!   allocate(vMu(N))
 !   !
 !   vXlast1(:)= vX(:)
 !   vXlast2(:)= vX(:)
 !   !
-!   IF(FF>0) WRITE(ff,'(/,A)') "========================"
+!   if(FF>0) write(ff,'(/,A)') "========================"
 !   !
-!   Converged= .FALSE.
+!   Converged= .false.
 !   !
 !   nCallG= 0
 !   IterTot= 0
 !   Iter= 0
 !   G= Objective(vX(:))
 !   !
-!   DO
+!   do
 !     Iter= Iter+1
 !     !
 !     !--- direction of steepest descent, normalized to |vVSteep|-1
-!     CALL ComputeMu(G,vX,vMu)
-!     MuTilde= sum(vMu(:)) /REAL(N)
+!     call ComputeMu(G,vX,vMu)
+!     MuTilde= sum(vMu(:)) /real(N)
 !     vVSteep(:)= MuTilde -vMu(:)
-!     CALL Normalize(vVSteep)
+!     call Normalize(vVSteep)
 !     !---/
 !     !
-!     IF(Iter<3) THEN
+!     if(Iter<3) then
 !       vV(:)= vVSteep(:)
-!     ELSE
+!     else
 !       vXDif(:)= vX(:) -vXlast2(:)
 !       Delta= Norm_L2(vXDif) *0.5D0
-!       Slope= DOT_PRODUCT(vXlast2(:),vMu(:)) - G
-!       !IF(G > DOT_PRODUCT(vXlast2(:),vMu(:))) THEN
-!       IF(Slope<Zero) THEN
+!       Slope= dot_product(vXlast2(:),vMu(:)) - G
+!       !if(G > dot_product(vXlast2(:),vMu(:))) then
+!       if(Slope<Zero) then
 !         vV(:)= vVSteep(:)
-!       ELSE
+!       else
 !         vV(:)= vXDif(:) /Delta *0.5D0
-!       ENDIF
-!       !PRINT '(A,G12.3)',"Delta2=",Delta
-!     ENDIF
+!       end if
+!       !print '(A,G12.3)',"Delta2=",Delta
+!     end if
 !     !
 !     vXlast2(:)= vXlast1(:)
 !     vXlast1(:)= vX(:)
 !     !
 !     Gsav= G
-!     CALL Theriak_Linesearch_2(Objective,ff,Iter,N,Delta,vV,vX,G,nCallG)
+!     call Theriak_Linesearch_2(Objective,ff,Iter,N,Delta,vV,vX,G,nCallG)
 !     DeltaG= G-Gsav
 !     !
-!     IF(Iter>2) THEN
+!     if(Iter>2) then
 !       DeltaG= G-Gsav
 !       DeltaX= norm_LInf(vX(:) -vXlast1(:))
-!       IF(iDebug>2) WRITE(fTrc,'(A,2G15.6)') "DeltaX_DeltaG=",DeltaX,DeltaG
-!       IF(DeltaX < TolX) THEN
-!         IF(iDebug>2) WRITE(fTrc,'(A)') "==converged=YES=="
-!         Converged= .TRUE.
-!         EXIT
-!       ENDIF
-!     ENDIF
+!       if(iDebug>2) write(fTrc,'(A,2G15.6)') "DeltaX_DeltaG=",DeltaX,DeltaG
+!       if(DeltaX < TolX) then
+!         if(iDebug>2) write(fTrc,'(A)') "==converged=YES=="
+!         Converged= .true.
+!         exit
+!       end if
+!     end if
 !     !
-!     IF(Iter>IterMax) THEN
-!       IF(iDebug>2) WRITE(fTrc,'(A,/)') "==converged=NO=="
-!       EXIT
-!     ENDIF
-!   ENDDO
+!     if(Iter>IterMax) then
+!       if(iDebug>2) write(fTrc,'(A,/)') "==converged=NO=="
+!       exit
+!     end if
+!   end do
 !   !
-!   !PRINT '(A,2F7.3)',"vXlast2",vXlast2(1),vXlast2(2)
-!   !PRINT '(A,2F7.3)',"vXlast1",vXlast1(1),vXlast1(2)
-!   !PRINT '(A,2F7.3)',"vX      ",vX(1),      vX(2)
+!   !print '(A,2F7.3)',"vXlast2",vXlast2(1),vXlast2(2)
+!   !print '(A,2F7.3)',"vXlast1",vXlast1(1),vXlast1(2)
+!   !print '(A,2F7.3)',"vX      ",vX(1),      vX(2)
 !   !
-!   DEALLOCATE(vXlast1)
-!   DEALLOCATE(vXlast2)
-!   DEALLOCATE(vVSteep)
-!   DEALLOCATE(vV)
-!   DEALLOCATE(vXDif)
-!   DEALLOCATE(vMu)
+!   deallocate(vXlast1)
+!   deallocate(vXlast2)
+!   deallocate(vVSteep)
+!   deallocate(vV)
+!   deallocate(vXDif)
+!   deallocate(vMu)
 !   !
-!   IF(iDebug>2) WRITE(fTrc,'(A,/)') "</ Optimsolver_Theriak"
+!   if(iDebug>2) write(fTrc,'(A,/)') "</ Optimsolver_Theriak"
 !   !
-! END SUBROUTINE Optimsolver_Theriak_2
+! end subroutine Optimsolver_Theriak_2
 ! 
-! SUBROUTINE Theriak_Linesearch_2(Objective,ff,Iter,N,Delta,vV,vX,G,nCallG)
-!   INTERFACE
-!     REAL(dp) FUNCTION Objective(vA)
-!       USE M_Kinds
-!       REAL(dp),INTENT(IN):: vA(:)
-!     END FUNCTION Objective
-!   END INTERFACE
-!   INTEGER, INTENT(IN):: ff
-!   INTEGER, INTENT(IN):: Iter
-!   INTEGER, INTENT(IN):: N
-!   REAL(dp),INTENT(IN):: Delta
-!   REAL(dp),INTENT(IN):: vV(:)
-!   REAL(dp),INTENT(INOUT):: vX(:)
-!   REAL(dp),INTENT(INOUT):: G
-!   INTEGER, INTENT(INOUT):: nCallG
+! subroutine Theriak_Linesearch_2(Objective,ff,Iter,N,Delta,vV,vX,G,nCallG)
+!   interface
+!     real(dp) function Objective(vA)
+!       use M_Kinds
+!       real(dp),intent(in):: vA(:)
+!     end function Objective
+!   end interface
+!   integer, intent(in):: ff
+!   integer, intent(in):: Iter
+!   integer, intent(in):: N
+!   real(dp),intent(in):: Delta
+!   real(dp),intent(in):: vV(:)
+!   real(dp),intent(inout):: vX(:)
+!   real(dp),intent(inout):: G
+!   integer, intent(inout):: nCallG
 !   !
-!   INTEGER:: m
-!   INTEGER:: i
-!   REAL(dp):: G_Old,G_New,G_Last
-!   REAL(dp):: Delta_new
-!   CHARACTER(LEN=80):: cForm
+!   integer:: m
+!   integer:: i
+!   real(dp):: G_Old,G_New,G_Last
+!   real(dp):: Delta_new
+!   character(len=80):: cForm
 !   !
 !   !real(dp),allocatable:: vXnew(:),vXlast(:)
-!   REAL(dp):: vXnew(N),vXlast(N)
+!   real(dp):: vXnew(N),vXlast(N)
 !   !
 !   !allocate(vXnew(N))
 !   !allocate(vXlast(N))
 !   !
-!   IF(iDebug>2) WRITE(cForm,'(a,i3,a)') '(A,A1,2(I3,A1),',N,'(G15.6,A1),G12.3)'
+!   if(iDebug>2) write(cForm,'(a,i3,a)') '(A,A1,2(I3,A1),',N,'(G15.6,A1),G12.3)'
 !   !
 !   !---------------------------------------------- Additive linesearch --
 !   G_New= G
-!   DO m=0,m_max
+!   do m=0,m_max
 !     !
 !     !--- increase step size
 !     !--- ( continue increase until G(vX +(m+1)*Delta)) > G(vX +m+*Delta) )
@@ -495,43 +495,43 @@ END MODULE M_Optimsolver_Theriak
 !     !
 !     !--- compute new vX(:)
 !     vXnew(:)= vX(:) + vV(:) *Delta_new
-!     CALL Project(Xmin,vXnew)
+!     call Project(Xmin,vXnew)
 !     !
 !     G_Old= G_New
 !     G_New= Objective(vXnew)  ;  nCallG= nCallG +1
 !     !
 !     IterTot= IterTot+1
-!     IF(FF>0) WRITE(ff,cForm) "A",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
+!     if(FF>0) write(ff,cForm) "A",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
 !     !
-!     IF(G_New > G_Old) EXIT
+!     if(G_New > G_Old) exit
 !     !
-!   ENDDO
+!   end do
 !   !---------------------------------------------/ Additive linesearch --
 !   !
 !   !---------------------------------------------- Division linesearch --
 !   !--- ( case where G(vX+Delta)>G(vX) )
-!   IF(m==0) THEN
+!   if(m==0) then
 !     !
 !     G_Old= G
 !     !
-!     DO m= 0,m_max
+!     do m= 0,m_max
 !       !
-!       Delta_new= Delta /REAL(m+1)
+!       Delta_new= Delta /real(m+1)
 !       !
 !       vXnew(:)= vX(:) + vV(:) *Delta_new
-!       CALL Project(Xmin,vXnew)
+!       call Project(Xmin,vXnew)
 !       !
 !       vXlast(:)= vXnew(:)
 !       G_New= Objective(vXnew)  ;  nCallG= nCallG +1
 !       G_Last= G_New
 !       !
 !       IterTot= IterTot+1
-!       IF(FF>0) WRITE(ff,cForm) "B",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
+!       if(FF>0) write(ff,cForm) "B",T_,Iter,T_,m,T_,(vXnew(i),T_,i=1,N),G_new
 !       !
-!       IF(        G_New < G_Old   &
-!       & .OR. Delta_new < DeltaMin) EXIT
-!     ENDDO
-!   ENDIF
+!       if(        G_New < G_Old   &
+!       & .or. Delta_new < DeltaMin) exit
+!     end do
+!   end if
 !   !---------------------------------------------/ Division linesearch --
 !   !
 !   vX(:)= vXlast(:)
@@ -539,4 +539,4 @@ END MODULE M_Optimsolver_Theriak
 !   !deallocate(vXnew)
 !   !deallocate(vXlast)
 !   !
-! END SUBROUTINE Theriak_Linesearch_2
+! end subroutine Theriak_Linesearch_2

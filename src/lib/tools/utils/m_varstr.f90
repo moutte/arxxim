@@ -1,251 +1,251 @@
-MODULE M_VarStr
+module M_VarStr
 !.module for string input, extracted from ISO_VARYING_STRING
 !
 !ISO_VARYING_STRING=
 !Written by J.L.Schonfelder 
 !Incorporating suggestions by C.Tanasescu, C.Weber, J.Wagener and W.Walter,
-!and corrections due to L.Moss, M.Cohen, P.GrIFiths, B.T.Smith
+!and corrections due to L.Moss, M.Cohen, P.Grifiths, B.T.Smith
 !and many other members of the committee ISO/IEC JTC1/SC22/WG5
 
-PRIVATE 
+private 
 
-PUBLIC:: T_VarStr, VarStr_Get, VarStr_Char, S_Ass_C !, LEN
+public:: T_VarStr, VarStr_Get, VarStr_Char, S_Ass_C !, len
   
-TYPE T_VarStr
- PRIVATE 
- CHARACTER,DIMENSION(:),POINTER :: chars 
-ENDTYPE T_VarStr 
+type T_VarStr
+ private 
+ character,dimension(:),pointer :: chars 
+end type T_VarStr 
   
-CHARACTER,PARAMETER :: blank= " " 
+character,parameter :: blank= " " 
   
-!----- GENERIC PROCEDURE INTERFACE DEFINITIONS -------------------------------! 
+!----- generic procedure interface DEFINITIONS -------------------------------! 
   
-!----- LEN interface ---------------------------------------------------------! 
-INTERFACE LEN 
-  MODULE PROCEDURE len_s   ! length of string
-ENDINTERFACE 
+!----- len interface ---------------------------------------------------------! 
+interface len 
+  module procedure len_s   ! length of string
+endinterface 
   
 !----- Conversion procedure interfaces ---------------------------------------!
-INTERFACE VAR_STR
-  MODULE PROCEDURE c_to_s   ! character to string
-ENDINTERFACE 
+interface VAR_STR
+  module procedure c_to_s   ! character to string
+endinterface 
   
-INTERFACE VarStr_Char
-  MODULE PROCEDURE &
+interface VarStr_Char
+  module procedure &
   & s_to_c, &   ! string to character
   & s_to_fix_c  ! string to specified length character
-ENDINTERFACE 
+endinterface 
   
-!----- ASSIGNMENT interfaces -------------------------------------------------! 
-INTERFACE ASSIGNMENT(=) 
-  MODULE PROCEDURE &
+!----- assignMENT interfaces -------------------------------------------------! 
+interface assignMENT(=) 
+  module procedure &
   & s_ass_s, &   ! string = string
   & c_ass_s, &   ! character= string
   & s_ass_c      ! string = character
-ENDINTERFACE 
+endinterface 
   
 !----- Concatenation operator interfaces -------------------------------------!
-INTERFACE OPERATOR(//) 
-  MODULE PROCEDURE &
+interface operator(//) 
+  module procedure &
   & s_concat_s, &  ! string//string
   & s_concat_c, &  ! string//character
   & c_concat_s     ! character//string
-ENDINTERFACE 
+endinterface 
   
 !----- Repeated Concatenation interface --------------------------------------! 
-INTERFACE REPEAT 
-  MODULE PROCEDURE repeat_s
-ENDINTERFACE 
+interface REPEAT 
+  module procedure repeat_s
+endinterface 
 
 !----- Input procedure interfaces --------------------------------------------!
-INTERFACE VarStr_GET
-  MODULE PROCEDURE &
+interface VarStr_GET
+  module procedure &
   & get_d_eor !, &    ! default unit, EoR termination
   !& get_u_eor,    & ! specified unit, EoR termination
   !& get_d_tset_s, & ! default unit, string set termination
   !& get_u_tset_s, & ! specified unit, string set termination
   !& get_d_tset_c, & ! default unit, char set termination
   !& get_u_tset_c    ! specified unit, char set termination
-ENDINTERFACE 
+endinterface 
   
-CONTAINS
+contains
 
-!----- LEN Procedure ---------------------------------------------------------! 
-FUNCTION len_s(string) 
-  TYPE(T_VarStr),INTENT(IN) :: string 
-  INTEGER                         :: len_s 
+!----- len Procedure ---------------------------------------------------------! 
+function len_s(string) 
+  type(T_VarStr),intent(in) :: string 
+  integer                         :: len_s 
   ! returns the length of the string argument or zero iFin there iStr no current 
   ! string value 
-  IF(.NOT.ASSOCIATED(string%chars))THEN; len_s= 0 
-  ELSE;                                  len_s= SIZE(string%chars) 
-  ENDIF 
-ENDFUNCTION len_s 
+  if(.not.associateD(string%chars))then; len_s= 0 
+  else;                                  len_s= size(string%chars) 
+  end if 
+end function len_s 
   
 !----- Conversion Procedures ------------------------------------------------! 
-FUNCTION c_to_s(chr) 
-  TYPE(T_VarStr)              :: c_to_s 
-  CHARACTER(LEN=*),INTENT(IN) :: chr 
+function c_to_s(chr) 
+  type(T_VarStr)              :: c_to_s 
+  character(len=*),intent(in) :: chr 
   ! returns the string consisting of the characters char 
-  INTEGER                     :: lc,i 
-  lc=LEN(chr) 
-  ALLOCATE(c_to_s%chars(1:lc)) 
-  DO i=1,lc; c_to_s%chars(i)= chr(i:i); ENDDO 
-ENDFUNCTION c_to_s 
+  integer                     :: lc,i 
+  lc=len(chr) 
+  allocate(c_to_s%chars(1:lc)) 
+  do i=1,lc; c_to_s%chars(i)= chr(i:i); end do 
+end function c_to_s 
   
-FUNCTION s_to_c(string) 
+function s_to_c(string) 
 ! returns the characters of string as an automatically sized character 
-  TYPE(T_VarStr),INTENT(IN)   :: string 
-  CHARACTER(LEN=SIZE(string%chars)) :: s_to_c 
-  INTEGER:: lc, i 
-  lc=SIZE(string%chars) 
-  DO i=1,lc ; s_to_c(i:i)= string%chars(i); ENDDO 
-ENDFUNCTION s_to_c 
+  type(T_VarStr),intent(in)   :: string 
+  character(len=size(string%chars)) :: s_to_c 
+  integer:: lc, i 
+  lc=size(string%chars) 
+  do i=1,lc ; s_to_c(i:i)= string%chars(i); end do 
+end function s_to_c 
   
-FUNCTION s_to_fix_c(string,length)
+function s_to_fix_c(string,length)
 ! returns the character of fixed length, length,
 ! containing the characters of string
 ! either padded with blanks or truncated on the right to fit
-  TYPE(T_VarStr),INTENT(IN) :: string
-  INTEGER,INTENT(IN)              :: length
-  CHARACTER(LEN=length)           :: s_to_fix_c
-  INTEGER                         :: lc, i
-  lc=MIN(SIZE(string%chars),length)
-  DO i=1,lc ; s_to_fix_c(i:i)= string%chars(i); ENDDO 
-  IF(lc < length) & ! result longer than string padding needed
+  type(T_VarStr),intent(in) :: string
+  integer,intent(in)              :: length
+  character(len=length)           :: s_to_fix_c
+  integer                         :: lc, i
+  lc=MIN(size(string%chars),length)
+  do i=1,lc ; s_to_fix_c(i:i)= string%chars(i); end do 
+  if(lc < length) & ! result longer than string padding needed
   & s_to_fix_c(lc+1:length)= blank
-ENDFUNCTION s_to_fix_c
+end function s_to_fix_c
 
-!----- ASSIGNMENT Procedures -------------------------------------------------!
-SUBROUTINE s_ass_s(var,expr) 
-  TYPE(T_VarStr),INTENT(OUT) :: var 
-  TYPE(T_VarStr),INTENT(IN)  :: expr 
+!----- assignMENT Procedures -------------------------------------------------!
+subroutine s_ass_s(var,expr) 
+  type(T_VarStr),intent(out) :: var 
+  type(T_VarStr),intent(in)  :: expr 
   !  assign a string value to a string variable overriding default assignement 
   !  reallocates string variable to size of string value and copies characters 
-  ALLOCATE(var%chars(1:LEN(expr)))
+  allocate(var%chars(1:len(expr)))
   var%chars= expr%chars 
-ENDSUBROUTINE s_ass_s 
+end subroutine s_ass_s 
  
-SUBROUTINE c_ass_s(var,expr) 
-  CHARACTER(LEN=*),INTENT(OUT)    :: var 
-  TYPE(T_VarStr),INTENT(IN) :: expr 
+subroutine c_ass_s(var,expr) 
+  character(len=*),intent(out)    :: var 
+  type(T_VarStr),intent(in) :: expr 
   ! assign a string value to a character variable 
   ! iFin the string iStr longer than the character truncate the string on the right 
   ! iFin the string iStr shorter the character iStr blank padded on the right 
-  INTEGER                         :: lc,ls,i 
-  lc= LEN(var); ls= MIN(LEN(expr),lc) 
-  DO i= 1,ls;    var(i:i)= expr%chars(i); ENDDO 
-  DO i= ls+1,lc; var(i:i)= blank        ; ENDDO 
-ENDSUBROUTINE c_ass_s 
+  integer                         :: lc,ls,i 
+  lc= len(var); ls= MIN(len(expr),lc) 
+  do i= 1,ls;    var(i:i)= expr%chars(i); end do 
+  do i= ls+1,lc; var(i:i)= blank        ; end do 
+end subroutine c_ass_s 
   
-SUBROUTINE s_ass_c(var,expr)
-  TYPE(T_VarStr),INTENT(OUT) :: var 
-  CHARACTER(LEN=*),INTENT(IN):: expr 
+subroutine s_ass_c(var,expr)
+  type(T_VarStr),intent(out) :: var 
+  character(len=*),intent(in):: expr 
   !  assign a character value to a string variable 
   !  disassociates the string variable from its current value, allocates new 
   !  space to hold the characters and copies them from the character value 
   !  into this space.
-  INTEGER                          :: lc, i 
-  lc= LEN(expr) 
-  ALLOCATE(var%chars(1:lc)) 
-  DO i= 1,lc; var%chars(i)= expr(i:i); ENDDO 
-ENDSUBROUTINE s_ass_c 
+  integer                          :: lc, i 
+  lc= len(expr) 
+  allocate(var%chars(1:lc)) 
+  do i= 1,lc; var%chars(i)= expr(i:i); end do 
+end subroutine s_ass_c 
   
 !----- Concatenation operator procedures ------------------------------------! 
-FUNCTION s_concat_s(string_a,string_b)  ! string//string 
-  TYPE(T_VarStr),INTENT(IN) :: string_a,string_b 
-  TYPE(T_VarStr)            :: s_concat_s 
-  INTEGER                         :: la,lb
-  la= LEN(string_a); lb= LEN(string_b)
-  ALLOCATE(s_concat_s%chars(1:la+lb)) 
+function s_concat_s(string_a,string_b)  ! string//string 
+  type(T_VarStr),intent(in) :: string_a,string_b 
+  type(T_VarStr)            :: s_concat_s 
+  integer                         :: la,lb
+  la= len(string_a); lb= len(string_b)
+  allocate(s_concat_s%chars(1:la+lb)) 
   s_concat_s%chars(1:la)= string_a%chars 
   s_concat_s%chars(1+la:la+lb)= string_b%chars 
-ENDFUNCTION s_concat_s 
+end function s_concat_s 
   
-FUNCTION s_concat_c(string_a,string_b)  ! string//character
-  TYPE(T_VarStr),INTENT(IN) :: string_a 
-  CHARACTER(LEN=*),INTENT(IN)     :: string_b 
-  TYPE(T_VarStr)            :: s_concat_c 
-  INTEGER                         :: la,lb, i 
-  la= LEN(string_a); lb= LEN(string_b)
-  ALLOCATE(s_concat_c%chars(1:la+lb)) 
+function s_concat_c(string_a,string_b)  ! string//character
+  type(T_VarStr),intent(in) :: string_a 
+  character(len=*),intent(in)     :: string_b 
+  type(T_VarStr)            :: s_concat_c 
+  integer                         :: la,lb, i 
+  la= len(string_a); lb= len(string_b)
+  allocate(s_concat_c%chars(1:la+lb)) 
   s_concat_c%chars(1:la)= string_a%chars 
-  DO i= 1,lb; s_concat_c%chars(la+i)= string_b(i:i); ENDDO 
-ENDFUNCTION s_concat_c 
+  do i= 1,lb; s_concat_c%chars(la+i)= string_b(i:i); end do 
+end function s_concat_c 
   
-FUNCTION c_concat_s(string_a,string_b)  ! character//string 
-  CHARACTER(LEN=*),INTENT(IN)     :: string_a 
-  TYPE(T_VarStr),INTENT(IN) :: string_b 
-  TYPE(T_VarStr)            :: c_concat_s 
-  INTEGER                         :: la,lb, i 
-  la= LEN(string_a); lb= LEN(string_b)
-  ALLOCATE(c_concat_s%chars(1:la+lb)) 
-  DO i= 1,la; c_concat_s%chars(i)= string_a(i:i); ENDDO 
+function c_concat_s(string_a,string_b)  ! character//string 
+  character(len=*),intent(in)     :: string_a 
+  type(T_VarStr),intent(in) :: string_b 
+  type(T_VarStr)            :: c_concat_s 
+  integer                         :: la,lb, i 
+  la= len(string_a); lb= len(string_b)
+  allocate(c_concat_s%chars(1:la+lb)) 
+  do i= 1,la; c_concat_s%chars(i)= string_a(i:i); end do 
   c_concat_s%chars(1+la:la+lb)= string_b%chars 
-ENDFUNCTION c_concat_s 
+end function c_concat_s 
   
 !----- Reapeated concatenation procedures -----------------------------------! 
-FUNCTION repeat_s(string,ncopies)                                     
- TYPE(T_VarStr),INTENT(IN) :: string 
- INTEGER,INTENT(IN)              :: ncopies 
- TYPE(T_VarStr)            :: repeat_s
+function repeat_s(string,ncopies)                                     
+ type(T_VarStr),intent(in) :: string 
+ integer,intent(in)              :: ncopies 
+ type(T_VarStr)            :: repeat_s
  ! Returns a string produced by the concatenation of ncopies of the 
  ! argument string 
- INTEGER                         :: lr,ls, i 
- IF(ncopies < 0) THEN 
-     WRITE(*,*) " Negative ncopies requested in REPEAT" 
-     STOP 
- ENDIF 
- ls= LEN(string); lr= ls*ncopies 
- ALLOCATE(repeat_s%chars(1:lr))
- DO i= 1,ncopies 
+ integer                         :: lr,ls, i 
+ if(ncopies < 0) then 
+     write(*,*) " Negative ncopies requested in REPEAT" 
+     stop 
+ end if 
+ ls= len(string); lr= ls*ncopies 
+ allocate(repeat_s%chars(1:lr))
+ do i= 1,ncopies 
    repeat_s%chars(1+(i-1)*ls:i*ls)= string%chars 
- ENDDO 
-ENDFUNCTION repeat_s 
+ end do 
+end function repeat_s 
   
 !----- Input string procedure -----------------------------------------------!
-SUBROUTINE get_d_eor(string,maxlen,iostat) !,message)
+subroutine get_d_eor(string,maxlen,iostat) !,message)
 ! reads string from the default unit starting at next character in the file
 ! and terminating at the end of record or after maxlen characters.
-  TYPE(T_VarStr),INTENT(OUT) :: string
+  type(T_VarStr),intent(out) :: string
   ! the string variable 
   ! to be filled with characters read from the file connected to the default unit
-  INTEGER,INTENT(IN),OPTIONAL      :: maxlen
+  integer,intent(in),optional      :: maxlen
   ! if present, indicates the maximum number of characters that will be read from the file
-  INTEGER,INTENT(OUT),OPTIONAL     :: iostat
+  integer,intent(out),optional     :: iostat
   ! if present, used to return the status of the data transfer
   ! if absent errors cause termination
-  !TYPE(T_VarStr),INTENT(IN),OPTIONAL:: message
+  !type(T_VarStr),intent(in),optional:: message
   !
-  CHARACTER(LEN=80) :: buffer
-  INTEGER           :: ist,nch,toread,nb
-  !! IF(PRESENT(message)) 
-  IF(PRESENT(maxlen))THEN; toread=maxlen
-  ELSE;                    toread=HUGE(1)
-  ENDIF
+  character(len=80) :: buffer
+  integer           :: ist,nch,toread,nb
+  !! if(present(message)) 
+  if(present(maxlen))then; toread=maxlen
+  else;                    toread=HUGE(1)
+  end if
   string= "" ! clears return string
-  DO
+  do
     !repeatedly read buffer and add to string until EoR or maxlen reached
-    IF(toread <= 0)EXIT
+    if(toread <= 0)exit
     nb=MIN(80,toread)
-    READ(*,FMT='(A)',ADVANCE='NO',EOR=9999,SIZE=nch,IOSTAT=ist) buffer(1:nb)
-    IF( ist /= 0 )THEN 
-      IF(PRESENT(iostat)) THEN
+    read(*,FMT='(A)',advance="no",EOR=9999,size=nch,iostat=ist) buffer(1:nb)
+    if( ist /= 0 )then 
+      if(present(iostat)) then
         iostat=ist 
-        RETURN 
-      ELSE 
-        WRITE(*,*) " Error No.",ist, &
-        &          " during READ_STRING of varying string on default unit"
-        STOP 
-      ENDIF 
-    ENDIF 
+        return 
+      else 
+        write(*,*) " Error No.",ist, &
+        &          " during read_STRING of varying string on default unit"
+        stop 
+      end if 
+    end if 
     string= string //buffer(1:nb)
     toread= toread - nb
-  ENDDO
-  IF(PRESENT(iostat)) iostat= 0
-  RETURN
+  end do
+  if(present(iostat)) iostat= 0
+  return
   9999 string= string //buffer(1:nch) 
-  IF(PRESENT(iostat)) iostat= ist
-ENDSUBROUTINE get_d_eor
+  if(present(iostat)) iostat= ist
+end subroutine get_d_eor
   
-ENDMODULE M_VarStr
+end module M_VarStr
 

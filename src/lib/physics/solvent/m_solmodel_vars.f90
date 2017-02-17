@@ -1,30 +1,30 @@
-MODULE M_Solmodel_Vars
+module M_Solmodel_Vars
   
-  USE M_Kinds
-  USE M_T_DtbLogKTbl,ONLY: DimLogK_Max
+  use M_Kinds
+  use M_T_DtbLogKTbl,only: DimLogK_Max
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
   !----------------------------------------------------- Solmodel_Vars --
-  LOGICAL,PUBLIC:: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
+  logical,public:: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
 
-  TYPE,PUBLIC:: T_Spline
+  type,public:: T_Spline
     
     !----------- tabulated values (input)
-    INTEGER :: Dimm
-    REAL(dp):: vX(DimLogK_Max)
-    REAL(dp):: vY(DimLogK_Max)
+    integer :: Dimm
+    real(dp):: vX(DimLogK_Max)
+    real(dp):: vY(DimLogK_Max)
 
     !----------- Spline Coeffs 
-    REAL(dp):: vSplineB(DimLogK_Max)
-    REAL(dp):: vSplineC(DimLogK_Max)
-    REAL(dp):: vsplineD(DimLogK_Max)
+    real(dp):: vSplineB(DimLogK_Max)
+    real(dp):: vSplineC(DimLogK_Max)
+    real(dp):: vsplineD(DimLogK_Max)
     
-  END TYPE T_Spline
+  end type T_Spline
 
-  TYPE(T_Spline),PUBLIC:: &
+  type(T_Spline),public:: &
   & Rho_Spl, &
   & Eps_Spl, &
   & dhA_Spl, &
@@ -32,5 +32,5 @@ MODULE M_Solmodel_Vars
   & bDot_Spl
   !----------------------------------------------------/ Solmodel_Vars --
   
-END MODULE M_Solmodel_Vars
+end module M_Solmodel_Vars
 

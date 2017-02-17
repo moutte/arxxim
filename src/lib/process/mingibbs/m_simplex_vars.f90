@@ -1,37 +1,37 @@
-MODULE M_Simplex_Vars
+module M_Simplex_Vars
 !--
 !-- vars for simplex computations
 !--
-  USE M_Kinds
-  USE M_T_MixModel,ONLY: MaxPole
-  IMPLICIT NONE
+  use M_Kinds
+  !use M_T_MixModel,only: MaxPole
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Simplex_Vars_Alloc
-  PUBLIC:: Simplex_Vars_Clean
-  PUBLIC:: tSimplex,IZROV,IPOSV
+  !public:: Simplex_Vars_Alloc
+  !public:: Simplex_Vars_Clean
+  !public:: tSimplex,IZROV,IPOSV
   !
-  REAL(dp),ALLOCATABLE:: tSimplex(:,:)
-  INTEGER, ALLOCATABLE:: IZROV(:),IPOSV(:)
+  real(dp),allocatable:: tSimplex(:,:)
+  integer, allocatable:: IZROV(:),IPOSV(:)
 
-CONTAINS
+contains
 
-SUBROUTINE Simplex_Vars_Alloc(M,N)
-  INTEGER,INTENT(IN)::M,N
+subroutine Simplex_Vars_Alloc(M,N)
+  integer,intent(in)::M,N
   !
-  CALL Simplex_Vars_Clean
+  call Simplex_Vars_Clean
   !
-  ALLOCATE(tSimplex(0:M+1,0:N))  ;  tSimplex=Zero
-  ALLOCATE(IPOSV(1:M))           ;  IPOSV= 0
-  ALLOCATE(IZROV(1:N))           ;  IZROV= 0
+  allocate(tSimplex(0:M+1,0:N))  ;  tSimplex=Zero
+  allocate(IPOSV(1:M))           ;  IPOSV= 0
+  allocate(IZROV(1:N))           ;  IZROV= 0
   !
-ENDSUBROUTINE Simplex_Vars_Alloc
+end subroutine Simplex_Vars_Alloc
 
-SUBROUTINE Simplex_Vars_Clean
-  IF(ALLOCATED(tSimplex))  DEALLOCATE(tSimplex)
-  IF(ALLOCATED(IZROV))     DEALLOCATE(IZROV)
-  IF(ALLOCATED(IPOSV))     DEALLOCATE(IPOSV)
-ENDSUBROUTINE Simplex_Vars_Clean
+subroutine Simplex_Vars_Clean
+  if(allocated(tSimplex))  deallocate(tSimplex)
+  if(allocated(IZROV))     deallocate(IZROV)
+  if(allocated(IPOSV))     deallocate(IPOSV)
+end subroutine Simplex_Vars_Clean
 
-END MODULE M_Simplex_Vars
+end module M_Simplex_Vars

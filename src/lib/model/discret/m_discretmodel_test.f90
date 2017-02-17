@@ -1,227 +1,201 @@
-MODULE M_DiscretModel_Test
+module M_DiscretModel_Test
   !.object describing "discretization" of a mixture phase
   !.to an array of pure phases
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_,Pause_
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: DiscretModel_Test
+  public:: DiscretModel_Test
   !
-CONTAINS
+contains
 
-SUBROUTINE Stoikio_Test
-  USE M_IoTools,ONLY: GetUnit
-  USE M_T_Species,ONLY: T_Species
-  USE M_Global_Vars,ONLY: vEle,vFas,vSpc,vMixModel
-  USE M_Global_Vars,ONLY: vDiscretModel,vDiscretParam
+subroutine Stoikio_Test
+  use M_IoTools,only: GetUnit
+  use M_T_Species,only: T_Species
+  use M_Global_Vars,only: vEle,vFas,vSpc,vMixModel
+  use M_Global_Vars,only: vDiscretModel,vDiscretParam
   !
-  INTEGER:: f
-  INTEGER:: iSp,iEl,iDis
-  TYPE(T_Species):: S
+  integer:: f
+  integer:: iSp,iEl,iDis
+  type(T_Species):: S
   !
-  CALL GetUnit(f)
-  OPEN(f,file="debug_discretmodel_stoik.log")
+  call GetUnit(f)
+  open(f,file="debug_discretmodel_stoik.log")
   !
-  WRITE(f,'(2(A,A1))',ADVANCE="no") "name",T_,"discri",T_
-  WRITE(f,'(3(A,A1))',ADVANCE="no") "disc%I",T_,"disc%iEl",T_,"disc%iDis",T_
-  DO iEl=1,SIZE(vEle)
-    WRITE(f,'(A,A1)',ADVANCE="no") vEle(iEl)%NamEl,T_
-  ENDDO
-  WRITE(f,'(A)') "div"
+  write(f,'(2(A,A1))',advance="no") "name",T_,"discri",T_
+  write(f,'(3(A,A1))',advance="no") "disc%I",T_,"disc%iEl",T_,"disc%iDis",T_
+  do iEl=1,size(vEle)
+    write(f,'(A,A1)',advance="no") vEle(iEl)%NamEl,T_
+  end do
+  write(f,'(A)') "div"
   !
-  DO iSp=1,SIZE(vSpc)
+  do iSp=1,size(vSpc)
     !
     S= vSpc(iSp)
     iDis= S%iDiscret
     !
-    IF(iDis==0) CYCLE
+    if(iDis==0) cycle
     !
-    WRITE(f,'(A,A1)',ADVANCE="no") S%NamSp,T_
-    WRITE(f,'(A,A1)',ADVANCE="no") &
+    write(f,'(A,A1)',advance="no") S%NamSp,T_
+    write(f,'(A,A1)',advance="no") &
     & vDiscretModel(vDiscretParam(iDis)%iModel)%Name,T_
     !
-    WRITE(f,'(3(I3,A1))',ADVANCE="no") &
+    write(f,'(3(I3,A1))',advance="no") &
     & vDiscretParam(iDis)%i,T_, &
     & vDiscretParam(iDis)%j,T_, &
     & vDiscretParam(iDis)%k,T_
     !
-    DO iEl=1,SIZE(vEle)
-      WRITE(f,'(I3,A1)',ADVANCE="no")  S%vStoikio(iEl),T_
-    ENDDO
-    WRITE(f,'(I3,A1)') S%vStoikio(0)
+    do iEl=1,size(vEle)
+      write(f,'(I3,A1)',advance="no")  S%vStoikio(iEl),T_
+    end do
+    write(f,'(I3,A1)') S%vStoikio(0)
     !
-  ENDDO
+  end do
   !
-  CLOSE(f)
+  close(f)
   !
-  IF(iDebug>1) THEN
-    PRINT *,">> results in debug_discretmodel_stoik.log !!!"
-    CALL Pause_
-  ENDIF
-ENDSUBROUTINE Stoikio_Test
+  if(iDebug>1) then
+    print *,">> results in debug_discretmodel_stoik.log !!!"
+    call Pause_
+  end if
+end subroutine Stoikio_Test
 
-SUBROUTINE DiscretModel_Test(TdgK,Pbar)
-  USE M_Global_Vars,ONLY: vEle,vFas,vSpc,vMixModel
-  USE M_Global_Vars,ONLY: vDiscretModel,vDiscretParam
-  USE M_DiscretModel_Tools
+subroutine DiscretModel_Test(TdgK,Pbar)
+  use M_Global_Vars,only: vEle,vFas,vSpc,vMixModel
+  use M_Global_Vars,only: vDiscretModel,vDiscretParam
+  use M_DiscretModel_Tools
   !
-  REAL(dp),INTENT(IN):: TdgK,Pbar
+  real(dp),intent(in):: TdgK,Pbar
   !
-  INTEGER:: i
+  integer:: i
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< DiscretModel_Test"
+  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Test"
   !
-  CALL DiscretModel_Test_Init(TdgK,Pbar)
+  call DiscretModel_Test_Init(TdgK,Pbar)
   !
-  IF(iDebug>1) THEN
+  if(iDebug>1) then
     !
-    PRINT *,"<============================================== SPECIES =="
-    DO i=1,SIZE(vSpc)
-      PRINT *,vSpc(i)%NamSp
-    ENDDO
-    CALL Pause_
+    print *,"<============================================== SPECIES =="
+    do i=1,size(vSpc)
+      print *,vSpc(i)%NamSp
+    end do
+    call Pause_
     !
-    PRINT *,"<=========================================== MIX.MODELS =="
-    DO i=1,SIZE(vMixModel)
-      PRINT *,vMixModel(i)%Name
-    ENDDO
-    CALL Pause_
+    print *,"<=========================================== MIX.MODELS =="
+    do i=1,size(vMixModel)
+      print *,vMixModel(i)%Name
+    end do
+    call Pause_
     !
-    PRINT *,"<======================================= DISCRET.MODELS =="
-    DO i=1,SIZE(vDiscretModel)
-      PRINT *,vDiscretModel(i)%Name
-    ENDDO
-    CALL Pause_
+    print *,"<======================================= DISCRET.MODELS =="
+    do i=1,size(vDiscretModel)
+      print *,vDiscretModel(i)%Name
+    end do
+    call Pause_
     !
-    PRINT *,"<=============================================== PHASES =="
-    DO i=1,SIZE(vFas)
-      PRINT *,vFas(i)%NamFs
-    ENDDO
-    CALL Pause_
+    print *,"<=============================================== PHASES =="
+    do i=1,size(vFas)
+      print *,vFas(i)%NamFs
+    end do
+    call Pause_
     !
-    PRINT *,"<======================================= DISCRET.PARAMS =="
-    DO i=1,SIZE(vDiscretParam)
-      PRINT *, &
+    print *,"<======================================= DISCRET.PARAMS =="
+    do i=1,size(vDiscretParam)
+      print *, &
       & vDiscretModel(vDiscretParam(i)%iModel)%Name, &
       & vDiscretParam(i)%I, &
       & vDiscretParam(i)%J, &
       & vDiscretParam(i)%K
-    ENDDO
-    CALL Pause_
+    end do
+    call Pause_
     !
-  ENDIF
+  end if
   !
-  CALL DiscretSpecies_Stoikio_Calc( &
+  call DiscretSpecies_Stoikio_Calc( &
   & vEle,          & !IN
   & vMixModel,     & !IN
   & vDiscretModel, & !IN
   & vDiscretParam, & !IN
   & vSpc)            !INOUT with updated stoichio's for discretized species
   !
-  CALL Stoikio_Test
+  call Stoikio_Test
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ DiscretModel_Test"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_Test"
   !
-ENDSUBROUTINE DiscretModel_Test
+end subroutine DiscretModel_Test
 
-SUBROUTINE DiscretModel_Test_Init(TdgK,Pbar)
-  USE M_T_Species,   ONLY: T_Species,Species_Stoikio_Calc
-  USE M_Dtb_Const,   ONLY: T_CK,Tref,Pref
-  USE M_Dtb_Read,    ONLY: Dtb_Read_Species
-  USE M_Dtb_Calc,    ONLY: SpeciesDtb_ToSpecies
-  USE M_Element_Read,ONLY: Element_Read_Redox,Element_Read_Entropy
-  USE M_Global_Tools,ONLY: Global_TP_Update
-  USE M_DiscretModel_Read
-  USE M_DiscretModel_Tools
-  USE M_Global_Alloc
+subroutine DiscretModel_Test_Init(TdgK,Pbar)
+  use M_T_Species,   only: T_Species,Species_Stoikio_Calc,Species_Append
+  use M_Dtb_Const,   only: T_CK,Tref,Pref
+  use M_Dtb_Read,    only: Dtb_Read_Species
+  use M_Dtb_Calc,    only: SpeciesDtb_ToSpecies
+  use M_Element_Read,only: Element_Read_Redox,Element_Read_Entropy
+  use M_Global_Tools,only: Global_TP_Update
+  use M_DiscretModel_Read
+  use M_DiscretModel_Tools
+  use M_Global_Alloc
   !
-  USE M_Global_Vars, ONLY: vEle,vSpc,vSpcDtb,vFas
-  USE M_Global_Vars, ONLY: vMixModel,vMixFas
-  USE M_Global_Vars, ONLY: vDiscretModel,vDiscretParam
-  USE M_Dtb_Vars,    ONLY: DtbLogK_vTPCond
+  use M_Global_Vars, only: vEle,vSpc,vSpcDtb,vFas
+  use M_Global_Vars, only: vMixModel,vMixFas
+  use M_Global_Vars, only: vDiscretModel,vDiscretParam
+  use M_Dtb_Vars,    only: DtbLogK_vTPCond
   !
-  REAL(dp),INTENT(IN):: TdgK,Pbar
+  real(dp),intent(in):: TdgK,Pbar
   !
-  INTEGER:: N
-  LOGICAL:: fOk
-  TYPE(T_Species),ALLOCATABLE:: vSpcTmp(:)
+  integer:: N
+  logical:: fOk
+  type(T_Species),allocatable:: vSpcTmp(:)
   !
-  CALL Elements_Alloc_forDtb !-> builds vEle
+  call Elements_Alloc_forDtb(vEle,N) !---------------------> builds vEle
   !
-  CALL Element_Read_Redox(vEle)
-  CALL Element_Read_Entropy(vEle)
+  call Element_Read_Redox(vEle)
+  call Element_Read_Entropy(vEle)
   !
-  CALL Dtb_Read_Species(vEle) !-> read databases -> build vDtbXxx
+  call Dtb_Read_Species(vEle) !--------> read databases -> build vDtbXxx
   !
-  CALL SpeciesDtb_Alloc       !-> from vDtb*, build vSpcDtb
+  call SpeciesDtb_Alloc(vSpcDtb,N) !---------> from vDtb*, build vSpcDtb
   !
-  N= SIZE(vSpcDtb)
-  IF(N<1) RETURN
+  if(N<1) return
   !
-  DEALLOCATE(vSpc)  ;  ALLOCATE(vSpc(1:N))
+  deallocate(vSpc)
+  allocate(vSpc(1:N))
   !
-  !! CALL Species_Alloc_forDtb(vEle) !-> read databases -> vSpc,tFormula
-  CALL SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
+  !! call Species_Alloc_forDtb(vEle) !-> read databases -> vSpc,tFormula
+  call SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
   !
-  CALL Species_Stoikio_Calc(vEle,vSpc,fOk)
+  call Species_Stoikio_Calc(vEle,vSpc,fOk)
   !
-  CALL MixModels_Alloc(vSpc) !-> build MixModel DATAbase vMixModel
+  call MixModels_Alloc(vSpc,vMixModel) !--> build MixModel dtb vMixModel
   !
-  CALL DiscretModel_Read(vMixModel) !-> allocate vDiscretModel
+  call DiscretModel_Read(vMixModel) !-----------> allocate vDiscretModel
   !
-  N= SIZE(vDiscretModel)
-  IF(N>0) THEN
-    CALL DiscretParam_Alloc(vDiscretModel) !-> allocate vDiscretParam
+  N= size(vDiscretModel)
+  if(N>0) then
+    call DiscretParam_Alloc(vDiscretModel,   vDiscretParam)
     !
-    ALLOCATE(vSpcTmp(SIZE(vDiscretParam)))
+    allocate(vSpcTmp(size(vDiscretParam)))
     !
-    CALL DiscretParam_Init( &
+    call DiscretParam_Init( &
     & vEle,vSpc,vMixModel,vDiscretModel, &
     & vDiscretParam,vSpcTmp) !-> build vSpcDiscret
     !
-    CALL Species_Append(vSpcTmp) !-> new vSpc !!!
+    call Species_Append(vSpcTmp,     vSpc) !-> new vSpc !!!
     !
-    DEALLOCATE(vSpcTmp)
+    deallocate(vSpcTmp)
     !
-  ENDIF
+  end if
   !
-  CALL MixPhases_Alloc(vSpc,vMixModel) !read phase compositions, build vMixFas
+  !-------------------------------read phase compositions, build vMixFas
+  call MixPhases_Alloc(vSpc,vMixModel,  vMixFas) 
   !
-  CALL Phases_Alloc(vSpc,vMixFas) !-> build vFas
+  call Phases_Alloc(vSpc,vMixFas, vFas) !-------------------> build vFas
   !
-  CALL Global_TP_Update( &
+  call Global_TP_Update( &
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
   & vSpc,vMixModel,vMixFas,vFas) !inout
   !
-ENDSUBROUTINE DiscretModel_Test_Init
+end subroutine DiscretModel_Test_Init
 
-SUBROUTINE Species_Append(vSpcAdd)
-!--
-!-- append vSpcAdd to current vSpc -> produce a new vSpc
-!--
-  USE M_T_Species, ONLY: T_Species
-  !
-  USE M_Global_Vars, ONLY: vSpc
-  !
-  TYPE(T_Species),INTENT(IN):: vSpcAdd(:)
-  !
-  TYPE(T_Species),ALLOCATABLE:: vSpcAll(:)
-  INTEGER:: M, N
-  !
-  M= SIZE(vSpc)
-  N= SIZE(vSpcAdd)
-  !
-  ALLOCATE(vSpcAll(M+N))
-  vSpcAll(1   :M )= vSpc(1:M)
-  vSpcAll(M+1:M+N)= vSpcAdd(1:N)
-  !
-  DEALLOCATE(vSpc)
-  ALLOCATE(vSpc(N+M)) ; vSpc= vSpcAll
-  !
-  DEALLOCATE(vSpcAll)
-  !
-ENDSUBROUTINE Species_Append
-  !
-ENDMODULE M_DiscretModel_Test
+end module M_DiscretModel_Test

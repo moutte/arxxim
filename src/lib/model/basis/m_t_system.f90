@@ -1,55 +1,55 @@
-MODULE M_T_System
+module M_T_System
 
-  USE M_Kinds
-  USE M_T_Component,ONLY: T_Component
+  use M_Kinds
+  use M_T_Component,only: T_Component
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC:: &
+  public:: &
   & T_System,   &
   & System_New, &
   & System_Free
   
-  TYPE:: T_System
-    !PRIVATE
-    CHARACTER(LEN=7):: SysName ! MASTER, INJECT, BOX, ...
-    CHARACTER(LEN=7):: SysType ! AQUEOUS, ...
+  type:: T_System
+    !private
+    character(len=7):: SysName ! MASTER, INJECT, BOX, ...
+    character(len=7):: SysType ! AQUEOUS, ...
     !
-    REAL(dp):: SysTdgK, SysPbar
+    real(dp):: SysTdgK, SysPbar
     !
-    INTEGER :: SysNCp
-    TYPE(T_Component),ALLOCATABLE:: vCpn(:)
+    integer :: SysNCp
+    type(T_Component),allocatable:: vCpn(:)
     !
-  END TYPE T_System
+  end type T_System
   
-CONTAINS
+contains
 
-SUBROUTINE System_New(N,This)
-  INTEGER,INTENT(IN):: N
-  TYPE(T_System),INTENT(OUT):: This
+subroutine System_New(N,This)
+  integer,intent(in):: N
+  type(T_System),intent(out):: This
   !
   This%SysName= "VOID"
   This%SysType= "VOID"
   
-  This%SysTdgK= 0.D0
-  This%SysPbar= 0.D0
+  This%SysTdgK= 25.D0
+  This%SysPbar= 1.D0
   
   This%SysNCp=  N
-  ALLOCATE(This%vCpn(N))
+  allocate(This%vCpn(N))
   !
-END SUBROUTINE System_New
+end subroutine System_New
 
-SUBROUTINE System_Free(This)
-  TYPE(T_System),INTENT(INOUT):: This
+subroutine System_Free(This)
+  type(T_System),intent(inout):: This
   !
   This%SysName="VOID"
   This%SysType="VOID"
   This%SysNCp= 0
-  DEALLOCATE(This%vCpn)
+  deallocate(This%vCpn)
   !
-END SUBROUTINE System_Free
+end subroutine System_Free
 
-END MODULE M_T_System
+end module M_T_System
 

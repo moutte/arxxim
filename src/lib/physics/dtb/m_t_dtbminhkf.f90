@@ -1,28 +1,28 @@
-MODULE M_T_DtbMinHkf
+module M_T_DtbMinHkf
 !--
 !-- module for data structures dedicated to thermodynamic data on min./gas species 
 !-- Hkf approach (apparent G a la Benson-Helgeson, minerals have constant volumes, etc.)
 !--
-  USE M_Kinds
-  IMPLICIT NONE
+  use M_Kinds
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: T_DtbMinHkf
-  PUBLIC:: DtbMinHkf_Calc
-  PUBLIC:: DtbMinHkf_Zero
+  public:: T_DtbMinHkf
+  public:: DtbMinHkf_Calc
+  public:: DtbMinHkf_Zero
   !
-  TYPE:: T_DtbMinHkf
+  type:: T_DtbMinHkf
   !--
   !-- data structure for thermo data for Min.Species according to SupCrt database
   !--
-    CHARACTER(LEN=15):: Num
-    CHARACTER(LEN=23):: Name
-    CHARACTER(LEN=71):: Formula
-    CHARACTER(LEN=3) :: Typ !MIN or GAS <-not used yet !!!??
-    INTEGER :: Div=1 !!,nO_=0
-    INTEGER :: nTran, phaser
-    REAL(dp):: &
+    character(len=15):: Num
+    character(len=23):: Name
+    character(len=71):: Formula
+    character(len=3) :: Typ !MIN or GAS <-not used yet !!!??
+    integer :: Div=1 !!,nO_=0
+    integer :: nTran, phaser
+    real(dp):: &
     & G0R,     &
     & H0R,     &
     & S0_,     &
@@ -30,46 +30,46 @@ MODULE M_T_DtbMinHkf
     & Tmax,    &
     & WeitKg,  &
     & S0Ele !ref. state entropy
-    REAL(dp),DIMENSION(3):: Ttran, Htran, Vtran
-    REAL(dp),DIMENSION(3):: MK1, MK2, MK3, MK4, dPdTtr !MK=MaierKelly Coeff's
-  ENDTYPE T_DtbMinHkf
+    real(dp),dimension(3):: Ttran, Htran, Vtran
+    real(dp),dimension(3):: MK1, MK2, MK3, MK4, dPdTtr !MK=MaierKelly Coeff's
+  end type T_DtbMinHkf
   !
-CONTAINS
+contains
 
-SUBROUTINE DtbMinHkf_Calc(M,TdgK,Pbar,S)
+subroutine DtbMinHkf_Calc(M,TdgK,Pbar,S)
 !--
 !-- computes the standard molal thermodynamic properties of mineral M at Pbar,TdgK
 !-- using equations from Helgeson et al. (1978).
 !--
-  USE M_Dtb_Const,ONLY: CalToJoule,R_cK,R_jK,Tref,Pref
-  USE M_Numeric_Const,    ONLY: Ln10
-  USE M_T_Species,ONLY: T_Species
+  use M_Dtb_Const,only: CalToJoule,R_cK,R_jK,Tref,Pref
+  use M_Numeric_Const,    only: Ln10
+  use M_T_Species,only: T_Species
   !
-  TYPE(T_DtbMinHkf),INTENT(IN)   :: M !thermodyn' model
-  REAL(dp),         INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_Species),  INTENT(INOUT):: S !species
+  type(T_DtbMinHkf),intent(in)   :: M !thermodyn' model
+  real(dp),         intent(in)   :: TdgK,Pbar
+  type(T_Species),  intent(inout):: S !species
   !
-  INTEGER :: PhTran,PhasRegion
-  REAL(dp):: CprdT,CprdlT,Spttrm,Hpttrm,Gpttrm,VdP
-  REAL(dp):: GR, HR, SR, VR, CpR !-> stores values computed for given P,T
+  integer :: PhTran,PhasRegion
+  real(dp):: CprdT,CprdlT,Spttrm,Hpttrm,Gpttrm,VdP
+  real(dp):: GR, HR, SR, VR, CpR !-> stores values computed for given P,T
   !
   Spttrm=  Zero
   Hpttrm=  Zero
   Gpttrm=  Zero
   !--------------------------------------------------- Phase Transition terms --
   PhasRegion=f_MinHkf_PhaseRegion(M,Pbar,Pref,TdgK)
-  DO PhTran=1,PhasRegion-1
+  do PhTran=1,PhasRegion-1
     Spttrm=  Spttrm + M%Htran(PhTran) /M%Ttran(PhTran)
     Hpttrm=  Hpttrm + M%Htran(PhTran)
     Gpttrm=  Gpttrm + M%Htran(PhTran) *(One - TdgK /M%Ttran(PhTran))
-    !!-> when there is phase transition, transition enthalpy is USEd  ...
-  ENDDO
+    !!-> when there is phase transition, transition enthalpy is used  ...
+  end do
   !--------------------------------------------------/ Phase Transition terms --
   !
-  SELECT CASE(TRIM(M%Typ))
+  select case(trim(M%Typ))
   
-  CASE("MIN")
-    CALL MinHkf_Vol_Calc( &
+  case("MIN")
+    call MinHkf_Vol_Calc( &
     & M,Pbar,Pref,TdgK,PhasRegion, &
     & VdP,Vr) ! VdP in calorie, Vr in cm^3
     !
@@ -80,13 +80,13 @@ SUBROUTINE DtbMinHkf_Calc(M,TdgK,Pbar,S)
     !--- from cm^3 to m^3
     Vr= Vr*1.0D-6
   
-  CASE("GAS") ! ideal gas
-    Vdp= R_jk *TdgK *LOG(Pbar /Pref) !=Joule
+  case("GAS") ! ideal gas
+    Vdp= R_jk *TdgK *log(Pbar /Pref) !=Joule
     Vr=  R_jK *TdgK /Pbar /1.D5 ! Joule/Pascal= m^3
   
-  END SELECT
+  end select
   !
-  CALL MinHkf_Cp_Calc( &
+  call MinHkf_Cp_Calc( &
   & M,TdgK,Tref, &    ! in
   & Cpr,CprdT,CprdlT) ! out
   !
@@ -107,10 +107,10 @@ SUBROUTINE DtbMinHkf_Calc(M,TdgK,Pbar,S)
   !
   !!S%VMol= S%V0
   !! Rho=  S%WeitKg / S%V0 !-> density of mineral, in kg/m3
-ENDSUBROUTINE DtbMinHkf_Calc
+end subroutine DtbMinHkf_Calc
 
-SUBROUTINE DtbMinHkf_Zero(M)
-  TYPE(T_DtbMinHkf),INTENT(OUT)::M
+subroutine DtbMinHkf_Zero(M)
+  type(T_DtbMinHkf),intent(out)::M
   !
   M%Div=   1
   M%G0R=   Zero
@@ -122,105 +122,105 @@ SUBROUTINE DtbMinHkf_Zero(M)
   M%MK1(1:3)= Zero
   M%MK2(1:3)= Zero
   M%MK3(1:3)= Zero
-ENDSUBROUTINE DtbMinHkf_Zero
+end subroutine DtbMinHkf_Zero
 
-!~ INTEGER FUNCTION DtbMinHkf_Index(Str,V) 
+!~ integer function DtbMinHkf_Index(Str,V) 
 !~ !.-> index of mineral named Str in vDtbMinHkf
-  !~ CHARACTER(*),                  INTENT(IN):: Str
-  !~ TYPE(T_DtbMinHkf),DIMENSION(:),INTENT(IN):: V
-  !~ INTEGER     ::I
+  !~ character(*),                  intent(in):: Str
+  !~ type(T_DtbMinHkf),dimension(:),intent(in):: V
+  !~ integer     ::I
   !~ DtbMinHkf_Index=0
   !~ I=0
-  !~ DO
-    !~ I=I+1 !; IF(iDebug>0) WRITE(fTrc,'(A)') vEle(I)%SpName
-    !~ IF(TRIM(Str)==TRIM(V(I)%Name)) THEN;
+  !~ do
+    !~ I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vEle(I)%SpName
+    !~ if(trim(Str)==trim(V(I)%Name)) then;
       !~ DtbMinHkf_Index=I
-      !~ EXIT
-    !~ ENDIF
-    !~ IF(I==SIZE(V)) EXIT
-  !~ ENDDO !IF Str not found -> DtbMinThr_Index=0
-!~ ENDFUNCTION DtbMinHkf_Index
+      !~ exit
+    !~ end if
+    !~ if(I==size(V)) exit
+  !~ end do !if Str not found -> DtbMinThr_Index=0
+!~ end function DtbMinHkf_Index
 
-FUNCTION Cp(T,a,b,c)
+function Cp(T,a,b,c)
 !.standard molal heat capacity at T.
-  REAL(dp)::Cp,T,a,b,c
+  real(dp)::Cp,T,a,b,c
   Cp=  a + b*T + c/T/T
-ENDFUNCTION Cp
+end function Cp
 
-FUNCTION CpdT(T1,T2,a,b,c)
+function CpdT(T1,T2,a,b,c)
 !.integral Cp.dT evaluated from T1 to T2.
-  REAL(dp)::CpdT,T1,T2,a,b,c
+  real(dp)::CpdT,T1,T2,a,b,c
   CpdT= a*(T2     - T1    ) &
   &   + b*(T2*T2  - T1*T1 )/2.0d0 &
   &   - c*(One/T2 - One/T1)
-END FUNCTION CpdT
+end function CpdT
 
-FUNCTION CpdlnT(T1,T2,a,b,c)
+function CpdlnT(T1,T2,a,b,c)
 !.integral Cp.dlnT evaluated from T1 to T2.
-  REAL(dp)::CpdlnT,T1,T2,a,b,c
-  CpdlnT= a*(LOG(T2)   - LOG(T1)  ) &
+  real(dp)::CpdlnT,T1,T2,a,b,c
+  CpdlnT= a*(log(T2)   - log(T1)  ) &
   &     + b*(T2        - T1       ) &
   &     - c*(One/T2/T2 - One/T1/T1)/2.0D0
-ENDFUNCTION CpdlnT
+end function CpdlnT
 
-SUBROUTINE MinHkf_Vol_Calc( &
+subroutine MinHkf_Vol_Calc( &
 & M,P,P_ref,T,PhaseRegion, &
 & VdP,Vr)
 !--
-!-- computes VMin_(P,T), VMin_*dP_, and (IF necesary) PtranT_.
+!-- computes VMin_(P,T), VMin_*dP_, and (if necesary) PtranT_.
 !--
-  USE M_Dtb_Const, ONLY: CalToJoule
+  use M_Dtb_Const, only: CalToJoule
   !
-  TYPE(T_DtbMinHkf),INTENT(IN) :: M
-  REAL(dp),         INTENT(IN) :: P,P_ref ! bar
-  REAL(dp),         INTENT(IN) :: T       ! dgK
-  INTEGER,          INTENT(IN) :: PhaseRegion
-  REAL(dp),         INTENT(OUT):: VdP     ! bar.cm^3
-  REAL(dp),         INTENT(OUT):: Vr      ! cm^3
+  type(T_DtbMinHkf),intent(in) :: M
+  real(dp),         intent(in) :: P,P_ref ! bar
+  real(dp),         intent(in) :: T       ! dgK
+  integer,          intent(in) :: PhaseRegion
+  real(dp),         intent(out):: VdP     ! bar.cm^3
+  real(dp),         intent(out):: Vr      ! cm^3
   !
-  REAL(dp),DIMENSION(2)::PtranT
-  INTEGER :: I
+  real(dp),dimension(2)::PtranT
+  integer :: I
   !
   Vr= M%V0R ! cm^3
-  DO i=1,PhaseRegion-1 ; Vr=Vr + M%Vtran(i) ; ENDDO
+  do i=1,PhaseRegion-1 ; Vr=Vr + M%Vtran(i) ; end do
   !
   VdP= Vr*(P - P_ref) !-> VdP in cm^3*bar
   !
-  !RETURN IF Pressure integration does not cross phase transition boundaries
-  IF ((M%nTran    ==0) &
-  .OR.(M%dPdTtr(1)==Zero) &
-  .OR.(M%Ttran(1) >=T)) RETURN 
+  !return if Pressure integration does not cross phase transition boundaries
+  if ((M%nTran    ==0) &
+  .or.(M%dPdTtr(1)==Zero) &
+  .or.(M%Ttran(1) >=T)) return 
   ! 
-  IF ((M%nTran==1).AND.(PhaseRegion==2))  RETURN
-  IF ((M%nTran==2).AND.(PhaseRegion==3))  RETURN
-  IF ((M%nTran==2).AND.(PhaseRegion==2).AND.(M%Ttran(2)>T)) RETURN
+  if ((M%nTran==1).and.(PhaseRegion==2))  return
+  if ((M%nTran==2).and.(PhaseRegion==3))  return
+  if ((M%nTran==2).and.(PhaseRegion==2).and.(M%Ttran(2)>T)) return
   !
   !-- take account of cross-boundary pressure integration 
-  IF ((M%nTran    == 1) &
- .OR.((PhaseRegion==1).AND.(M%Ttran(2)>T))) THEN
+  if ((M%nTran    == 1) &
+ .or.((PhaseRegion==1).and.(M%Ttran(2)>T))) then
     PtranT(1)=  P_ref + (T - M%Ttran(1))*M%dPdTtr(1)
     VdP= M%V0R     *(P - P_ref)  &
     &  + M%Vtran(1)*(PtranT(1) - P_ref) !-> VdP in cm^3*bar
-    RETURN
-  ENDIF
+    return
+  end if
   !
   !-- nTran-  2 and T >- Ttran(2)
   PtranT(2)=  P_ref + (T - M%Ttran(2))*M%dPdTtr(2)
-  IF (PhaseRegion==2) THEN
+  if (PhaseRegion==2) then
     VdP=(M%V0R + M%Vtran(1))*(P -         P_ref) &
     &  + M%Vtran(2)         *(PtranT(2) - P_ref)
-  ELSE
+  else
     PtranT(1)= P_ref + (T - M%Ttran(1))*M%dPdTtr(1)
     VdP= M%V0R     *(P - P_ref) &
     &  + M%Vtran(1)*(PtranT(1) - P_ref) &
     &  + M%Vtran(2)*(PtranT(2) - P_ref)
-  ENDIF
-  RETURN
-ENDSUBROUTINE MinHkf_Vol_Calc
+  end if
+  return
+end subroutine MinHkf_Vol_Calc
 
-INTEGER FUNCTION f_MinHkf_PhaseRegion(M,P,P_ref,T)
-  TYPE(T_DtbMinHkf),INTENT(IN)::M
-  REAL(dp),      INTENT(IN)::P,P_ref,T
+integer function f_MinHkf_PhaseRegion(M,P,P_ref,T)
+  type(T_DtbMinHkf),intent(in)::M
+  real(dp),      intent(in)::P,P_ref,T
   !
   !-- Returns phase region for mineral imin at P, T; 
   !-- and, as a side effect, TtranP(1..MXTRAN) as f(P).
@@ -229,61 +229,61 @@ INTEGER FUNCTION f_MinHkf_PhaseRegion(M,P,P_ref,T)
   !-- f_MinHkf_PhaseRegion-  3 ... TtranP(2) - T  [- TtranP(3)]
   !-- f_MinHkf_PhaseRegion-  4 ... TtranP(3) - T
   !
-  REAL(dp),DIMENSION(3)::TtranP
+  real(dp),dimension(3)::TtranP
   !
-  f_MinHkf_PhaseRegion=  1 !== phase region 1
-  IF (M%nTran==0) RETURN
-  IF (M%dPdTtr(1)==Zero) THEN  ;  TtranP(1)=M%Ttran(1)
-  ELSE                         ;  TtranP(1)=M%Ttran(1)+(P-P_ref)/M%dPdTtr(1)
-  END IF
-  IF (T<=TtranP(1)) RETURN
-  f_MinHkf_PhaseRegion=  2 !== phase region 2
-  IF (M%nTran==1) RETURN
-  IF (M%dPdTtr(2)==Zero) THEN  ;  TtranP(2)=M%Ttran(2)
-  ELSE                         ;  TtranP(2)=M%Ttran(2)+(P-P_ref)/M%dPdTtr(2)
-  END IF
-  IF (T<=TtranP(2)) RETURN
-  f_MinHkf_PhaseRegion=  3 !== phase region 3
-  IF (M%nTran== 2)   RETURN
-  IF (M%dPdTtr(3)==Zero) THEN  ;  TtranP(3)=M%Ttran(3)
-  ELSE                         ;  TtranP(3)=M%Ttran(3)+(P-P_ref)/M%dPdTtr(3)
-  END IF
-  IF (T<=TtranP(3)) RETURN
-  f_MinHkf_PhaseRegion=  4 !== phase region 4
-  RETURN
-ENDFUNCTION f_MinHkf_PhaseRegion
+  f_MinHkf_PhaseRegion=  1 !-- phase region 1
+  if (M%nTran==0) return
+  if (M%dPdTtr(1)==Zero) then  ;  TtranP(1)=M%Ttran(1)
+  else                         ;  TtranP(1)=M%Ttran(1)+(P-P_ref)/M%dPdTtr(1)
+  end if
+  if (T<=TtranP(1)) return
+  f_MinHkf_PhaseRegion=  2 !-- phase region 2
+  if (M%nTran==1) return
+  if (M%dPdTtr(2)==Zero) then  ;  TtranP(2)=M%Ttran(2)
+  else                         ;  TtranP(2)=M%Ttran(2)+(P-P_ref)/M%dPdTtr(2)
+  end if
+  if (T<=TtranP(2)) return
+  f_MinHkf_PhaseRegion=  3 !-- phase region 3
+  if (M%nTran== 2)   return
+  if (M%dPdTtr(3)==Zero) then  ;  TtranP(3)=M%Ttran(3)
+  else                         ;  TtranP(3)=M%Ttran(3)+(P-P_ref)/M%dPdTtr(3)
+  end if
+  if (T<=TtranP(3)) return
+  f_MinHkf_PhaseRegion=  4 !-- phase region 4
+  return
+end function f_MinHkf_PhaseRegion
 
-INTEGER FUNCTION f_MinHkf_CpRegion(M,T) !in M_T_DtbMinHkf
+integer function f_MinHkf_CpRegion(M,T) !in M_T_DtbMinHkf
 !.-> effective phase region for temperature integration of Cpr(T)
-!.for mineral imin (i.e., the phase region specIFied by T at 1 bar).
-  TYPE(T_DtbMinHkf)::M
-  REAL(dp)::T
-  INTEGER ::I
+!.for mineral imin (i.e., the phase region specified by T at 1 bar).
+  type(T_DtbMinHkf)::M
+  real(dp)::T
+  integer ::I
   !
   f_MinHkf_CpRegion=1
-  DO i=1,M%nTran
-    IF (T > M%TTran(i)) f_MinHkf_CpRegion=f_MinHkf_CpRegion+1
-  ENDDO
-ENDFUNCTION f_MinHkf_CpRegion
+  do i=1,M%nTran
+    if (T > M%TTran(i)) f_MinHkf_CpRegion=f_MinHkf_CpRegion+1
+  end do
+end function f_MinHkf_CpRegion
 
-SUBROUTINE MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
+subroutine MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
 !--
 !-- computes the standard molal heat capacity and heat capacity temperature integrals, 
 !-- evaluated from Tref to TdgK at 1 bar.
 !--
   !
-  TYPE(T_DtbMinHkf),INTENT(IN) :: M
-  REAL(dp),         INTENT(IN) :: TdgK,T_ref
-  REAL(dp),         INTENT(OUT):: Cpr,CprdT,CprdlT 
+  type(T_DtbMinHkf),intent(in) :: M
+  real(dp),         intent(in) :: TdgK,T_ref
+  real(dp),         intent(out):: Cpr,CprdT,CprdlT 
   !
   !iCpRegion=f_MinHkf_CpRegion(M,TdgK)
   !
-  SELECT CASE(f_MinHkf_CpRegion(M,TdgK)) !iCpRegion)
-  CASE(1)
+  select case(f_MinHkf_CpRegion(M,TdgK)) !iCpRegion)
+  case(1)
     Cpr=     Cp(TdgK,          M%MK1(1),M%MK1(2),M%MK1(3))
     CprdT=   CpdT(T_ref,  TdgK,M%MK1(1),M%MK1(2),M%MK1(3))
     CprdlT=  CpdlnT(T_ref,TdgK,M%MK1(1),M%MK1(2),M%MK1(3))
-  CASE(2)
+  case(2)
     Cpr=   Cp(TdgK,                 M%MK2(1),M%MK2(2),M%MK2(3))
     !
     CprdT= CpdT(T_ref,M%Ttran(1),   M%MK1(1),M%MK1(2),M%MK1(3)) &
@@ -291,7 +291,7 @@ SUBROUTINE MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
     !
     CprdlT= CpdlnT(T_ref,M%Ttran(1),M%MK1(1),M%MK1(2),M%MK1(3)) &
     &     + CpdlnT(M%Ttran(1),TdgK,M%MK2(1),M%MK2(2),M%MK2(3))
-  CASE(3)
+  case(3)
     Cpr=     Cp(TdgK, M%MK3(1),M%MK3(2),M%MK3(3))
     !
     CprdT= CpdT(T_ref,M%Ttran(1),       M%MK1(1),M%MK1(2),M%MK1(3)) &
@@ -301,7 +301,7 @@ SUBROUTINE MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
     CprdlT= CpdlnT(T_ref,M%Ttran(1),     M%MK1(1),M%MK1(2),M%MK1(3)) &
     &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1),M%MK2(2),M%MK2(3)) &
     &     + CpdlnT(M%Ttran(2),TdgK,      M%MK3(1),M%MK3(2),M%MK3(3))
-  CASE(4)
+  case(4)
     Cpr= Cp(  TdgK,                      M%MK4(1),M%MK4(2),M%MK4(3))
     !
     CprdT= CpdT(T_ref,     M%Ttran(1),M%MK1(1),M%MK1(2),M%MK1(3)) &
@@ -313,19 +313,19 @@ SUBROUTINE MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
     &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1),M%MK2(2),M%MK2(3)) &
     &     + CpdlnT(M%Ttran(2),M%Ttran(3),M%MK3(1),M%MK3(2),M%MK3(3)) &
     &     + CpdlnT(M%Ttran(3),TdgK,      M%MK4(1),M%MK4(2),M%MK4(3))
-  END SELECT
+  end select
   !
-  RETURN
-ENDSUBROUTINE MinHkf_Cp_Calc
+  return
+end subroutine MinHkf_Cp_Calc
 
-!!!   SUBROUTINE CalcGasHKF(s_,TdgK) !gas-> calculate G,H,S at (TdgK, Pref)
-!!!     USE M_Dtb_Const,ONLY:CalToJoule,R_jk,Tref
-!!!     USE M_Numeric_Const,ONLY:Ln10
-!!!     TYPE(T_GasHkf),INTENT(INOUT)::S_
-!!!     REAL(dp),      INTENT(IN)   ::TdgK
+!!!   subroutine CalcGasHKF(s_,TdgK) !gas-> calculate G,H,S at (TdgK, Pref)
+!!!     use M_Dtb_Const,only:CalToJoule,R_jk,Tref
+!!!     use M_Numeric_Const,only:Ln10
+!!!     type(T_GasHkf),intent(inout)::S_
+!!!     real(dp),      intent(in)   ::TdgK
 !!!     !
-!!!     INTEGER::nEl
-!!!     REAL(dp)::Cpr,CprdT,CprdlT
+!!!     integer::nEl
+!!!     real(dp)::Cpr,CprdT,CprdlT
 !!!     !Cptrms(phase,i,CpRegion,T,Cpr,CprdT,CprdlT)
 !!!     !Computes the standard molal heat capacity and heat capacity temperature integrals, 
 !!!     !evaluated from Tref to T at 1 bar.
@@ -344,12 +344,12 @@ ENDSUBROUTINE MinHkf_Cp_Calc
 !!!     S_%Hr=   S_%Hr*CalToJoule
 !!!     S_%Sr=   S_%Sr*CalToJoule
 !!!     !
-!!!     nEl=SIZE(vEle)
-!!!     S_%S0Ele= DOT_PRODUCT(S_%Stoik(1:nEl),vEle(1:nEl)%S0) /S_%Div
-!!!     S_%WeitKg=DOT_PRODUCT(S_%Stoik(1:nEl)/S_%Div,vEle(1:nEl)%WeitKg) /S_%Div
+!!!     nEl=size(vEle)
+!!!     S_%S0Ele= dot_product(S_%Stoik(1:nEl),vEle(1:nEl)%S0) /S_%Div
+!!!     S_%WeitKg=dot_product(S_%Stoik(1:nEl)/S_%Div,vEle(1:nEl)%WeitKg) /S_%Div
 !!!     !
 !!!     S_%logK=-S_%Gr/R_jk/TdgK/Ln10
-!!!   ENDSUBROUTINE CalcGasHKF
+!!!   end subroutine CalcGasHKF
 
-ENDMODULE M_T_DtbMinHkf
+end module M_T_DtbMinHkf
 

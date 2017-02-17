@@ -1,49 +1,51 @@
-MODULE M_Global_Build
-  IMPLICIT NONE
+module M_Global_Build
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Global_Build
-  PUBLIC:: Global_Build_New
+  public:: Global_Build
+  ! public:: Global_Build_New
 
-CONTAINS
+contains
 
-SUBROUTINE Global_Build
+subroutine Global_Build
 !--
-!-- build "global" vEle and vSpc
+!-- build "global" vEle, vSpc, vMixModel, vMixFas, vFas
 !-- (all available elements and species, not restricted to those used in the run)
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc  !,Stop_,Warning_
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc  !,Stop_,Warning_
   !
-  USE M_T_Species,   ONLY: T_Species,Species_Stoikio_Calc
-  USE M_Dtb_Const,   ONLY: T_CK,Tref,Pref
-  USE M_Dtb_Read,    ONLY: Dtb_Read_Species
-  USE M_Dtb_Calc,    ONLY: SpeciesDtb_ToSpecies
-  USE M_Element_Read,ONLY: Element_Read_Redox,Element_Read_Entropy
-  USE M_SpeciesDtb_Read,ONLY: Species_Read_AquSize,Species_Write_AquSize
-  USE M_Global_Tools,ONLY: Global_TP_Update,Global_Species_Select
-  USE M_Global_Alloc
+  use M_T_Species,   only: T_Species,Species_Stoikio_Calc
+  use M_Dtb_Const,   only: T_CK,Tref,Pref
+  use M_Dtb_Read,    only: Dtb_Read_Species
+  use M_Dtb_Calc,    only: SpeciesDtb_ToSpecies
+  use M_Element_Read,only: Element_Read_Redox,Element_Read_Entropy
+  use M_SpeciesDtb_Read,only: Species_Read_AquSize,Species_Write_AquSize
+  use M_Global_Tools,only: Global_TP_Update,Global_Species_Select
+  use M_Global_Alloc
   !
   !--global variables--
-  USE M_Global_Vars, ONLY: vEle,vSpc,vSpcDtb
-  USE M_Global_Vars, ONLY: vMixModel,vMixFas,vFas
-  USE M_Global_Vars, ONLY: vDiscretModel,vDiscretParam
+  use M_Global_Vars, only: vEle,vSpc,vSpcDtb
+  use M_Global_Vars, only: vMixModel,vMixFas,vFas
+  use M_Global_Vars, only: vDiscretModel,vDiscretParam
+  use M_Global_Vars, only: vSolModel
+  use M_Global_Vars, only: MySpace
   !
-  INTEGER :: iTP, N
-  LOGICAL :: fOk
-  REAL(dp):: TdgK,Pbar
+  integer :: iTP, N
+  logical :: fOk
+  real(dp):: TdgK,Pbar
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Global_Build"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Global_Build"
   !
-  CALL Elements_Alloc_forDtb !-> builds vEle
+  call Elements_Alloc_forDtb(vEle,N) !---------------------> builds vEle
   !
-  CALL Element_Read_Redox(vEle)
-  !CALL Element_Read_Entropy(vEle)
+  call Element_Read_Redox(vEle)
+  !call Element_Read_Entropy(vEle)
   !
-  CALL Dtb_Read_Species(vEle) !-> read databases -> build vDtbXxx
+  call Dtb_Read_Species(vEle) !--------> read databases -> build vDtbXxx
   !
-  CALL SpeciesDtb_Alloc       !-> from vDtb*, build vSpcDtb
+  call SpeciesDtb_Alloc(vSpcDtb,N) !---------> from vDtb*, build vSpcDtb
   !
   ! write(11,'(A)') "<=======vSpcDtb=1==="
   ! do n=1,size(vSpcDtb)
@@ -51,12 +53,13 @@ SUBROUTINE Global_Build
   ! end do
   ! write(11,'(A)') "===================>"
   !
-  N= SIZE(vSpcDtb)
-  IF(N<1) RETURN
+  N= size(vSpcDtb)
+  if(N<1) return
   !
-  DEALLOCATE(vSpc)  ;  ALLOCATE(vSpc(N))
+  deallocate(vSpc)
+  allocate(vSpc(N))
   !
-  CALL SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
+  call SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
   !
   ! write(11,'(A)') "<=======species=2==="
   ! do n=1,size(vSpc)
@@ -64,343 +67,325 @@ SUBROUTINE Global_Build
   ! end do
   ! write(11,'(A)') "===================>"
   !
-  CALL Global_Species_Select
+  call Global_Species_Select
   !
-  CALL Species_Stoikio_Calc(vEle,vSpc,fOk)
+  call Species_Stoikio_Calc(vEle,vSpc,fOk)
   !
-  CALL Species_Read_AquSize(vSpc)
-  ! CALL Species_Write_AquSize(vSpc)
+  call Species_Read_AquSize(vSpc)
+  ! call Species_Write_AquSize(vSpc)
   !
-  CALL vSpecies_Rename(vSpc)
+  call vSpecies_Rename(vSpc)
   !
-  CALL MixModels_Alloc(vSpc) !-> build MixModel database vMixModel
+  call MixModels_Alloc(vSpc,  vMixModel) !-------build MixModel database
   !
-  CALL MixPhases_Alloc(vSpc,vMixModel) !READ phase compositions, build vMixFas
+  call MixPhases_Alloc(vSpc,vMixModel,  vMixFas)
   !
-  CALL Phases_Alloc(vSpc,vMixFas) !-> build vFas
+  call Phases_Alloc(vSpc,vMixFas,  vFas) !------------------> build vFas
   !
-  CALL Condition_Read(iTP)
+  call Condition_Read(iTP)
   !
   TdgK= Tref
   Pbar= Pref
   !
-  CALL Global_TP_Update( &
+  call Global_TP_Update( &
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
   & vSpc,vMixModel,vMixFas,vFas) !inout
   !
-  CALL Species_Write_AquSize(vSpc)
+  if(.not.allocated(vSolModel)) allocate(vSolModel(0)) !!JM!!EN_COURS
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Global_Build"
+  if(allocated(MySpace%vEle)) call MySpace%Free_ !!JM!!
+  call MySpace%New_( &
+  & size(vEle),      & !
+  & size(vSpcDtb),   & !
+  & size(vSpc),      & !
+  & size(vMixModel), & !
+  & size(vSolModel)  )
+  !!JM!!EN_COURS ... MySpace must be free'd at end of loop ....
   !
-END SUBROUTINE Global_Build
+  call Species_Write_AquSize(vSpc)
+  !
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Global_Build"
+  !
+end subroutine Global_Build
 
-SUBROUTINE Global_Build_New
+subroutine Global_Build_New !-------------------------------------UNUSED
 !--
-!-- build "global" vEle and vSpc
+!-- build "global" vEle, vSpc, vMixModel, vMixFas, vFas
 !-- (all available elements and species,
 !-- not restricted to those used in the run)
 !--
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,Stop_  !,Warning_
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,Stop_  !,Warning_
   !
-  USE M_T_Species,   ONLY: T_Species,Species_Stoikio_Calc
-  USE M_T_SolModel,  ONLY: T_SolModel
+  use M_T_Species,   only: T_Species,Species_Stoikio_Calc,Species_Append
+  use M_T_SolModel,  only: T_SolModel
   !
-  USE M_Dtb_Const,   ONLY: T_CK,Tref,Pref
-  USE M_Dtb_Read,    ONLY: Dtb_Read_Species
-  USE M_Dtb_Calc,    ONLY: SpeciesDtb_ToSpecies
+  use M_Dtb_Const,   only: T_CK,Tref,Pref
+  use M_Dtb_Read,    only: Dtb_Read_Species
+  use M_Dtb_Calc,    only: SpeciesDtb_ToSpecies
   !
-  USE M_Element_Read,ONLY: Element_Read_Redox,Element_Read_Entropy
-  USE M_SpeciesDtb_Read,ONLY: Species_Read_AquSize,Species_Write_AquSize
-  USE M_Global_Tools,ONLY: Global_TP_Update,Global_Species_Select
-  USE M_Global_Alloc
+  use M_Element_Read,only: Element_Read_Redox,Element_Read_Entropy
+  use M_SpeciesDtb_Read,only: Species_Read_AquSize,Species_Write_AquSize
+  use M_Global_Tools,only: Global_TP_Update,Global_Species_Select
+  use M_Global_Alloc
   !
-  !~ USE M_SolModel_Alloc
-  USE M_SolModel_Read
-  USE M_SolPhase_Read
-  USE M_T_SolModel,   ONLY: SolModel_Spc_Init
-  USE M_T_SolPhase,   ONLY: SolPhase_Init
+  use M_SolModel_Read
+  use M_SolPhase_Read
+  use M_T_SolModel,   only: SolModel_Spc_Init
+  use M_T_SolPhase,   only: SolPhase_Init
   !
-  USE M_DiscretModel_Read
-  USE M_DiscretModel_Tools
+  use M_DiscretModel_Read
+  use M_DiscretModel_Tools
   !
   ! !--database variables--
-  ! USE M_Solmodel_Vars, ONLY: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
-  ! USE M_Solmodel_Vars, ONLY: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl,T_Spline
+  ! use M_Solmodel_Vars, only: Ok_Rho,Ok_Eps,Ok_DHA,Ok_DHB,Ok_BDot
+  ! use M_Solmodel_Vars, only: Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl,T_Spline
   !
   !--global variables--
-  USE M_Global_Vars, ONLY: vEle,vSpc,vSpcDtb
-  USE M_Global_Vars, ONLY: vMixModel,vMixFas,vFas
-  USE M_Global_Vars, ONLY: vSolModel,vSolFas
-  USE M_Global_Vars, ONLY: vDiscretModel,vDiscretParam
+  use M_Global_Vars, only: vEle,vSpc,vSpcDtb
+  use M_Global_Vars, only: vMixModel,vMixFas,vFas
+  use M_Global_Vars, only: vSolModel,vSolFas
+  use M_Global_Vars, only: vDiscretModel,vDiscretParam
   !
-  INTEGER :: iTP, N
-  LOGICAL :: fOk
-  REAL(dp):: TdgK,Pbar
-  LOGICAL:: Ok
-  CHARACTER(LEN=80):: Msg
-  TYPE(T_Species),ALLOCATABLE:: vSpcTmp(:)
-  ! TYPE(T_SolModel):: SolModel
+  integer :: iTP, N
+  logical :: fOk
+  real(dp):: TdgK,Pbar
+  logical :: Ok
+  character(len=80):: Msg
+  type(T_Species),allocatable:: vSpcTmp(:)
+  ! type(T_SolModel):: SolModel
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Global_Build"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Global_Build"
   !
-  CALL Elements_Alloc_forDtb !-> builds vEle
+  call Elements_Alloc_forDtb(vEle,N) !---------------------> builds vEle
   !
-  CALL Element_Read_Redox(vEle)
-  !CALL Element_Read_Entropy(vEle)
+  call Element_Read_Redox(vEle)
+  !call Element_Read_Entropy(vEle)
   !
-  CALL Dtb_Read_Species(vEle) !-> read databases -> build vDtbXxx
+  call Dtb_Read_Species(vEle) !--------> read databases -> build vDtbXxx
   !
-  CALL SpeciesDtb_Alloc       !-> from vDtb*, build vSpcDtb
+  call SpeciesDtb_Alloc(vSpcDtb,N) !---------> from vDtb*, build vSpcDtb
   !
-  N= SIZE(vSpcDtb)
-  IF(N<1) RETURN
+  N= size(vSpcDtb)
+  if(N<1) return
   !
-  DEALLOCATE(vSpc)  ;  ALLOCATE(vSpc(1:N))
+  deallocate(vSpc)
+  allocate(vSpc(1:N))
   !
-  CALL SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
+  call SpeciesDtb_ToSpecies(vSpcDtb,vSpc)
   !
-  CALL Global_Species_Select
+  call Global_Species_Select
   !
-  CALL Species_Stoikio_Calc(vEle,vSpc,fOk)
+  call Species_Stoikio_Calc(vEle,vSpc,fOk)
   !
-  CALL Species_Read_AquSize(vSpc)
-  !CALL Species_Write_AquSize(vSpc)
+  call Species_Read_AquSize(vSpc)
+  !call Species_Write_AquSize(vSpc)
   !
-  CALL vSpecies_Rename(vSpc)
+  call vSpecies_Rename(vSpc)
   !
-  CALL MixModels_Alloc(vSpc) !-> build MixModel database vMixModel
+  call MixModels_Alloc(vSpc, vMixModel) !--------build MixModel database
   !
-  !------------------------------------------------ add discrete species
-  !--- allocate & read vDiscretModel--
-  CALL DiscretModel_Read(vMixModel)
+  !-------------------------------------------------add discrete species
+  !--allocate & read vDiscretModel--
+  call DiscretModel_Read(vMixModel)
   !
-  IF(SIZE(vDiscretModel)>0) THEN
+  if(size(vDiscretModel)>0) then
     !
-    CALL DiscretParam_Alloc(vDiscretModel) !-> allocate vDiscretParam
+    call DiscretParam_Alloc(vDiscretModel,  vDiscretParam)
     !
-    ALLOCATE(vSpcTmp(SIZE(vDiscretParam)))
+    allocate(vSpcTmp(size(vDiscretParam)))
     !
-    CALL DiscretParam_Init( &
+    call DiscretParam_Init( &
     & vEle,vSpc,vMixModel,vDiscretModel, &
     & vDiscretParam,vSpcTmp) !-> build vSpcDiscret
     !
-    CALL Species_Append(vSpcTmp) !-> new vSpc !!!
+    call Species_Append(vSpcTmp,      vSpc) !-> new vSpc !!!
     !
-    DEALLOCATE(vSpcTmp)
+    deallocate(vSpcTmp)
     !
-    CALL DiscretSpecies_Stoikio_Calc( & !
+    call DiscretSpecies_Stoikio_Calc( & !
     & vEle,          & !IN
     & vMixModel,     & !IN
     & vDiscretModel, & !IN
     & vDiscretParam, & !IN
     & vSpc)            !INOUT
     !
-  ENDIF
-  !-----------------------------------------------/ add discrete species
+  end if
+  !------------------------------------------------/add discrete species
   !
   !----------------------------------------------------- build vSolModel
-  IF(COUNT(vSpc(:)%Typ=="AQU") >0) THEN
+  if(count(vSpc(:)%Typ=="AQU") >0) then
 
     ! N= 0
-    ! IF(DtbFormat=="LOGKTBL") N= DtbLogK_Dim
+    ! if(DtbFormat=="LOGKTBL") N= DtbLogK_Dim
 
-    ! ALLOCATE(vTdgC(N))
-    ! IF(N>0) vTdgC(1:N)= DtbLogK_vTPCond(1:N)%TdgC
+    ! allocate(vTdgC(N))
+    ! if(N>0) vTdgC(1:N)= DtbLogK_vTPCond(1:N)%TdgC
 
     ! ! even for HSV base, Solmodel_Read must be called,
     ! ! for reading activity model
-    ! CALL Solmodel_Solvent_Read( &
+    ! call Solmodel_Solvent_Read( &
     ! & N,vTdgC,SolModel, &
     ! & Ok_Rho, Ok_Eps, Ok_DHA, Ok_DHB, Ok_BDot, &
     ! & Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl)
 
-    ! IF(SolModel%ActModel=="PITZER" .OR. &
-    ! &  SolModel%ActModel=="SIT"  ) THEN
-    !   CALL Pitzer_Dtb_Init(vSpc)
-    !   CALL Pitzer_Dtb_TPUpdate(TdgK,Pbar)
-    !   IF(iDebug>2) CALL Pitzer_Dtb_TPtest !!!"WRK"!!!
-    ! ENDIF
+    ! if(SolModel%ActModel=="PITZER" .or. &
+    ! &  SolModel%ActModel=="SIT"  ) then
+    !   call Pitzer_Dtb_Init(vSpc)
+    !   call Pitzer_Dtb_TPUpdate(TdgK,Pbar)
+    !   if(iDebug>2) call Pitzer_Dtb_TPtest !!!"WRK"!!!
+    ! end if
 
     !!--- initialize indexes of the sol'model
-    ! CALL SolModel_Spc_Init("H2O",vSpc,SolModel,Ok,Msg)
+    ! call SolModel_Spc_Init("H2O",vSpc,SolModel,Ok,Msg)
 
-    ! CALL SolModel_Alloc ! allocate vSolModel
+    ! call SolModel_Alloc ! allocate vSolModel
     ! vSolModel(1)= SolModel
 
-    CALL SolModel_Read(vSpc,Ok,Msg)
-    IF(.NOT. Ok) &
-    & CALL Stop_("SolModel_Read==> "//TRIM(Msg))
+    call SolModel_Read(vSpc,Ok,Msg)
+    if(.not. Ok) &
+    & call Stop_("SolModel_Read==> "//trim(Msg))
 
-    CALL SolPhase_Read(vSpc,vSolModel,Ok,Msg)
-    IF(.NOT. Ok) &
-    & CALL Stop_("SolPhase_Read==> "//TRIM(Msg))
-    ! CALL SolPhase_Alloc ! allocate vSolFas
+    call SolPhase_Read(vSpc,vSolModel,Ok,Msg)
+    if(.not. Ok) &
+    & call Stop_("SolPhase_Read==> "//trim(Msg))
+    ! call SolPhase_Alloc ! allocate vSolFas
 
-    ! CALL SolPhase_Init( & !
+    ! call SolPhase_Init( & !
     ! & 1,          & !IN, model index
     ! & vSolModel,  & !IN, base of solution models
     ! & vSolFas(1), & !INOUT, solution phase
     ! & Ok,Msg)       !OUT
  
-    ! CALL SolPhase_Model_Init(SolModel%Model,vSolModel,vSolFas(1),Ok,Msg)
-    ! IF(.NOT. Ok) CALL Stop_(TRIM(Msg))
+    ! call SolPhase_Model_Init(SolModel%Model,vSolModel,vSolFas(1),Ok,Msg)
+    ! if(.not. Ok) call Stop_(trim(Msg))
 
-
-  ENDIF
+  end if
   !-----------------------------------------------------/build vSolModel
   !
-  CALL MixPhases_Alloc(vSpc,vMixModel) !read phase compositions, build vMixFas
+  call MixPhases_Alloc(vSpc,vMixModel,       vMixFas)
   !
-  CALL Phases_Alloc_New(vSpc,vMixFas,vSolFas)
+  call Phases_Alloc_New(vSpc,vMixFas,vSolFas,   vFas)
   !
-  CALL Condition_Read(iTP)
+  call Condition_Read(iTP)
   !
   TdgK= Tref
   Pbar= Pref
   !
-  CALL Global_TP_Update( &
+  call Global_TP_Update( &
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
   & vSpc,vMixModel,vMixFas,vFas) !inout
   !
-  CALL Species_Write_AquSize(vSpc)
+  call Species_Write_AquSize(vSpc)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Global_Build"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Global_Build"
   !
-END SUBROUTINE Global_Build_New
+end subroutine Global_Build_New
 
-SUBROUTINE Species_Append(vSpcAdd)
-!--
-!-- Append vSpcAdd to current vSpc
-!-- -> produce a new vSpc
-!--
-  USE M_T_Species, ONLY: T_Species
+subroutine vSpecies_Rename(vSpc)
+  use M_T_Species,only: T_Species,Species_Rename
+  type(T_Species),intent(inout):: vSpc(:)
   !
-  USE M_Global_Vars, ONLY: vSpc
+  integer:: I
   !
-  TYPE(T_Species),INTENT(IN):: vSpcAdd(:)
+  do I=1,size(vSpc)
+    call Species_Rename(vSpc(I)%NamSp)
+  end do
   !
-  TYPE(T_Species),ALLOCATABLE:: vSpcAll(:)
-  INTEGER:: M, N
-  !
-  M= SIZE(vSpc)
-  N= SIZE(vSpcAdd)
-  !
-  ALLOCATE(vSpcAll(M+N))
-  vSpcAll(1   :M )= vSpc(1:M)
-  vSpcAll(M+1:M+N)= vSpcAdd(1:N)
-  !
-  DEALLOCATE(vSpc)
-  ALLOCATE(vSpc(N+M)) ; vSpc= vSpcAll
-  !
-  DEALLOCATE(vSpcAll)
-  !
-ENDSUBROUTINE Species_Append
+end subroutine vSpecies_Rename
 
-SUBROUTINE vSpecies_Rename(vSpc)
-  USE M_T_Species,ONLY: T_Species,Species_Rename
-  TYPE(T_Species),INTENT(INOUT):: vSpc(:)
-  !
-  INTEGER:: I
-  !
-  DO I=1,SIZE(vSpc)
-    CALL Species_Rename(vSpc(I)%NamSp)
-  END DO
-  !
-END SUBROUTINE vSpecies_Rename
-
-SUBROUTINE Condition_Read(iTP)
+subroutine Condition_Read(iTP)
 !--
 !-- read the block CONDITIONS
 !--
-  USE M_Trace,ONLY: fHtm,iDebug,fTrc
-  USE M_Files,ONLY: NamFInn,cTitle,File_Path
-  USE M_Files,ONLY: DirOut,DirLog,DirDtbLog,DirDtbOut
-  USE M_Files,ONLY: Files_Index_Close,Files_Index_Open
-  USE M_IoTools
+  use M_Trace,only: fHtm,iDebug,fTrc
+  use M_Files,only: NamFInn,cTitle,File_Path
+  use M_Files,only: DirOut,DirLog,DirDtbLog,DirDtbOut
+  use M_Files,only: Files_Index_Close,Files_Index_Open
+  use M_IoTools
   !
-  INTEGER,INTENT(OUT):: iTP
+  integer,intent(out):: iTP
   !
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W
-  LOGICAL:: EoL,Ok
-  INTEGER:: f,ios,N
+  character(len=255):: L
+  character(len=80) :: W
+  logical:: EoL,Ok
+  integer:: f,ios,N
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Condition_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Condition_Read"
   !
   iTP= 0
   !
-  CALL GetUnit(f)
-  OPEN(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  open(f,file=trim(NamFInn))
 
-  Ok=.FALSE.
+  Ok=.false.
 
-  DoFile: DO
+  DoFile: do
     !
-    READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
 
-    CASE("ENDINPUT")
-      EXIT  DoFile
+    case("ENDINPUT")
+      exit  DoFile
     !
-    CASE("CONDITIONS")
-      Ok=.TRUE.
+    case("CONDITIONS")
+      Ok=.true.
       !
-      LoopRead: DO
+      LoopRead: do
         !
-        READ(f,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE LoopRead !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(f,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle LoopRead !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(W)
         !
-        CASE("ENDINPUT")            ; EXIT DoFile
-        CASE("END","ENDCONDITIONS") ; EXIT LoopRead
+        case("ENDINPUT")            ; exit DoFile
+        case("END","ENDCONDITIONS") ; exit LoopRead
         !
-        CASE("TP.POINT","TPPOINT")
-          !! CALL Stop_(TRIM(W)//" is Obsolete !! Give TdgC, Pbar in SYSTEM")
-          CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,iTP)
-        CASE("TITLE")
-          cTitle=TRIM(L)
-        CASE("OUTPUT")
-          CALL LinToWrd(L,W,EoL,"NO"); DirOut=File_Path(TRIM(W))
-        CASE("DIRLOG")
-          CALL LinToWrd(L,W,EoL,"NO"); DirLog=File_Path(TRIM(W))
-        CASE("DTBDIROUT")
-          CALL LinToWrd(L,W,Eol,"NO"); DirDtbOut=File_Path(TRIM(W))
-        CASE("DTBDIRLOG")
-          CALL LinToWrd(L,W,Eol,"NO"); DirDtbLog=File_Path(TRIM(W))
-        CASE("DEBUG")
-          CALL LinToWrd(L,W,EoL); CALL WrdToInt(W,N)
-          IF(N>0 .AND. iDebug==0) iDebug=N
+        case("TP.POINT","TPPOINT")
+          !! call Stop_(trim(W)//" is Obsolete !! Give TdgC, Pbar in SYSTEM")
+          call LinToWrd(L,W,EoL); call WrdToInt(W,iTP)
+        case("TITLE")
+          cTitle=trim(L)
+        case("OUTPUT")
+          call LinToWrd(L,W,EoL,"NO"); DirOut=File_Path(trim(W))
+        case("DIRLOG")
+          call LinToWrd(L,W,EoL,"NO"); DirLog=File_Path(trim(W))
+        case("DTBDIROUT")
+          call LinToWrd(L,W,Eol,"NO"); DirDtbOut=File_Path(trim(W))
+        case("DTBDIRLOG")
+          call LinToWrd(L,W,Eol,"NO"); DirDtbLog=File_Path(trim(W))
+        case("DEBUG")
+          call LinToWrd(L,W,EoL); call WrdToInt(W,N)
+          if(N>0 .and. iDebug==0) iDebug=N
         !
-        END SELECT
+        end select
         !
-      ENDDO LoopRead
+      end do LoopRead
     !
-    END SELECT
+    end select
     !
-  ENDDO DoFile
+  end do DoFile
 
-  CLOSE(f)
+  close(f)
 
-  IF(.NOT.Ok) THEN
-    IF(iDebug>0) WRITE(fTrc,'(A)') "block CONDITIONS not found ???!!!"
-    IF(iDebug>2) PRINT '(A)',"block CONDITIONS not found ???!!!"
-  ENDIF
+  if(.not.Ok) then
+    if(iDebug>0) write(fTrc,'(A)') "block CONDITIONS not found ???!!!"
+    if(iDebug>2) print '(A)',"block CONDITIONS not found ???!!!"
+  end if
 
-  IF(iDebug>0) THEN
-    IF(fHtm>0) CALL Files_Index_Close(fHtm)
-    CALL Files_Index_Open(fHtm)
-  ENDIF
+  if(iDebug>0) then
+    if(fHtm>0) call Files_Index_Close(fHtm)
+    call Files_Index_Open(fHtm)
+  end if
 
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Condition_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Condition_Read"
 
-END SUBROUTINE Condition_Read
+end subroutine Condition_Read
 
-ENDMODULE M_Global_Build
+end module M_Global_Build

@@ -1,97 +1,97 @@
-MODULE M_IO_Menu
+module M_IO_Menu
 !.tools for input from KeyBoard / Screen
 
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
   !
-  INTEGER :: ISelection = 0 ! selection number in file
+  integer :: ISelection = 0 ! selection number in file
   !
-  PUBLIC :: IO_Menu
-  PUBLIC :: IO_Options_Read
+  public :: IO_Menu
+  public :: IO_Options_Read
   !
-  LOGICAL:: Ok_Path=      .FALSE.
-  LOGICAL:: Ok_Speciation=.FALSE.
-  LOGICAL:: Ok_TPpath=    .FALSE.
-  LOGICAL:: Ok_Simplex=   .FALSE.
-  LOGICAL:: Ok_Dynamic=   .FALSE.
-  LOGICAL:: Ok_Database=  .FALSE.
-  LOGICAL:: Ok_MixModel=  .FALSE.
+  logical:: Ok_Path=      .false.
+  logical:: Ok_Speciation=.false.
+  logical:: Ok_TPpath=    .false.
+  logical:: Ok_Simplex=   .false.
+  logical:: Ok_Dynamic=   .false.
+  logical:: Ok_Database=  .false.
+  logical:: Ok_MixModel=  .false.
   
-CONTAINS
+contains
 
 !---
 
-SUBROUTINE IO_Menu(S,OkCmd,DebugLevel)
-  USE M_FArgC,ONLY: F_IARGC, F_GETARG
-  USE M_IoTools,ONLY: WrdToInt,CarToInt,Str_Upper
-  USE M_VarStr
+subroutine IO_Menu(S,OkCmd,DebugLevel)
+  use M_FArgC,only: F_IARGC, F_GETARG
+  use M_IoTools,only: WrdToInt,CarToInt,Str_Upper
+  use M_VarStr
   !
-  IMPLICIT NONE
+  implicit none
   !---
-  CHARACTER(LEN=*),INTENT(OUT):: S
-  LOGICAL,         INTENT(OUT):: OkCmd
-  INTEGER,         INTENT(OUT):: DebugLevel
+  character(len=*),intent(out):: S
+  logical,         intent(out):: OkCmd
+  integer,         intent(out):: DebugLevel
   !---
-  CHARACTER(LEN=1) :: T
-  INTEGER          :: J
-  LOGICAL          :: OkFInn
+  character(len=1) :: T
+  integer          :: J
+  logical          :: OkFInn
   
   DebugLevel= 0
 
-  IF(IARGC()>1) THEN
+  if(IARGC()>1) then
     
     ! 2 arguments on command line -> 2nd arg' is the debug level
-    CALL GETARG(2,S)
-    WRITE(*,*) "READING ARG2 = ", S
-    IF(LEN_TRIM(S)==1) THEN
+    call GETARG(2,S)
+    write(*,*) "READING ARG2 = ", S
+    if(len_trim(S)==1) then
       J= CarToInt(S(1:1))
-      IF(J>=0) DebugLevel=J
-      OkCmd=.FALSE.
-    ELSE
-      OkCmd=.TRUE.
-    ENDIF
+      if(J>=0) DebugLevel=J
+      OkCmd=.false.
+    else
+      OkCmd=.true.
+    end if
 
-  ELSE
+  else
     
-    OkCmd=.FALSE.
+    OkCmd=.false.
     
-  ENDIF
+  end if
 
-  IF(.NOT. OkCmd) THEN
+  if(.not. OkCmd) then
     
-    !CALL Options_Read(DebugLevel)
-    CALL IO_FInn_Selection(S, OkFInn)
+    !call Options_Read(DebugLevel)
+    call IO_FInn_Selection(S, OkFInn)
     
-    IF (.NOT. OkFInn) THEN
-      CALL IO_Menu_Selection(S)
-    ELSE
-      WRITE(*,'(A,A)') "TEST COMPUTE ", S
-    END IF
+    if (.not. OkFInn) then
+      call IO_Menu_Selection(S)
+    else
+      write(*,'(A,A)') "TEST COMPUTE ", S
+    end if
     
-  END IF
+  end if
 
-  CALL Str_Upper(S)
+  call Str_Upper(S)
   
-ENDSUBROUTINE IO_Menu
+end subroutine IO_Menu
 
 !---
 
-SUBROUTINE IO_FInn_Selection(S, Ok)
+subroutine IO_FInn_Selection(S, Ok)
   !===========================================================
   ! Select option number I in the TEST block from file FInn
   !===========================================================
-  USE M_Test_Read
-  IMPLICIT NONE
-  CHARACTER(LEN=*),INTENT(OUT):: S
-  LOGICAL,INTENT(OUT) :: Ok
+  use M_Test_Read
+  implicit none
+  character(len=*),intent(out):: S
+  logical,intent(out) :: Ok
   !----
-  !! INTEGER :: nRun = 0
+  !! integer :: nRun = 0
   !---
   !S= ""
-  IF(ISelection==0) THEN
-    CALL Test_Read_Init(Ok) ! should be called before !
-    IF(.NOT.Ok) RETURN
-  ENDIF
+  if(ISelection==0) then
+    call Test_Read_Init(Ok) ! should be called before !
+    if(.not.Ok) return
+  end if
   !
   ISelection = ISelection + 1
   Ok = Test_Read_OptCompute(ISelection, S)
@@ -99,154 +99,154 @@ SUBROUTINE IO_FInn_Selection(S, Ok)
   !~ print *,"IO_FInn_Selection=",S
   !~ pause
   !
-END SUBROUTINE IO_FInn_Selection
+end subroutine IO_FInn_Selection
 
 !---
 
-SUBROUTINE IO_Menu_Selection(S)
+subroutine IO_Menu_Selection(S)
   !========================================================
   ! Print user menu selection and get user run option => S
   !========================================================
-  USE M_VarStr
-  IMPLICIT NONE
-  CHARACTER(LEN=*),INTENT(OUT):: S
+  use M_VarStr
+  implicit none
+  character(len=*),intent(out):: S
   !---
-  TYPE(T_VarStr)   :: Str
+  type(T_VarStr)   :: Str
   !---
-  PRINT '(/,A,/)',"INTERACTIVE MENU SELECTION"
+  print '(/,A,/)',"INTERACTIVE MENU selectION"
 
-  IF(Ok_Speciation) THEN
+  if(Ok_Speciation) then
   
-    PRINT   '(A)',   "SPC:    Fluid Speciation"
-    PRINT   '(A)',   "EQU:    Equilibrium with other phases"
+    print   '(A)',   "SPC:    Fluid Speciation"
+    print   '(A)',   "EQU:    Equilibrium with other phases"
     
-    IF(Ok_TPpath) THEN
-      PRINT   '(A)',   "SPCTP:  Speciation  along T,P sequence"
-      PRINT   '(A)',   "EQUTP:  Equilibrium along T,P sequence"
-    ENDIF
+    if(Ok_TPpath) then
+      print   '(A)',   "SPCTP:  Speciation  along T,P sequence"
+      print   '(A)',   "EQUTP:  Equilibrium along T,P sequence"
+    end if
     
-    IF(Ok_Path) THEN
-      PRINT '(A)',   "SPCPATH:  Speciation along Path"
-      PRINT '(A)',   "EQUPATH:  Speciation along Path"
-    ENDIF
+    if(Ok_Path) then
+      print '(A)',   "SPCPATH:  Speciation along Path"
+      print '(A)',   "EQUPATH:  Speciation along Path"
+    end if
     
-    IF(Ok_Dynamic) &
-    & PRINT '(A)',   "DYN:    Speciation & Dynamic"
+    if(Ok_Dynamic) &
+    & print '(A)',   "DYN:    Speciation & Dynamic"
     
-    PRINT   '(A)',   ""
+    print   '(A)',   ""
     
-  ENDIF
+  end if
 
-  !~ IF(Ok_Database) THEN
-     !~ PRINT '(A,/)',     "Database tests :"
-     !~ PRINT '(A  )',     "  LOGK:      Build LogK database"
-     !~ PRINT '(A  )',     "  DTBSHO:    Write Test Files"
-     !~ PRINT '(A  )',     "  DTBFLUID:  Write G,H,S,Rho of H2O on T,P grid"
-     !~ PRINT '(A  )',     "  DTBH2OHKF: Write solvent prop's of H2O on T,P grid"
-     !~ PRINT '(A  )',     "  DTBAQU:    Write aqu'species prop's on T,P grid"
-  !~ ENDIF
+  ! if(Ok_Database) then
+  !   print '(A,/)',     "Database tests :"
+  !   print '(A  )',     "  LOGK:      Build LogK database"
+  !   print '(A  )',     "  DTBSHO:    Write Test Files"
+  !   print '(A  )',     "  DTBFLUID:  Write G,H,S,Rho of H2O on T,P grid"
+  !   print '(A  )',     "  DTBH2OHKF: Write solvent prop's of H2O on T,P grid"
+  !   print '(A  )',     "  DTBAQU:    Write aqu'species prop's on T,P grid"
+  ! end if
 
-  !~ IF(Ok_MixModel) THEN
-     !~ PRINT '(A)',     "  SOL:       Test mixing model"
-  !~ ENDIF
+  ! if(Ok_MixModel) then
+  !   print '(A)',     "  SOL:       Test mixing model"
+  ! end if
 
-  IF(Ok_Simplex) THEN
-     PRINT '(/,A,/)', "Simplex tests :"
-     PRINT '(  A  )', "  SPLTP:   Simplex on TP path"
-     PRINT '(  A  )', "  SPLPATH: Simplex on composition path"
-     PRINT '(  A  )', "  SPLMIX:  Simplex with mixtures"
-  ENDIF
+  if(Ok_Simplex) then
+     print '(/,A,/)', "Simplex tests :"
+     print '(  A  )', "  SPLTP:   Simplex on TP path"
+     print '(  A  )', "  SPLPATH: Simplex on composition path"
+     print '(  A  )', "  SPLMIX:  Simplex with mixtures"
+  end if
   !
-  PRINT   '(A)',     ""
+  print   '(A)',     ""
   !
-  PRINT   '(A,/)',   "NEW:  New Input File"
-  PRINT   '(A,/)',   "REF:  Refresh"
-  PRINT   '(A,/)',   "Q:QUIT"
+  print   '(A,/)',   "NEW:  New Input File"
+  print   '(A,/)',   "REF:  Refresh"
+  print   '(A,/)',   "Q:QUIT"
   !
-  WRITE(*,'(A)',ADVANCE='NO') "Select : "
-  CALL VarStr_Get(String=Str)
+  write(*,'(A)',advance="no") "Select : "
+  call VarStr_Get(String=Str)
 
   S=VarStr_Char(Str)
 
-END SUBROUTINE IO_Menu_Selection
+end subroutine IO_Menu_Selection
 
 !--
 
-SUBROUTINE IO_Options_Read(DebugLevel)
-  INTEGER,INTENT(OUT):: DebugLevel
-  CALL Options_Read(DebugLevel)
-END SUBROUTINE
+subroutine IO_Options_Read(DebugLevel)
+  integer,intent(out):: DebugLevel
+  call Options_Read(DebugLevel)
+end subroutine
 
 !--
 
-SUBROUTINE Options_Read(DebugLevel)
+subroutine Options_Read(DebugLevel)
   !========================================================
   ! Read available blocks in the input file
   ! Then set status of the different menu options
   ! Ok_Option <=> Option available in the menu
   !========================================================
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
-  USE M_Files, ONLY: NamFInn
-  !USE M_System_Vars,ONLY: System_Type
-  IMPLICIT NONE
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
+  use M_Files, only: NamFInn
+  !use M_System_Vars,only: System_Type
+  implicit none
   !
-  INTEGER,INTENT(OUT):: DebugLevel
+  integer,intent(out):: DebugLevel
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios
   !
-  Ok_Path=      .FALSE.
-  Ok_Speciation=.FALSE.
-  Ok_Simplex=   .FALSE.
-  Ok_Dynamic=   .FALSE.
-  Ok_MixModel=  .FALSE.
+  Ok_Path=      .false.
+  Ok_Speciation=.false.
+  Ok_Simplex=   .false.
+  Ok_Dynamic=   .false.
+  Ok_MixModel=  .false.
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
 
-  DoFile: DO
+  DoFile: do
 
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
 
-    SELECT CASE(TRIM(W))
+    select case(trim(W))
 
-    CASE("ENDINPUT")
-      EXIT DoFile
-    CASE("TP.TABLE")
-      Ok_TPpath= .TRUE.
-    CASE("DEBUG")
-      CALL LinToWrd(L,W,EoL)
-      CALL WrdToInt(W,DebugLevel)
-    CASE("ELEMENT")
-      Ok_Database= .TRUE.
-    CASE("DYNAMIC")
-      Ok_Dynamic= .TRUE.
-    CASE("PATH")
-      Ok_Path=.TRUE.
-    CASE("SOLUTION.MODEL","MIXTURE.MODEL")
-      Ok_MixModel=.TRUE.
-    CASE("SYSTEM","SYSTEM.AQUEOUS")
-      Ok_Speciation=.TRUE.
+    case("ENDINPUT")
+      exit DoFile
+    case("TP.TABLE")
+      Ok_TPpath= .true.
+    case("DEBUG")
+      call LinToWrd(L,W,EoL)
+      call WrdToInt(W,DebugLevel)
+    case("ELEMENT")
+      Ok_Database= .true.
+    case("DYNAMIC")
+      Ok_Dynamic= .true.
+    case("PATH")
+      Ok_Path=.true.
+    case("SOLUTION.MODEL","MIXTURE.MODEL")
+      Ok_MixModel=.true.
+    case("SYSTEM","SYSTEM.AQUEOUS")
+      Ok_Speciation=.true.
       !System_Type="AQUEOUS"
-    CASE("SYSTEM.GLOBAL")
-      Ok_Speciation=.TRUE.
+    case("SYSTEM.GLOBAL")
+      Ok_Speciation=.true.
       !System_Type="GLOBAL" !not used yet
-    CASE("SYSTEM.MOMAS")
-      Ok_Speciation=.TRUE.
+    case("SYSTEM.MOMAS")
+      Ok_Speciation=.true.
       !System_Type="MOMAS"  !for "virtual" system, cf momas benches
-    CASE("SYSTEM.SIMPLEX")
-      Ok_Simplex= .TRUE.
+    case("SYSTEM.SIMPLEX")
+      Ok_Simplex= .true.
       !System_Type="SIMPLEX"
 
-    ENDSELECT
+    end select
 
-  ENDDO DoFile
+  end do DoFile
 
-  CLOSE(F)
-ENDSUBROUTINE Options_Read
+  close(F)
+end subroutine Options_Read
 
-ENDMODULE M_IO_Menu
+end module M_IO_Menu

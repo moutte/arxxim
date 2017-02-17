@@ -1,25 +1,25 @@
-MODULE M_Numeric_Newton
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_
-  IMPLICIT NONE
+module M_Numeric_Newton
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_
+  implicit none
 
-  PRIVATE
+  private
   !
-  PUBLIC:: NewtLnsrch
-  PUBLIC:: Newton_Press
-  PUBLIC:: Newton_Walker
-  PUBLIC:: Newton_Kelley
-  PUBLIC:: Newton
-  PUBLIC:: NewtonChess
+  public:: NewtLnsrch
+  public:: Newton_Press
+  public:: Newton_Walker
+  public:: Newton_Kelley
+  public:: Newton
+  public:: NewtonChess
   !
-  LOGICAL,PUBLIC:: TestJacob=.FALSE.
-  LOGICAL,PUBLIC:: ShoResult=.FALSE.
+  logical,public:: TestJacob=.false.
+  logical,public:: ShoResult=.false.
   !
-  LOGICAL:: DeltaX_Ok= .TRUE.
+  logical:: DeltaX_Ok= .true.
   !
-CONTAINS
+contains
 
-SUBROUTINE NewtLnsrch( & !from Press et al, Numerical Recipes
+subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
 & vX,       & !inout= the initial guess, and the root returned
 !!& vLPos,  & !in=    enforce vX(vLPos=TRUE)>0
 & Residual, & !
@@ -28,13 +28,13 @@ SUBROUTINE NewtLnsrch( & !from Press et al, Numerical Recipes
 & TolF,     & !in=    convergence criterion on function values
 & TolX,     & !in=    convergence criterion on dx
 !!& TolMin, & !in=    whether spurious convergence to a minimum of fmin has occurred
-& bFinDIF,  & !in=    use numeric Jacobian
+& bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
 & Error_F,  & !out=   MAXVAL(ABS(vFunc(:)))
 & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
 & Gradient, & !out=
 & Nits,     & !out=   number of iterations
-& Check,    & !out=   IF Check, should check convergence
+& Check,    & !out=   if Check, should check convergence
 & iErr)      !out=   error code
 !
 !------------------------------------------------------------error codes
@@ -46,197 +46,197 @@ SUBROUTINE NewtLnsrch( & !from Press et al, Numerical Recipes
 ! iErr=-5 : no convergence on vFunc, vX very close to previous vX -> stationary point ??
 !-----------------------------------------------------------/error codes
 !
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
-  USE M_Numeric_Const,ONLY: Ln10 !for debugging
-  USE M_IoTools,      ONLY: GetUnit, OutStrVec !for debugging
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
+  use M_Numeric_Const,only: Ln10 !for debugging
+  use M_IoTools,      only: GetUnit, OutStrVec !for debugging
   !
-  !!LOGICAL, DIMENSION(:), INTENT(IN)   :: vLPos
-  REAL(dp),INTENT(INOUT):: vX(:)
-  REAL(dp),INTENT(IN)   :: TolF,TolX !!,TolMin
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X,Gradient
-  LOGICAL, INTENT(OUT)  :: Check
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),              INTENT(IN) :: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(vF,vTolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: vF(:),vTolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  !!logical, dimension(:), intent(in)   :: vLPos
+  real(dp),intent(inout):: vX(:)
+  real(dp),intent(in)   :: TolF,TolX !!,TolMin
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X,Gradient
+  logical, intent(out)  :: Check
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),              intent(in) :: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(vF,vTolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: vF(:),vTolF(:)
+    end function Converge
+  endinterface
   !
-  !INTEGER, PARAMETER :: MAXITS=NewtMaxIts
-  !NewtTolF=   convergence criterion on FUNCTION values
+  !integer, parameter :: MAXITS=NewtMaxIts
+  !NewtTolF=   convergence criterion on function values
   !NewtTolMin= criterion for spurious convergence
   !NewtTolX=   convergence criterion on dx
   !
-  REAL(dp),PARAMETER:: STPMX= 100.0
-  !scaled maximum step LENgth allowed in line searches
-  REAL(dp),PARAMETER:: Alf= Epsilon(vX) !1.0D-12
+  real(dp),parameter:: STPMX= 100.0
+  !scaled maximum step length allowed in line searches
+  real(dp),parameter:: Alf= Epsilon(vX) !1.0D-12
   !
-  LOGICAL :: bSingul
-  INTEGER :: ITS
-  REAL(dp):: D,F,rFOld,rStpMax,rSlope,Norm_vDX !,FMin
+  logical :: bSingul
+  integer :: ITS
+  real(dp):: D,F,rFOld,rStpMax,rSlope,Norm_vDX !,FMin
   !
-  REAL(dp),DIMENSION(SIZE(vX)):: vFunc,vGrad,vDX,vXOld
-  INTEGER, DIMENSION(SIZE(vX)):: vIndex
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJacob,tJacobNum
+  real(dp),dimension(size(vX)):: vFunc,vGrad,vDX,vXOld
+  integer, dimension(size(vX)):: vIndex
+  real(dp),dimension(size(vX),size(vX)):: tJacob,tJacobNum
   !
-  REAL(dp):: A,Alam,Alam2,AlaMin,B,DISC,F2
-  REAL(dp):: RHS1,RHS2,tmpLam
+  real(dp):: A,Alam,Alam2,AlaMin,B,DISC,F2
+  real(dp):: RHS1,RHS2,tmpLam
   !
   vFunc= Residual(vX)
-  F= 0.5_dp*DOT_PRODUCT(vFunc,vFunc)
+  F= 0.5_dp*dot_product(vFunc,vFunc)
   !
   iErr=-1
-  !Error_F= MAXVAL(ABS(vFunc(:))) !-> error on FUNCTION
-  !IF (Error_F < 0.01_dp*TolF) THEN !Test for initial guess being a root
+  !Error_F= MAXVAL(ABS(vFunc(:))) !-> error on function
+  !if (Error_F < 0.01_dp*TolF) then !Test for initial guess being a root
   !  nIts=1
   !  iErr=1 !-----------Use more stringent test than simply NewtTolF ???
-  !  RETURN
-  !ENDIF
+  !  return
+  !end if
   !
-  IF(ShoResult) PRINT '(/,A,/)',"iTs,Error_F,Gradient,Delta_X"
+  if(ShoResult) print '(/,A,/)',"iTs,Error_F,Gradient,Delta_X"
   !
-  rStpMax=STPMX*MAX(vAbs(vX(:)),REAL(SIZE(vX),dp)) !Calculate StpMax for line searches
+  rStpMax=STPMX*MAX(vAbs(vX(:)),real(size(vX),dp)) !Calculate StpMax for line searches
   !
-  DO its=1,MaxIts
+  do its=1,MaxIts
     !--------------------------------------------start of iteration loop
     !
     nIts=its
     !
-    CALL Newton_Sho(vX,vFunc,Its)
+    call Newton_Sho(vX,vFunc,Its)
     !
-    IF(bFinDIF) THEN
-      CALL Jacobian_Numeric(Residual,vX,vFunc,tJacob)
-    ELSE
-      CALL Jacobian(vX,tJacob)
-      IF(TestJacob) THEN
+    if(bFinDif) then
+      call Jacobian_Numeric(Residual,vX,vFunc,tJacob)
+    else
+      call Jacobian(vX,tJacob)
+      if(TestJacob) then
       !for test, calc. numeric Jacobian and compare with analytical one
-        CALL Jacobian_Numeric(Residual,vX,vFunc,tJacobNum)
-        CALL TestJacob_Sho(tJacob,tJacobNum)
-        TestJacob=.FALSE. !calculate ONLY on first CALL to NewtLnsrch
-      ENDIF
-    ENDIF
+        call Jacobian_Numeric(Residual,vX,vFunc,tJacobNum)
+        call TestJacob_Sho(tJacob,tJacobNum)
+        TestJacob=.false. !calculate only on first call to NewtLnsrch
+      end if
+    end if
     !
-    vGrad(:)= MATMUL(vFunc(:),tJacob(:,:)) ! compute grad(f) for the line search.
+    vGrad(:)= matmul(vFunc(:),tJacob(:,:)) ! compute grad(f) for the line search.
     vXOld(:)= vX(:)                        ! store vX
     rFOld=    F                            ! store F
     vDX(:)=  -vFunc(:)                     ! right-hand side for linear equations.
     !
     !--- solve linear equations by LU decomposition
-    CALL LU_Decomp(tJacob,vIndex,D,bSingul)
+    call LU_Decomp(tJacob,vIndex,D,bSingul)
     !
-    IF(bSingul) THEN
+    if(bSingul) then
       iErr= -2 !-> "SINGULAR JACOBIAN, cf Log File"
-      CALL Jacobian_Sho(tJacob)
-      RETURN !System not solved --------------------------------- RETURN
-    ENDIF
+      call Jacobian_Sho(tJacob)
+      return !System not solved --------------------------------- return
+    end if
     !
-    CALL LU_BakSub(tJacob,vIndex,vDX)
+    call LU_BakSub(tJacob,vIndex,vDX)
     !---/ solve linear equations by LU decomposition
     !
     Norm_vDX= vAbs(vDX(:))
     !-- Scale if attempted step is too big --
-    IF (Norm_vDX>rStpMax) vDX(:)= rStpMax *vDX(:) /Norm_vDX
+    if (Norm_vDX>rStpMax) vDX(:)= rStpMax *vDX(:) /Norm_vDX
     !
-    rSlope= DOT_PRODUCT(vGrad,vDX)
+    rSlope= dot_product(vGrad,vDX)
     !
-    IF (rSlope>=Zero) THEN
-      IF(iDebug>0) THEN
-        WRITE(fTrc,'(/,A,/)') "ROUNDOFF PROBLEM -> vGrad, vDX ="
-        CALL OutStrVec(fTrc,vGrad(1:SIZE(vX)),OPt_C="G")
-        CALL OutStrVec(fTrc,vDX(1:SIZE(vX)),  OPt_C="G")
-      ENDIF
+    if (rSlope>=Zero) then
+      if(iDebug>0) then
+        write(fTrc,'(/,A,/)') "ROUNdoFF PROBLEM -> vGrad, vDX ="
+        call OutStrVec(fTrc,vGrad(1:size(vX)),OPt_C="G")
+        call OutStrVec(fTrc,vDX(1:size(vX)),  OPt_C="G")
+      end if
       iErr= -3 !-> 'roundoff problem in linesearch, cf log file'
-      RETURN ! System not solved -------------------------------- RETURN
-    ENDIF
+      return ! System not solved -------------------------------- return
+    end if
     !
     !----------------------------------------linesearch and backtracking
     !
-    CHECK= .FALSE.
+    CHECK= .false.
     AlaMin= TolX /MAXVAL(ABS(vDX(:))/MAX(ABS(vXOld(:)),One))
     Alam=   One !always try full Newton step first
     !
-    DoLineSearch: DO !Start of iteration loop
+    DoLineSearch: do !Start of iteration loop
       !
       !!write(51,'(I3,G15.6)') Its, Alam
       !
       vX(:)= vXOld(:) +Alam*vDX(:)
       !
       vFunc= Residual(vX)
-      F= DOT_PRODUCT(vFunc,vFunc)/2.0D0
+      F= dot_product(vFunc,vFunc)/2.0D0
       !
-      IF (Alam<AlaMin) THEN !Convergence on vX
+      if (Alam<AlaMin) then !Convergence on vX
         !
         vX(:)=vXOld(:)
         !-- For zero finding, the calling program should verify the convergence
-        CHECK=.TRUE.
-        EXIT DoLineSearch !-----------------------------------------EXIT
+        CHECK=.true.
+        exit DoLineSearch !-----------------------------------------exit
         !
-      ELSEIF (F <= rFOld + ALF*Alam*rSlope) THEN
+      elseif (F <= rFOld + ALF*Alam*rSlope) then
         !
-        EXIT DoLineSearch !sufficient FUNCTION decrease ----------- EXIT
+        exit DoLineSearch !sufficient function decrease ----------- exit
         !
-      ELSE !==< Backtrack.
+      else !--< Backtrack.
         !
-        IF (Alam==One) THEN !---------------------------------First time
+        if (Alam==One) then !---------------------------------First time
           tmpLam= -rSlope /(2.0_dp*(F-rFOld-rSlope))
           !
-        ELSE !-------------------------------------Subsequent backtracks
-          !PRINT *,Alam2   ; PAUSE_
+        else !-------------------------------------Subsequent backtracks
+          !print *,Alam2   ; pause_
           RHS1= F -rFOld -Alam *rSlope
           RHS2= F2-rFOld -Alam2*rSlope
           A= (       RHS1/Alam**2 -      RHS2/Alam2**2) /(Alam-Alam2)
           B= (-Alam2*RHS1/Alam**2 + Alam*RHS2/Alam2**2) /(Alam-Alam2)
           !
-          IF (A==Zero) THEN
+          if (A==Zero) then
             tmpLam= -rSlope/(2.0_dp*B)
             !
-          ELSE
-            IF(B<-1.0D100) B=-1.0D100
-            IF(B> 1.0D100) B= 1.0D100
-            !PRINT *,A     ; PAUSE_
-            !PRINT *,B     ; PAUSE_
-            !PRINT *,"B*B",B*B   ; PAUSE_
+          else
+            if(B<-1.0D100) B=-1.0D100
+            if(B> 1.0D100) B= 1.0D100
+            !print *,A     ; pause_
+            !print *,B     ; pause_
+            !print *,"B*B",B*B   ; pause_
             DISC= B*B -3.0_dp*A*rSlope
-            !PRINT *,DISC  ; PAUSE_
-            IF     (DISC<Zero) THEN  ; tmpLam= 0.5_dp*Alam
-            ELSEIF (B<=Zero)   THEN  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
-            ELSE                     ; tmpLam= -rSlope/(B+SQRT(DISC))
-            ENDIF
-          ENDIF
+            !print *,DISC  ; pause_
+            if     (DISC<Zero) then  ; tmpLam= 0.5_dp*Alam
+            elseif (B<=Zero)   then  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
+            else                     ; tmpLam= -rSlope/(B+SQRT(DISC))
+            end if
+          end if
           !
-          IF (tmpLam>0.5_dp*Alam) tmpLam=0.5_dp*Alam
+          if (tmpLam>0.5_dp*Alam) tmpLam=0.5_dp*Alam
           !
-        ENDIF
+        end if
         !
-      ENDIF
+      end if
       !
       Alam2= Alam
       Alam=  MAX(tmpLam,0.1_dp*Alam)
       !
       F2=F
       !
-    ENDDO DoLineSearch
+    end do DoLineSearch
     !
     !---------------------------------------/linesearch and backtracking
     !
-    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on FUNCTION value
+    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on function value
     !
     !-- Press-> max variation on vX
     !Delta_X= MAXVAL( ABS(vX(:)-vXOld(:))/MAX(ABS(vX(:)),One) )
@@ -244,45 +244,45 @@ SUBROUTINE NewtLnsrch( & !from Press et al, Numerical Recipes
     !-- Archim-> max relative variation on vX
     Delta_X=  MAXVAL( ABS( (vX(:)-vXOld(:)) /vX(:)) )
     !
-    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*SIZE(vX)) )
+    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
     !
-    IF(ShoResult) PRINT '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
+    if(ShoResult) print '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
     !
-    !-------------------------------- Test for convergence on FUNCTION values --
-    !! IF(Converge(vFunc)) THEN
-    IF(Error_F < TolF) THEN
+    !-------------------------------- Test for convergence on function values --
+    !! if(Converge(vFunc)) then
+    if(Error_F < TolF) then
       iErr= 0
-      CALL Newton_Sho(vX,vFunc,Its) !mod add 19/06/2008 08:22
-      RETURN !----------------------------------------------------RETURN
-    ENDIF
-    !! IF(Check) THEN !Check for gradient of f being zero
+      call Newton_Sho(vX,vFunc,Its) !mod add 19/06/2008 08:22
+      return !----------------------------------------------------return
+    end if
+    !! if(Check) then !Check for gradient of f being zero
     !!   Check= (Gradient < TolMin ) !convergence on dx
     !!   iErr= -4
-    !!   RETURN !-------------------------------------------------RETURN
-    !! ENDIF
-    IF(DeltaX_Ok .AND. Delta_X < TolX) THEN
+    !!   return !-------------------------------------------------return
+    !! end if
+    if(DeltaX_Ok .and. Delta_X < TolX) then
     !-> while Error_F still high, current vX very close to previous vX
     !-> arrived to a stationary point ??
       iErr= -5 !
-      RETURN !----------------------------------------------------RETURN
-    ENDIF
+      return !----------------------------------------------------return
+    end if
     !
     !----------------------------------------------end of iteration loop
-  ENDDO
-ENDSUBROUTINE NewtLnsrch
+  end do
+end subroutine NewtLnsrch
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE Newton_Press( & !from "NR"
+subroutine Newton_Press( & !from "NR"
 & vX,       & !inout= the initial guess, and the root returned
 & vIsPlus,  & !in=    if(vIsPlus(i)) then vX(i) must be >Zero
-& Residual, & !INTERFACE
-& Jacobian, & !INTERFACE
-& Converge, & !INTERFACE
+& Residual, & !interface
+& Jacobian, & !interface
+& Converge, & !interface
 & TolF,     & !in=    convergence criterion on function values
 & TolX,     & !in=    convergence criterion on dx
-& bFinDIF,  & !in=    use numeric Jacobian
+& bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
 & Error_F,  & !out=   MAXVAL(ABS(vFunc(:)))
 & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
@@ -296,205 +296,205 @@ SUBROUTINE Newton_Press( & !from "NR"
 !iErr=-4 : no convergence on vFunc, problem with gradient ?
 !iErr=-5 : no convergence on vFunc, vX very close to previous vX -> stationary point ??
 !
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Tools,ONLY: fNewtJ
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Tools,only: fNewtJ
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
   !
-  REAL(dp),INTENT(INOUT):: vX(:)
-  LOGICAL, INTENT(IN)   :: vIsPlus(:)
-  REAL(dp),INTENT(IN)   :: TolF,TolX !!,TolMin
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X !,Gradient
-  !! LOGICAL, INTENT(OUT)  :: Check
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),              INTENT(IN) :: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(vF,vTolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: vF(:),vTolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  real(dp),intent(inout):: vX(:)
+  logical, intent(in)   :: vIsPlus(:)
+  real(dp),intent(in)   :: TolF,TolX !!,TolMin
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X !,Gradient
+  !! logical, intent(out)  :: Check
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),              intent(in) :: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(vF,vTolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: vF(:),vTolF(:)
+    end function Converge
+  endinterface
   !
-  !INTEGER, PARAMETER :: MAXITS=NewtMaxIts
-  ! NewtTolF=   convergence criterion on FUNCTION values
+  !integer, parameter :: MAXITS=NewtMaxIts
+  ! NewtTolF=   convergence criterion on function values
   ! NewtTolMin= criterion for spurious convergence
   ! NewtTolX=   convergence criterion on dx
   !
   ! scaled maximum step length allowed in line searches
-  REAL(dp),PARAMETER:: STPMX= 100.0
+  real(dp),parameter:: STPMX= 100.0
   !
-  REAL(dp),PARAMETER:: Alf= Epsilon(vX) !1.0D-12
+  real(dp),parameter:: Alf= Epsilon(vX) !1.0D-12
   !
-  LOGICAL :: Check
-  LOGICAL :: bSingul
-  LOGICAL :: ForcePositive
-  INTEGER :: ITS
-  REAL(dp):: D,F,rFOld,rStpMax,rSlope,Norm_vDX,Gradient !,FMin
+  logical :: Check
+  logical :: bSingul
+  logical :: ForcePositive
+  integer :: ITS
+  real(dp):: D,F,rFOld,rStpMax,rSlope,Norm_vDX,Gradient !,FMin
   !
-  REAL(dp),DIMENSION(SIZE(vX)):: vFunc,vDX,vX0,vGrad
-  INTEGER, DIMENSION(SIZE(vX)):: vIndex
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJacob
-  REAL(dp),DIMENSION(SIZE(vX)):: vTolF
+  real(dp),dimension(size(vX)):: vFunc,vDX,vX0,vGrad
+  integer, dimension(size(vX)):: vIndex
+  real(dp),dimension(size(vX),size(vX)):: tJacob
+  real(dp),dimension(size(vX)):: vTolF
   !
-  REAL(dp):: A,Alam,Alam2,AlaMin,B,DISC,F2,X
-  REAL(dp):: RHS1,RHS2,tmpLam
+  real(dp):: A,Alam,Alam2,AlaMin,B,DISC,F2,X
+  real(dp):: RHS1,RHS2,tmpLam
   !
-  ForcePositive= COUNT(vIsPlus(:))>0
+  ForcePositive= count(vIsPlus(:))>0
   !
   vTolF(:)= TolF
   !
   vFunc= Residual(vX)
-  F= DOT_PRODUCT(vFunc,vFunc) *0.5_dp
+  F= dot_product(vFunc,vFunc) *0.5_dp
   !
   iErr=-1
   !
-  IF(ShoResult) PRINT '(/,A,/)',"iTs,Error_F,Gradient,Delta_X"
+  if(ShoResult) print '(/,A,/)',"iTs,Error_F,Gradient,Delta_X"
   !
   ! Calculate StpMax for line searches
-  rStpMax= STPMX*MAX(vAbs(vX(:)),REAL(SIZE(vX),dp))
+  rStpMax= STPMX*MAX(vAbs(vX(:)),real(size(vX),dp))
   !
-  DO its=1,MaxIts
+  do its=1,MaxIts
     !
     nIts=its
     !
-    CALL Newton_Sho(vX,vFunc,Its)
+    call Newton_Sho(vX,vFunc,Its)
     !
-    IF(bFinDIF) THEN
-      CALL Jacobian_Numeric(Residual,vX,vFunc,tJacob)
-    ELSE
-      CALL Jacobian(vX,tJacob)
-    ENDIF
+    if(bFinDif) then
+      call Jacobian_Numeric(Residual,vX,vFunc,tJacob)
+    else
+      call Jacobian(vX,tJacob)
+    end if
     !
-    vGrad(:)= MATMUL(vFunc(:),tJacob(:,:)) ! compute grad(f) for the line search.
+    vGrad(:)= matmul(vFunc(:),tJacob(:,:)) ! compute grad(f) for the line search.
     vX0(:)= vX(:)                          ! store vX
     rFOld=    F                            ! store F
     vDX(:)=  -vFunc(:)                     ! right-hand side for linear equations.
     !
     !-------------------------solve linear equations by LU decomposition
-    CALL LU_Decomp(tJacob,vIndex,D,bSingul)
+    call LU_Decomp(tJacob,vIndex,D,bSingul)
     !
-    IF(bSingul) THEN
+    if(bSingul) then
       iErr= -2 !-> "SINGULAR JACOBIAN, cf Log File"
-      !CALL Jacobian_Sho(fNewtJ,tJacob)
-      RETURN !-------------------------------System not solved -> RETURN
-    ENDIF
+      !call Jacobian_Sho(fNewtJ,tJacob)
+      return !-------------------------------System not solved -> return
+    end if
     !
-    CALL LU_BakSub(tJacob,vIndex,vDX)
+    call LU_BakSub(tJacob,vIndex,vDX)
     !------------------------/solve linear equations by LU decomposition
     !
-    !~ IF(fNewtJ>0) THEN
-      !~ CALL Jacobian_Sho(fNewtJ,tJacob)
-      !~ fNewtJ= 0  ;  CLOSE(fNewtJ)
-    !~ ENDIF
+    !~ if(fNewtJ>0) then
+      !~ call Jacobian_Sho(fNewtJ,tJacob)
+      !~ fNewtJ= 0  ;  close(fNewtJ)
+    !~ end if
     !
     Norm_vDX= vAbs(vDX(:))
     !-- Scale if attempted step is too big --
-    IF (Norm_vDX>rStpMax) vDX(:)= rStpMax *vDX(:) /Norm_vDX
+    if (Norm_vDX>rStpMax) vDX(:)= rStpMax *vDX(:) /Norm_vDX
     !
-    rSlope= DOT_PRODUCT(vGrad,vDX)
+    rSlope= dot_product(vGrad,vDX)
     !
-    IF (rSlope>=Zero) THEN
+    if (rSlope>=Zero) then
       iErr= -3 !-> 'roundoff problem in linesearch, cf log file'
-      RETURN !-------------------------------System not solved -> RETURN
-    ENDIF
+      return !-------------------------------System not solved -> return
+    end if
     !
     !-------------------------------------------------enforce positivity
-    IF(ForcePositive) THEN
+    if(ForcePositive) then
       !--- under relaxation technique from Bethke
       !--- if (Xi/2 + dXi)-0
       X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
-      if(iDebug>2 .AND. X>1.0D0) write(69,*) " Press-UR, ", X
-      IF(X>1.0D0) vDX(:)= vDX(:) /X
-      !DO
+      if(iDebug>2 .and. X>1.0D0) write(69,*) " Press-UR, ", X
+      if(X>1.0D0) vDX(:)= vDX(:) /X
+      !do
       !  X= MINVAL(vX(:),MASK=vIsPlus(:))
-      !  IF(X>Zero) EXIT
+      !  if(X>Zero) exit
       !  vDX(:)= vDX(:)*0.5D0
       !  vX(:)= vX0(:) + vDX(:)
-      !ENDDO
-    ENDIF
+      !end do
+    end if
     !------------------------------------------------/enforce positivity
     !
     vX(:)= vX0(:) +vDX(:)
     !
     !----------------------------------------linesearch and backtracking
     !
-    CHECK= .FALSE.
+    CHECK= .false.
     AlaMin= TolX /MAXVAL(ABS(vDX(:))/MAX(ABS(vX0(:)),One))
     Alam=   One !always try full Newton step first
     !
-    DoLineSearch: DO !Start of iteration loop
+    DoLineSearch: do !Start of iteration loop
       !
       !!write(51,'(I3,G15.6)') Its, Alam
       !
       vX(:)= vX0(:) +Alam*vDX(:)
       !
       vFunc= Residual(vX)
-      F= DOT_PRODUCT(vFunc,vFunc)/2.0D0
+      F= dot_product(vFunc,vFunc)/2.0D0
       !
-      IF (Alam<AlaMin) THEN !Convergence on vX
+      if (Alam<AlaMin) then !Convergence on vX
         !
         vX(:)=vX0(:)
         !-- For zero finding, the calling program should verify the convergence
-        CHECK=.TRUE.
-        EXIT DoLineSearch !-----------------------------------------EXIT
+        CHECK=.true.
+        exit DoLineSearch !-----------------------------------------exit
         !
-      ELSEIF (F <= rFOld + ALF*Alam*rSlope) THEN
+      elseif (F <= rFOld + ALF*Alam*rSlope) then
         !
-        EXIT DoLineSearch !sufficient FUNCTION decrease ------------EXIT
+        exit DoLineSearch !sufficient function decrease ------------exit
         !
-      ELSE !--Backtrack.
+      else !--Backtrack.
         !
-        IF (Alam==One) THEN !---------------------------------First time
+        if (Alam==One) then !---------------------------------First time
           tmpLam= -rSlope /(2.0_dp*(F-rFOld-rSlope))
           !
-        ELSE !-------------------------------------Subsequent backtracks
+        else !-------------------------------------Subsequent backtracks
           RHS1= F -rFOld -Alam *rSlope
           RHS2= F2-rFOld -Alam2*rSlope
           A= (       RHS1/Alam**2 -      RHS2/Alam2**2) /(Alam-Alam2)
           B= (-Alam2*RHS1/Alam**2 + Alam*RHS2/Alam2**2) /(Alam-Alam2)
           !
-          IF (A==Zero) THEN
+          if (A==Zero) then
             tmpLam= -rSlope/(2.0_dp*B)
             !
-          ELSE
+          else
             B= MIN(B, 1.0D100)
             B= MAX(B,-1.0D100)
             DISC= B*B -3.0_dp*A*rSlope
-            IF     (DISC<Zero) THEN  ; tmpLam= 0.5_dp*Alam
-            ELSEIF (B<=Zero)   THEN  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
-            ELSE                     ; tmpLam= -rSlope/(B+SQRT(DISC))
-            ENDIF
-          ENDIF
+            if     (DISC<Zero) then  ; tmpLam= 0.5_dp*Alam
+            elseif (B<=Zero)   then  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
+            else                     ; tmpLam= -rSlope/(B+SQRT(DISC))
+            end if
+          end if
           !
           tmpLam= MIN(tmpLam,0.5_dp*Alam)
           !
-        ENDIF
+        end if
         !
-      ENDIF
+      end if
       !
       Alam2= Alam
       Alam=  MAX(tmpLam,0.1_dp*Alam)
       !
       F2=F
       !
-    ENDDO DoLineSearch
+    end do DoLineSearch
     !
     !---------------------------------------/linesearch and backtracking
     !
-    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on FUNCTION value
+    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on function value
     !
     !-- Press-> max relative variation on vX
     Delta_X= MAXVAL( ABS(vX(:)-vX0(:))/MAX(ABS(vX(:)),One) )
@@ -502,40 +502,40 @@ SUBROUTINE Newton_Press( & !from "NR"
     !-- Archim-> max relative variation on vX
     ! Delta_X=  MAXVAL( ABS( (vX(:)-vX0(:)) /vX(:)) )
     !
-    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*SIZE(vX)) )
+    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
     !
-    IF(ShoResult) PRINT '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
+    if(ShoResult) print '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
     !
     !----------------------------test for convergence on function values
-    IF(Converge(vFunc,vTolF)) THEN
-    !IF(Error_F < TolF) THEN
+    if(Converge(vFunc,vTolF)) then
+    !if(Error_F < TolF) then
       iErr= 0
-      CALL Newton_Sho(vX,vFunc,Its) !mod add 19/06/2008 08:22
-      RETURN !----------------------------------------------------RETURN
-    ENDIF
+      call Newton_Sho(vX,vFunc,Its) !mod add 19/06/2008 08:22
+      return !----------------------------------------------------return
+    end if
     !---/
-    !! IF(Check) THEN !Check for gradient of f being zero
+    !! if(Check) then !Check for gradient of f being zero
     !!   Check= (Gradient < TolMin ) !convergence on dx
     !!   iErr= -4
-    !!   RETURN !-------------------------------------------------RETURN
-    !! ENDIF
+    !!   return !-------------------------------------------------return
+    !! end if
     !------------------------------------------test for stationary point
-    IF(DeltaX_Ok .AND. Delta_X < TolX) THEN
+    if(DeltaX_Ok .and. Delta_X < TolX) then
     !-> while Error_F still high, current vX very close to previous vX
     !-> arrived to a stationary point ??
       iErr= -5 !
-      RETURN !----------------------------------------------------RETURN
-    ENDIF
+      return !----------------------------------------------------return
+    end if
     !---/
     !
     !----------------------------------------------end of iteration loop
-  ENDDO
-ENDSUBROUTINE Newton_Press
+  end do
+end subroutine Newton_Press
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE Newton_Walker( & !
+subroutine Newton_Walker( & !
 !--
 !-- version adapted for direct substitution
 !-- and for solving with moles -> enforce vX(:)>0
@@ -547,7 +547,7 @@ SUBROUTINE Newton_Walker( & !
 & Converge, & !
 & TolF,     & !in=    convergence criterion on function values
 & TolX,     & !in=    convergence criterion on dx
-& bFinDIF,  & !in=    use numeric Jacobian
+& bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
 & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
 & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
@@ -556,7 +556,7 @@ SUBROUTINE Newton_Walker( & !
 !--
 !-- translated from matlab code by Homer Walekr
 !-- http://users.wpi.edu/~walker/MA590
-!-- cf http://users.wpi.edu/~walker/MA590/HANDOUTS/newton-backtracking.pdf
+!-- cf http://users.wpi.edu/~walker/MA590/HANdoUTS/newton-backtracking.pdf
 !--
 !-- Given an initial guess x for a root in n dimensions,
 !-- take Nits Newton-Raphson steps to improve the root
@@ -564,105 +564,105 @@ SUBROUTINE Newton_Walker( & !
 !-- in either summed absolute variable increments NewtTolX
 !-- or summed absolute function values NewtTolF
 !--
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Tools,ONLY: fNewtJ
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Tools,only: fNewtJ
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
   !
-  !USE M_Numeric_Const,  ONLY: Ln10
-  !USE M_IOTools,ONLY: OutStrVec
+  !use M_Numeric_Const,  only: Ln10
+  !use M_IOTools,only: OutStrVec
   !
-  REAL(dp),INTENT(INOUT):: vX(:)
-  LOGICAL, INTENT(IN)   :: vIsPlus(:)
-  REAL(dp),INTENT(IN)   :: TolF
-  REAL(dp),INTENT(IN)   :: TolX
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(vF,vTolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: vF(:),vTolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  real(dp),intent(inout):: vX(:)
+  logical, intent(in)   :: vIsPlus(:)
+  real(dp),intent(in)   :: TolF
+  real(dp),intent(in)   :: TolX
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(vF,vTolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: vF(:),vTolF(:)
+    end function Converge
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vFunc0,vDX,vX0
-  REAL(dp),DIMENSION(SIZE(vX))         :: vTolF
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
+  real(dp),dimension(size(vX))         :: vFunc,vFunc0,vDX,vX0
+  real(dp),dimension(size(vX))         :: vTolF
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
   !
-  INTEGER :: Its
-  REAL(dp):: D
-  LOGICAL :: bSingul
-  LOGICAL :: ForcePositive
+  integer :: Its
+  real(dp):: D
+  logical :: bSingul
+  logical :: ForcePositive
   !
-  REAL(dp),PARAMETER:: &
+  real(dp),parameter:: &
   & SigmaMax= 0.5_dp,  &
   & SigmaMin= 0.1_dp,  &
   & Tau=      1.0D-4
-  INTEGER, PARAMETER:: iArmMax= 12
-  INTEGER :: iArm
-  REAL(dp):: Norm_vF0,Norm_vF,delta,lambda,Sigma
-  REAL(dp):: X
+  integer, parameter:: iArmMax= 12
+  integer :: iArm
+  real(dp):: Norm_vF0,Norm_vF,delta,lambda,Sigma
+  real(dp):: X
   !
-  ForcePositive= COUNT(vIsPlus(:))>0
+  ForcePositive= count(vIsPlus(:))>0
   !
   vTolF(:)= TolF
   !
   iErr=-1
   !
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
     Norm_vF0= SQRT(SUM(vFunc0(:)*vFunc0(:)))
     !
-    CALL Newton_Sho(vX0,vFunc0,Its)
+    call Newton_Sho(vX0,vFunc0,Its)
     !
-    IF(bFinDIF) THEN
-      CALL Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
-    ELSE
-      CALL Jacobian(vX0,tJac)
-    ENDIF
+    if(bFinDif) then
+      call Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
+    else
+      call Jacobian(vX0,tJac)
+    end if
     !
-    !~ IF(fNewtJ>0) THEN
-      !~ CALL Jacobian_Sho(fNewtJ,tJac)
-      !~ fNewtJ= 0  ;  CLOSE(fNewtJ)
-    !~ ENDIF
+    !~ if(fNewtJ>0) then
+      !~ call Jacobian_Sho(fNewtJ,tJac)
+      !~ fNewtJ= 0  ;  close(fNewtJ)
+    !~ end if
     !
     !----------------------solve linear equations using LU decomposition
-    CALL LU_Decomp(tJac, vIndex, D, bSingul)
-    IF(bSingul) THEN
-      iErr=-2  ;  EXIT !--------------------------------------------EXIT
-    ENDIF
+    call LU_Decomp(tJac, vIndex, D, bSingul)
+    if(bSingul) then
+      iErr=-2  ;  exit !--------------------------------------------exit
+    end if
     vDX(:)= -vFunc0(:)
-    CALL LU_BakSub(tJac,vIndex,vDX)
+    call LU_BakSub(tJac,vIndex,vDX)
     !---------------------/solve linear equations using LU decomposition
     !
-    IF(ForcePositive) THEN
+    if(ForcePositive) then
       X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
-      if(iDebug>2 .AND. X>1.0D0) write(69,*) "Walker-UR, ", X
-      IF(X>1.0D0) vDX(:)= vDX(:) /X
-      !DO
+      if(iDebug>2 .and. X>1.0D0) write(69,*) "Walker-UR, ", X
+      if(X>1.0D0) vDX(:)= vDX(:) /X
+      !do
       !  X= MINVAL(vX(:),MASK=vIsPlus(:))
-      !  IF(X>Zero) EXIT
+      !  if(X>Zero) exit
       !  vDX(:)= vDX(:)*0.5D0
       !  vX(:)= vX0(:) + vDX(:)
-      !ENDDO
-    ENDIF
+      !end do
+    end if
     !
     vX(:)= vX0(:) + vDX(:)
     !
@@ -673,25 +673,25 @@ SUBROUTINE Newton_Walker( & !
     iArm=   0
     !
     !---------------------------Test the step and backtrack as necessary
-    DO WHILE ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
+    do while ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
       !
       !!write(52,'(I3,G15.6)') Its, lambda
       !
       iArm= iArm +1
       !
-      IF(iArm > iArmMax) THEN !! error('Maximum number of backtracks reached.')
-        iErr= -4  ;  EXIT
-      ENDIF
+      if(iArm > iArmMax) then !! error('Maximum number of backtracks reached.')
+        iErr= -4  ;  exit
+      end if
       !
       delta= (Norm_vF /Norm_vF0)**2 -1.0d0 +2.0d0*lambda
       !
-      IF (delta > Zero) THEN
+      if (delta > Zero) then
         Sigma=  lambda/delta
         Sigma=  MIN(Sigma,SigmaMax)
         Sigma=  MAX(Sigma,SigmaMin)
-      ELSE
+      else
         Sigma=  SigmaMax
-      END IF
+      end if
       !
       vDX(:)=  Sigma*vDX(:)
       lambda=  Sigma*lambda
@@ -699,31 +699,31 @@ SUBROUTINE Newton_Walker( & !
       vFunc(:)= Residual(vX)
       Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
       !
-    END DO
+    end do
     !--------------------------/Test the step and backtrack as necessary
     !
     Error_F= MAXVAL(ABS(vFunc(:)))
     Delta_X= MAXVAL(ABS(vDX(:)))
     !
     !-- convergence --
-    !IF (Error_F < TolF) THEN
-    IF(Converge(vFunc,vTolF)) THEN  ;  iErr= 0  ;  EXIT !-----------EXIT
-    ENDIF
+    !if (Error_F < TolF) then
+    if(Converge(vFunc,vTolF)) then  ;  iErr= 0  ;  exit !-----------exit
+    end if
     !
     !-- stationary --
-    IF (Delta_X < TolX) THEN        ;  iErr=-5  ;  EXIT !-----------EXIT
-    ENDIF
+    if (Delta_X < TolX) then        ;  iErr=-5  ;  exit !-----------exit
+    end if
     !
-  ENDDO
+  end do
   !
   nIts=Its
   !
-END SUBROUTINE Newton_Walker
+end subroutine Newton_Walker
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE Newton_Kelley( & !
+subroutine Newton_Kelley( & !
 & vX,        & !inout= the initial guess, and the root returned
 & vIsPlus,   & !in=    if(vIsPlus(i)) then vX(i) must be >Zero
 & Residual,  & !
@@ -731,7 +731,7 @@ SUBROUTINE Newton_Kelley( & !
 & Converge,  & !
 & TolF,      & !in=    convergence criterion on function values
 & TolX,      & !in=    convergence criterion on dx
-& bFinDIF,   & !in=    use numeric Jacobian
+& bFinDif,   & !in=    use numeric Jacobian
 & MaxIts,    & !in=    maximum number of iterations
 & Error_F,   & !out=   MAXVAL(ABS(fVec(:)))
 & Delta_X,   & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
@@ -742,112 +742,112 @@ SUBROUTINE Newton_Kelley( & !
 !-- http://www4.ncsu.edu/~ctk/newton/SOLVERS/nsold.m
 !-- cf CT Kelley, Solving nonlinear equations with Newton's method, SIAM, 2003
 !--
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Tools,ONLY: fNewtJ
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Tools,only: fNewtJ
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
   !
-  REAL(dp),INTENT(INOUT):: vX(:)
-  LOGICAL, INTENT(IN)   :: vIsPlus(:)
-  REAL(dp),INTENT(IN)   :: TolF,TolX
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(F,tolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: F(:),tolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  real(dp),intent(inout):: vX(:)
+  logical, intent(in)   :: vIsPlus(:)
+  real(dp),intent(in)   :: TolF,TolX
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(F,tolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: F(:),tolF(:)
+    end function Converge
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vFunc0,vDX,vX0,vStep,vTolF
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
+  real(dp),dimension(size(vX))         :: vFunc,vFunc0,vDX,vX0,vStep,vTolF
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
   !
-  INTEGER :: Its
-  REAL(dp):: D,X
-  LOGICAL :: bSingul
-  LOGICAL :: ForcePositive
+  integer :: Its
+  real(dp):: D,X
+  logical :: bSingul
+  logical :: ForcePositive
   !
   !-- Armijo parameters --
-  REAL(dp),PARAMETER:: SigmaMax= 0.5_dp
-  REAL(dp),PARAMETER:: SigmaMin= 0.1_dp
-  REAL(dp),PARAMETER:: Tau=      1.0D-4
-  INTEGER, PARAMETER:: iArmMax= 10
+  real(dp),parameter:: SigmaMax= 0.5_dp
+  real(dp),parameter:: SigmaMin= 0.1_dp
+  real(dp),parameter:: Tau=      1.0D-4
+  integer, parameter:: iArmMax= 10
   !--
   !
-  INTEGER :: iArm
-  REAL(dp):: Norm_vF0,Norm_vF,Norm_Ratio
-  REAL(dp):: lambda,lam_m,lam_c
-  REAL(dp):: ff_0, ff_m, ff_c
+  integer :: iArm
+  real(dp):: Norm_vF0,Norm_vF,Norm_Ratio
+  real(dp):: lambda,lam_m,lam_c
+  real(dp):: ff_0, ff_m, ff_c
   !
-  ForcePositive= COUNT(vIsPlus(:))>0
+  ForcePositive= count(vIsPlus(:))>0
   !
   vTolF(:)= TolF
   !
   iErr=-1
   Norm_Ratio= One
   !
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vX0(:)= vX(:)
     !
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(DOT_PRODUCT(vFunc0(:),vFunc0(:)))
+    Norm_vF0= SQRT(dot_product(vFunc0(:),vFunc0(:)))
     !
-    CALL Newton_Sho(vX0,vFunc0,Its)
+    call Newton_Sho(vX0,vFunc0,Its)
     !
     !----------------------solve linear equations using LU decomposition
-    !!IF(Its==1 .OR. Norm_Ratio > 0.5_dp) THEN
+    !!if(Its==1 .or. Norm_Ratio > 0.5_dp) then
       !-- evaluate and factorize Jacobian
       !-- only when norm(Residual) strongly decreases
       !
-      IF(bFinDIF) THEN
-        CALL Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
-      ELSE
-        CALL Jacobian(vX0,tJac)
-      ENDIF
+      if(bFinDif) then
+        call Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
+      else
+        call Jacobian(vX0,tJac)
+      end if
       !
-      CALL LU_Decomp(tJac, vIndex, D, bSingul)
-      IF(bSingul) THEN
-        iErr=-2  ;  EXIT
-      ENDIF
+      call LU_Decomp(tJac, vIndex, D, bSingul)
+      if(bSingul) then
+        iErr=-2  ;  exit
+      end if
       !
-    !!ENDIF
+    !!end if
     !
     vDX(:)= -vFunc0(:)
-    CALL LU_BakSub(tJac,vIndex,vDX)
+    call LU_BakSub(tJac,vIndex,vDX)
     !-------------------------------------------------------------/solve
     !
-    !~ IF(fNewtJ>0) THEN
-      !~ CALL Jacobian_Sho(fNewtJ,tJac)
-      !~ fNewtJ= 0  ;  CLOSE(fNewtJ)
-    !~ ENDIF
+    !~ if(fNewtJ>0) then
+      !~ call Jacobian_Sho(fNewtJ,tJac)
+      !~ fNewtJ= 0  ;  close(fNewtJ)
+    !~ end if
     !
-    IF(ForcePositive) THEN
+    if(ForcePositive) then
       X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
-      if(iDebug>2 .AND. X>1.0D0) write(69,*) "Kelley-UR, ", X
-      IF(X>1.0D0) vDX(:)= vDX(:) /X
-      !DO
+      if(iDebug>2 .and. X>1.0D0) write(69,*) "Kelley-UR, ", X
+      if(X>1.0D0) vDX(:)= vDX(:) /X
+      !do
       !  X= MINVAL(vX(:),MASK=vIsPlus(:))
-      !  IF(X>Zero) EXIT
+      !  if(X>Zero) exit
       !  vStep(:)= vStep(:)*0.5D0
       !  vX(:)= vX0(:) + vStep(:)
-      !ENDDO
-    ENDIF
+      !end do
+    end if
     !
     lambda= 1.0d0
     lam_m=  lambda
@@ -858,27 +858,27 @@ SUBROUTINE Newton_Kelley( & !
     vX(:)= vX0(:) + vStep(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(DOT_PRODUCT(vFunc(:),vFunc(:)))
+    Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
     !
     ff_0= Norm_vF0**2  ! initial value
     ff_c= Norm_vF**2   ! current value
     ff_m= ff_c         ! previous value in linesearch
     !
     !---------------------------test the step and backtrack as necessary
-    DO WHILE ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
+    do while ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
       !
       !!write(52,'(I3,G15.6)') Its, lambda
       !
-      IF(iArm==0) THEN
+      if(iArm==0) then
         lambda=  SigmaMax*lambda
-      ELSE
-        CALL Parab3p(SigmaMin,SigmaMax, lam_c,lam_m, ff_0,ff_c,ff_m, lambda)
-      ENDIF
+      else
+        call Parab3p(SigmaMin,SigmaMax, lam_c,lam_m, ff_0,ff_c,ff_m, lambda)
+      end if
       !
       iArm= iArm + 1
-      IF(iArm > iArmmax) THEN !! error('Maximum number of backtracks reached.')
-        iErr= -4  ;  EXIT
-      ENDIF
+      if(iArm > iArmmax) then !! error('Maximum number of backtracks reached.')
+        iErr= -4  ;  exit
+      end if
       !
       lam_m= lam_c    ! lam_c=  current steplength
       lam_c= lambda   ! lam_m=  previous steplength
@@ -886,12 +886,12 @@ SUBROUTINE Newton_Kelley( & !
       vStep(:)= lambda *vDX(:)
       vX(:)= vX0(:) + vStep(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(DOT_PRODUCT(vFunc(:),vFunc(:)))
+      Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
       !
       ff_m= ff_c
       ff_c= Norm_vF**2
       !
-    END DO
+    end do
     !--------------------------/test the step and backtrack as necessary
     !
     Error_F= MAXVAL(ABS(vFunc(:)))
@@ -900,21 +900,21 @@ SUBROUTINE Newton_Kelley( & !
     Norm_Ratio= Norm_vF /Norm_vF0
     !! write(71,'(A,G16.6)') "Kelley, Norm_Ratio ", Norm_Ratio
     !
-    !IF (Error_F < TolF) THEN
-    IF(Converge(vFunc,vTolF)) THEN  ;  iErr= 0   ;  EXIT
-    ENDIF
+    !if (Error_F < TolF) then
+    if(Converge(vFunc,vTolF)) then  ;  iErr= 0   ;  exit
+    end if
     !
-    IF (Delta_X<TolX) THEN          ;  iErr=-5   ;  EXIT
-    ENDIF
+    if (Delta_X<TolX) then          ;  iErr=-5   ;  exit
+    end if
     !
-  ENDDO
+  end do
   !
   !! write(71,*)
   nIts=Its
   !
-END SUBROUTINE Newton_Kelley
+end subroutine Newton_Kelley
 
-SUBROUTINE parab3p(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
+subroutine parab3p(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
 ! Apply three-point safeguarded parabolic model for a line search.
 ! C. T. Kelley, April 1, 2003
 ! input:
@@ -926,11 +926,11 @@ SUBROUTINE parab3p(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
 !       ffm=  |F(x_c + lambdam)|^2
 ! output:
 !       lambdap=  new value of lambda given by parabolic model
-  REAL(dp),INTENT(IN) :: sigma0,sigma1
-  REAL(dp),INTENT(IN) :: lambdac, lambdam, ff0, ffc, ffm
-  REAL(dp),INTENT(OUT):: lambdap
+  real(dp),intent(in) :: sigma0,sigma1
+  real(dp),intent(in) :: lambdac, lambdam, ff0, ffc, ffm
+  real(dp),intent(out):: lambdap
   !
-  REAL(dp):: c1, c2
+  real(dp):: c1, c2
   !
   !-------------------- Compute coefficients of interpolation polynomial
   ! p(lambda)=  ff0 + (-c1 lambda + c2 lambda^2)/d1
@@ -940,26 +940,26 @@ SUBROUTINE parab3p(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
   !
   c2= lambdam*(ffc-ff0)-lambdac*(ffm-ff0);
   !
-  IF(c2 >=0.0d0) THEN
+  if(c2 >=0.0d0) then
     lambdap=  sigma1*lambdac
-  ELSE
+  else
     c1= lambdam *lambdam *(ffc-ff0) - lambdac *lambdac *(ffm-ff0)
     lambdap= c1 *0.5d0 /c2
     lambdap= MAX(lambdap, sigma0*lambdac)
     lambdap= MIN(lambdap, sigma1*lambdac)
-  END IF
+  end if
   !
-  RETURN
-END SUBROUTINE parab3p
+  return
+end subroutine parab3p
 
-SUBROUTINE Newton_Walker_old( & !
+subroutine Newton_Walker_old( & !
 & vX,       & !inout=  the initial guess, and the root returned
 & Residual, & !
 & Jacobian, & !
 & Converge, & !
 & TolF,     & !in=    convergence criterion on function values
 & TolX,     & !in=    convergence criterion on dx
-& bFinDIF,  & !in=    use numeric Jacobian
+& bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
 & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
 & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
@@ -968,7 +968,7 @@ SUBROUTINE Newton_Walker_old( & !
 !--
 !-- translated from matlab code by Homer Walekr
 !-- http://users.wpi.edu/~walker/MA590
-!-- cf http://users.wpi.edu/~walker/MA590/HANDOUTS/newton-backtracking.pdf
+!-- cf http://users.wpi.edu/~walker/MA590/HANdoUTS/newton-backtracking.pdf
 !--
 !-- Given an initial guess x for a root in n dimensions,
 !-- take Nits Newton-Raphson steps to improve the root
@@ -976,79 +976,79 @@ SUBROUTINE Newton_Walker_old( & !
 !-- in either summed absolute variable increments NewtTolX
 !-- or summed absolute function values NewtTolF
 !--
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
   !
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_IOTools,ONLY: OutStrVec
+  use M_Numeric_Const,  only: Ln10
+  use M_IOTools,only: OutStrVec
   !
-  REAL(dp),INTENT(INOUT):: vX(:)
-  REAL(dp),INTENT(IN)   :: TolF,TolX
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(vF,vTolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: vF(:),vTolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  real(dp),intent(inout):: vX(:)
+  real(dp),intent(in)   :: TolF,TolX
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(vF,vTolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: vF(:),vTolF(:)
+    end function Converge
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vFunc0,vDX,vX0,vTolF
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
+  real(dp),dimension(size(vX))         :: vFunc,vFunc0,vDX,vX0,vTolF
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
   !
-  INTEGER :: Its
-  REAL(dp):: D
-  LOGICAL :: bSingul
+  integer :: Its
+  real(dp):: D
+  logical :: bSingul
   !
-  REAL(dp),PARAMETER:: &
+  real(dp),parameter:: &
   & SigmaMax= 0.5_dp,  &
   & SigmaMin= 0.1_dp,  &
   & Tau=      1.0D-4
-  INTEGER, PARAMETER:: iArmMax= 12
-  INTEGER :: iArm
-  REAL(dp):: Norm_vF0,Norm_vF,delta,lambda,Sigma
+  integer, parameter:: iArmMax= 12
+  integer :: iArm
+  real(dp):: Norm_vF0,Norm_vF,delta,lambda,Sigma
   !
   vTolF(:)= TolF
   !
   iErr=-1
   !
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
     Norm_vF0= SQRT(SUM(vFunc0(:)*vFunc0(:)))
     !
-    CALL Newton_Sho(vX0,vFunc0,Its)
+    call Newton_Sho(vX0,vFunc0,Its)
     !
-    IF(bFinDIF) THEN
-      CALL Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
-    ELSE
-      CALL Jacobian(vX0,tJac)
-    ENDIF
+    if(bFinDif) then
+      call Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
+    else
+      call Jacobian(vX0,tJac)
+    end if
     !
     !---solve linear equations using LU decomposition --
-    CALL LU_Decomp(tJac, vIndex, D, bSingul)
-    IF(bSingul) THEN
-      iErr=-2  ;  EXIT
-    ENDIF
+    call LU_Decomp(tJac, vIndex, D, bSingul)
+    if(bSingul) then
+      iErr=-2  ;  exit
+    end if
     vDX(:)= -vFunc0(:)
-    CALL LU_BakSub(tJac,vIndex,vDX)
+    call LU_BakSub(tJac,vIndex,vDX)
     !---/solve
     !
     vX(:)= vX0(:) + vDX(:)
@@ -1060,25 +1060,25 @@ SUBROUTINE Newton_Walker_old( & !
     iArm=   0
     !
     !---------------------------Test the step and backtrack as necessary
-    DO WHILE ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
+    do while ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
       !
       !!write(52,'(I3,G15.6)') Its, lambda
       !
       iArm= iArm +1
       !
-      IF(iArm > iArmMax) THEN !! error('Maximum number of backtracks reached.')
-        iErr= -4  ;  EXIT
-      ENDIF
+      if(iArm > iArmMax) then !! error('Maximum number of backtracks reached.')
+        iErr= -4  ;  exit
+      end if
       !
       delta= (Norm_vF /Norm_vF0)**2 -1.0d0 +2.0d0*lambda
       !
-      IF (delta > Zero) THEN
+      if (delta > Zero) then
         Sigma=  lambda/delta
         Sigma=  MIN(Sigma,SigmaMax)
         Sigma=  MAX(Sigma,SigmaMin)
-      ELSE
+      else
         Sigma=  SigmaMax
-      END IF
+      end if
       !
       vDX(:)=  Sigma*vDX(:)
       lambda=  Sigma*lambda
@@ -1086,30 +1086,30 @@ SUBROUTINE Newton_Walker_old( & !
       vFunc(:)= Residual(vX)
       Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
       !
-    END DO
+    end do
     !--------------------------/Test the step and backtrack as necessary
     !
     Error_F= MAXVAL(ABS(vFunc(:)))
     Delta_X= MAXVAL(ABS(vDX(:)))
     !
-    !IF (Error_F < TolF) THEN
-    IF(Converge(vFunc,vTolF)) THEN
-      iErr= 0  ;  EXIT
-    ENDIF
-    IF (Delta_X < TolX) THEN !== stationary ==
-      iErr=-5  ;  EXIT
-    ENDIF
+    !if (Error_F < TolF) then
+    if(Converge(vFunc,vTolF)) then
+      iErr= 0  ;  exit
+    end if
+    if (Delta_X < TolX) then !-- stationary ==
+      iErr=-5  ;  exit
+    end if
     !
-  ENDDO
+  end do
   !
   nIts=Its
   !
-END SUBROUTINE Newton_Walker_old
+end subroutine Newton_Walker_old
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE Newton_Kelley_old( & !
+subroutine Newton_Kelley_old( & !
 & vX,        & !inout= the initial guess, and the root returned
 & Residual,  & !
 & Jacobian,  & !
@@ -1127,97 +1127,97 @@ SUBROUTINE Newton_Kelley_old( & !
 !-- http://www4.ncsu.edu/~ctk/newton/SOLVERS/nsold.m
 !-- cf CT Kelley, Solving nonlinear equations with Newton's method, SIAM, 2003
 !--
-  USE M_Numeric_Tools,ONLY: vAbs,Jacobian_Numeric
-  USE M_Numeric_Mat,  ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,only: vAbs,Jacobian_Numeric
+  use M_Numeric_Mat,  only: LU_BakSub,LU_Decomp
   !
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_IOTools,      ONLY: OutStrVec
+  use M_Numeric_Const,only: Ln10
+  use M_IOTools,      only: OutStrVec
   !
-  REAL(dp),INTENT(INOUT):: vX(:)
-  REAL(dp),INTENT(IN)   :: TolF,TolX
-  LOGICAL, INTENT(IN)   :: bFinDIF
-  INTEGER, INTENT(IN)   :: MaxIts
-  REAL(dp),INTENT(OUT)  :: Error_F,Delta_X
-  INTEGER, INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-    LOGICAL FUNCTION Converge(F,tolF)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),INTENT(IN):: F(:),tolF(:)
-    ENDFUNCTION Converge
-  ENDINTERFACE
+  real(dp),intent(inout):: vX(:)
+  real(dp),intent(in)   :: TolF,TolX
+  logical, intent(in)   :: bFinDif
+  integer, intent(in)   :: MaxIts
+  real(dp),intent(out)  :: Error_F,Delta_X
+  integer, intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+    logical function Converge(F,tolF)
+      use M_Kinds
+      implicit none
+      real(dp),intent(in):: F(:),tolF(:)
+    end function Converge
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vFunc0,vDX,vX0,vStep,vTolF
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
+  real(dp),dimension(size(vX))         :: vFunc,vFunc0,vDX,vX0,vStep,vTolF
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
   !
-  INTEGER :: Its
-  REAL(dp):: D
-  LOGICAL :: bSingul
+  integer :: Its
+  real(dp):: D
+  logical :: bSingul
   !
   !--- Armijo parameters --
-  REAL(dp),PARAMETER:: SigmaMax= 0.5_dp
-  REAL(dp),PARAMETER:: SigmaMin= 0.1_dp
-  REAL(dp),PARAMETER:: Tau=      1.0D-4
-  INTEGER, PARAMETER:: iArmMax= 10
+  real(dp),parameter:: SigmaMax= 0.5_dp
+  real(dp),parameter:: SigmaMin= 0.1_dp
+  real(dp),parameter:: Tau=      1.0D-4
+  integer, parameter:: iArmMax= 10
   !---/
   !
-  INTEGER :: iArm
-  REAL(dp):: Norm_vF0,Norm_vF,Norm_Ratio
-  REAL(dp):: lambda,lam_m,lam_c
-  REAL(dp):: ff_0, ff_m, ff_c
+  integer :: iArm
+  real(dp):: Norm_vF0,Norm_vF,Norm_Ratio
+  real(dp):: lambda,lam_m,lam_c
+  real(dp):: ff_0, ff_m, ff_c
   !
   vTolF(:)= TolF
   !
   iErr=-1
   Norm_Ratio= One
   !
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vX0(:)= vX(:)
     !
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(DOT_PRODUCT(vFunc0(:),vFunc0(:)))
+    Norm_vF0= SQRT(dot_product(vFunc0(:),vFunc0(:)))
     !
-    CALL Newton_Sho(vX0,vFunc0,Its)
+    call Newton_Sho(vX0,vFunc0,Its)
     !
-    !IF(DebNewt .AND. bOpenNewt) THEN
-    !  CALL OutStrVec(fNewt1,X(1:SIZE(X))/Ln10,Opt_I=Its,Opt_C="F")
-    !  CALL OutStrVec(fNewt2,vFunc0(1:SIZE(X)),  Opt_I=Its,Opt_C="F")
-    !ENDIF
+    !if(DebNewt .and. bOpenNewt) then
+    !  call OutStrVec(fNewt1,X(1:size(X))/Ln10,Opt_I=Its,Opt_C="F")
+    !  call OutStrVec(fNewt2,vFunc0(1:size(X)),  Opt_I=Its,Opt_C="F")
+    !end if
     !
     !-------------------------- solve linear equations using LU decomposition --
-    !!IF(Its==1 .OR. Norm_Ratio > 0.5_dp) THEN
+    !!if(Its==1 .or. Norm_Ratio > 0.5_dp) then
       !-- evaluate and factorize Jacobian
       !-- only when norm(Residual) strongly decreases
       !
-      IF(bFinDIF) THEN
-        CALL Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
-      ELSE
-        CALL Jacobian(vX0,tJac)
-      ENDIF
+      if(bFinDif) then
+        call Jacobian_Numeric(Residual,vX0,vFunc0,tJac)
+      else
+        call Jacobian(vX0,tJac)
+      end if
       !
-      CALL LU_Decomp(tJac, vIndex, D, bSingul)
-      IF(bSingul) THEN
-        iErr=-2  ;  EXIT
-      ENDIF
+      call LU_Decomp(tJac, vIndex, D, bSingul)
+      if(bSingul) then
+        iErr=-2  ;  exit
+      end if
       !
-    !!ENDIF
+    !!end if
     !
     vDX(:)= -vFunc0(:)
-    CALL LU_BakSub(tJac,vIndex,vDX)
+    call LU_BakSub(tJac,vIndex,vDX)
     !-------------------------------------------------------------/solve
     !
     lambda= 1.0d0
@@ -1228,27 +1228,27 @@ SUBROUTINE Newton_Kelley_old( & !
     vStep(:)= lambda *vDX(:)
     vX(:)= vX0(:) + vStep(:)
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(DOT_PRODUCT(vFunc(:),vFunc(:)))
+    Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
     !
     ff_0= Norm_vF0**2
     ff_c= Norm_vF**2
     ff_m= Norm_vF**2
     !
     !---------------------------test the step and backtrack as necessary
-    DO WHILE ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
+    do while ( Norm_vF > (1.0d0-tau*lambda)*Norm_vF0 )
       !
       !!write(52,'(I3,G15.6)') Its, lambda
       !
-      IF(iArm==0) THEN
+      if(iArm==0) then
         lambda=  SigmaMax*lambda
-      ELSE
-        CALL Parab3p(SigmaMin,SigmaMax, lam_c,lam_m, ff_0,ff_c,ff_m, lambda)
-      ENDIF
+      else
+        call Parab3p(SigmaMin,SigmaMax, lam_c,lam_m, ff_0,ff_c,ff_m, lambda)
+      end if
       !
       iArm=  iArm + 1
-      IF(iArm > iArmmax) THEN !! error('Maximum number of backtracks reached.')
-        iErr= -4  ;  EXIT
-      ENDIF
+      if(iArm > iArmmax) then !! error('Maximum number of backtracks reached.')
+        iErr= -4  ;  exit
+      end if
       !
       ! lam_c=  current steplength
       ! lam_m=  previous steplength
@@ -1258,12 +1258,12 @@ SUBROUTINE Newton_Kelley_old( & !
       vStep(:)= lambda *vDX(:)
       vX(:)= vX0(:) + vStep(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(DOT_PRODUCT(vFunc(:),vFunc(:)))
+      Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
       !
       ff_m= ff_c
       ff_c= Norm_vF**2
       !
-    END DO
+    end do
     !------------------------------/ test the step and backtrack as necessary --
     !
     Error_F= MAXVAL(ABS(vFunc(:)))
@@ -1272,21 +1272,21 @@ SUBROUTINE Newton_Kelley_old( & !
     Norm_Ratio= Norm_vF /Norm_vF0
     !! write(71,'(G16.6)') Norm_Ratio
     !
-    !IF (Error_F < TolF) THEN
-    IF(Converge(vFunc,vTolF)) THEN
-      iErr= 0; EXIT
-    ENDIF
-    IF (Delta_X<TolX) THEN
-      iErr=-5; EXIT
-    ENDIF
+    !if (Error_F < TolF) then
+    if(Converge(vFunc,vTolF)) then
+      iErr= 0; exit
+    end if
+    if (Delta_X<TolX) then
+      iErr=-5; exit
+    end if
     !
-  ENDDO
+  end do
   !
   nIts=Its
   !
-END SUBROUTINE Newton_Kelley_old
+end subroutine Newton_Kelley_old
 
-SUBROUTINE parab3p_old(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
+subroutine parab3p_old(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
 ! Apply three-point safeguarded parabolic model for a line search.
 ! C. T. Kelley, April 1, 2003
 ! input:
@@ -1298,11 +1298,11 @@ SUBROUTINE parab3p_old(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
 !       ffm=  |F(x_c + lambdam)|^2
 ! output:
 !       lambdap=  new value of lambda given by parabolic model
-  REAL(dp),INTENT(IN) :: sigma0,sigma1
-  REAL(dp),INTENT(IN) :: lambdac, lambdam, ff0, ffc, ffm
-  REAL(dp),INTENT(OUT):: lambdap
+  real(dp),intent(in) :: sigma0,sigma1
+  real(dp),intent(in) :: lambdac, lambdam, ff0, ffc, ffm
+  real(dp),intent(out):: lambdap
   !
-  REAL(dp):: c1, c2
+  real(dp):: c1, c2
   !
   !---------------------Compute coefficients of interpolation polynomial
   ! p(lambda)=  ff0 + (-c1 lambda + c2 lambda^2)/d1
@@ -1312,25 +1312,25 @@ SUBROUTINE parab3p_old(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
   !
   c2= lambdam*(ffc-ff0)-lambdac*(ffm-ff0);
   !
-  IF(c2 >=0.0d0) THEN
+  if(c2 >=0.0d0) then
     lambdap=  sigma1*lambdac
-  ELSE
+  else
     c1= lambdam *lambdam *(ffc-ff0) - lambdac *lambdac *(ffm-ff0)
     lambdap= c1 *0.5d0 /c2
     lambdap= MAX(lambdap, sigma0*lambdac)
     lambdap= MIN(lambdap, sigma1*lambdac)
-  END IF
+  end if
   !
-  RETURN
-END SUBROUTINE parab3p_old
+  return
+end subroutine parab3p_old
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE NewtonChess( &
-& vX, &      !initial guess x for a root in N DIMENSIONs
+subroutine NewtonChess( &
+& vX, &      !initial guess x for a root in N dimensions
 & Residual, Jacobian, &
-& TolF,    & !in=    convergence criterion on FUNCTION values
+& TolF,    & !in=    convergence criterion on function values
 & TolX,    & !in=    convergence criterion on dx
 !!& TolMin,  & !in=    whether spurious convergence to a minimum of fmin has occurred
 & MaxIts,  & !in=    maximum number of iterations
@@ -1338,106 +1338,106 @@ SUBROUTINE NewtonChess( &
 & Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
 !& Gradient, & !out=
 & Nits,    & !out=   number of iterations
-!& Check,   & !out=   IF Check, should check convergence
+!& Check,   & !out=   if Check, should check convergence
 & iErr)      !out=   error code
-!Given an initial guess x for a root in N DIMENSIONs,
+!Given an initial guess x for a root in N dimensions,
 !take Nits Newton-Raphson steps to improve the root
-!Stop IF the root converges,
+!Stop if the root converges,
 !in either summed absolute variable increments NewtTolX
-!or summed absolute FUNCTION values NewtTolF.
-  USE M_Numeric_Tools,   ONLY: vAbs, iMaxLoc_R
-  USE M_Numeric_Mat,ONLY: LU_BakSub,LU_Decomp
+!or summed absolute function values NewtTolF.
+  use M_Numeric_Tools,   only: vAbs, iMaxLoc_R
+  use M_Numeric_Mat,only: LU_BakSub,LU_Decomp
   !
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_IOTools,ONLY: OutStrVec
+  use M_Numeric_Const,  only: Ln10
+  use M_IOTools,only: OutStrVec
   !
-  REAL(dp),DIMENSION(:), INTENT(INOUT):: vX
-  REAL(dp),              INTENT(IN)   :: TolF,TolX !!,TolMin
-  INTEGER,               INTENT(IN)   :: MaxIts
-  REAL(dp),              INTENT(OUT)  :: Error_F,Delta_X !,Gradient
-  !LOGICAL,               INTENT(OUT)  :: Check
-  INTEGER,               INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-  ENDINTERFACE
+  real(dp),dimension(:), intent(inout):: vX
+  real(dp),              intent(in)   :: TolF,TolX !!,TolMin
+  integer,               intent(in)   :: MaxIts
+  real(dp),              intent(out)  :: Error_F,Delta_X !,Gradient
+  !logical,               intent(out)  :: Check
+  integer,               intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vDX
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
-  INTEGER :: Its
-  REAL(dp):: D
-  LOGICAL ::bSingul
+  real(dp),dimension(size(vX))         :: vFunc,vDX
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
+  integer :: Its
+  real(dp):: D
+  logical ::bSingul
   !
   !Chess/Concepts, p71, Newton with "polishing factor"
-  INTEGER :: I
-  REAL(dp):: R,Alfa
-  REAL(dp),PARAMETER::  A=0.5D0, B=3.0D0, C=-0.9D0
+  integer :: I
+  real(dp):: R,Alfa
+  real(dp),parameter::  A=0.5D0, B=3.0D0, C=-0.9D0
   !iErr=-1: MaxIts reached
   !iErr=-2: singular Jacobian
   !iErr=-5:
   !
   iErr=-1
   !
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vFunc(:)= Residual(vX)
-    CALL Jacobian(vX,tJac)
+    call Jacobian(vX,tJac)
     !
-    !IF(DebNewt .AND. bOpenNewt) THEN
-    !  CALL OutStrVec(fNewt1,X(1:SIZE(X))/Ln10,Opt_I=Its,Opt_C="F")
-    !  CALL OutStrVec(fNewt2,vFunc(1:SIZE(X)),  Opt_I=Its,Opt_C="F")
-    !ENDIF
+    !if(DebNewt .and. bOpenNewt) then
+    !  call OutStrVec(fNewt1,X(1:size(X))/Ln10,Opt_I=Its,Opt_C="F")
+    !  call OutStrVec(fNewt2,vFunc(1:size(X)),  Opt_I=Its,Opt_C="F")
+    !end if
     !
     !--- Solve linear equations using LU decomposition --
-    CALL LU_Decomp(tJac,vIndex,D,bSingul)
-    IF(bSingul) THEN
-      iErr=-2; EXIT
-    ENDIF
+    call LU_Decomp(tJac,vIndex,D,bSingul)
+    if(bSingul) then
+      iErr=-2; exit
+    end if
     vDX(:)= -vFunc(:)
-    CALL LU_BakSub(tJac,vIndex,vDX) !solve vDX= -vFunc.inv(tJac)
+    call LU_BakSub(tJac,vIndex,vDX) !solve vDX= -vFunc.inv(tJac)
     !---/ Solve
     !
     R= One
     !Chess/Concepts, p71, Newton with "polishing factor"
     Alfa= MAXVAL(ABS(vDX(:)/vX(:)))  !alfa_i= |dX_i|/X_i
-    IF(Alfa > A) THEN !-> far from root
+    if(Alfa > A) then !-> far from root
       I= iMaxLoc_R(ABS(vDX(:)/vX(:)))
-      IF(vDX(I)>Zero) R=   (Alfa*B - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
-      IF(vDX(I)<Zero) R= C*(Alfa   - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
-    ENDIF
+      if(vDX(I)>Zero) R=   (Alfa*B - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
+      if(vDX(I)<Zero) R= C*(Alfa   - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
+    end if
     !
     vX= vX + R *vDX
     !
     Error_F= MAXVAL(ABS(vFunc(:)))
     Delta_X= MAXVAL(ABS(vDX(:)))
     !
-    IF (Error_F<TolF) THEN
-      iErr= 0; EXIT
-    ENDIF
+    if (Error_F<TolF) then
+      iErr= 0; exit
+    end if
     !
-    IF (Delta_X<TolX) THEN
-      iErr=-5; EXIT
-    ENDIF
-  ENDDO
+    if (Delta_X<TolX) then
+      iErr=-5; exit
+    end if
+  end do
   !
   nIts=Its
-ENDSUBROUTINE NewtonChess
+end subroutine NewtonChess
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE Newton( &
+subroutine Newton( &
 & vX, &      ! inout= the initial guess, and the root returned
 & Residual, Jacobian, &
 & TolF,     & !in=    convergence criterion on function values
@@ -1454,59 +1454,59 @@ SUBROUTINE Newton( &
 ! in either summed absolute variable increments NewtTolX
 ! or summed absolute function values NewtTolF
 !-----------------------------------------------------------------------
-  USE M_Numeric_Tools,   ONLY: vAbs
-  USE M_Numeric_Mat,ONLY: LU_BakSub,LU_Decomp
+  use M_Numeric_Tools,   only: vAbs
+  use M_Numeric_Mat,only: LU_BakSub,LU_Decomp
   !
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_IOTools,ONLY: OutStrVec
+  use M_Numeric_Const,  only: Ln10
+  use M_IOTools,only: OutStrVec
   !
-  REAL(dp),DIMENSION(:), INTENT(INOUT):: vX
-  REAL(dp),              INTENT(IN)   :: TolF,TolX !!,TolMin
-  INTEGER,               INTENT(IN)   :: MaxIts
-  REAL(dp),              INTENT(OUT)  :: Error_F,Delta_X !,Gradient
-  !LOGICAL,               INTENT(OUT)  :: Check
-  INTEGER,               INTENT(OUT)  :: nIts,iErr
-  INTERFACE
-    FUNCTION Residual(v)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:),INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v))     :: Residual
-    ENDFUNCTION Residual
-    SUBROUTINE Jacobian(v,t)
-      USE M_Kinds
-      IMPLICIT NONE
-      REAL(dp),DIMENSION(:), INTENT(IN):: v
-      REAL(dp),DIMENSION(SIZE(v),SIZE(v)),INTENT(OUT):: t
-    ENDSUBROUTINE Jacobian
-  ENDINTERFACE
+  real(dp),dimension(:), intent(inout):: vX
+  real(dp),              intent(in)   :: TolF,TolX !!,TolMin
+  integer,               intent(in)   :: MaxIts
+  real(dp),              intent(out)  :: Error_F,Delta_X !,Gradient
+  !logical,               intent(out)  :: Check
+  integer,               intent(out)  :: nIts,iErr
+  interface
+    function Residual(v)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:),intent(in):: v
+      real(dp),dimension(size(v))     :: Residual
+    end function Residual
+    subroutine Jacobian(v,t)
+      use M_Kinds
+      implicit none
+      real(dp),dimension(:), intent(in):: v
+      real(dp),dimension(size(v),size(v)),intent(out):: t
+    end subroutine Jacobian
+  endinterface
   !
-  REAL(dp),DIMENSION(SIZE(vX))         :: vFunc,vDX
-  REAL(dp),DIMENSION(SIZE(vX),SIZE(vX)):: tJac
-  INTEGER, DIMENSION(SIZE(vX))         :: vIndex
-  INTEGER :: Its
-  REAL(dp):: D
-  LOGICAL :: bSingul
-  REAL(dp),PARAMETER:: Alfa= 0.5_dp
+  real(dp),dimension(size(vX))         :: vFunc,vDX
+  real(dp),dimension(size(vX),size(vX)):: tJac
+  integer, dimension(size(vX))         :: vIndex
+  integer :: Its
+  real(dp):: D
+  logical :: bSingul
+  real(dp),parameter:: Alfa= 0.5_dp
   !
   iErr=-1
-  DO Its=1,MaxIts
+  do Its=1,MaxIts
     !
     vFunc(:)= Residual(vX)
-    CALL Jacobian(vX,tJac)
+    call Jacobian(vX,tJac)
     !
-    !IF(DebNewt .AND. bOpenNewt) THEN
-    !  CALL OutStrVec(fNewt1,X(1:SIZE(X))/Ln10,Opt_I=Its,Opt_C="F")
-    !  CALL OutStrVec(fNewt2,vFunc(1:SIZE(X)),  Opt_I=Its,Opt_C="F")
-    !ENDIF
+    !if(DebNewt .and. bOpenNewt) then
+    !  call OutStrVec(fNewt1,X(1:size(X))/Ln10,Opt_I=Its,Opt_C="F")
+    !  call OutStrVec(fNewt2,vFunc(1:size(X)),  Opt_I=Its,Opt_C="F")
+    !end if
     !
     !--- solve linear equations using LU decomposition --
-    CALL LU_Decomp(tJac,vIndex,D,bSingul)
-    IF(bSingul) THEN
-      iErr=-2  ;  EXIT
-    ENDIF
+    call LU_Decomp(tJac,vIndex,D,bSingul)
+    if(bSingul) then
+      iErr=-2  ;  exit
+    end if
     vDX(:)= -vFunc(:)
-    CALL LU_BakSub(tJac,vIndex,vDX)
+    call LU_BakSub(tJac,vIndex,vDX)
     !---/ solve
     !
     vX= vX + vDX *Alfa
@@ -1514,78 +1514,78 @@ SUBROUTINE Newton( &
     Error_F= MAXVAL(ABS(vFunc(:)))
     Delta_X= MAXVAL(ABS(vDX(:)))
     !
-    IF (Error_F < TolF) THEN
-      iErr= 0; EXIT
-    ENDIF
-    IF (Delta_X<TolX) THEN
-      iErr=-5; EXIT
-    ENDIF
-  ENDDO
+    if (Error_F < TolF) then
+      iErr= 0; exit
+    end if
+    if (Delta_X<TolX) then
+      iErr=-5; exit
+    end if
+  end do
   !
   nIts=Its
   !
-  RETURN
-END SUBROUTINE Newton
+  return
+end subroutine Newton
 
 !///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!!///\\\!
 !\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!!\\\///!
 
-SUBROUTINE TestJacob_Sho(tJacob,tJacobNum)
-  USE M_IoTools,ONLY: GetUnit, OutStrVec
+subroutine TestJacob_Sho(tJacob,tJacobNum)
+  use M_IoTools,only: GetUnit, OutStrVec
   !
-  REAL(dp),DIMENSION(:,:),INTENT(IN):: tJacob,tJacobNum
+  real(dp),dimension(:,:),intent(in):: tJacob,tJacobNum
   !
-  REAL(dp),DIMENSION(SIZE(tJacob,1))  :: xx,xr
-  INTEGER:: ff,I
+  real(dp),dimension(size(tJacob,1))  :: xx,xr
+  integer:: ff,I
   !
-  WRITE(fTrc,'(/,A,/)') "!!!!!! TEST JACOBIAN"
-  WRITE(fTrc,'(A)') "results in zzDynam_TestJacob.log"
-  CALL GetUnit(ff)
-  OPEN(ff,FILE="debug_dynam_jacob.log")
-  DO I=1,SIZE(tJacob,1)
-    CALL OutStrVec(ff,tJacob(I,:),   Opt_I=I,Opt_S="JacobAna",Opt_C="G")
-    CALL OutStrVec(ff,tJacobNum(I,:),Opt_I=I,Opt_S="JacobDIF",Opt_C="G")
+  write(fTrc,'(/,A,/)') "!!!!!! TEST JACOBIAN"
+  write(fTrc,'(A)') "results in zzDynam_TestJacob.log"
+  call GetUnit(ff)
+  open(ff,file="debug_dynam_jacob.log")
+  do I=1,size(tJacob,1)
+    call OutStrVec(ff,tJacob(I,:),   Opt_I=I,Opt_S="JacobAna",Opt_C="G")
+    call OutStrVec(ff,tJacobNum(I,:),Opt_I=I,Opt_S="JacobDif",Opt_C="G")
     !
     xx(:)= tJacob(I,:) -tJacobNum(I,:)
-    CALL OutStrVec(ff,xx(:),         Opt_I=I,Opt_S="DeltJac",   Opt_C="G")
+    call OutStrVec(ff,xx(:),         Opt_I=I,Opt_S="DeltJac",   Opt_C="G")
     !
     xr(:)= tJacob(I,:) +tJacobNum(I,:)
-    WHERE(xr(:)>1.D-16) ; xx(:)= xx(:) / xr(:)
-    ELSEWHERE           ; xx(:)= Zero
-    ENDWHERE
-    CALL OutStrVec(ff,xx(:),         Opt_I=I,Opt_S="DeltRel",   Opt_C="G")
-  ENDDO
-  WRITE(ff,*)
-  CLOSE(ff)
-  WRITE(fTrc,'(/,A,/)') "!!!!!! TEST JACOBIAN END"
-ENDSUBROUTINE TestJacob_Sho
+    where(xr(:)>1.D-16) ; xx(:)= xx(:) / xr(:)
+    elsewhere           ; xx(:)= Zero
+    endwhere
+    call OutStrVec(ff,xx(:),         Opt_I=I,Opt_S="DeltRel",   Opt_C="G")
+  end do
+  write(ff,*)
+  close(ff)
+  write(fTrc,'(/,A,/)') "!!!!!! TEST JACOBIAN end"
+end subroutine TestJacob_Sho
 
-SUBROUTINE Newton_Sho(vX,vFunc,Its) !,nAq)
-  USE M_Numeric_Const,        ONLY: Ln10
-  USE M_Numeric_Tools,ONLY: fNewtF,fNewtR,fNewt_I
-  USE M_IoTools,      ONLY: OutStrVec
+subroutine Newton_Sho(vX,vFunc,Its) !,nAq)
+  use M_Numeric_Const,        only: Ln10
+  use M_Numeric_Tools,only: fNewtF,fNewtR,fNewt_I
+  use M_IoTools,      only: OutStrVec
   !
-  REAL(dp),INTENT(IN):: vX(:),vFunc(:)
-  INTEGER, INTENT(IN):: Its
+  real(dp),intent(in):: vX(:),vFunc(:)
+  integer, intent(in):: Its
   !
   fNewt_I= fNewt_I +1
-  IF(fNewtF>0) CALL OutStrVec(fNewtF,vX(:)/Ln10,   Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
-  IF(fNewtR>0) CALL OutStrVec(fNewtR,ABS(vFunc(:)),Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
+  if(fNewtF>0) call OutStrVec(fNewtF,vX(:)/Ln10,   Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
+  if(fNewtR>0) call OutStrVec(fNewtR,ABS(vFunc(:)),Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
   !
-ENDSUBROUTINE Newton_Sho
+end subroutine Newton_Sho
 
-SUBROUTINE Jacobian_Sho(t)
-  REAL(dp),INTENT(IN):: t(:,:)
-  INTEGER:: I,J
-  DO I=1,SIZE(t,1)
-    DO J=1,SIZE(t,2)
-      IF(t(I,J)/=0) THEN  ;  WRITE(fTrc,'(F7.1,A1)',ADVANCE='NO') t(I,J), T_
-      ELSE                ;  WRITE(fTrc,'(A1,  A1)',ADVANCE='NO') "0",    T_
-      ENDIF
-    ENDDO
-    WRITE(fTrc,*)
-  ENDDO
-  RETURN
-ENDSUBROUTINE Jacobian_Sho
+subroutine Jacobian_Sho(t)
+  real(dp),intent(in):: t(:,:)
+  integer:: I,J
+  do I=1,size(t,1)
+    do J=1,size(t,2)
+      if(t(I,J)/=0) then  ;  write(fTrc,'(F7.1,A1)',advance="no") t(I,J), T_
+      else                ;  write(fTrc,'(A1,  A1)',advance="no") "0",    T_
+      end if
+    end do
+    write(fTrc,*)
+  end do
+  return
+end subroutine Jacobian_Sho
 
-ENDMODULE M_Numeric_Newton
+end module M_Numeric_Newton

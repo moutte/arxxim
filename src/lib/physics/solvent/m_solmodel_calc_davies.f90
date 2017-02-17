@@ -1,4 +1,4 @@
-MODULE M_Solmodel_Calc_Davies
+module M_Solmodel_Calc_Davies
 !-----------------------------------------------------------------------
 ! Davies models of activity for Aqueous Species
 !
@@ -9,7 +9,7 @@ MODULE M_Solmodel_Calc_Davies
 !
 ! DAV_2 :  Davies 2
 !   after Grenthe et al, Modelling In Aquatic Chemistry, OECD,p.330
-!   Davies, with Gamma(Neutral) a FUNCTION of IonStrength
+!   Davies, with Gamma(Neutral) a function of IonStrength
 !
 ! SAMSON : Samson et al. 1999
 !   Modeling chemical activity effects in strong ionic solutions.
@@ -17,47 +17,47 @@ MODULE M_Solmodel_Calc_Davies
 !
 !-----------------------------------------------------------------------
 
-  USE M_Numeric_Const
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc,iDebug,T_
+  use M_Numeric_Const
+  use M_Kinds
+  use M_Trace,only: fTrc,iDebug,T_
 
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
 
-  PUBLIC:: Solmodel_Calc_Davies
+  public:: Solmodel_Calc_Davies
 
-CONTAINS
+contains
 
-  SUBROUTINE Solmodel_Calc_Davies( &
+  subroutine Solmodel_Calc_Davies( &
   & vZSp, vMolal, &
   & dhA, iModel, MWSv, &
   & vLnGam, LnActSv, OsmoSv) !,ERR)
 
-    INTEGER, INTENT(IN)::  vZSp(:)
-    REAL(dp),INTENT(IN)::  vMolal(:)
-    REAL(dp),INTENT(IN)::  dhA
-    REAL(dp),INTENT(IN)::  MWSv
-    INTEGER, INTENT(IN)::  iModel
+    integer, intent(in)::  vZSp(:)
+    real(dp),intent(in)::  vMolal(:)
+    real(dp),intent(in)::  dhA
+    real(dp),intent(in)::  MWSv
+    integer, intent(in)::  iModel
 
-    REAL(dp),INTENT(OUT):: vLnGam(:)
-    REAL(dp),INTENT(OUT):: LnActSv
-    REAL(dp),INTENT(OUT):: OsmoSv
+    real(dp),intent(out):: vLnGam(:)
+    real(dp),intent(out):: LnActSv
+    real(dp),intent(out):: OsmoSv
 
-    REAL(dp):: LnGam_Charged, LnGam_Neutral
-    REAL(dp):: Sum_Solute
-    REAL(dp):: IonStr, SqrtIoSt
-    INTEGER :: vZ2(SIZE(vZSp))
-    INTEGER :: nSolut,iAq
+    real(dp):: LnGam_Charged, LnGam_Neutral
+    real(dp):: Sum_Solute
+    real(dp):: IonStr, SqrtIoSt
+    integer :: vZ2(size(vZSp))
+    integer :: nSolut,iAq
     !-------------------------------------------------------------------
 
-    nSolut= SIZE(vMolal)
+    nSolut= size(vMolal)
     vZ2(:)= vZSp(:)*vZSp(:)
 
     !Ion Strength=  sum(m(i)*z2(i)) /2
-    IonStr= DOT_PRODUCT(vZ2(:),vMolal(:)) /Two
+    IonStr= dot_product(vZ2(:),vMolal(:)) /Two
 
     !-- "TRUNCATED DAVIES"
-    !-- IF(IonStr>0.3) IonStr- 0.3D0
+    !-- if(IonStr>0.3) IonStr- 0.3D0
 
     SqrtIoSt= SQRT(IonStr)
 
@@ -70,45 +70,45 @@ CONTAINS
     ! "name12 "               & ! 12
 
     !---------------------------------------------------------< Solute--
-    SELECT CASE(iModel)
+    select case(iModel)
     !
-    CASE(6,7) !"DAV_1","DAV_2")
+    case(6,7) !"DAV_1","DAV_2")
       LnGam_Charged = -dhA &
       &               *( SqrtIoSt/(One + SqrtIoSt) -0.3D0*IonStr ) &
       &               *Ln10
       ! there's also a version of Davies equation
       ! where coeff 0.2 is used instead of 0.3 !?!
     !
-    CASE(9) !("SAMSON")
+    case(9) !("SAMSON")
       LnGam_Charged = -dhA &
       &               *( SqrtIoSt/(One + SqrtIoSt) &
       &                 -(0.2D0 -4.17D-5*IonStr) *IonStr ) &
       &               *Ln10
     !
-    END SELECT
+    end select
     
-    SELECT CASE(iModel)
+    select case(iModel)
     !
-    CASE(6,9) !("DAV_1","SAMSON")
+    case(6,9) !("DAV_1","SAMSON")
       LnGam_Neutral = Zero
       !-> official Davies equation
     !
-    CASE(7) !"DAV_2")
+    case(7) !"DAV_2")
       LnGam_Neutral = 0.064D0*IonStr*Ln10
       !-> non-official equation (where is it from ??)
     !
-    END SELECT
+    end select
     
-    DO iAq=1,nSolut
-      IF (vZSp(iAq)/=0) THEN
+    do iAq=1,nSolut
+      if (vZSp(iAq)/=0) then
         !------------------Charged Species--
         ! e.g. Bethke, eq.7.4, p110
         vLnGam(iAq)= vZ2(iAq) *LnGam_Charged
-      ELSE
+      else
         !------------------Neutral Species--
         vLnGam(iAq)= LnGam_Neutral
-      ENDIF
-    ENDDO
+      end if
+    end do
     !---------------------------------------------------------</Solute--
     
     !-------------------------------------------------------- Solvent --
@@ -121,15 +121,15 @@ CONTAINS
     OsmoSv= - LnActSv /MWsv / Sum_Solute
     !--------------------------------------------------------/Solvent --
 
-  END SUBROUTINE Solmodel_Calc_Davies
+  end subroutine Solmodel_Calc_Davies
 
-  REAL(dp) FUNCTION Sigma(x)
+  real(dp) function Sigma(x)
   ! for calcul. Water Acivity,
   ! cf equ.23-40 in LewisRandall'61, used also in EQ3NR
-    REAL(dp),INTENT(IN):: x
+    real(dp),intent(in):: x
     
-    Sigma=  3.0D0*(One + x - One/(One+x) - Two*LOG(One+x))/x/x/x
+    Sigma=  3.0D0*(One + x - One/(One+x) - Two*log(One+x))/x/x/x
   
-  END FUNCTION Sigma
+  end function Sigma
 
-ENDMODULE M_Solmodel_Calc_Davies
+end module M_Solmodel_Calc_Davies

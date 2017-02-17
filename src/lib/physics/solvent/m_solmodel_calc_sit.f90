@@ -1,66 +1,66 @@
-MODULE M_Solmodel_Calc_SIT
-  !---------------------------------------------------------------
-  ! SIT model of activity for Aqueous Species
-  !          after Grenthe et al, ModellingInAquaticChemistry,OECD,Chap.IX,p.330
-  !----------------------------------------------------------------
+module M_Solmodel_Calc_SIT
+!-----------------------------------------------------------------------
+! SIT model of activity for Aqueous Species
+! after Grenthe et al, Modelling In Aquatic Chemistry,OECD,Chap.IX,p.330
+!-----------------------------------------------------------------------
 
-  USE M_Numeric_Const
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc,iDebug,T_
+  use M_Numeric_Const
+  use M_Kinds
+  use M_Trace,only: fTrc,iDebug,T_
   
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
 
-  PUBLIC:: Solmodel_Calc_SIT
+  public:: Solmodel_Calc_SIT
 
-CONTAINS
+contains
 
-  SUBROUTINE Solmodel_Calc_SIT( &
+  subroutine Solmodel_Calc_SIT( &
   & vZSp, vMolal, &
   & dhA, Model, MWSv, &
   & vLnGam, LnActSv, OsmoSv)
   
-    INTEGER, INTENT(IN)     :: vZSp(:)
-    REAL(dp),INTENT(IN)     :: vMolal(:)
-    REAL(dp),INTENT(IN)     :: dhA
-    REAL(dp),INTENT(IN)     :: MWSv
-    CHARACTER(*),INTENT(IN) :: Model
-    REAL(dp),INTENT(OUT)    :: vLnGam(:)
-    REAL(dp),INTENT(OUT)    :: LnActSv
-    REAL(dp),INTENT(OUT)    :: OsmoSv
+    integer, intent(in)     :: vZSp(:)
+    real(dp),intent(in)     :: vMolal(:)
+    real(dp),intent(in)     :: dhA
+    real(dp),intent(in)     :: MWSv
+    character(*),intent(in) :: Model
+    real(dp),intent(out)    :: vLnGam(:)
+    real(dp),intent(out)    :: LnActSv
+    real(dp),intent(out)    :: OsmoSv
     !
-    REAL(dp):: LnGam_Charged, LnGam_Neutral
-    REAL(dp):: Sum_Solute
-    REAL(dp):: IonStr, SqrtIoSt, X
-    INTEGER :: vZ2(SIZE(vZSp))
-    INTEGER :: nSolut,iAq
+    real(dp):: LnGam_Charged, LnGam_Neutral
+    real(dp):: Sum_Solute
+    real(dp):: IonStr, SqrtIoSt, X
+    integer :: vZ2(size(vZSp))
+    integer :: nSolut,iAq
     
-    nSolut= SIZE(vMolal)
+    nSolut= size(vMolal)
     vZ2(:)= vZSp(:)*vZSp(:)
     !    
     !Ion Strength=  sum(m(i)*z2(i)) /2
-    IonStr= DOT_PRODUCT(vZ2(:),vMolal(:)) /Two
+    IonStr= dot_product(vZ2(:),vMolal(:)) /Two
     !
     SqrtIoSt= SQRT(IonStr)
     !
-    !--------------------------------------------------------- Solute --
+    !------------------------------------------------------------ Solute
     LnGam_Charged = -dhA *(SqrtIoSt/(One + 1.5D0*SqrtIoSt))*Ln10
     !
     LnGam_Neutral = Zero
     !
-    DO iAq=1,nSolut
-      IF (vZSp(iAq)/=0) THEN
+    do iAq=1,nSolut
+      if (vZSp(iAq)/=0) then
         !--- Charged Species --!
         !e.g. Bethke, eq.7.4, p110
         vLnGam(iAq)= vZ2(iAq) *LnGam_Charged
-      ELSE
+      else
         !--- Neutral Species --!
         vLnGam(iAq)= LnGam_Neutral
-      ENDIF
-    ENDDO
-    !--------------------------------------------------------/ Solute --
+      end if
+    end do
+    !-----------------------------------------------------------/ Solute
     !
-    !-------------------------------------------------------- Solvent --
+    !----------------------------------------------------------- Solvent
     Sum_Solute = SUM(vMolal(:))
     !-- LewisRandall,23-39,p347; EQ3NR-Doc, p.39
     LnActSv= Ln10 *Two/3.0D0 *dhA  *SqrtIost**3 *Sigma(SqrtIoSt) &
@@ -74,20 +74,20 @@ CONTAINS
     !---/
     OsmoSv= - X
     LnActSv=  X *MWSv *Sum_Solute
-    !-------------------------------------------------------/ Solvent --!
+    !----------------------------------------------------------/ Solvent
 
-  END SUBROUTINE Solmodel_Calc_SIT
+  end subroutine Solmodel_Calc_SIT
 
-  REAL(dp) FUNCTION Sigma(x)
+  real(dp) function Sigma(x)
   !-- for computing Water Acivity,
   !-- -> equ.23-40 in LewisRandall'61, p.347, used also in EQ3NR
-    REAL(dp),INTENT(IN):: x
+    real(dp),intent(in):: x
     
-    REAL(dp):: XX
+    real(dp):: XX
     
     XX= One+x
-    Sigma=  3.0D0*(XX - One/XX - Two*LOG(XX)) /X**3
+    Sigma=  3.0D0*(XX - One/XX - Two*log(XX)) /X**3
     
-  END FUNCTION Sigma
+  end function Sigma
   
-ENDMODULE M_Solmodel_Calc_SIT
+end module M_Solmodel_Calc_SIT

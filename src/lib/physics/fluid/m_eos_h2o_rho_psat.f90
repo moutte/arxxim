@@ -1,4 +1,4 @@
-MODULE M_Eos_H2O_Rho_Psat
+module M_Eos_H2O_Rho_Psat
 !! was M_CalcPSatRho_H2O
 
 !--------------------------------------------------------------
@@ -12,56 +12,56 @@ MODULE M_Eos_H2O_Rho_Psat
 ! Arxim Integration : J.Moutte
 !---------------------------------------------------------------
 
-  USE M_Kinds
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  implicit none
+  private
 
   !// Public Functions
-  PUBLIC :: Eos_H2O_rho
-  PUBLIC :: Eos_H2O_psat
+  public :: Eos_H2O_rho
+  public :: Eos_H2O_psat
 
-CONTAINS
+contains
 
 !---
 
-SUBROUTINE Eos_H2O_psat(Tk,PSatBar) 
+subroutine Eos_H2O_psat(Tk,PSatBar) 
 !--
 !-- ... should give the *source* of these equations !!! ...
 !--
-  REAL(dp),INTENT(IN) :: Tk
-  REAL(dp),INTENT(OUT):: PSatBar
+  real(dp),intent(in) :: Tk
+  real(dp),intent(out):: PSatBar
   
-  REAL(dp):: W,WSQ,V,FF
-  INTEGER :: I
-  REAL(dp):: A(1:8)=(/ &
+  real(dp):: W,WSQ,V,FF
+  integer :: I
+  real(dp):: A(1:8)=(/ &
   & -7.8889166D0, 2.5514255D0, -6.716169D0,  33.239495D0, &
   & -105.38479D0, 174.35319D0, -148.39348D0, 48.631602D0 /)
   !
-  IF (Tk <= 314.0D0) THEN
+  if (Tk <= 314.0D0) then
   
-    PSatBar= EXP( 6.3573118D0 -8858.843D0/Tk +607.56335D0/(Tk**0.6D0) )
+    PSatBar= exp( 6.3573118D0 -8858.843D0/Tk +607.56335D0/(Tk**0.6D0) )
     
-  ELSE
+  else
   
     V=  Tk/647.25D0
     W=  ABS(One-V)
     WSQ=SQRT(W)
     FF= Zero
-    DO I=1,8
+    do I=1,8
       FF=FF+A(I)*W
       W=W*WSQ
-    ENDDO
+    end do
     !
-    PSatBar= 220.93D0*EXP(FF/V)
+    PSatBar= 220.93D0*exp(FF/V)
   
-  ENDIF
+  end if
   !
-  RETURN
-ENDSUBROUTINE Eos_H2O_psat
+  return
+end subroutine Eos_H2O_psat
 
 !---
 
-SUBROUTINE Eos_H2O_rho( &
+subroutine Eos_H2O_rho( &
 & TdgK,Pbar, & !IN
 & RH2O,Alfa,Beta,dAlfdT,dBetdT,dBetdP) !OUT
 !-----------------------------------------------------------------------
@@ -69,25 +69,25 @@ SUBROUTINE Eos_H2O_rho( &
 !--For given Pbar-Pbar,TdgK-TdegK,
 !--compute density of water, RH2O, 
 !--and Alfa, Beta, dAlfa/dT, dBeta/dT, dAlfa/dP_, dBeta/dP_
-!--which are input DATA for :
+!--which are input data for :
 !--__G_Shok92, to compute Gf, dG/dP_, dG/dT, d2G/dT2
 !--__JohnsonNorton91, to compute epsilon, and its derivatives
 !-----------------------------------------------------------------------
-  USE M_Eos_Utils, ONLY : Cubic
+  use M_Eos_Utils, only : Cubic
   
-  IMPLICIT NONE
+  implicit none
   
-  REAL(dp),INTENT(IN) ::Pbar,TdgK
-  REAL(dp),INTENT(OUT)::RH2O,Alfa,Beta,dAlfdT,dBetdT,dBetdP
+  real(dp),intent(in) ::Pbar,TdgK
+  real(dp),intent(out)::RH2O,Alfa,Beta,dAlfdT,dBetdT,dBetdP
   
-  INTEGER::KI(40),LI(40)
-  REAL(dp)::&
+  integer::KI(40),LI(40)
+  real(dp)::&
   & TAUI(0:6),ERMI(0:9),&
   & GI(40), &
   & RHOI(37:40),TTTI(37:40),ALPI(37:40),BETI(37:40),&
   & TIT(7),PIT(7),RHIT(7),DPRIT(7)
-  INTEGER:: ITER,LOO,I
-  REAL(dp):: &
+  integer:: ITER,LOO,I
+  real(dp):: &
   & RR,R,T,T0,P,RT,PR,PS,S,&
   & ARK,BRK,OFT,   &
   & BUK,CUK,DUK,   &
@@ -140,7 +140,7 @@ SUBROUTINE Eos_H2O_rho( &
   !
   PS=220.55D0
   !
-  IF (T<=647.25D0) CALL Eos_H2O_psat(T,PS) !for subcritic. water
+  if (T<=647.25D0) call Eos_H2O_psat(T,PS) !for subcritic. water
   !
   !SET INITIAL GUESS FOR RHO USING THB.HOLLAND-FIT TO REDLICH-KWONG
   ARK= 1.279186D8 -2.241415D04*T !REDLICH-KWONG constant A
@@ -150,19 +150,19 @@ SUBROUTINE Eos_H2O_rho( &
   CUK= OFT -BRK*BRK +BRK*BUK
   DUK=     -BRK*OFT
   !
-  CALL CUBIC(BUK,CUK,DUK,X1,X2,X2I,X3)
+  call CUBIC(BUK,CUK,DUK,X1,X2,X2I,X3)
   !
-  IF (X2I /= 0.0D0) THEN
+  if (X2I /= 0.0D0) then
     VOL=X1
-  ELSE
-    !IF (P<PS) THEN; VOL=MAX(X1,X2,X3)
-    !ELSE;           VOL=MIN(X1,X2,X3)
-    !END IF
+  else
+    !if (P<PS) then; VOL=MAX(X1,X2,X3)
+    !else;           VOL=MIN(X1,X2,X3)
+    !end if
     VOL=DMIN1(X1,X2,X3);
-  END IF
-  IF (VOL<=0.0D0) THEN; RHN=1.9D0
-  ELSE                ; RHN=1D0/VOL*18.0152D0
-  ENDIF
+  end if
+  if (VOL<=0.0D0) then; RHN=1.9D0
+  else                ; RHN=1D0/VOL*18.0152D0
+  end if
   !
   DELT=0.001D0; DELP=0.01D0
   TIT(1)=TdgK;             PIT(1)=Pbar
@@ -174,9 +174,9 @@ SUBROUTINE Eos_H2O_rho( &
   TIT(7)=TdgK;             PIT(7)=Pbar+DELP
   T0=    647.073D0
   !
-  DO100: DO ITER=1,7
+  do100: do ITER=1,7
   
-    IF (ITER /= 1) RHN=RHIT(1)
+    if (ITER /= 1) RHN=RHIT(1)
     
     T=TIT(ITER)
     P=PIT(ITER)
@@ -185,8 +185,8 @@ SUBROUTINE Eos_H2O_rho( &
     !The values (T/T0)**i are stored in the array TAUI(i)
     TAUI(0)=1.D0
     TAUI(1)=T/T0
-    DO I=2,6; TAUI(I)=TAUI(I-1)*TAUI(1); ENDDO
-    B = -0.3540782D0 *LOG(TAUI(1)) &
+    do I=2,6; TAUI(I)=TAUI(I-1)*TAUI(1); end do
+    B = -0.3540782D0 *log(TAUI(1)) &
     & + 0.7478629D0 &
     & + 0.007159876D0/TAUI(3) &
     & - 0.003528426D0/TAUI(5)
@@ -198,15 +198,15 @@ SUBROUTINE Eos_H2O_rho( &
     !FIND THE TRUE(?) RH(T,P)
     !NOTE: PR= PRESSURE CORRESPONDING TO GUESSED RH
     !      DPR= (dP_ / dRH)
-    !      the values (1-EXP(-RH))**i are stored in the array ERMI(i)
-    DO20: DO LOO=1,100
+    !      the values (1-exp(-RH))**i are stored in the array ERMI(i)
+    do20: do LOO=1,100
     
       RH=RHN
-      IF (RH<=1D-8) RH=1D-8
-      IF (RH> 1.9D0) RH=1.9D0
+      if (RH<=1D-8) RH=1D-8
+      if (RH> 1.9D0) RH=1.9D0
       RH2= RH*RH
       Y=   RH*B/4.D0
-      ER=  EXP(-RH)
+      ER=  exp(-RH)
       Y3=  (1D0-Y)**3
       ALY= 11.D0*Y
       BETY=44.33333333333333D0*Y*Y
@@ -214,25 +214,25 @@ SUBROUTINE Eos_H2O_rho( &
       F2= 4.D0*Y*(BB/B-3.5D0)
       ERMI(0)=1D0
       ERMI(1)=1D0-ER
-      DO I=2,9; ERMI(I)=ERMI(I-1)*ERMI(1); ENDDO
+      do I=2,9; ERMI(I)=ERMI(I-1)*ERMI(1); end do
       PR=0.0D0
       DPR=0.0D0
-      DO I=1,36
+      do I=1,36
         S=  GI(I)/TAUI(LI(I))*ERMI(KI(I)-1)
         PR= PR+S
         DPR=DPR+(2D0+RH*(KI(I)*ER-1D0)/ERMI(1))*S
-      END DO
-      DO I=37,40
+      end do
+      do I=37,40
         DEL=  RH/RHOI(I)-One
         RHOI2=RHOI(I)*RHOI(I)
         TAU=  T/TTTI(I)-One
         QHEX=(-ALPI(I)*DEL**LI(I)-BETI(I)*TAU*TAU)
-        IF (QHEX>-150.0D0) THEN
+        if (QHEX>-150.0D0) then
           Q10= GI(I) *DEL**LI(I) &
-          &          *EXP( -ALPI(I)*DEL**LI(I) -BETI(I)*TAU*TAU )
-        ELSE
+          &          *exp( -ALPI(I)*DEL**LI(I) -BETI(I)*TAU*TAU )
+        else
           Q10=0.0D0
-        END IF
+        end if
         QM= LI(I)/DEL-KI(I)*ALPI(I)*DEL**(KI(I)-1)
         S= Q10*QM*RH2/RHOI(I)
         PR= PR+S
@@ -240,33 +240,33 @@ SUBROUTINE Eos_H2O_rho( &
         &  + S*(2.0D0/RH+QM/RHOI(I)) &
         &  - RH2 /RHOI2 *Q10 &
         &    *( LI(I)/DEL/DEL +KI(I)*(KI(I)-1)*ALPI(I)*DEL**(KI(I)-2) )
-      END DO
+      end do
       PR=RH*(RH*ER*PR+RT*(F1+F2))
       DPR= RH*ER*DPR &
       &  + RT * ((1.D0 +2.D0*ALY +3D0*BETY)/Y3 &
       &         + 3.D0*Y*F1/(1D0-Y) &
       &         + 2.D0*F2)
       !
-      IF (DPR<=0.0D0) THEN
-        IF (P<=PS) THEN; RHN=RHN*0.95D0
-        ELSE           ; RHN=RHN*1.05D0
-        ENDIF
-      ELSE
-        IF(DPR<0.01D0) DPR=0.01D0
+      if (DPR<=0.0D0) then
+        if (P<=PS) then; RHN=RHN*0.95D0
+        else           ; RHN=RHN*1.05D0
+        end if
+      else
+        if(DPR<0.01D0) DPR=0.01D0
         S=(P-PR)/DPR
-        IF(ABS(S)>0.1D0) S=0.1D0*S/ABS(S)
+        if(ABS(S)>0.1D0) S=0.1D0*S/ABS(S)
         RHN=RH+S
-      END IF
+      end if
       DP_=ABS(One-PR/P)
       DR_=ABS(One-RHN/RH)
-      IF (DP_<1D-5 .AND. DR_<1D-12) EXIT DO20 !GOTO 30
+      if (DP_<1D-5 .and. DR_<1D-12) exit do20 !goto 30
     
-    ENDDO DO20 !20 CONTINUE
+    end do do20 !20 continue
     
     RHIT(ITER)=RHN !30
     DPRIT(ITER)=DPR
   
-  ENDDO DO100
+  end do do100
   !
   RH2O=RHIT(1)
   !
@@ -288,7 +288,7 @@ SUBROUTINE Eos_H2O_rho( &
   !
   dAlfdT=(F2-F1)/DELT/2.0D0
   
-  RETURN
-ENDSUBROUTINE Eos_H2O_rho
+  return
+end subroutine Eos_H2O_rho
 
-ENDMODULE M_Eos_H2O_Rho_Psat
+end module M_Eos_H2O_Rho_Psat

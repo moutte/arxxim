@@ -1,251 +1,252 @@
-MODULE M_Safe_Functions
+module M_Safe_Functions
 
-  !=========================================
+  !--=======================================
   ! Safe Functions Exp, Log, Log10
   ! Truncated to avoid Out of Range Errors
-  !=========================================
+  !--=======================================
+  use M_Kinds
 
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
 
-  REAL(kind=8), PARAMETER:: Ln10= 2.30258509299404D0
-  REAL(kind=8), PARAMETER:: Zero = 0.D0
-  REAL(kind=8), PARAMETER:: One = 1.D0
+  real(dp), parameter:: Ln10= 2.30258509299404D0
+  ! real(dp), parameter:: Zero = 0.D0         ! is in M_Kinds
+  ! real(dp), parameter:: One = 1.D0          ! is in M_Kinds
 
-  REAL(kind=8) :: MinExpDP= -300.D0
-  REAL(kind=8) :: MaxExpDP= +300.D0
-  REAL(kind=8) :: TinyDP= 1.D-300
+  real(dp) :: MinExpDP= -300.D0
+  real(dp) :: MaxExpDP= +300.D0
+  real(dp) :: TinyDP= 1.D-300
 
   !// Set Parameters
-  PUBLIC :: Set_MinExpDP
-  PUBLIC :: Set_MaxExpDP
-  PUBLIC :: Set_TinyDP
+  public :: Set_MinExpDP
+  public :: Set_MaxExpDP
+  public :: Set_TinyDP
 
   !// Scalar values
-  PUBLIC :: Safe_Exp
-  PUBLIC :: Safe_Log
-  PUBLIC :: Safe_Log10
+  public :: Safe_Exp
+  public :: Safe_Log
+  public :: Safe_Log10
 
   !// Function Scalar values
-  PUBLIC :: FSafe_Exp
-  PUBLIC :: FSafe_Log
-  PUBLIC :: FSafe_Log10
+  public :: FSafe_Exp
+  public :: FSafe_Log
+  public :: FSafe_Log10
   
   !// Vector values
-  PUBLIC :: Safe_vExp
-  PUBLIC :: Safe_vLog
-  PUBLIC :: Safe_vLog10
+  public :: Safe_vExp
+  public :: Safe_vLog
+  public :: Safe_vLog10
 
   !// Function Vector values
-  PUBLIC :: FSafe_vExp
-  PUBLIC :: FSafe_vLog
-  PUBLIC :: FSafe_vLog10
+  public :: FSafe_vExp
+  public :: FSafe_vLog
+  public :: FSafe_vLog10
 
-CONTAINS
+contains
 
-  !==================== PARAMETER SETTING =====================
+  !--================== parameter SETTING =====================
 
-  SUBROUTINE Set_MinExpDP(value)
-    IMPLICIT NONE
-    REAL(kind=8) :: value
+  subroutine Set_MinExpDP(value)
+    implicit none
+    real(dp) :: value
     MinExpDP= value
-  END SUBROUTINE Set_MinExpDP
+  end subroutine Set_MinExpDP
 
   !---
 
-  SUBROUTINE Set_MaxExpDP(value)
-    IMPLICIT NONE
-    REAL(kind=8) :: value
+  subroutine Set_MaxExpDP(value)
+    implicit none
+    real(dp) :: value
     MaxExpDP= value
-  END SUBROUTINE Set_MaxExpDP
+  end subroutine Set_MaxExpDP
 
   !---
   
-  SUBROUTINE Set_TinyDP(value)
-    IMPLICIT NONE
-    REAL(kind=8) :: value
+  subroutine Set_TinyDP(value)
+    implicit none
+    real(dp) :: value
     TinyDP= value
-  END SUBROUTINE Set_TinyDP
+  end subroutine Set_TinyDP
 
-  !====================>>  SCALAR VALUES <<=====================
+  !--==================>>  SCALAR valueS <<=====================
 
-  SUBROUTINE Safe_Exp(X,Expx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8), intent(out) :: Expx
+  subroutine Safe_Exp(X,Expx) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp), intent(out) :: Expx
     !--
     Expx = 0.; 
-    IF( (X>MinExpDP) .AND. (X<MaxExpDP) ) THEN
-       Expx= EXP(X)
-    ELSE
-       IF(X<=MinExpDP) Expx= EXP(MinExpDP)
-       IF(X>=MaxExpDP) Expx= EXP(MaxExpDP)
-    END IF
+    if( (X>MinExpDP) .and. (X<MaxExpDP) ) then
+       Expx= exp(X)
+    else
+       if(X<=MinExpDP) Expx= exp(MinExpDP)
+       if(X>=MaxExpDP) Expx= exp(MaxExpDP)
+    end if
 
-  END SUBROUTINE Safe_Exp
+  end subroutine Safe_Exp
 
   !---
   
-  FUNCTION FSafe_Exp(X) result (Expx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8) :: Expx
+  function FSafe_Exp(X) result (Expx) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp) :: Expx
     !--
     Expx = 0.; 
-    IF( (X>MinExpDP) .AND. (X<MaxExpDP) ) THEN
-       Expx= EXP(X)
-    ELSE
-       IF(X<=MinExpDP) Expx= EXP(MinExpDP)
-       IF(X>=MaxExpDP) Expx= EXP(MaxExpDP)
-    END IF
-  END FUNCTION FSafe_Exp
+    if( (X>MinExpDP) .and. (X<MaxExpDP) ) then
+       Expx= exp(X)
+    else
+       if(X<=MinExpDP) Expx= exp(MinExpDP)
+       if(X>=MaxExpDP) Expx= exp(MaxExpDP)
+    end if
+  end function FSafe_Exp
 
   !---
 
-  SUBROUTINE Safe_Log(X,Logx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8), intent(out) :: Logx
+  subroutine Safe_Log(X,Logx) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp), intent(out) :: Logx
     !--
-    IF( X>TinyDP ) THEN
+    if( X>TinyDP ) then
        Logx= log(X)
-    ELSE
-       IF ( X>= Zero ) Logx= LOG(TinyDP)
-       IF ( X< Zero )  Logx= LOG(X) ! Error Log Undefined !    
-    END IF
+    else
+       if ( X>= Zero ) Logx= log(TinyDP)
+       if ( X< Zero )  Logx= log(X) ! Error Log Undefined !    
+    end if
 
-  END SUBROUTINE Safe_Log
+  end subroutine Safe_Log
 
   !---
   
-  FUNCTION FSafe_Log(X) result(LogX) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8) :: Logx
+  function FSafe_Log(X) result(LogX) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp) :: Logx
     !--
-    IF( X>TinyDP ) THEN
+    if( X>TinyDP ) then
       Logx= log(X)
-    ELSE
-      IF ( X>= Zero ) Logx= LOG(TinyDP)
-      IF ( X< Zero )  Logx= LOG(X) ! Error Log Undefined !    
-    END IF
+    else
+      if ( X>= Zero ) Logx= log(TinyDP)
+      if ( X< Zero )  Logx= log(X) ! Error Log Undefined !    
+    end if
     
-  END FUNCTION FSafe_Log
+  end function FSafe_Log
 
   !---
 
-  SUBROUTINE Safe_Log10(X,Logx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8), intent(out) :: Logx
+  subroutine Safe_Log10(X,Logx) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp), intent(out) :: Logx
     !--
-    CALL Safe_Log(X,Logx) 
+    call Safe_Log(X,Logx) 
     Logx = LogX + Ln10;
 
-  END SUBROUTINE Safe_Log10
+  end subroutine Safe_Log10
 
   !---
   
-   FUNCTION FSafe_Log10(X) result(Logx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: X
-    REAL(kind=8) :: Logx
+   function FSafe_Log10(X) result(Logx) 
+    implicit none
+    real(dp), intent(in)  :: X
+    real(dp) :: Logx
     !--
-    CALL Safe_Log(X,Logx) 
+    call Safe_Log(X,Logx) 
     Logx = LogX + Ln10;
 
-  END FUNCTION FSafe_Log10
+  end function FSafe_Log10
 
-  !====================>>  VECTOR VALUES <<=====================
+  !--==================>>  VECTOR valueS <<=====================
 
 
-  SUBROUTINE Safe_vExp(vX,vExpx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8), intent(out) :: vExpx(:)
+  subroutine Safe_vExp(vX,vExpx) 
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp), intent(out) :: vExpx(:)
     !--
     vExpx = 0.
-    WHERE((vX>MinExpDP) .AND. (vX<MaxExpDP))
-      vExpx=EXP(vX)
-    ELSEWHERE
-      WHERE(vX<=MinExpDP) vExpx= EXP(MinExpDP)
-      WHERE(vX>=MaxExpDP) vExpx= EXP(MaxExpDP)
-    END WHERE
+    where((vX>MinExpDP) .and. (vX<MaxExpDP))
+      vExpx=exp(vX)
+    elsewhere
+      where(vX<=MinExpDP) vExpx= exp(MinExpDP)
+      where(vX>=MaxExpDP) vExpx= exp(MaxExpDP)
+    end where
 
-  END SUBROUTINE Safe_vExp
+  end subroutine Safe_vExp
 
   !---
 
-  FUNCTION FSafe_vExp(vX) result(vExpx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8) :: vExpx(size(vX))
+  function FSafe_vExp(vX) result(vExpx) 
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp) :: vExpx(size(vX))
     !--
     vExpx = 0.
-    WHERE((vX>MinExpDP) .AND. (vX<MaxExpDP))
-      vExpx=EXP(vX)
-    ELSEWHERE
-      WHERE(vX<=MinExpDP) vExpx= EXP(MinExpDP)
-      WHERE(vX>=MaxExpDP) vExpx= EXP(MaxExpDP)
-    END WHERE
-  END FUNCTION FSafe_vExp
+    where((vX>MinExpDP) .and. (vX<MaxExpDP))
+      vExpx=exp(vX)
+    elsewhere
+      where(vX<=MinExpDP) vExpx= exp(MinExpDP)
+      where(vX>=MaxExpDP) vExpx= exp(MaxExpDP)
+    end where
+  end function FSafe_vExp
     
   !---
   
-  SUBROUTINE Safe_vLog(vX,vLogx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8), intent(out) :: vLogx(:)
+  subroutine Safe_vLog(vX,vLogx) 
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp), intent(out) :: vLogx(:)
     !
-    WHERE( vX> TinyDP )
-       vLogx= LOG(vX)
-    ELSEWHERE
-       WHERE(vX>=0.) vLogx= LOG(TinyDP)
-       WHERE(vX<0.)  vLogx= LOG(vX)     ! Error Log Undefined !    
-    END WHERE
+    where( vX> TinyDP )
+       vLogx= log(vX)
+    elsewhere
+       where(vX>=0.) vLogx= log(TinyDP)
+       where(vX<0.)  vLogx= log(vX)     ! Error Log Undefined !    
+    end where
 
-  END SUBROUTINE Safe_vLog
+  end subroutine Safe_vLog
 
   !---
 
-  FUNCTION FSafe_vLog(vX) result (vLogx)
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8) :: vLogx(size(vX))
+  function FSafe_vLog(vX) result (vLogx)
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp) :: vLogx(size(vX))
     !
-    WHERE( vX> TinyDP )
-       vLogx= LOG(vX)
-    ELSEWHERE
-       WHERE(vX>=0.) vLogx= LOG(TinyDP)
-       WHERE(vX<0.)  vLogx= LOG(vX)     ! Error Log Undefined !    
-    END WHERE
+    where( vX> TinyDP )
+       vLogx= log(vX)
+    elsewhere
+       where(vX>=0.) vLogx= log(TinyDP)
+       where(vX<0.)  vLogx= log(vX)     ! Error Log Undefined !    
+    end where
 
-  END FUNCTION FSafe_vLog
+  end function FSafe_vLog
 
   !---
 
-  SUBROUTINE Safe_vLog10(vX,vLogx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8), intent(out) :: vLogx(:)
+  subroutine Safe_vLog10(vX,vLogx) 
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp), intent(out) :: vLogx(:)
     !--
-    CALL Safe_vLog(vX,vLogx) 
+    call Safe_vLog(vX,vLogx) 
     vLogx = vLogx + Ln10
 
-  END SUBROUTINE Safe_vLog10
+  end subroutine Safe_vLog10
 
   !---
 
-  FUNCTION FSafe_vLog10(vX) result (vLogx) 
-    IMPLICIT NONE
-    REAL(kind=8), intent(in)  :: vX(:)
-    REAL(kind=8)  :: vLogx(size(vX))
+  function FSafe_vLog10(vX) result (vLogx) 
+    implicit none
+    real(dp), intent(in)  :: vX(:)
+    real(dp)  :: vLogx(size(vX))
     !--
-    CALL Safe_vLog(vX,vLogx) 
+    call Safe_vLog(vX,vLogx) 
     vLogx = vLogx + Ln10
 
-  END FUNCTION FSafe_vLog10
+  end function FSafe_vLog10
 
   !---
 
-END MODULE M_Safe_Functions
+end module M_Safe_Functions

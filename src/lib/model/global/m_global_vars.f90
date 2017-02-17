@@ -1,72 +1,76 @@
-MODULE M_Global_Vars
+module M_Global_Vars
 !--
-!-- MODULE for definition of structures, constants and global variables
+!-- module for definition of structures, constants and global variables
 !--
-  USE M_Kinds
+  use M_Kinds
   !
-  USE M_T_Element,     ONLY: T_Element
-  USE M_T_Species,     ONLY: T_Species,T_SpeciesDtb
-  USE M_T_MixModel,    ONLY: T_MixModel
-  USE M_T_SolModel,    ONLY: T_SolModel
-  USE M_T_MixPhase,    ONLY: T_MixPhase
-  USE M_T_SolPhase,    ONLY: T_SolPhase
-  USE M_T_Phase,       ONLY: T_Phase
-  USE M_T_DiscretModel,ONLY: T_DiscretModel,T_DiscretParam
+  use M_T_Element,     only: T_Element
+  use M_T_Species,     only: T_Species,T_SpeciesDtb
+  use M_T_MixModel,    only: T_MixModel
+  use M_T_SolModel,    only: T_SolModel
+  use M_T_MixPhase,    only: T_MixPhase
+  use M_T_SolPhase,    only: T_SolPhase
+  use M_T_Phase,       only: T_Phase
+  use M_T_DiscretModel,only: T_DiscretModel,T_DiscretParam
   !
-  USE M_T_KinFas,   ONLY: T_KinFas
-  USE M_T_Kinmodel, ONLY: T_KinModel
+  use M_T_KinFas,   only: T_KinFas
+  use M_T_Kinmodel, only: T_KinModel
   !
-  IMPLICIT NONE
+  use M_T_ChemSpace
   !
-  PRIVATE
+  implicit none
   !
-  TYPE(T_Element),   DIMENSION(:),ALLOCATABLE,PUBLIC:: vEle
-  TYPE(T_SpeciesDtb),DIMENSION(:),ALLOCATABLE,PUBLIC:: vSpcDtb
-  TYPE(T_Species),   DIMENSION(:),ALLOCATABLE,PUBLIC:: vSpc
-  !! TYPE(T_SpcData),  DIMENSION(:),ALLOCATABLE,PUBLIC:: vSpcData
+  private
   !
-  TYPE(T_MixModel), DIMENSION(:),ALLOCATABLE,PUBLIC:: vMixModel
-  ! vMixModel stores all mixing models available for the current run
-  TYPE(T_MixPhase), DIMENSION(:),ALLOCATABLE,PUBLIC:: vMixFas
-  ! vMixFas stores all phase data for the current run
+  type(T_ChemSpace),public:: MySpace
   !
-  TYPE(T_SolModel), DIMENSION(:),ALLOCATABLE,PUBLIC:: vSolModel
-  TYPE(T_SolPhase), DIMENSION(:),ALLOCATABLE,PUBLIC:: vSolFas
-  TYPE(T_SolModel),PUBLIC:: SolModel
+  type(T_Element),   dimension(:),allocatable,public:: vEle
+  type(T_SpeciesDtb),dimension(:),allocatable,public:: vSpcDtb
+  type(T_Species),   dimension(:),allocatable,public:: vSpc
+  !! type(T_SpcData),  dimension(:),allocatable,public:: vSpcData
   !
-  TYPE(T_Phase),    DIMENSION(:),ALLOCATABLE,PUBLIC:: vFas
-  !
-  TYPE(T_DiscretParam),DIMENSION(:),ALLOCATABLE,PUBLIC:: vDiscretParam
-  TYPE(T_DiscretModel),DIMENSION(:),ALLOCATABLE,PUBLIC:: vDiscretModel
-  !
-  REAL(dp),DIMENSION(:,:),ALLOCATABLE,PUBLIC:: tFormula
+  real(dp),dimension(:,:),allocatable,public:: tFormula
   !1:nCp,1:nSp= Stoikio of All Species in Terms of Elements, in Columns
   !
-  !!LOGICAL, DIMENSION(:),ALLOCATABLE,PUBLIC:: vLAqu,vLMin,vLGas 
-  !a collection of masks, all of DIMENSION 1:nSp, to flag the nature of the species
+  type(T_MixModel), dimension(:),allocatable,public:: vMixModel
+  ! vMixModel stores all mixing models available for the current run
+  type(T_MixPhase), dimension(:),allocatable,public:: vMixFas
+  ! vMixFas stores all phase data for the current run
   !
-  TYPE(T_KinFas),   DIMENSION(:),ALLOCATABLE,PUBLIC:: vKinFas !-> DATA on kinetic minerals
-  TYPE(T_KinModel), DIMENSION(:),ALLOCATABLE,PUBLIC:: vKinModel !-> DATA on kinetic models
+  type(T_SolModel), dimension(:),allocatable,public:: vSolModel
+  type(T_SolPhase), dimension(:),allocatable,public:: vSolFas
+  type(T_SolModel),public:: SolModel
   !
-  INTEGER,PUBLIC:: &
+  type(T_Phase),    dimension(:),allocatable,public:: vFas
+  !
+  type(T_DiscretParam),dimension(:),allocatable,public:: vDiscretParam
+  type(T_DiscretModel),dimension(:),allocatable,public:: vDiscretModel
+  !
+  !!logical, dimension(:),allocatable,public:: vLAqu,vLMin,vLGas 
+  !a collection of masks, all of dimension 1:nSp, to flag the nature of the species
+  !
+  type(T_KinFas),   dimension(:),allocatable,public:: vKinFas !-> data on kinetic minerals
+  type(T_KinModel), dimension(:),allocatable,public:: vKinModel !-> data on kinetic models
+  !
+  integer,public:: &
   & nAq, &  !nAq= NrOfAqueousSpecies=  Prim'Species(1:nCp) U Second'Species(nCp+1:nAq)
   & nMn, &  !nMn= NumberOfMinerals !at the moment, nMn includes all pure phases, including gases
   & nGs !, &  !nGs= NumberOfGases !for future use 
-  !& nCp, &  !nCp= NrOfPrimarySpecies (idem NrOfComponents) = redundant with SIZE(vCpn)
-  !& nSp, &  !nSp= TotalNrOfSpecies = redundant with SIZE(vSpc)
+  !& nCp, &  !nCp= NrOfPrimarySpecies (idem NrOfComponents) = redundant with size(vCpn)
+  !& nSp, &  !nSp= TotalNrOfSpecies = redundant with size(vSpc)
   !& nFs, &  !number of non aqueous Multi-component phases
   !& nMk
   !
-  !TYPE:: T_GlobalState
-  !  !CONTAINS a "state" of the chemical space
+  !type:: T_GlobalState
+  !  !contains a "state" of the chemical space
   !  !i.e. abundances of phases,
   !  !     abundances of species and their activities in their respective phases
-  !  REAL(dp), ALLOCATABLE:: vFasMole(:)
-  !  REAL(dp), ALLOCATABLE:: vSpcMole(:),vSpcLnAct(:)
+  !  real(dp), allocatable:: vFasMole(:)
+  !  real(dp), allocatable:: vSpcMole(:),vSpcLnAct(:)
   !  
-  !ENDTYPE T_State
+  !end type T_State
   !
-ENDMODULE M_Global_Vars
+end module M_Global_Vars
 
 
 

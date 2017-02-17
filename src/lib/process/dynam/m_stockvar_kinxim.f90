@@ -1,89 +1,91 @@
-MODULE M_stockvar_KINXIM
+module M_stockvar_KINXIM
 
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds,only: dp
+  
+  implicit none
+  private
 
   !
-  ! MODULE de stockage des valeurs de flux par espece
+  ! module de stockage des valeurs de flux par espece
   ! sur l'ensemble des pas de temps ( MAXNBTIMESTEP )
   !
-  LOGICAL, PUBLIC::  LSTOCK =.false. !.true. !!!JM
-  INTEGER :: MAX_NBTIMESTEP
-  INTEGER, PUBLIC:: SIZE_X
-  LOGICAL, PRIVATE :: warnout =.false.
+  logical, public::  LSTOCK =.false. !.true. !!!JM
+  integer :: MAX_NBTIMESTEP
+  integer, public:: size_X
+  logical, private :: warnout =.false.
 
-  INTEGER, PUBLIC:: index_stockvar
-  REAL(kind=8), ALLOCATABLE, DIMENSION (:,:), PUBLIC:: stock_X
-  REAL(kind=8), ALLOCATABLE, DIMENSION (:), PUBLIC:: stock_T
-  REAL(kind=8), ALLOCATABLE, DIMENSION (:), PUBLIC:: stock_DT
-  REAL(kind=8), ALLOCATABLE, DIMENSION (:), PUBLIC:: stock_V
-  REAL(kind=8), ALLOCATABLE, DIMENSION (:), PUBLIC:: stock_EPSILON
-  CHARACTER,    ALLOCATABLE, DIMENSION (:), PUBLIC:: stock_TAG
+  integer, public:: index_stockvar
+  real(dp), allocatable, dimension (:,:), public:: stock_X
+  real(dp), allocatable, dimension (:), public:: stock_T
+  real(dp), allocatable, dimension (:), public:: stock_DT
+  real(dp), allocatable, dimension (:), public:: stock_V
+  real(dp), allocatable, dimension (:), public:: stock_EPSILON
+  character,    allocatable, dimension (:), public:: stock_TAG
 
-  !// PUBLIC FUNCTIONs
-  PUBLIC:: reset_stockvar
-  PUBLIC:: set_stockvar
-  PUBLIC:: init_stockvar
-  PUBLIC:: del_stockvar
-  PUBLIC:: PRINT_stockvar
-  PUBLIC:: computemean_stockvar
+  !// public functions
+  public:: reset_stockvar
+  public:: set_stockvar
+  public:: init_stockvar
+  public:: del_stockvar
+  public:: print_stockvar
+  public:: computemean_stockvar
 
-CONTAINS
+contains
 
   !----
 
-  SUBROUTINE PRINT_stockvar(fiLEName)
+  subroutine print_stockvar(filename)
 
-    IMPLICIT NONE
-    INTEGER :: nunit = 45673
+    implicit none
+    integer :: nunit = 45673
 
-    CHARACTER(LEN=*) :: fiLEName
-    CHARACTER(LEN=30) :: monformat
+    character(len=*) :: filename
+    character(len=30) :: monformat
 
-    INTEGER :: iL, SIZEtable
-    REAL(kind=8), DIMENSION(:), ALLOCATABLE :: table
+    integer :: iL, sizetable
+    real(dp), dimension(:), allocatable :: table
 
-    REAL(kind=8), DIMENSION(:), ALLOCATABLE :: X
-    REAL(kind=8) :: T, DT, EPSILON, V !, tol
+    real(dp), dimension(:), allocatable :: X
+    real(dp) :: T, DT, EPSILON, V !, tol
 
 !!$
-!!$    ALLOCATE(X(SIZE_X))
+!!$    allocate(X(size_X))
 !!$
-!!$    CALL computemean_stockvar(X,V, T,DT, EPSILON)
-!!$    CALL set_stockvar(X,V, T,DT, EPSILON,'B')
+!!$    call computemean_stockvar(X,V, T,DT, EPSILON)
+!!$    call set_stockvar(X,V, T,DT, EPSILON,'B')
 !!$
-!!$    OPEN(unit=nunit, file=fiLEName)
+!!$    open(unit=nunit, file=filename)
 !!$
-!!$    SIZEtable = SIZE_X + 4
-!!$    ALLOCATE(table(SIZEtable))
+!!$    sizetable = size_X + 4
+!!$    allocate(table(sizetable))
 !!$
-!!$    DO iL=1, index_stockvar-1
-!!$       WRITE(monformat, '(1A,1I2,1A)') '(1A, 1I6,',SIZEtable,'D14.6)'
+!!$    do iL=1, index_stockvar-1
+!!$       write(monformat, '(1A,1I2,1A)') '(1A, 1I6,',sizetable,'D14.6)'
 !!$       !
 !!$       table(1) = stock_T (iL)
 !!$       table(2) = stock_DT (iL)
 !!$       table(3) = stock_EPSILON (iL)
 !!$       table(4) = stock_V (iL)
-!!$       table(5:SIZE_X + 4)= stock_X (iL,1:SIZE_X)
+!!$       table(5:size_X + 4)= stock_X (iL,1:size_X)
 !!$
-!!$       WRITE(nunit,TRIM(monformat)) stock_TAG(iL), iL, table(1: SIZEtable)
+!!$       write(nunit,trim(monformat)) stock_TAG(iL), iL, table(1: sizetable)
 !!$
-!!$    END DO
+!!$    end do
 !!$
-!!$    DEALLOCATE(table)
-!!$    DEALLOCATE(X)
+!!$    deallocate(table)
+!!$    deallocate(X)
 !!$
-!!$    CLOSE(nunit)
+!!$    close(nunit)
 
-  END SUBROUTINE PRINT_stockvar
+  end subroutine print_stockvar
 
   !----
 
-  SUBROUTINE reset_stockvar
+  subroutine reset_stockvar
 
-    IMPLICIT NONE
+    implicit none
 
-!!$    stock_X  ( 1:index_stockvar, 1:SIZE_X ) = 0.D0
+!!$    stock_X  ( 1:index_stockvar, 1:size_X ) = 0.D0
 !!$    stock_T ( 1:index_stockvar )  = 0.D0
 !!$    stock_DT ( 1:index_stockvar ) = 0.D0
 !!$    stock_EPSILON ( 1:index_stockvar ) = 0.D0
@@ -91,21 +93,21 @@ CONTAINS
 !!$    index_stockvar = 1
 !!$    warnout=.false.
 
-  END SUBROUTINE reset_stockvar
+  end subroutine reset_stockvar
 
   !----
 
-  SUBROUTINE set_stockvar(X, V, T, DT, EPSILON, TAG)
+  subroutine set_stockvar(X, V, T, DT, EPSILON, TAG)
 
-    IMPLICIT NONE
-    REAL(kind=8), DIMENSION (:) :: X
-    REAL(kind=8) :: T, DT, V
-    REAL(kind=8) :: EPSILON
-    CHARACTER :: TAG
+    implicit none
+    real(dp), dimension (:) :: X
+    real(dp) :: T, DT, V
+    real(dp) :: EPSILON
+    character :: TAG
 
-     !!WRITE(*,*) '-----------------Set stockvar', X, V, T, DT, EPSILON, TAG 
-     IF (index_stockvar < MAX_NBTIMESTEP) THEN
-       stock_X (index_stockvar,1:SIZE_X) = X( 1:SIZE_X)
+     !!write(*,*) '-----------------Set stockvar', X, V, T, DT, EPSILON, TAG 
+     if (index_stockvar < MAX_NBTIMESTEP) then
+       stock_X (index_stockvar,1:size_X) = X( 1:size_X)
        stock_DT (index_stockvar) = DT
        stock_V (index_stockvar) = V
        stock_T (index_stockvar) = T
@@ -113,66 +115,66 @@ CONTAINS
        stock_TAG (index_stockvar) = TAG
 
        index_stockvar = index_stockvar + 1
-    ELSE
-       IF (.not.(warnout)) THEN
-          WRITE(*,*) "==============================================="
-          WRITE(*,*) "STOP stockvar ...  NBTIMESTEP >", MAX_NBTIMESTEP, '!'
-          WRITE(*,*) "==============================================="
+    else
+       if (.not.(warnout)) then
+          write(*,*) "==============================================="
+          write(*,*) "stop stockvar ...  NBTIMESTEP >", MAX_NBTIMESTEP, '!'
+          write(*,*) "==============================================="
           warnout=.true.
           stop "GEOCHIMIE : NBTIMESTEP > MAX_NBTIMESTEP"
-       END IF
-    END IF
+       end if
+    end if
 
-  END SUBROUTINE set_stockvar
+  end subroutine set_stockvar
 
   !----
 
-  SUBROUTINE init_stockvar (maxtstep, nbx)
+  subroutine init_stockvar (maxtstep, nbx)
 
-    IMPLICIT NONE
-    INTEGER :: maxtstep
-    INTEGER :: nbx
+    implicit none
+    integer :: maxtstep
+    integer :: nbx
 
     MAX_NBTIMESTEP = maxtstep
-    SIZE_X = nbx
-    !!!WRITE(*,*) '-----------------Initialization stockvar ::', SIZE_X
-    ALLOCATE(stock_X(MAX_NBTIMESTEP,SIZE_X))
-    ALLOCATE(stock_DT(MAX_NBTIMESTEP))
-    ALLOCATE(stock_T(MAX_NBTIMESTEP))
-    ALLOCATE(stock_EPSILON(MAX_NBTIMESTEP))
-    ALLOCATE(stock_TAG(MAX_NBTIMESTEP))
-    ALLOCATE(stock_V(MAX_NBTIMESTEP))
+    size_X = nbx
+    !!!write(*,*) '-----------------Initialization stockvar ::', size_X
+    allocate(stock_X(MAX_NBTIMESTEP,size_X))
+    allocate(stock_DT(MAX_NBTIMESTEP))
+    allocate(stock_T(MAX_NBTIMESTEP))
+    allocate(stock_EPSILON(MAX_NBTIMESTEP))
+    allocate(stock_TAG(MAX_NBTIMESTEP))
+    allocate(stock_V(MAX_NBTIMESTEP))
 
     index_stockvar = 1
 
-  END SUBROUTINE init_stockvar
+  end subroutine init_stockvar
 
   ! ----
 
-  SUBROUTINE del_stockvar
+  subroutine del_stockvar
 
-    IMPLICIT NONE
-    DEALLOCATE(stock_X)
-    DEALLOCATE(stock_DT)
-    DEALLOCATE(stock_T)
-    DEALLOCATE(stock_EPSILON)
-    DEALLOCATE(stock_TAG)
-    DEALLOCATE(stock_V)
-    !!!WRITE(*,*) '-----------------Delete stockvar', SIZE_X
-  END SUBROUTINE del_stockvar
+    implicit none
+    deallocate(stock_X)
+    deallocate(stock_DT)
+    deallocate(stock_T)
+    deallocate(stock_EPSILON)
+    deallocate(stock_TAG)
+    deallocate(stock_V)
+    !!!write(*,*) '-----------------Delete stockvar', size_X
+  end subroutine del_stockvar
 
 !---
 
-  SUBROUTINE computemean_stockvar(X,V, T,DT, EPSILON)
+  subroutine computemean_stockvar(X,V, T,DT, EPSILON)
 
-    IMPLICIT NONE
-    INTEGER :: Nstep
-    INTEGER :: istep !ivar,
-    REAL(kind=8), DIMENSION(:) :: X
-    REAL(kind=8) :: T, tol, DT, EPSILON, V
-    !CHARACTER(LEN=8) :: strI
-    !INTEGER :: iFileStock = 1
-    !CHARACTER(LEN=40) :: FiLEName
+    implicit none
+    integer :: Nstep
+    integer :: istep !ivar,
+    real(dp), dimension(:) :: X
+    real(dp) :: T, tol, DT, EPSILON, V
+    !character(len=8) :: strI
+    !integer :: iFileStock = 1
+    !character(len=40) :: Filename
     !---
 
     X = 0.D0
@@ -183,36 +185,36 @@ CONTAINS
     Nstep=0
    
 
-    DO istep=1, index_stockvar-1
-       IF (stock_TAG(istep)=='C') THEN
+    do istep=1, index_stockvar-1
+       if (stock_TAG(istep)=='C') then
          
           Nstep = Nstep+1
           DT = stock_DT(istep)
           
-          X(1:SIZE_X) = X(1:SIZE_X) + stock_X(istep,1:SIZE_X) * DT
+          X(1:size_X) = X(1:size_X) + stock_X(istep,1:size_X) * DT
           EPSILON =  EPSILON + stock_EPSILON(istep) * DT
           T = T + DT
           V = V + stock_V(istep) * DT
-!!$          WRITE(*,*) 'found DATA', Nstep
-!!$          WRITE(*,*) 'V', V
-!!$          WRITE(*,*) 'T', T
-!!$          WRITE(*,*) 'EPSILON', EPSILON
-!!$          WRITE(*,*) 'X', X
-       END IF
-    END DO
+!!$          write(*,*) 'found data', Nstep
+!!$          write(*,*) 'V', V
+!!$          write(*,*) 'T', T
+!!$          write(*,*) 'EPSILON', EPSILON
+!!$          write(*,*) 'X', X
+       end if
+    end do
 
-    X(1:SIZE_X) = X(1:SIZE_X)/ T
+    X(1:size_X) = X(1:size_X)/ T
     EPSILON = EPSILON/T
     DT = T/Nstep
     V = V/T
-!!$    WRITE(*,*) 'found DATA', Nstep
-!!$    WRITE(*,*) 'V', V
-!!$    WRITE(*,*) 'T', T
-!!$    WRITE(*,*) 'EPSILON', EPSILON
-!!$    WRITE(*,*) 'X', X
-!!$    WRITE(*,*) '--------------------'
-  END SUBROUTINE computemean_stockvar
+!!$    write(*,*) 'found data', Nstep
+!!$    write(*,*) 'V', V
+!!$    write(*,*) 'T', T
+!!$    write(*,*) 'EPSILON', EPSILON
+!!$    write(*,*) 'X', X
+!!$    write(*,*) '--------------------'
+  end subroutine computemean_stockvar
 
 
 
-ENDMODULE M_stockvar_KINXIM
+end module M_stockvar_KINXIM

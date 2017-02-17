@@ -1,391 +1,391 @@
-MODULE M_Files
+module M_Files
 
-  USE M_Files_Vars
-  USE M_Files_Index
-  USE M_FileUtils
-  IMPLICIT NONE
+  use M_Files_Vars
+  use M_Files_Index
+  use M_FileUtils
+  implicit none
   !
-  PRIVATE
+  private
   !
   !// Private variables
-  CHARACTER(LEN=80) :: NamFIn0
+  character(len=80) :: NamFIn0
 
   !// Exported M_Files_Vars Variables
-  PUBLIC :: NamFInn
-  PUBLIC :: cTitle
-  PUBLIC :: NamFLogK,NamFEle,NamFKin,NamFSol,NamFPtz
-  PUBLIC :: NamDtbAqu,NamDtbMin,NamDtbMlt
-  PUBLIC :: DirOut,DirLog
-  PUBLIC :: DirDtbOut,DirDtbLog 
+  public :: NamFInn
+  public :: cTitle
+  public :: NamFLogK,NamFEle,NamFKin,NamFSol,NamFPtz
+  public :: NamDtbAqu,NamDtbMin,NamDtbMlt
+  public :: DirOut,DirLog
+  public :: DirDtbOut,DirDtbLog 
 
   !// Public Methods
-  PUBLIC :: Files_Vars_Init
-  PUBLIC :: Files_BuildInput
-  PUBLIC :: Files_PathRead
-  PUBLIC :: Files_PathRead_From_FileName
-  PUBLIC :: Info_PathRead
+  public :: Files_Vars_Init
+  public :: Files_BuildInput
+  public :: Files_PathRead
+  public :: Files_PathRead_From_FileName
+  public :: Info_PathRead
   
   ! Exported M_Files_Index methods
-  PUBLIC :: Files_Index_Write
-  PUBLIC :: Files_Index_Open
-  PUBLIC :: Files_Index_Close
+  public :: Files_Index_Write
+  public :: Files_Index_Open
+  public :: Files_Index_Close
 
   ! Exported M_Files_Utils methods
-  PUBLIC :: File_Exist
-  PUBLIC :: File_Write_Date_Time 
-  PUBLIC :: File_Path
+  public :: File_Exist
+  public :: File_Write_Date_Time 
+  public :: File_Path
 
   !// Private Methods
-  PRIVATE :: Files_PathRead_From_CommandArgs
-  PRIVATE :: Files_PathRead_From_UserInput
+  private :: Files_PathRead_From_CommandArgs
+  private :: Files_PathRead_From_UserInput
   
-CONTAINS
+contains
 
-  SUBROUTINE Info_PathRead
+  subroutine Info_PathRead
     !===================================================================
     ! Print the Input FileName 
     !===================================================================
-    USE M_Trace,  ONLY: fHtm
-    IMPLICIT NONE
+    use M_Trace,  only: fHtm
+    implicit none
     !--
-    write(*,'(A)') "Arxim Script File : "// TRIM(NamFIn0)
+    write(*,'(A)') "Arxim Script File : "// trim(NamFIn0)
     call Files_Index_InputFile(fHtm, NamFIn0)
 
-  END SUBROUTINE Info_PathRead
+  end subroutine Info_PathRead
 
   !---
 
-  SUBROUTINE Files_PathRead(Ok)
+  subroutine Files_PathRead(Ok)
     !===================================================================
     ! Read the Input FileName ( Default = "arxim.inn" )
     !===================================================================
-    USE M_Trace, ONLY: Stop_
-    IMPLICIT NONE
-    LOGICAL, INTENT(OUT) :: Ok
+    use M_Trace, only: Stop_
+    implicit none
+    logical, intent(out) :: Ok
     !--
     Ok = .false.
-    IF (.NOT.Ok) CALL Files_PathRead_From_CommandArgs(Ok)
-    IF (.NOT.Ok) CALL Files_PathRead_From_FileName("arxim.inn",Ok)
-    IF (.NOT.Ok) CALL Files_PathRead_From_UserInput(Ok)
-    IF (.NOT.Ok) CALL Stop_("Error Reading Input File")
+    if (.not.Ok) call Files_PathRead_From_CommandArgs(Ok)
+    if (.not.Ok) call Files_PathRead_From_FileName("arxim.inn",Ok)
+    if (.not.Ok) call Files_PathRead_From_UserInput(Ok)
+    if (.not.Ok) call Stop_("Error Reading Input File")
 
-    CALL Info_PathRead
+    call Info_PathRead
     
-  END SUBROUTINE Files_PathRead
+  end subroutine Files_PathRead
 
   !---
 
-  SUBROUTINE Files_BuildInput
+  subroutine Files_BuildInput
     !===================================================================
     ! Build the input data file from main file + include
     ! Init Files Variables
     !===================================================================
-    IMPLICIT NONE
+    implicit none
     !---
     ! Merge include files
-    CALL Files_BuildInput_IncludeFiles
+    call Files_BuildInput_IncludeFiles
 
     ! Init files names variable
-    CALL Files_Vars_Init(NamFInn)
+    call Files_Vars_Init(NamFInn)
 
-  END SUBROUTINE Files_BuildInput
+  end subroutine Files_BuildInput
 
   !---
 
-  SUBROUTINE Files_PathRead_From_FileName(sFileName, Ok) 
+  subroutine Files_PathRead_From_FileName(sFileName, Ok) 
     !===================================================================
     ! Read the Input FileName from the command line argumants
     ! -> Default Extension = .inn
     ! Output in NamFIn0 
     !===================================================================
-    IMPLICIT NONE
-    LOGICAL,INTENT(OUT):: Ok
-    CHARACTER(LEN=*), INTENT(IN):: sFileName
+    implicit none
+    logical,intent(out):: Ok
+    character(len=*), intent(in):: sFileName
     !--
-    Ok=.FALSE.
+    Ok=.false.
     NamFIn0="NOFILE"
     
-    IF(.NOT. File_Exist(TRIM(sFileName))) THEN
-       Ok=.FALSE.
+    if(.not. File_Exist(trim(sFileName))) then
+       Ok=.false.
        NamFIn0="NOFILE"
-       PRINT '(A)',TRIM(sFileName)//"-> File Not Found ...!!!"
-    ELSE
-       Ok=.TRUE.
-       NamFIn0=TRIM(sFileName)
-    END IF
+       print '(A)',trim(sFileName)//"-> File Not Found ...!!!"
+    else
+       Ok=.true.
+       NamFIn0=trim(sFileName)
+    end if
     
-  END SUBROUTINE Files_PathRead_From_FileName
+  end subroutine Files_PathRead_From_FileName
 
   !---
 
-  SUBROUTINE Files_PathRead_From_CommandArgs(Ok) 
+  subroutine Files_PathRead_From_CommandArgs(Ok) 
     !===================================================================
     ! Read the Input FileName from the command line argumants
     ! -> Default Extension = .inn
     ! Output in NamFIn0 
     !===================================================================
-    USE M_FArgC, ONLY: F_GETARG, F_IARGC
-    USE M_VarStr,ONLY: T_VarStr,VarStr_Get,VarStr_Char
-    IMPLICIT NONE
+    use M_FArgC, only: F_GETARG, F_IARGC
+    use M_VarStr,only: T_VarStr,VarStr_Get,VarStr_Char
+    implicit none
     !--
-    LOGICAL,INTENT(OUT):: Ok
+    logical,intent(out):: Ok
     !--
-    CHARACTER(LEN=255):: Str
+    character(len=255):: Str
     !--
-    Ok=.FALSE.
+    Ok=.false.
     NamFIn0="NOFILE"
 
-    IF(F_IARGC()>0) THEN
+    if(F_IARGC()>0) then
     
-      CALL F_GETARG(1,Str)
+      call F_GETARG(1,Str)
       
-      IF(INDEX(Str,".")<1) Str=TRIM(Str)//".inn"
+      if(index(Str,".")<1) Str=trim(Str)//".inn"
       ! Default file name suffix is .inn
       
-      IF(.NOT. File_Exist(TRIM(Str))) THEN
-        Ok=.FALSE.
-        PRINT '(A)',TRIM(Str)//"-> File Not Found ...!!!"
-      ELSE
-        Ok=.TRUE.
-        NamFIn0=TRIM(Str)
-      END IF
+      if(.not. File_Exist(trim(Str))) then
+        Ok=.false.
+        print '(A)',trim(Str)//"-> File Not Found ...!!!"
+      else
+        Ok=.true.
+        NamFIn0=trim(Str)
+      end if
       
-    END IF
+    end if
     
-    RETURN
-  END SUBROUTINE Files_PathRead_From_CommandArgs
+    return
+  end subroutine Files_PathRead_From_CommandArgs
 
   !--
 
-  SUBROUTINE Files_PathRead_From_UserInput(Ok) 
+  subroutine Files_PathRead_From_UserInput(Ok) 
     !===================================================================
     ! Read the Input FileName by using interactive questions
     ! -> Default FileName  = arxim.inn
     ! -> Default Extension = .inn
     ! Output in NamFIn0 
     !===================================================================
-    USE M_VarStr,ONLY: T_VarStr,VarStr_Get,VarStr_Char
-    IMPLICIT NONE
+    use M_VarStr,only: T_VarStr,VarStr_Get,VarStr_Char
+    implicit none
     !--
-    LOGICAL,INTENT(OUT):: Ok
+    logical,intent(out):: Ok
     !--
-    TYPE(T_VarStr):: VStr
-    CHARACTER(LEN=255):: Str
+    type(T_VarStr):: VStr
+    character(len=255):: Str
     !--
-    Ok=.FALSE.
+    Ok=.false.
     NamFIn0="NOFILE"
     
-    DoNam: DO
-       WRITE(*,'(A)') "Input File Name [ Return = arxim.inn ] ?"
-       CALL VarStr_Get(String=VStr)
-       IF(VarStr_Char(VStr)=="") THEN
+    DoNam: do
+       write(*,'(A)') "Input File Name [ Return = arxim.inn ] ?"
+       call VarStr_Get(String=VStr)
+       if(VarStr_Char(VStr)=="") then
           Str="arxim.inn"
-       ELSE
+       else
           Str=VarStr_Char(VStr)
           ! Default file name suffix is .inn 
-          IF(INDEX(Str,".")<1) Str=TRIM(Str)//".inn"        
-       ENDIF
-       IF(File_Exist(Str)) THEN
-          Ok=.TRUE.
-          EXIT DoNam
-       ELSE                   
-          Ok=.FALSE.
-          PRINT '(A)',"File Not Found ...!!!"
-       ENDIF
-    ENDDO DoNam
-    NamFIn0=TRIM(Str)
+          if(index(Str,".")<1) Str=trim(Str)//".inn"        
+       end if
+       if(File_Exist(Str)) then
+          Ok=.true.
+          exit DoNam
+       else                   
+          Ok=.false.
+          print '(A)',"File Not Found ...!!!"
+       end if
+    end do DoNam
+    NamFIn0=trim(Str)
     
-  END SUBROUTINE Files_PathRead_From_UserInput
+  end subroutine Files_PathRead_From_UserInput
 
   !---
 
-  SUBROUTINE Files_BuildInput_IncludeFiles
+  subroutine Files_BuildInput_IncludeFiles
     !==========================================================
     ! Build the Input file NamFinn = "arxim_inn.tmp"
     !
     !  -> Merge nested include files 
     !  -> Skip comments
     ! 
-    ! Input  File  = NamFIn0 ( + INCLUDE Files )
+    ! Input  File  = NamFIn0 ( + include Files )
     ! Output File  = NamFinn = "arxim_inn.tmp" 
     ! 
     !==========================================================
-    USE M_Trace,  ONLY: iDebug,Pause_,fHtm,Stop_
-    USE M_IOTools,ONLY: GetUnit,LinToWrd,AppendToEnd
+    use M_Trace,  only: iDebug,Pause_,fHtm,Stop_
+    use M_IOTools,only: GetUnit,LinToWrd,AppendToEnd
     !
-    INTEGER:: fAll,fInn,fAdd,fAdd2
-    CHARACTER(LEN=512):: L, LL, W, W1, W2
-    CHARACTER(LEN=512):: sIncludeFile1, sIncludeFile2
-    LOGICAL:: EoL
-    INTEGER:: ios     
+    integer:: fAll,fInn,fAdd,fAdd2
+    character(len=512):: L, LL, W, W1, W2
+    character(len=512):: sIncludeFile1, sIncludeFile2
+    logical:: EoL
+    integer:: ios     
     !
     NamFInn="arxim_inn.tmp"
     !
-    CALL GetUnit(fAll); OPEN(fAll,FILE=TRIM(NamFInn))
-    CALL GetUnit(fInn); OPEN(fInn,FILE=TRIM(NamFIn0))
+    call GetUnit(fAll); open(fAll,file=trim(NamFInn))
+    call GetUnit(fInn); open(fInn,file=trim(NamFIn0))
 
-    !=========== READ ROOT FILE  ================================
-    Do1: DO
+    !--========= read ROOT FILE  ================================
+    Do1: do
       !
-      READ(fInn,'(A)',IOSTAT=ios) LL
-      IF(ios/=0) EXIT Do1 
-      L=TRIM(LL)
-      CALL LinToWrd(L,W,EoL)
-      CALL AppendToEnd(L,W,EoL)
+      read(fInn,'(A)',iostat=ios) LL
+      if(ios/=0) exit Do1 
+      L=trim(LL)
+      call LinToWrd(L,W,EoL)
+      call AppendToEnd(L,W,EoL)
       !
-      IF(W(1:1)=='!') CYCLE Do1 ! skip comment lines
-      IF(TRIM(W)=='/*') THEN !skip comment block
-        DO
-          READ(fInn,'(A)',IOSTAT=ios) L
-          IF(ios/=0) THEN
-            PRINT '(A)', "!!!WARNING!!! COMMENT BLOCK UNTERMINATED !!!WARNING!!!"
-            EXIT Do1
-          ENDIF
-          CALL LinToWrd(L,W,EoL)
-          IF(TRIM(W)=='*/') EXIT
-        ENDDO
-        CYCLE Do1
-      ENDIF
+      if(W(1:1)=='!') cycle Do1 ! skip comment lines
+      if(trim(W)=='/*') then !skip comment block
+        do
+          read(fInn,'(A)',iostat=ios) L
+          if(ios/=0) then
+            print '(A)', "!!!WARNING!!! COMMENT block UNTERMINATED !!!WARNING!!!"
+            exit Do1
+          end if
+          call LinToWrd(L,W,EoL)
+          if(trim(W)=='*/') exit
+        end do
+        cycle Do1
+      end if
       !
-      SELECT CASE(TRIM(W))
+      select case(trim(W))
       !
-      CASE DEFAULT
-        WRITE(fAll,'(A)') TRIM(LL)
+      case default
+        write(fAll,'(A)') trim(LL)
       !
-      CASE("ENDINPUT")
-        EXIT Do1
+      case("ENDINPUT")
+        exit Do1
         !
-      CASE("INCLUDE") 
+      case("INCLUDE") 
         ! Get Include File Name Level 1        
-        CALL LinToWrd(L,W,EoL,"NO") 
+        call LinToWrd(L,W,EoL,"NO") 
         sIncludeFile1 = W
         
-        IF (File_Exist_System(sIncludeFile1)) THEN 
+        if (File_Exist_System(sIncludeFile1)) then 
           
-          WRITE(*,*) "INCLUDE LEVEL 1 : ", TRIM(sIncludeFile1)
+          write(*,*) "INCLUDE LEVEL 1 : ", trim(sIncludeFile1)
           
           ! Open Include File Level 1
-          CALL GetUnit(fAdd)
-          OPEN(fAdd,FILE=TRIM(sIncludeFile1))
-          CALL Files_Index_Include(fHtm,sIncludeFile1)
-          WRITE(fAll,'(A,A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
-          WRITE(fAll,'(A,A)') "! INCLUDE ", TRIM(sIncludeFile1)
+          call GetUnit(fAdd)
+          open(fAdd,file=trim(sIncludeFile1))
+          call Files_Index_Include(fHtm,sIncludeFile1)
+          write(fAll,'(A,A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
+          write(fAll,'(A,A)') "! INCLUDE ", trim(sIncludeFile1)
           
-          !=========== READ FILE INCLUDE LEVEL 1 =======================
-          Do2: DO
+          !--========= read FILE include LEVEL 1 =======================
+          Do2: do
             !
-            READ(fAdd,'(A)',IOSTAT=ios) LL
-            IF(ios/=0) EXIT Do2
+            read(fAdd,'(A)',iostat=ios) LL
+            if(ios/=0) exit Do2
             L=LL
-            CALL LinToWrd(L,W1,EoL)
-            CALL AppendToEnd(L,W1,EoL)
+            call LinToWrd(L,W1,EoL)
+            call AppendToEnd(L,W1,EoL)
             !
-            IF(W1(1:1)=='!') CYCLE Do2 !skip comment lines
-            IF(TRIM(W1)=='/*') THEN !skip comment block
-              DO
-                READ(fInn,'(A)',IOSTAT=ios) L
-                IF(ios/=0) THEN
-                  PRINT '(A)', &
+            if(W1(1:1)=='!') cycle Do2 !skip comment lines
+            if(trim(W1)=='/*') then !skip comment block
+              do
+                read(fInn,'(A)',iostat=ios) L
+                if(ios/=0) then
+                  print '(A)', &
                   & "!!!WARNING!!! COMMENT BLOCK UNTERMINATED !!!WARNING!!!"
-                  EXIT Do2
-                ENDIF
-                CALL LinToWrd(L,W1,EoL)
-                IF(TRIM(W1)=='*/') EXIT
-              ENDDO
-              CYCLE Do2
-            ENDIF
+                  exit Do2
+                end if
+                call LinToWrd(L,W1,EoL)
+                if(trim(W1)=='*/') exit
+              end do
+              cycle Do2
+            end if
             !
-            IF(TRIM(W1)=="ENDINPUT")  EXIT Do2
+            if(trim(W1)=="ENDINPUT")  exit Do2
             !
-            IF(TRIM(W1)=="INCLUDE") THEN 
+            if(trim(W1)=="INCLUDE") then 
               
               ! Get Include File Name Level 2
-              CALL LinToWrd(L,W1,EoL,"NO") 
+              call LinToWrd(L,W1,EoL,"NO") 
               sIncludeFile2 = W1
               
-              IF(File_Exist_System(sIncludeFile2)) THEN 
+              if(File_Exist_System(sIncludeFile2)) then 
                 
-                WRITE(*,*) "INCLUDE LEVEL 2 : .. ", TRIM(sIncludeFile2)
+                write(*,*) "INCLUDE LEVEL 2 : .. ", trim(sIncludeFile2)
                 
                 ! Open Include File Level 2
-                CALL GetUnit(fAdd2)
-                OPEN(fAdd2,FILE=TRIM(sIncludeFile2))
-                CALL Files_Index_Include(fHtm,sIncludeFile2)
-                WRITE(fAll,'(A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
-                WRITE(fAll,'(A,A)') "! INCLUDE ", TRIM(sIncludeFile2)
+                call GetUnit(fAdd2)
+                open(fAdd2,file=trim(sIncludeFile2))
+                call Files_Index_Include(fHtm,sIncludeFile2)
+                write(fAll,'(A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
+                write(fAll,'(A,A)') "! INCLUDE ", trim(sIncludeFile2)
                 
-                !=========== READ FILE LEVEL 2 =========================
-                do3: DO 
-                  READ(fAdd2,'(A)',IOSTAT=ios) LL
-                  IF(ios/=0) EXIT do3
-                  L=TRIM(LL)
-                  CALL LinToWrd(L,W2,EoL)
-                  CALL AppendToEnd(L,W2,EoL)
+                !--========= read FILE LEVEL 2 =========================
+                do3: do 
+                  read(fAdd2,'(A)',iostat=ios) LL
+                  if(ios/=0) exit do3
+                  L=trim(LL)
+                  call LinToWrd(L,W2,EoL)
+                  call AppendToEnd(L,W2,EoL)
                   !
-                  IF(W2(1:1)=='!') CYCLE do3 !skip comment lines
-                  IF(TRIM(W2)=='/*') THEN !skip comment block
-                    DO
-                      READ(fInn,'(A)',IOSTAT=ios) L
-                      IF(ios/=0) THEN
-                        PRINT '(A)', &
-                        & "!!!WARNING!!! COMMENT BLOCK UNTERMINATED !!!WARNING!!!"
-                        EXIT Do3
-                      ENDIF
-                      CALL LinToWrd(L,W2,EoL)
-                      IF(TRIM(W2)=='*/') EXIT
-                    ENDDO
-                    CYCLE do3
-                  ENDIF
+                  if(W2(1:1)=='!') cycle do3 !skip comment lines
+                  if(trim(W2)=='/*') then !skip comment block
+                    do
+                      read(fInn,'(A)',iostat=ios) L
+                      if(ios/=0) then
+                        print '(A)', &
+                        & "!!!WARNING!!! COMMENT block UNTERMINATED !!!WARNING!!!"
+                        exit Do3
+                      end if
+                      call LinToWrd(L,W2,EoL)
+                      if(trim(W2)=='*/') exit
+                    end do
+                    cycle do3
+                  end if
                   !
-                  IF(TRIM(W2)=="ENDINPUT") EXIT do3
+                  if(trim(W2)=="ENDINPUT") exit do3
                   !
-                  IF(TRIM(W2)=="INCLUDE") THEN
-                    PRINT '(A)', "!!!WARNING!!! TOO Many Nested INCLUDEs !!!WARNING!!!"
-                    CALL LinToWrd(L,W2,EoL,"NO") 
-                    CALL Stop_ ("INCLUDE LEVEL 3 :"//TRIM(W2)//" NOT IMPLEMENTED")
-                  END IF
+                  if(trim(W2)=="INCLUDE") then
+                    print '(A)', "!!!WARNING!!! TOO Many Nested includes !!!WARNING!!!"
+                    call LinToWrd(L,W2,EoL,"NO") 
+                    call Stop_ ("INCLUDE LEVEL 3 :"//trim(W2)//" NOT IMPLEMENTED")
+                  end if
                   !
-                  WRITE(fAll,'(A)') TRIM(LL)
-                ENDDO do3
+                  write(fAll,'(A)') trim(LL)
+                end do do3
                 
                 ! Close Include File Level 2
-                WRITE(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
-                CLOSE(fAdd2)
+                write(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
+                close(fAdd2)
               
-              ELSE
+              else
                 
-                CALL Stop_("File "//TRIM(sIncludeFile2)//" NOT FOUND -> Can Not INCLUDE !!!")
+                call Stop_("File "//trim(sIncludeFile2)//" NOT FOUND -> Can Not include !!!")
               
-              ENDIF
+              end if
               !
-            ENDIF ! nested INCLUDE
+            end if ! nested include
             !
-            WRITE(fAll,'(A)') TRIM(LL)
-          ENDDO Do2
+            write(fAll,'(A)') trim(LL)
+          end do Do2
           ! Close Include File Level 1
-          WRITE(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
-          CLOSE(fAdd)
-        ELSE
-          CALL Stop_("FILE "//TRIM(sIncludeFile1)//" NOT FOUND -> Can Not INCLUDE !!!")
-        ENDIF
-      ENDSELECT
-    ENDDO Do1
+          write(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
+          close(fAdd)
+        else
+          call Stop_("FILE "//trim(sIncludeFile1)//" NOT FOUND -> Can Not include !!!")
+        end if
+      end select
+    end do Do1
     ! Close Root File
-    CLOSE(fInn)
+    close(fInn)
     ! Close Result Merged File
-    !! WRITE(fAll,'(A)') "ENDINPUT" !!! IF(Mod="APPEND") 
-    CLOSE(fAll)
+    !! write(fAll,'(A)') "ENDINPUT" !!! if(Mod="APPend") 
+    close(fAll)
 
-  END SUBROUTINE Files_BuildInput_IncludeFiles
+  end subroutine Files_BuildInput_IncludeFiles
 
   !---
 
-  SUBROUTINE Files_Vars_Init(sFilNam)
+  subroutine Files_Vars_Init(sFilNam)
     !==========================================================
     ! Init the Directories and Input Files Names
     !==========================================================
-    IMPLICIT NONE
-    CHARACTER(*),INTENT(IN):: sFilNam
+    implicit none
+    character(*),intent(in):: sFilNam
     !---
     cTitle=""
 
@@ -397,13 +397,13 @@ CONTAINS
     DirDtbLog="dtb_log_"
 
     ! make the input file the default file for all data
-    NamFLogK=TRIM(sFilNam) ! file for logK
-    NamFEle= TRIM(sFilNam) ! file for elements
-    NamFSol= TRIM(sFilNam) ! file for solutions
-    NamFKin= TRIM(sFilNam) ! file for kinetics
-    NamFPtz= TRIM(sFilNam) ! file for pitzer parameters
+    NamFLogK=trim(sFilNam) ! file for logK
+    NamFEle= trim(sFilNam) ! file for elements
+    NamFSol= trim(sFilNam) ! file for solutions
+    NamFKin= trim(sFilNam) ! file for kinetics
+    NamFPtz= trim(sFilNam) ! file for pitzer parameters
 
-  END SUBROUTINE Files_Vars_Init
+  end subroutine Files_Vars_Init
 
-END MODULE M_Files
+end module M_Files
 

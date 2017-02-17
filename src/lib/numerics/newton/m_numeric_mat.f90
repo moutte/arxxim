@@ -1,141 +1,141 @@
-MODULE M_Numeric_Mat
+module M_Numeric_Mat
 !.routines from Numerical Recipes"
-  USE M_Kinds
-  IMPLICIT NONE
-  PRIVATE
+  use M_Kinds
+  implicit none
+  private
   !
-  PUBLIC:: LU_Decomp
-  PUBLIC:: LU_BakSub
-  PUBLIC:: CheckSingular
+  public:: LU_Decomp
+  public:: LU_BakSub
+  public:: CheckSingular
   !
-CONTAINS
+contains
 
-SUBROUTINE CheckSingular( & !"NR"
+subroutine CheckSingular( & !"NR"
 & A, &       !IN:  a square matrix
-& N, &       !IN:  INTEGER, DIMENSION of upper-left block of A 
-& Singular)  !OUT: LOGICAL
-  USE M_Numeric_Tools,   ONLY: iMaxLoc_R,OuterProd_R,Swap_RV
-  REAL(dp),INTENT(IN) :: A(:,:)
-  INTEGER, INTENT(IN) :: N
-  LOGICAL, INTENT(OUT):: Singular
+& N, &       !IN:  integer, dimension of upper-left block of A 
+& Singular)  !OUT: logical
+  use M_Numeric_Tools,   only: iMaxLoc_R,OuterProd_R,Swap_RV
+  real(dp),intent(in) :: A(:,:)
+  integer, intent(in) :: N
+  logical, intent(out):: Singular
   !
-  REAL(dp),PARAMETER:: TINY=1.0E-18_dp
-  REAL(dp):: W(N)  !stores the IMPLICIT scaling of each row.
-  REAL(dp):: AA(N,N)
-  INTEGER :: J,iMax !,N
+  real(dp),parameter:: TINY=1.0E-18_dp
+  real(dp):: W(N)  !stores the implicit scaling of each row.
+  real(dp):: AA(N,N)
+  integer :: J,iMax !,N
   !
-  Singular=.FALSE.
+  Singular=.false.
   AA(:,:)= A(1:N,1:N)
-  !N= SIZE(A,1)
+  !N= size(A,1)
   !
-  W=MAXVAL(ABS(AA),DIM=2) !Loop over rows to get the IMPLICIT scaling information
-  IF (ANY(W==Zero)) THEN !there is at least one row with ONLY Zeros ...
-    Singular= .TRUE.
-    RETURN
-  ENDIF
+  W=MAXVAL(ABS(AA),DIM=2) !Loop over rows to get the implicit scaling information
+  if (ANY(W==Zero)) then !there is at least one row with only Zeros ...
+    Singular= .true.
+    return
+  end if
   W= One/W !Save the scaling.
-  DO J=1,N
+  do J=1,N
     iMax= (J-1) + iMaxLoc_R(W(J:N)*ABS(AA(J:N,J))) !Find the pivot row.
-    IF(J /= iMAx) THEN !need to interchange rows ?
-      CALL Swap_RV(AA(iMax,:),AA(J,:)) !interchange,
+    if(J /= iMAx) then !need to interchange rows ?
+      call Swap_RV(AA(iMax,:),AA(J,:)) !interchange,
       W(iMax)=W(J) !also interchange the scale factor
-    ENDIF
-    !! IF (AA(J,J)==Zero) THEN
-    IF (ABS(AA(J,J))<Tiny) THEN
-      Singular=.TRUE.
-      RETURN
-    ENDIF
+    end if
+    !! if (AA(J,J)==Zero) then
+    if (ABS(AA(J,J))<Tiny) then
+      Singular=.true.
+      return
+    end if
     AA(J+1:N,J)=    AA(J+1:N,J) /AA(J,J) !Reduce remaining submatrix.
     AA(J+1:N,J+1:N)=AA(J+1:N,J+1:N) -OuterProd_R(AA(J+1:N,J),AA(J,J+1:N))
-  ENDDO
-  RETURN
-ENDSUBROUTINE CheckSingular
+  end do
+  return
+end subroutine CheckSingular
 
-SUBROUTINE LU_Decomp( & !"NR"
+subroutine LU_Decomp( & !"NR"
 & A,    &    !IN:  a matrix, OUT: LU decompsition of a rowwise permutation of itself
 & Indx, &    !OUT: records row permutations effected by the partial pivoting
 & D,    &    !OUT: +1/-1 = even/odd number of row interchanges
 & Singular)  !OUT
-!USEd in combination with LU_BakSub to solve linear equations or invert a matrix
+!used in combination with LU_BakSub to solve linear equations or invert a matrix
   !
-  USE M_Numeric_Tools,   ONLY: iMaxLoc_R,OuterProd_R,Swap_RV
-  USE M_Trace,ONLY: Stop_
-  REAL(dp),DIMENSION(:,:),INTENT(INOUT):: A
-  INTEGER, DIMENSION(:),  INTENT(OUT)  :: Indx
-  REAL(dp),               INTENT(OUT)  :: D
-  LOGICAL,                INTENT(OUT)  :: Singular
+  use M_Numeric_Tools,   only: iMaxLoc_R,OuterProd_R,Swap_RV
+  use M_Trace,only: Stop_
+  real(dp),dimension(:,:),intent(inout):: A
+  integer, dimension(:),  intent(out)  :: Indx
+  real(dp),               intent(out)  :: D
+  logical,                intent(out)  :: Singular
   !
-  REAL(dp),DIMENSION(SIZE(A,1)) :: W  !stores the IMPLICIT scaling of each row.
-  REAL(dp),PARAMETER :: TINY=1.0E-20_dp
-  INTEGER:: J,N,IMAX
+  real(dp),dimension(size(A,1)) :: W  !stores the implicit scaling of each row.
+  real(dp),parameter :: TINY=1.0E-20_dp
+  integer:: J,N,IMAX
   !
-  Singular=.FALSE.
-  N=SIZE(Indx)
-  IF (SIZE(A,1)/=N .OR. SIZE(A,2)/=N) CALL Stop_("error on DIMENSIONs in LU_Decomp")
+  Singular=.false.
+  N=size(Indx)
+  if (size(A,1)/=N .or. size(A,2)/=N) call Stop_("error on dimensions in LU_Decomp")
   !
   D=One !No row interchanges yet.
-  W=MAXVAL(ABS(A),DIM=2) !Loop over rows to get the IMPLICIT scaling information
-  IF (ANY(W==Zero)) THEN !there is at least one row with ONLY Zeros ...
-    Singular=.TRUE.
-    RETURN
-  ENDIF
+  W=MAXVAL(ABS(A),DIM=2) !Loop over rows to get the implicit scaling information
+  if (ANY(W==Zero)) then !there is at least one row with only Zeros ...
+    Singular=.true.
+    return
+  end if
   W=One/W !Save the scaling.
-  DO J=1,N
+  do J=1,N
     IMAX=(J-1)+iMaxLoc_R(W(J:N)*ABS(A(J:N,J))) !Find the pivot row.
-    IF(J /= IMAX) THEN !______________Do we need to interchange rows ?
-      CALL Swap_RV(A(IMAX,:),A(J,:)) !interchange,
+    if(J /= IMAX) then !______________Do we need to interchange rows ?
+      call Swap_RV(A(IMAX,:),A(J,:)) !interchange,
       D=-D !__________________________and change the parity of d.
       W(IMAX)=W(J) !__________________Also interchange the scale factor
-    ENDIF
+    end if
     Indx(J)=IMAX
-    !!!§§§ IF (A(J,J)==Zero) A(J,J)=TINY
-    IF (A(J,J)==Zero) THEN
-      Singular=.TRUE.
-      RETURN
-    ENDIF
+    !!!§§§ if (A(J,J)==Zero) A(J,J)=TINY
+    if (A(J,J)==Zero) then
+      Singular=.true.
+      return
+    end if
     !If the pivot element is zero the matrix is singular
     !(at least to the precision of the algorithm,
     ! for some applications on singular matrices, 
     ! it is desirable to substitute TINY for zero)
     A(J+1:N,J)=    A(J+1:N,J) /A(J,J) !Reduce remaining submatrix.
     A(J+1:N,J+1:N)=A(J+1:N,J+1:N) -OuterProd_R(A(J+1:N,J),A(J,J+1:N))
-  ENDDO
-ENDSUBROUTINE LU_Decomp
+  end do
+end subroutine LU_Decomp
 
-SUBROUTINE LU_BakSub( & !"NR"
+subroutine LU_BakSub( & !"NR"
 !.solves the system of linear equations A·X=  B
 & A,    & !IN,    matrix, LU decomposition, determined by the routine LU_Decomp  
-& Indx, & !IN,    permutation vector RETURNed by LU_Decomp
+& Indx, & !IN,    permutation vector returned by LU_Decomp
 & B)      !INOUT, IN=the right-hand-side vector, OUT=the solution vector
 !NOTE FROM "NR"
-!A and Indx are not modIFied by this routine
-!and can be left in place for successive calls with dIFferent right-hand sides b
+!A and Indx are not MODIFIED by this routine
+!and can be left in place for successive calls with different right-hand sides b
 !LU_BakSub takes into account the possibility that B will begin with many zero elements, 
-!so it is efficient for USE in matrix inversion.
-  USE M_Trace,ONLY:Stop_
-  REAL(dp),DIMENSION(:,:),INTENT(IN)    :: A
-  INTEGER, DIMENSION(:),  INTENT(IN)    :: Indx
-  REAL(dp),DIMENSION(:),  INTENT(INOUT) :: B
+!so it is efficient for use in matrix inversion.
+  use M_Trace,only:Stop_
+  real(dp),dimension(:,:),intent(in)    :: A
+  integer, dimension(:),  intent(in)    :: Indx
+  real(dp),dimension(:),  intent(inout) :: B
   !
-  INTEGER:: N,I,J,K
-  REAL(dp):: Summ
+  integer:: N,I,J,K
+  real(dp):: Summ
   !
-  N=SIZE(Indx)
-  IF (SIZE(A,1)/=N .OR. SIZE(A,2)/=N) CALL Stop_("error on DIMENSIONs in LU_BakSub")
+  N=size(Indx)
+  if (size(A,1)/=N .or. size(A,2)/=N) call Stop_("error on dimensions in LU_BakSub")
   J=0
-  DO I=1,N
+  do I=1,N
     K=    Indx(I)
     Summ= B(K)
     B(K)= B(I)
-    IF (J/=0) THEN;           Summ=Summ-DOT_PRODUCT(A(I,J:I-1),B(J:I-1))
-    ELSEIF (Summ/=Zero) THEN; J=I
-    ENDIF
+    if (J/=0) then;           Summ=Summ-dot_product(A(I,J:I-1),B(J:I-1))
+    elseif (Summ/=Zero) then; J=I
+    end if
     B(I)=Summ
-  ENDDO
-  DO I=N,1,-1
-    B(I)=(B(I)-DOT_PRODUCT(A(I,I+1:N),B(I+1:N)))/A(I,I)
-  ENDDO
-ENDSUBROUTINE LU_BakSub
+  end do
+  do I=N,1,-1
+    B(I)=(B(I)-dot_product(A(I,I+1:N),B(I+1:N)))/A(I,I)
+  end do
+end subroutine LU_BakSub
 
-ENDMODULE M_Numeric_Mat
+end module M_Numeric_Mat
 

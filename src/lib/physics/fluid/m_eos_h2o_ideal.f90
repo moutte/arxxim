@@ -1,4 +1,4 @@
-MODULE M_Eos_H2O_Ideal
+module M_Eos_H2O_Ideal
 !! was M_Ideal_H2O
 
 !-------------------------------------------------------------------------------
@@ -13,31 +13,31 @@ MODULE M_Eos_H2O_Ideal
 ! Arxim Integration : J.Moutte
 !-------------------------------------------------------------------------------
 
-USE M_Kinds
-IMPLICIT NONE
-PRIVATE
+use M_Kinds
+implicit none
+private
 
-REAL(dp), PARAMETER :: R_jK= 8.314510D0
+real(dp), parameter :: R_jK= 8.314510D0
 
-!// PUBLIC FUNCTIONS
-PUBLIC:: Eos_H2O_Ideal ! was CalcH2O_Ideal
+!// public functionS
+public:: Eos_H2O_Ideal ! was CalcH2O_Ideal
 
-CONTAINS
+contains
 
-SUBROUTINE Eos_H2O_Ideal(T,AI,GI,SI,UI,HI,CVI,CPI)
+subroutine Eos_H2O_Ideal(T,AI,GI,SI,UI,HI,CVI,CPI)
 !--
 !-- retrieved from SupCrt (routine called ideal),
 !-- thermodynamic properties for H2O (AI,GI,SI,UI,HI,CVI,CPI)
 !-- in the ideal gas state 
 !-- using equations given by Woolley (1979)
 !--
-  IMPLICIT NONE
-  REAL(dp),INTENT(IN) ::T
-  REAL(dp),INTENT(OUT)::AI,GI,SI,UI,HI,CVI,CPI
-  REAL(dp)::&
+  implicit none
+  real(dp),intent(in) ::T
+  real(dp),intent(out)::AI,GI,SI,UI,HI,CVI,CPI
+  real(dp)::&
     C(18), &
     TT,TL,EMULT
-  INTEGER::I
+  integer::I
   !
   C=(/ &
   &  0.197302710180D02,  0.209662681977D2,  -0.483429455355D0,  &
@@ -48,22 +48,22 @@ SUBROUTINE Eos_H2O_Ideal(T,AI,GI,SI,UI,HI,CVI,CPI)
   &  0.451916067368D-11,-0.370734122710D-13, 0.137546068238D-15 /)
   !
   TT= T/100._dp
-  TL= LOG(TT)
+  TL= log(TT)
   GI= -(C(1)/TT + C(2)) *TL
   HI=  (C(2) + C(1)*(One - TL)/TT)
   CPI=  C(2) - C(1)/TT
-  DO I=3,18
+  do I=3,18
     EMULT= TT**(I-6)
     GI=  GI  - C(I) *EMULT
     HI=  HI  + C(I) *(I-6) *EMULT
     CPI= CPI + C(I) *(I-6) *(I-5) *EMULT
-  ENDDO 
+  end do 
   AI= GI - One
   UI= HI - One
   CVI= CPI - One
   SI= UI - AI
   !
-  RETURN
-END SUBROUTINE Eos_H2O_Ideal
+  return
+end subroutine Eos_H2O_Ideal
 
-ENDMODULE M_Eos_H2O_Ideal
+end module M_Eos_H2O_Ideal

@@ -1,333 +1,335 @@
-MODULE M_KinFas_Read
+module M_KinFas_Read
 !--
 !-- routines for reading kinetic models
 !--
-  USE M_Kinds
-  USE M_Trace,   ONLY: iDebug,fTrc,T_,Stop_,Warning_
-  USE M_T_KinFas,ONLY: T_KinFas
-  USE M_T_Phase, ONLY: T_Phase
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,   only: iDebug,fTrc,T_,Stop_,Warning_
+  use M_T_KinFas,only: T_KinFas
+  use M_T_Phase, only: T_Phase
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: KinFas_BuildLnk
-  PUBLIC:: KinFas_LnkToVec
-  PUBLIC:: T_LnkKin 
+  public:: KinFas_BuildLnk
+  public:: KinFas_LnkToVec
+  public:: T_LnkKin 
   !
-  TYPE T_LnkKin
-    TYPE(T_KinFas)         ::Value
-    TYPE(T_LnkKin), POINTER::Next
-  ENDTYPE T_LnkKin
+  type T_LnkKin
+    type(T_KinFas)         ::Value
+    type(T_LnkKin), pointer::Next
+  end type T_LnkKin
   !
-CONTAINS
+contains
 
-SUBROUTINE KinFas_LnkToVec(LnkKin,vFas,vKinFas)
+subroutine KinFas_LnkToVec(LnkKin,vFas,vKinFas)
   !
-  TYPE(T_LnkKin),POINTER    :: LnkKin
-  TYPE(T_Phase), INTENT(IN) :: vFas(:)
-  TYPE(T_KinFas),INTENT(OUT):: vKinFas(:)
+  type(T_LnkKin),pointer    :: LnkKin
+  type(T_Phase), intent(in) :: vFas(:)
+  type(T_KinFas),intent(out):: vKinFas(:)
   !
-  TYPE(T_LnkKin),POINTER::pCur, pPrev
-  INTEGER:: I, J
+  type(T_LnkKin),pointer::pCur, pPrev
+  integer:: I, J
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< KinFas_LnkToVec"
+  if(iDebug>0) write(fTrc,'(/,A)') "< KinFas_LnkToVec"
   !
   I=0
   J=0
   pCur=> LnkKin
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associated(pCur))
     !
     I= I+1
     vKinFas(I)= pCur%Value
     !
-    IF(iDebug>0) WRITE(fTrc,'(I4,A1,A12)') I," ",vKinFas(I)%NamKF
+    if(iDebug>0) write(fTrc,'(I4,A1,A12)') I," ",vKinFas(I)%NamKF
     !
-    pPrev=>pCur; pCur=> pCur%next; DEALLOCATE(pPrev)
+    pPrev=>pCur
+    pCur=> pCur%next
+    deallocate(pPrev)
     !
-  ENDDO
+  enddo
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ KinFas_LnkToVec"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ KinFas_LnkToVec"
   !
-ENDSUBROUTINE KinFas_LnkToVec
+end subroutine KinFas_LnkToVec
 
-SUBROUTINE BuildLnkKin(B,E,L,P)
-  LOGICAL               ::B !TRUE=first element
-  TYPE(T_KinFas)        ::E
-  TYPE(T_LnkKin),POINTER::L,P
-  IF(B) NULLIFY(L)
-  IF(B) THEN; ALLOCATE(L);      NULLIFY(L%next);      L%Value=E;       P=>L
-  ELSE;       ALLOCATE(P%next); NULLIFY(P%next%next); P%next%Value=E;  P=>P%next
-  ENDIF
-ENDSUBROUTINE BuildLnkKin
+subroutine BuildLnkKin(B,E,L,P)
+  logical               ::B  !.true.=first element
+  type(T_KinFas)        ::E
+  type(T_LnkKin),pointer::L,P
+  if(B) nullify(L)
+  if(B) then; allocate(L);      nullify(L%next);      L%Value=E;       P=>L
+  else;       allocate(P%next); nullify(P%next%next); P%next%Value=E;  P=>P%next
+  end if
+end subroutine BuildLnkKin
 
-SUBROUTINE KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
+subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
 !--
 !-- read the "ROCK" block from input.file -> build link list --
 !--
-  USE M_IOTools
-  USE M_Files,      ONLY: NamFInn
-  !!USE M_T_Species, ONLY: T_Species,Species_Index
-  USE M_T_Phase,    ONLY: T_Phase,Phase_Index
-  USE M_T_Kinmodel, ONLY: T_KinModel,KinModel_Index
-  USE M_T_KinFas,   ONLY: KinFas_Zero,KinFas_Surf_Zero
+  use M_IOTools
+  use M_Files,      only: NamFInn
+  !!use M_T_Species, only: T_Species,Species_Index
+  use M_T_Phase,    only: T_Phase,Phase_Index
+  use M_T_Kinmodel, only: T_KinModel,KinModel_Index
+  use M_T_KinFas,   only: KinFas_Zero,KinFas_Surf_Zero
   !
-  TYPE(T_Phase),   INTENT(IN) :: vFas(:)
-  TYPE(T_KinModel),INTENT(IN) :: vKinModel(:)
-  CHARACTER(LEN=7),INTENT(IN) :: sModelSurf
-  INTEGER,         INTENT(OUT):: N
-  TYPE(T_LnkKin),  POINTER    :: LnkKin
+  type(T_Phase),   intent(in) :: vFas(:)
+  type(T_KinModel),intent(in) :: vKinModel(:)
+  character(len=7),intent(in) :: sModelSurf
+  integer,         intent(out):: N
+  type(T_LnkKin),  pointer    :: LnkKin
   !
-  REAL(dp),DIMENSION(dimV)::vX
-  TYPE(T_LnkKin),POINTER::pKin
-  TYPE(T_KinFas)    :: M
-  CHARACTER(LEN=255):: L
-  CHARACTER(LEN=80) :: W1,W2,W3
-  REAL(dp):: xGram,xMole
-  LOGICAL :: EoL,BlockFound,OldFormat
-  INTEGER :: I,jKin,mDum,f_,ios
+  real(dp),dimension(dimV)::vX
+  type(T_LnkKin),pointer::pKin
+  type(T_KinFas)    :: M
+  character(len=255):: L
+  character(len=80) :: W1,W2,W3
+  real(dp):: xGram,xMole
+  logical :: EoL,BlockFound,OldFormat
+  integer :: I,jKin,mDum,f_,ios
   !
   !dimV: defined in ModIo,
   !dimension of "buffer array" scanned from words of a string
   !
-  CALL GetUnit(f_)
-  OPEN(f_,FILE=TRIM(NamFInn))
+  call GetUnit(f_)
+  open(f_,file=trim(NamFInn))
   !
   N= 0
   !
-  BlockFound= .FALSE.
-  OldFormat=  .FALSE.
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< KinFas_BuildLnk"
-  DoFile: DO 
+  BlockFound= .false.
+  OldFormat=  .false.
+  if(iDebug>0) write(fTrc,'(/,A)') "< KinFas_BuildLnk"
+  DoFile: do 
     !
-    READ(F_,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W1,EoL)
-    IF(W1(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W1,EoL)
+    read(F_,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W1,EoL)
+    if(W1(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W1,EoL)
     !
-    SELECT CASE(W1)
+    select case(W1)
     !
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
     !
-    !NB: the DYNAMIC.ROCK block is READ after KINETICS block
+    !NB: the DYNAMIC.ROCK block is read after KINETICS block
     !
-    CASE("DYNAMIC.ROCK")
-      BlockFound=.TRUE.
+    case("DYNAMIC.ROCK")
+      BlockFound=.true.
       N=0
-      IF(.NOT. EoL) THEN
-        CALL LinToWrd(L,W3,EoL)
-        OldFormat= TRIM(W3)=="OLD"
-      ENDIF
-      IF(OldFormat) THEN
+      if(.not. EoL) then
+        call LinToWrd(L,W3,EoL)
+        OldFormat= trim(W3)=="OLD"
+      end if
+      if(OldFormat) then
       !------------------------------------------------------ old format
-        DoReadOld: DO
+        DoReadOld: do
         
-          READ(F_,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W1,EoL)
-          IF(W1(1:1)=='!')   CYCLE DoReadOld !skip comment lines
-          CALL AppendToEnd(L,W1,EoL)
+          read(F_,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W1,EoL)
+          if(W1(1:1)=='!')   cycle DoReadOld !skip comment lines
+          call AppendToEnd(L,W1,EoL)
           !
-          SELECT CASE(W1)
-          CASE("ENDINPUT")                ; EXIT DoFile
-          CASE("END","ENDDYNAMIC.ROCK")   ; EXIT DoReadOld
-          END SELECT
+          select case(W1)
+          case("ENDINPUT")                ; exit DoFile
+          case("END","ENDDYNAMIC.ROCK")   ; exit DoReadOld
+          end select
           !
-          CALL LinToWrd(L,W2,EoL)
+          call LinToWrd(L,W2,EoL)
           !
-          IF(TRIM(W2)/="D" .AND. TRIM(W2)/="R") THEN
-            !-> IF next word is not D or R, THEN it is Species Name
+          if(trim(W2)/="D" .and. trim(W2)/="R") then
+            !-> if next word is not D or R, then it is Species Name
             
             !I= Species_Index(W2,vSpc) !find species named W2 in vSpc
             I= Phase_Index(W2,vFas) !find phase named W2 in vFas
             
-            CALL LinToWrd(L,W2,EoL) !-> next word is Name Of Kinetic Model
+            call LinToWrd(L,W2,EoL) !-> next word is Name Of Kinetic Model
             jKin= KinModel_Index(W2,vKinModel) !find species named W2 in vKinModel
             
-            CALL LinToWrd(L,W2,EoL) !READ next word
-            IF(TRIM(W2)/="D" .AND. TRIM(W2)/="R") CALL Stop_( &
+            call LinToWrd(L,W2,EoL) !read next word
+            if(trim(W2)/="D" .and. trim(W2)/="R") call Stop_( &
             & "texture code should be either R (radius) or D (density)" )
             M%cMode=W2(1:1)
           
-          ELSE
+          else
             I= Phase_Index(W1,vFas)
             !I= Species_Index(W1,vSpc)
             jKin= KinModel_Index(W1,vKinModel)
             M%cMode=W2(1:1)
           
-          ENDIF
+          end if
           !
-          IF(I==0) WRITE(*,'(A)') "Species not found for "//TRIM(W1)
-          IF(jKin==0) WRITE(*,'(A)') "Kinetic model not found for "//TRIM(W1)
+          if(I==0) write(*,'(A)') "Species not found for "//trim(W1)
+          if(jKin==0) write(*,'(A)') "Kinetic model not found for "//trim(W1)
           !
-          IF(I>0 .AND. jKin>0) THEN
+          if(I>0 .and. jKin>0) then
             !
-            CALL KinFas_Zero(M)
+            call KinFas_Zero(M)
             !
-            M%NamKF=TRIM(W1) !-> the Kinetic Mineral Name
+            M%NamKF=trim(W1) !-> the Kinetic Mineral Name
             !M%iSpc=I
             M%iFas=I
             M%iKin=jKin
             !
-            IF(iDebug>0) WRITE(fTrc,'(3(A12,1X))') &
+            if(iDebug>0) write(fTrc,'(3(A12,1X))') &
             !& M%Name,vSpc(M%iSpc)%Name,vKinModel(M%iKin)%Name
             & M%NamKF,vFas(M%iFas)%NamFs,vKinModel(M%iKin)%Name
             !
-            CALL ReadRValsV(L,mDum,vX) !read radius and relative fraction
+            call ReadRValsV(L,mDum,vX) !read radius and relative fraction
             M%Dat%Radius= vX(1)
             M%Dat%PhiM=   vX(2)
-            IF(vX(3)/=Zero) M%QsKSeuil= vX(3)
-            IF(vX(4)/=Zero) M%ReacCoef= vX(4)
+            if(vX(3)/=Zero) M%QsKSeuil= vX(3)
+            if(vX(4)/=Zero) M%ReacCoef= vX(4)
             !
             !!M%Dat%cSat="1" !"PRIMARY" 
-            !!IF(M%Dat%PhiM<1.0E-5) M%Dat%cSat="2" !"SECONDA" 
-            !!!-> mineral is "secondary",i.e. not REALly in initial assemblage
+            !!if(M%Dat%PhiM<1.0E-5) M%Dat%cSat="2" !"SECONDA" 
+            !!!-> mineral is "secondary",i.e. not really in initial assemblage
             !
-            N=N+1; CALL BuildLnkKin(N==1,M,LnkKin,pKin)
-          ENDIF
-        ENDDO DoReadOld
+            N=N+1; call BuildLnkKin(N==1,M,LnkKin,pKin)
+          end if
+        enddo DoReadOld
         !
       !------------------------------------------------------/old format
-      ELSE
+      else
       !------------------------------------------------------ new format
         !
-        DoReadRock: DO
+        DoReadRock: do
         
-          READ(F_,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-          CALL LinToWrd(L,W1,EoL)
-          IF(W1(1:1)=='!')   CYCLE DoReadRock !skip comment lines
-          CALL AppendToEnd(L,W1,EoL)
-          SELECT CASE(W1)
-            CASE("ENDINPUT")              ; EXIT DoFile
-            CASE("END","ENDDYNAMIC.ROCK") ; EXIT DoReadRock
-          END SELECT
+          read(F_,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+          call LinToWrd(L,W1,EoL)
+          if(W1(1:1)=='!')   cycle DoReadRock !skip comment lines
+          call AppendToEnd(L,W1,EoL)
+          select case(W1)
+            case("ENDINPUT")              ; exit DoFile
+            case("END","ENDDYNAMIC.ROCK") ; exit DoReadRock
+          end select
           !
           I=    0
           jKin= 0
           xGram= Zero
           xMole= Zero
           !
-          CALL KinFas_Zero(M)
+          call KinFas_Zero(M)
           !
-          M%NamKF= TRIM(W1) !-> the Kinetic Phase Name
-          CALL LinToWrd(L,W2,EoL)
+          M%NamKF= trim(W1) !-> the Kinetic Phase Name
+          call LinToWrd(L,W2,EoL)
           !
-          DO
+          do
             
-            IF(EoL) EXIT
+            if(EoL) exit
             !
-            SELECT CASE(TRIM(W2))
+            select case(trim(W2))
             !
-            CASE DEFAULT
-              CALL Stop_(TRIM(W2)//" <<Unknown Keyword in DYNAMIC.ROCK")
+            case default
+              call Stop_(trim(W2)//" <<Unknown Keyword in DYNAMIC.ROCK")
             !
-            CASE("SPECIES","SOLUTION","MIXTURE")
-              IF(TRIM(W2)=="SOLUTION") &
-              & CALL Warning_(TRIM(W2)//" soon Obsolete, better use MIXTURE !!!")
+            case("SPECIES","SOLUTION","MIXTURE")
+              if(trim(W2)=="SOLUTION") &
+              & call Warning_(trim(W2)//" soon Obsolete, better use MIXTURE !!!")
               !
-              CALL LinToWrd(L,W2,EoL)
+              call LinToWrd(L,W2,EoL)
               I= Phase_Index(W2,vFas)
-              IF(I==0) PRINT '(A)',"SPECIES not found for "//TRIM(W2)
+              if(I==0) print '(A)',"SPECIES not found for "//trim(W2)
             !
-            CASE("KINETICS")
-              CALL LinToWrd(L,W2,EoL)
+            case("KINETICS")
+              call LinToWrd(L,W2,EoL)
               jKin= KinModel_Index(W2,vKinModel)
-              IF(jKin==0) &
-              & CALL Stop_("DYNAMIC.ROCK: kinetic model not found for "//TRIM(W2))
+              if(jKin==0) &
+              & call Stop_("DYNAMIC.ROCK: kinetic model not found for "//trim(W2))
             !
-            CASE("MODE") !=> mode= Radius / Density / Surface/ Equil / Adsorption
-              CALL LinToWrd(L,W2,EoL) ; M%cMode= W2(1:1)
+            case("MODE") !=> mode= Radius / Density / Surface/ Equil / Adsorption
+              call LinToWrd(L,W2,EoL) ; M%cMode= W2(1:1)
             !
-            CASE("RADIUS") !=> radius (metre)
-              CALL LinToWrd(L,W2,EoL) ; CALL WrdToReal(W2,M%Dat%Radius)
+            case("RADIUS") !=> radius (metre)
+              call LinToWrd(L,W2,EoL) ; call WrdToReal(W2,M%Dat%Radius)
             !
-            CASE("SURFACE") !=> specific surface m2/kg
-              CALL LinToWrd(L,W2,EoL) ; CALL WrdToReal(W2,M%Dat%SurfKg) 
+            case("SURFACE") !=> specific surface m2/kg
+              call LinToWrd(L,W2,EoL) ; call WrdToReal(W2,M%Dat%SurfKg) 
             !
-            CASE("VOLUME") !=> volume (relative to other volumes in min'assemblages)
-              CALL LinToWrd(L,W2,EoL) ; CALL WrdToReal(W2,M%Dat%PhiM)
+            case("VOLUME") !=> volume (relative to other volumes in min'assemblages)
+              call LinToWrd(L,W2,EoL) ; call WrdToReal(W2,M%Dat%PhiM)
             !
-            CASE("MOLE") !=> mole number
-              CALL LinToWrd(L,W2,EoL) ; CALL WrdToReal(W2,xMole)
+            case("MOLE") !=> mole number
+              call LinToWrd(L,W2,EoL) ; call WrdToReal(W2,xMole)
             !
-            CASE("GRAM") !=> gram number
-              CALL LinToWrd(L,W2,EoL) ; CALL WrdToReal(W2,xGram)
+            case("GRAM") !=> gram number
+              call LinToWrd(L,W2,EoL) ; call WrdToReal(W2,xGram)
             !
-            END SELECT
+            end select
             !
-            CALL LinToWrd(L,W2,EoL)
+            call LinToWrd(L,W2,EoL)
             
-          ENDDO
+          enddo
           !
-          IF(M%Dat%SurfKg >Zero) M%Dat%Radius= -One
+          if(M%Dat%SurfKg >Zero) M%Dat%Radius= -One
           ! otherwise Radius would take default value set in KinFas_Zero ...
           !
-          IF(I==0) I= Phase_Index(W1,vFas)
+          if(I==0) I= Phase_Index(W1,vFas)
           !-> default species name= name of kinetic phase
-          IF(I==0) &
-          & CALL Stop_("DYNAMIC.ROCK: Species not found for "//TRIM(M%NamKF))
+          if(I==0) &
+          & call Stop_("DYNAMIC.ROCK: Species not found for "//trim(M%NamKF))
           !
-          IF(M%cMode/="E" .AND. M%cMode/="I") THEN
-            IF(jKin==0) jKin= KinModel_Index(W1,vKinModel) !default kin'model name= name of kinetic phase
-            IF(jKin==0) CALL Stop_("Kinetic model not found for "//TRIM(M%NamKF))
-          ENDIF
+          if(M%cMode/="E" .and. M%cMode/="I") then
+            if(jKin==0) jKin= KinModel_Index(W1,vKinModel) !default kin'model name= name of kinetic phase
+            if(jKin==0) call Stop_("Kinetic model not found for "//trim(M%NamKF))
+          end if
           !
           M%iFas= I
-          IF(xGram>Zero) M%Dat%PhiM= xGram /1.0D3 /vFas(M%iFas)%WeitKg *vFas(M%iFas)%VolM3
-          IF(xMole>Zero) M%Dat%PhiM= xMole *vFas(M%iFas)%VolM3
+          if(xGram>Zero) M%Dat%PhiM= xGram /1.0D3 /vFas(M%iFas)%WeitKg *vFas(M%iFas)%VolM3
+          if(xMole>Zero) M%Dat%PhiM= xMole *vFas(M%iFas)%VolM3
           !
-          IF(M%cMode/="E".AND. M%cMode/="I") THEN
+          if(M%cMode/="E".and. M%cMode/="I") then
             M%iKin= jKin
-          ELSE
+          else
             M%iKin= 0
-          ENDIF
+          end if
           !
-          CALL KinFas_Surf_Zero(vFas,M)
+          call KinFas_Surf_Zero(vFas,M)
           !-> calc' SurfKg from Radius, or Radius from SurfKg
           !
           N=N+1
-          CALL BuildLnkKin(N==1,M,LnkKin,pKin)
+          call BuildLnkKin(N==1,M,LnkKin,pKin)
           
-        ENDDO DoReadRock
+        enddo DoReadRock
         !
-      ENDIF
+      end if
       !------------------------------------------------------/new format
-    !ENDCASE("DYNAMIC.ROCK")
+    !endcase("DYNAMIC.ROCK")
     !
-    END SELECT
+    end select
     !
-  ENDDO DoFile
-  CLOSE(f_)
+  enddo DoFile
+  close(f_)
   !
-  IF(.NOT. BlockFound) PRINT '(A)',"!!!WARNING!!! Block DYNAMIC.ROCK Not Found"
+  if(.not. BlockFound) print '(A)',"!!!WARNING!!! Block DYNAMIC.ROCK Not Found"
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ KinFas_BuildLnk"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ KinFas_BuildLnk"
   !
-ENDSUBROUTINE KinFas_BuildLnk
+end subroutine KinFas_BuildLnk
 
-SUBROUTINE KinFas_Check(vFas_,vKinFas_)
-  USE M_Numeric_Const,  ONLY: Ln10
-  USE M_T_Phase,  ONLY: T_Phase,Phase_Index
+subroutine KinFas_Check(vFas_,vKinFas_)
+  use M_Numeric_Const,  only: Ln10
+  use M_T_Phase,  only: T_Phase,Phase_Index
   !
-  TYPE(T_Phase), INTENT(IN):: vFas_(:)
-  TYPE(T_KinFas),INTENT(IN):: vKinFas_(:)
+  type(T_Phase), intent(in):: vFas_(:)
+  type(T_KinFas),intent(in):: vKinFas_(:)
   !
-  INTEGER ::I,J
-  REAL(dp)::RhoM
+  integer ::I,J
+  real(dp)::RhoM
   
-  DO I=1,SIZE(vKinFas_)
+  do I=1,size(vKinFas_)
     !!J=vKinFas_(I)%iSpc !J= index (in vSpc_) of species named vKinFas(I)%Name
     !!RhoM=vSpc_(J)%WeitKg / vSpc_(J)%V0
     J=vKinFas_(I)%iFas !J= index (in vFas_) of species named vKinFas(I)%Name
     RhoM= vFas_(J)%WeitKg / vFas_(J)%VolM3
-    WRITE(fTrc,'(A,I3,A1,A,A15,A1,3(A7,F12.6,A1))') &
+    write(fTrc,'(A,I3,A1,A,A15,A1,3(A7,F12.6,A1))') &
     & "iMk=",  I,                                  T_, &
     & "vKinFas=", vFas_(J)%NamFs,                  T_, &
     & "RhoM=", RhoM,                               T_, &
     & "VMol=", vFas_(vKinFas_(I)%iFas)%VolM3,      T_, &
     & "logK=", - vFas_(vKinFas_(I)%iFas)%Grt/Ln10, T_
-  ENDDO
+  enddo
   
-ENDSUBROUTINE KinFas_Check
+end subroutine KinFas_Check
 
-ENDMODULE M_KinFas_Read
+end module M_KinFas_Read
 
 

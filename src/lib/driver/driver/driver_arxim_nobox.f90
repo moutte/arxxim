@@ -1,399 +1,399 @@
-SUBROUTINE Driver_Arxim_NoBox
+subroutine Driver_Arxim
   !---------------------------------------------------------------------
   ! Driver_Arxim
   !---------------------------------------------------------------------
   ! Interactive Program Arxim
   ! Get Input Filename and Compute Mode From [ User Command Line ]
   !---------------------------------------------------------------------
-  USE M_Trace,       ONLY: iDebug, Stop_, Trace_Close, Trace_Init,Pause_,LWarning
-  USE M_Files,       ONLY: Files_PathRead, Files_BuildInput 
-  USE M_Global_Tools,ONLY: Global_Zero, Global_Clean
-  USE M_System_Vars, ONLY: System_Clean, vCpn
-  USE M_IO_Menu
+  use M_Trace,       only: iDebug, Stop_, Trace_Close, Trace_Init,Pause_,LWarning
+  use M_Files,       only: Files_PathRead, Files_BuildInput 
+  use M_Global_Tools,only: Global_Zero, Global_Clean
+  use M_System_Vars, only: System_Clean, vCpn
+  use M_IO_Menu
   !
-  IMPLICIT NONE
+  implicit none
   !
-  LOGICAL:: OkCmd,Ok
-  LOGICAL:: OkSMode
-  CHARACTER(LEN=15):: S
+  logical:: OkCmd,Ok
+  logical:: OkSMode
+  character(len=15):: S
   !
-  CALL Trace_Init
+  call Trace_Init
   !
-  CALL Files_PathRead(Ok)
-  IF(.NOT. Ok) CALL Stop_("ERRORS")
+  call Files_PathRead(Ok)
+  if(.not. Ok) call Stop_("ERRORS")
   ! 
-  CALL Files_BuildInput
-  DoMain: DO
+  call Files_BuildInput
+  DoMain: do
     !
-    CALL Global_Zero
+    call Global_Zero
     !
-    CALL IO_Menu(S,OkCmd,iDebug)
+    call IO_Menu(S,OkCmd,iDebug)
     LWarning= (iDebug>0)
     !
     !------------------------------------------------------
     !// SPECIAL MODES : Q, REF, NEW
-    OkSMode = .FALSE.
-    SELECT CASE(TRIM(S)) 
-    CASE("Q") 
-      OkSMode = .TRUE.
-      EXIT DoMain
-    CASE("NEW")
-      CALL Files_PathRead(Ok)
-      CALL Files_BuildInput
-      OkSMode = .TRUE.
-    CASE("REF") !to call when input file has been modified
-      CALL Files_BuildInput !-> renew arxim_inn
-      OkSMode = .TRUE.
-    CASE DEFAULT
-      OkSMode = .FALSE.
-    END SELECT
+    OkSMode = .false.
+    select case(trim(S)) 
+    case("Q") 
+      OkSMode = .true.
+      exit DoMain
+    case("NEW")
+      call Files_PathRead(Ok)
+      call Files_BuildInput
+      OkSMode = .true.
+    case("REF") !to call when input file has been MODIFIED
+      call Files_BuildInput !-> renew arxim_inn
+      OkSMode = .true.
+    case default
+      OkSMode = .false.
+    end select
     !------------------------------------------------------
     !// COMPUTE MODES : SPC, EQU, DYN, BOX, SPCPATH, etc ...
-    IF (.NOT. OkSMode) THEN
-      CALL Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
-    END IF
+    if (.not. OkSMode) then
+      call Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
+    end if
     !
-    CALL System_Clean
-    CALL Global_Clean
+    call System_Clean
+    call Global_Clean
     !
-    IF(OkCmd) EXIT
-  ENDDO DoMain
+    if(OkCmd) exit
+  end do DoMain
   !
-  CALL Trace_Close
-  WRITE(*,'(A)') "PERFECT"
+  call Trace_Close
+  write(*,'(A)') "PERFECT"
 
-END SUBROUTINE Driver_Arxim_NoBox
+end subroutine Driver_Arxim
 
 !---
 
-SUBROUTINE Driver_Arxim_Options(sFilename, sMode)
+subroutine Driver_Arxim_Options(sFilename, sMode)
 !---------------------------------------------------------------------
 ! Driver_Arxim_Options
 !---------------------------------------------------------------------
 ! Batch Program Arxim 
 ! Get Input Filename and Compute Mode From [ Arguments ]
 !---------------------------------------------------------------------
-  USE M_Trace,       ONLY: iDebug, Stop_,Trace_Close,Trace_Init,Pause_,LWarning
-  USE M_Files,       ONLY: Files_PathRead_From_FileName, Files_BuildInput 
-  USE M_Global_Tools,ONLY: Global_Zero, Global_Clean
-  USE M_System_Vars, ONLY: System_Clean, vCpn
-  USE M_IO_Menu
+  use M_Trace,       only: iDebug, Stop_,Trace_Close,Trace_Init,Pause_,LWarning
+  use M_Files,       only: Files_PathRead_From_FileName, Files_BuildInput 
+  use M_Global_Tools,only: Global_Zero, Global_Clean
+  use M_System_Vars, only: System_Clean, vCpn
+  use M_IO_Menu
   !
-  IMPLICIT NONE
+  implicit none
   !
-  LOGICAL:: OkCmd,Ok, OkSMode
-  CHARACTER(LEN=*):: sMode
-  CHARACTER(LEN=*):: sFilename
+  logical:: OkCmd,Ok, OkSMode
+  character(len=*):: sMode
+  character(len=*):: sFilename
   !
-  CALL Trace_Init
+  call Trace_Init
   !
-  CALL Files_PathRead_From_FileName(sFileName, Ok) 
-  IF(.NOT. Ok) CALL Stop_("ERRORS")
+  call Files_PathRead_From_FileName(sFileName, Ok) 
+  if(.not. Ok) call Stop_("ERRORS")
   ! 
-  CALL Files_BuildInput
+  call Files_BuildInput
   !
-  CALL Global_Zero
+  call Global_Zero
   !
-  OkCmd=.TRUE. ! Direct Command 
-  CALL IO_Options_Read(iDebug)
+  OkCmd=.true. ! Direct Command 
+  call IO_Options_Read(iDebug)
   LWarning= (iDebug>0)
   !
-  WRITE(*,'(A,A)') "TEST COMPUTE ", sMode
+  write(*,'(A,A)') "TEST COMPUTE ", sMode
   !
-  CALL Driver_Arxim_ComputeSequence(sMode, OkCmd, OkSMode)
+  call Driver_Arxim_ComputeSequence(sMode, OkCmd, OkSMode)
   !
-  CALL System_Clean
-  CALL Global_Clean
+  call System_Clean
+  call Global_Clean
   !
-  CALL Trace_Close
+  call Trace_Close
   !
-  if (OkSMode)      WRITE(*,'(A)') "PERFECT"
-  if (.not.OkSMode) WRITE(*,'(A)') "ERRORS"
+  if (OkSMode)      write(*,'(A)') "PERFECT"
+  if (.not.OkSMode) write(*,'(A)') "ERRORS"
 
-END SUBROUTINE Driver_Arxim_Options
+end subroutine Driver_Arxim_Options
 
 !---
 
-SUBROUTINE Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
-  
-  USE M_Basis_Vars,  ONLY: Basis_CleanAll
-  USE M_Basis,       ONLY: Basis_Change
-  USE M_System_Vars, ONLY: System_Clean,vCpn
-  USE M_Global_Build,ONLY: Global_Build
-  USE M_System_Tools,ONLY: System_Build
-  USE M_Dtb_Test
-  USE M_Equil
-  USE M_Dynam
-  USE M_Dynam_Column
-  USE M_Path
-  USE M_GEM_Vars
-  USE M_Simplex_Theriak
-  USE M_Simplex_Path
-  USE M_Simplex_Build
-  USE M_DiscretModel_Test
-  USE M_IO_Menu
+subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
 
-  IMPLICIT NONE
+  use M_Basis_Vars,  only: Basis_CleanAll
+  use M_Basis,       only: Basis_Change
+  use M_System_Vars, only: System_Clean,vCpn
+  use M_Global_Build,only: Global_Build
+  use M_System_Tools,only: System_Build
+  use M_Dtb_Test
+  use M_Equil
+  use M_Dynam
+  use M_Dynam_Column
+  use M_Path
+  use M_GEM_Vars
+  use M_Simplex_Theriak
+  use M_Simplex_Path
+  use M_Simplex_Build
+  use M_DiscretModel_Test
+  use M_IO_Menu
 
-  CHARACTER(len=*) :: S
-  LOGICAL :: OkCmd
-  LOGICAL, intent(out) :: OkSMode
+  implicit none
 
-  LOGICAL :: Ok
+  character(len=*) :: S
+  logical :: OkCmd
+  logical, intent(out) :: OkSMode
+
+  logical :: Ok
   
   !--- COMPUTE Sequence 
   OkSMode = .true.
   
-  SELECT CASE(TRIM(S))
+  select case(trim(S))
     !
-  CASE DEFAULT !-> in case S is unknown as a code ...
-    !IF(OkCmd) THEN
-      PRINT &
-      & '(/,A)',TRIM(S)//"-> Unknown Code In command line...???" 
+  case default !-> in case S is unknown as a code ...
+    !if(OkCmd) then
+      print &
+      & '(/,A)',trim(S)//"-> Unknown Code In command line...???" 
       OkSMode = .false.
-    !ELSE
-    !  PRINT &
-    !  & '(/,A)',"WHAT DO YOU SAY ?? RETRY ...???"
+    !else
+    !  print &
+    !  & '(/,A)',"WHAT do YOU SAY ?? RETRY ...???"
     !  OkSMode = .false.
-    !ENDIF
+    !end if
      
-  CASE("SPC")
-    CALL Global_Build
-    CALL System_Build
+  case("SPC")
+    call Global_Build
+    call System_Build
     !
-    CALL Equil_Calc("SPC")
+    call Equil_Calc("SPC")
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
     !
-  CASE("EQU","EQ2")
-    CALL Global_Build
-    CALL System_Build
+  case("EQU","EQ2")
+    call Global_Build
+    call System_Build
     !
-    !IF(COUNT(vCpn(:)%Statut=="MOBILE")>0) THEN
-    IF(COUNT(vCpn(:)%Statut=="MOBILE")>0 .OR. &
-    &  COUNT(vCpn(:)%Statut=="BUFFER")>0) THEN
-      CALL Equil_Calc("SPC")
-      CALL Basis_Change("EQU",vCpn)
-    ENDIF
-    CALL Equil_Calc("EQ2")
+    !if(count(vCpn(:)%Statut=="MOBILE")>0) then
+    if(count(vCpn(:)%Statut=="MOBILE")>0 .or. &
+    &  count(vCpn(:)%Statut=="BUFFER")>0) then
+      call Equil_Calc("SPC")
+      call Basis_Change("EQU",vCpn)
+    end if
+    call Equil_Calc("EQ2")
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
     !
-  CASE("EQM")
-    CALL Global_Build
-    CALL System_Build
+  case("EQM")
+    call Global_Build
+    call System_Build
     !
-    !IF(COUNT(vCpn(:)%Statut=="MOBILE")>0) THEN
-    IF(COUNT(vCpn(:)%Statut=="MOBILE")>0 .OR. &
-    &  COUNT(vCpn(:)%Statut=="BUFFER")>0) THEN
-      CALL Equil_Calc("SPC")
-      CALL Basis_Change("EQU",vCpn)
-    ENDIF
-    CALL Equil_Calc("EQM")
+    !if(count(vCpn(:)%Statut=="MOBILE")>0) then
+    if(count(vCpn(:)%Statut=="MOBILE")>0 .or. &
+    &  count(vCpn(:)%Statut=="BUFFER")>0) then
+      call Equil_Calc("SPC")
+      call Basis_Change("EQU",vCpn)
+    end if
+    call Equil_Calc("EQM")
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
     !
-  CASE("EQ1")
-    CALL Global_Build
-    CALL System_Build
+  case("EQ1")
+    call Global_Build
+    call System_Build
     !
-    IF(COUNT(vCpn(:)%Statut=="MOBILE")>0 .OR. &
-    &  COUNT(vCpn(:)%Statut=="BUFFER")>0) THEN
-    !IF(COUNT(vCpn(:)%Statut=="MOBILE")>0) THEN
-      CALL Equil_Calc("SPC")
-      CALL Basis_Change("EQU",vCpn)
-    ENDIF
-    CALL Equil_Calc("EQ1")
+    if(count(vCpn(:)%Statut=="MOBILE")>0 .or. &
+    &  count(vCpn(:)%Statut=="BUFFER")>0) then
+    !if(count(vCpn(:)%Statut=="MOBILE")>0) then
+      call Equil_Calc("SPC")
+      call Basis_Change("EQU",vCpn)
+    end if
+    call Equil_Calc("EQ1")
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
 
-  CASE("DYN")
-    CALL Global_Build
+  case("DYN")
+    call Global_Build
     !
-    CALL Dynam_Initialize
+    call Dynam_Initialize
     !-> initial speciation for box fluid and inject fluid
     !
-    CALL Dynam_Box
+    call Dynam_Box
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
     
-  CASE("COLUMN")
-    CALL Global_Build
+  case("COLUMN")
+    call Global_Build
     !
-    CALL Dynam_Initialize
+    call Dynam_Initialize
     !-> initial speciation for box fluid and inject fluid
     !
-    CALL Dynam_Column
+    call Dynam_Column
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
   
-  CASE("SPCTP","TPSPC")
-    CALL Global_Build
-    CALL System_Build
+  case("SPCTP","TPSPC")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("SPCTP")
+    call Path_Execute("SPCTP")
     !
-    CALL Basis_CleanAll
-    CALL System_Clean
+    call Basis_CleanAll
+    call System_Clean
     
-  CASE("EQUTP","TPEQU","EQ2TP")
-    CALL Global_Build
-    CALL System_Build
+  case("EQUTP","TPEQU","EQ2TP")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("EQ2TP")
+    call Path_Execute("EQ2TP")
     !
-    CALL Basis_CleanAll
+    call Basis_CleanAll
   
-  CASE("EQ1TP")  
-    CALL Global_Build
-    CALL System_Build
+  case("EQ1TP")  
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("EQ1TP")
+    call Path_Execute("EQ1TP")
     !
-    CALL Basis_CleanAll
+    call Basis_CleanAll
     
-  ! CASE("EQ0TP")  
-  !   CALL Global_Build
-  !   CALL System_Build
+  ! case("EQ0TP")  
+  !   call Global_Build
+  !   call System_Build
   !   !
-  !   CALL Path_Execute("EQ0TP")
+  !   call Path_Execute("EQ0TP")
   !   !
-  !   CALL Basis_CleanAll
+  !   call Basis_CleanAll
     
-  CASE("EQMTP")  
-      CALL Global_Build
-      CALL System_Build
+  case("EQMTP")  
+      call Global_Build
+      call System_Build
       !
-      CALL Path_Execute("EQMTP")
+      call Path_Execute("EQMTP")
       !
-      CALL Basis_CleanAll
+      call Basis_CleanAll
       
-  CASE("SPCPATH","PATHSPC")
-    CALL Global_Build
-    CALL System_Build
+  case("SPCPATH","PATHSPC")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("SPC__")
+    call Path_Execute("SPC__")
     !
-    CALL Basis_CleanAll
-  CASE("EQUPATH","PATHEQU","EQ2PATH")
-    CALL Global_Build
-    CALL System_Build
+    call Basis_CleanAll
+  case("EQUPATH","PATHEQU","EQ2PATH")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("EQ2__")
+    call Path_Execute("EQ2__")
     !
-    CALL Basis_CleanAll
+    call Basis_CleanAll
     !
-  CASE("EQ1PATH")
-    CALL Global_Build
-    CALL System_Build
+  case("EQ1PATH")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("EQ1__")
+    call Path_Execute("EQ1__")
     !
-    CALL Basis_CleanAll
+    call Basis_CleanAll
     !
-  CASE("EQMPATH")
-    CALL Global_Build
-    CALL System_Build
+  case("EQMPATH")
+    call Global_Build
+    call System_Build
     !
-    CALL Path_Execute("EQM__")
+    call Path_Execute("EQM__")
     !
-    CALL Basis_CleanAll
+    call Basis_CleanAll
     !
-  ! CASE("SPLMIX")
-  !   CALL Global_Build
-  !   CALL Simplex_Build
-  !   CALL Simplex_Theriak(.FALSE.)
+  ! case("SPLMIX")
+  !   call Global_Build
+  !   call Simplex_Build
+  !   call Simplex_Theriak(.false.)
   
-  ! CASE("SPLMIXID")
-  !   CALL Global_Build
-  !   CALL Simplex_Build
-  !   CALL Simplex_Theriak(.TRUE.)
+  ! case("SPLMIXID")
+  !   call Global_Build
+  !   call Simplex_Build
+  !   call Simplex_Theriak(.true.)
   
-  CASE("GEM")
-    CALL Global_Build
-    CALL Simplex_Build
-    CALL Simplex_Theriak
-    CALL GEM_Vars_Clean
+  case("GEM")
+    call Global_Build
+    call Simplex_Build
+    call Simplex_Theriak
+    call GEM_Vars_Clean
   
-  ! CASE("GEMID")
-  !   CALL Global_Build
-  !   CALL Simplex_Build
-  !   CALL Simplex_Theriak(.TRUE.)
+  ! case("GEMID")
+  !   call Global_Build
+  !   call Simplex_Build
+  !   call Simplex_Theriak(.true.)
   
-  CASE("GEMPATH")
-    CALL Global_Build
-    CALL Simplex_Build
-    CALL Simplex_Theriak_Path
-    CALL GEM_Vars_Clean
+  case("GEMPATH")
+    call Global_Build
+    call Simplex_Build
+    call Simplex_Theriak_Path
+    call GEM_Vars_Clean
     
-  CASE("SPLTP")
-    CALL Global_Build
-    CALL Simplex_Build
-    CALL Simplex_Path("TP")
+  case("SPLTP")
+    call Global_Build
+    call Simplex_Build
+    call Simplex_Path("TP")
   
-  CASE("SPLPATH")
-    CALL Global_Build
-    CALL Simplex_Build
-    CALL Simplex_Path("PATH")
+  case("SPLPATH")
+    call Global_Build
+    call Simplex_Build
+    call Simplex_Path("PATH")
 
-  CASE("DTBEQ36")
-    CALL Global_Build
-    CALL Dtb_Test_EQ36
+  case("DTBEQ36")
+    call Global_Build
+    call Dtb_Test_EQ36
     
-  CASE("DTBSOL")
-    CALL Global_Build
-    !! CALL Dtb_Test_Mixture_1
-    !CALL Dtb_Test_Mixture_2
+  case("DTBSOL")
+    call Global_Build
+    !! call Dtb_Test_Mixture_1
+    !call Dtb_Test_Mixture_2
     !
-  CASE("DTBFLUID")
-    CALL Global_Build
-    CALL Dtb_Test_Fluid
+  case("DTBFLUID")
+    call Global_Build
+    call Dtb_Test_Fluid
   
-  CASE("DTBH2OHKF")
-    CALL Global_Build
-    CALL Dtb_Test_H2OHkf
+  case("DTBH2OHKF")
+    call Global_Build
+    call Dtb_Test_H2OHkf
     !
-  CASE("DTBSPC")
-    CALL Global_Build
-    CALL Dtb_Test_Species
+  case("DTBSPC")
+    call Global_Build
+    call Dtb_Test_Species
     !
-  CASE("DTBAQU")
-    CALL Global_Build
-    CALL System_Build
+  case("DTBAQU")
+    call Global_Build
+    call System_Build
     !-> will work only on system's species,
     !   because could produce too many data on whole base
-    CALL Dtb_Test_AquHkf
+    call Dtb_Test_AquHkf
     !
-  CASE("DTBLOGK")
-    CALL Global_Build
-    CALL Dtb_Tabulate("LOGK")
+  case("DTBLOGK")
+    call Global_Build
+    call Dtb_Tabulate("LOGK")
     
-  CASE("DTBGIBBS")
-    CALL Global_Build
-    CALL Dtb_Tabulate("GIBBS")
+  case("DTBGIBBS")
+    call Global_Build
+    call Dtb_Tabulate("GIBBS")
   
-  CASE("DTBGIBBS2")
-    CALL Global_Build
-    CALL Dtb_Tabulate("GIBBS2")
+  case("DTBGIBBS2")
+    call Global_Build
+    call Dtb_Tabulate("GIBBS2")
     
-  CASE("SSAS1","ssas1") !uses ssas01.inn as input !!!
+  case("SSAS1","ssas1") !uses ssas01.inn as input !!!
     !
-    CALL Global_Build
-    CALL System_Build
-    !!CALL Test_Ssas(1)
+    call Global_Build
+    call System_Build
+    !!call Test_Ssas(1)
     !
-  CASE("SSAS2","ssas2") !uses ssas02.inn as input !!!
+  case("SSAS2","ssas2") !uses ssas02.inn as input !!!
     !
-    CALL Global_Build
-    CALL System_Build
-    !!CALL Test_Ssas(2)
+    call Global_Build
+    call System_Build
+    !!call Test_Ssas(2)
    ! !
-  ENDSELECT
+  end select
 
-END SUBROUTINE Driver_Arxim_ComputeSequence
+end subroutine Driver_Arxim_ComputeSequence

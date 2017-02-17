@@ -1,46 +1,46 @@
-MODULE M_SolModel_Alloc
-  USE M_Kinds
+module M_SolModel_Alloc
+  use M_Kinds
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: SolModel_Alloc
-  PUBLIC:: SolPhase_Alloc
+  public:: SolModel_Alloc
+  public:: SolPhase_Alloc
   !
-CONTAINS
+contains
 
-SUBROUTINE SolModel_Alloc
-  USE M_T_SolModel
-  USE M_Global_Vars,ONLY: vSolModel
+subroutine SolModel_Alloc
+  use M_T_SolModel
+  use M_Global_Vars,only: vSolModel
   !
-  INTEGER:: nSolModel
-  INTEGER:: I
+  integer:: nSolModel
+  integer:: I
   
   nSolModel= 1
   
-  IF(ALLOCATED(vSolModel)) DEALLOCATE(vSolModel)
-  ALLOCATE(vSolModel(nSolModel))
+  if(allocated(vSolModel)) deallocate(vSolModel)
+  allocate(vSolModel(nSolModel))
   
-  DO I=1,nSolModel
-    !~ vSolModel(I)%Name= TRIM(vSolModelName(I))
+  do I=1,nSolModel
+    !~ vSolModel(I)%Name= trim(vSolModelName(I))
     vSolModel(I)%Typ=  "LIQ"
     !~ vSolModel(I)%ActModel= "IDEAL"
     vSolModel(I)%iActModel= 1
-  ENDDO
+  end do
   
-END SUBROUTINE SolModel_Alloc
+end subroutine SolModel_Alloc
 
-SUBROUTINE SolPhase_Alloc
-  USE M_T_SolPhase
-  USE M_Global_Vars,ONLY: vSolFas
+subroutine SolPhase_Alloc
+  use M_T_SolPhase
+  use M_Global_Vars,only: vSolFas
   !
-  IF(ALLOCATED(vSolFas)) DEALLOCATE(vSolFas)
-  ALLOCATE(vSolFas(1))
+  if(allocated(vSolFas)) deallocate(vSolFas)
+  allocate(vSolFas(1))
   
   vSolFas(1)%Name=   "WATER"
   vSolFas(1)%iModel= 1
   
-END SUBROUTINE SolPhase_Alloc
+end subroutine SolPhase_Alloc
 
-ENDMODULE M_SolModel_Alloc
+end module M_SolModel_Alloc

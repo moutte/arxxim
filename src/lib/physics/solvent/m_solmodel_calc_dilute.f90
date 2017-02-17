@@ -1,4 +1,4 @@
-MODULE M_Solmodel_Calc_Dilute
+module M_Solmodel_Calc_Dilute
   !---------------------------------------------------------------
   ! models of activity for dilute aqueous solutions
   !
@@ -7,26 +7,26 @@ MODULE M_Solmodel_Calc_Dilute
   !
   !---------------------------------------------------------------
 
-  USE M_Numeric_Const
-  USE M_Kinds
-  USE M_Trace,    ONLY: fTrc,iDebug,T_
+  use M_Numeric_Const
+  use M_Kinds
+  use M_Trace,    only: fTrc,iDebug,T_
   
-  IMPLICIT NONE
+  implicit none
   
-  PRIVATE
+  private
 
-  PUBLIC:: Solmodel_Calc_Dilute
+  public:: Solmodel_Calc_Dilute
 
-CONTAINS
+contains
 
-  SUBROUTINE Solmodel_Calc_Dilute( & 
+  subroutine Solmodel_Calc_Dilute( & 
   & vLnGam, LnActSv, OsmoSv) !,ERR)
     
-    !REAL(dp),INTENT(IN)     :: vMolal(:) != solute species molalities
-    !REAL(dp),INTENT(IN)     :: MolWeitSv
-    REAL(dp),INTENT(OUT)    :: vLnGam(:)
-    REAL(dp),INTENT(OUT)    :: LnActSv
-    REAL(dp),INTENT(OUT)    :: OsmoSv
+    !real(dp),intent(in)     :: vMolal(:) != solute species molalities
+    !real(dp),intent(in)     :: MolWeitSv
+    real(dp),intent(out)    :: vLnGam(:)
+    real(dp),intent(out)    :: LnActSv
+    real(dp),intent(out)    :: OsmoSv
     
     !//================ Solute Species
     vLnGam(:)= Zero
@@ -42,6 +42,6 @@ CONTAINS
     !lnActW= ln(1/(1+ MW*SUM(m_i)) ~= - MW*SUM(m_i)
     !-> OsmoSv = -lnActW /MW /SUM(m_i) ~= +1
 
-  END SUBROUTINE Solmodel_Calc_Dilute
+  end subroutine Solmodel_Calc_Dilute
   
-ENDMODULE M_Solmodel_Calc_Dilute
+end module M_Solmodel_Calc_Dilute

@@ -1,108 +1,108 @@
-MODULE M_T_MixPhase
-  USE M_Kinds
-  USE M_Trace,ONLY: fTrc, iDebug, T_, Stop_
-  USE M_T_MixModel
-  IMPLICIT NONE
+module M_T_MixPhase
+  use M_Kinds
+  use M_Trace,only: fTrc, iDebug, T_, Stop_
+  use M_T_MixModel
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: T_MixPhase
+  public:: T_MixPhase
   !
-  PUBLIC:: MixPhase_Index
-  PUBLIC:: MixPhase_Zero
-  PUBLIC:: MixPhase_CalcActivs
-  PUBLIC:: MixPhase_NormCompo
-  PUBLIC:: MixPhase_Weit
-  PUBLIC:: MixPhase_GibbsRT
-  PUBLIC:: MixPhase_Constraint
-  PUBLIC:: MixPhase_Volume
+  public:: MixPhase_Index
+  public:: MixPhase_Zero
+  public:: MixPhase_CalcActivs
+  public:: MixPhase_NormCompo
+  public:: MixPhase_Weit
+  public:: MixPhase_GibbsRT
+  public:: MixPhase_Constraint
+  public:: MixPhase_Volume
   !
-  PUBLIC:: MixPhase_CalcMixing   !used in Dtb_Test_Solution
+  public:: MixPhase_CalcMixing   !used in Dtb_Test_Solution
 
-  TYPE:: T_MixPhase
+  type:: T_MixPhase
   ! implements a mixture phase (= symetric model)(= )
   ! includes a pointer to the mixing model,
   ! the composition data, and stores activity data
     !----------------------------------------------------- fixed data --
-    CHARACTER(LEN=23):: Name
-    INTEGER          :: iModel !index of mixing model in vMixModel
+    character(len=23):: Name
+    integer          :: iModel !index of mixing model in vMixModel
     !-----------------------------------------------------/fixed data --
     !
     !-------------------------------------------------- variable data --
     !----------------------------------------------- composition data --
-    LOGICAL :: vLPole(1:MaxPole)
+    logical :: vLPole(1:MaxPole)
     ! vLPole(I)= T/F == end member I is present /absent
-    REAL(dp):: vXPole(1:MaxPole)
+    real(dp):: vXPole(1:MaxPole)
     ! comp'n in mole fractions of the end members
-    !REAL(dp):: vXAtom(1:MaxAtom) !comp'n in atom fractions, size=Model%NAtom
+    !real(dp):: vXAtom(1:MaxAtom) !comp'n in atom fractions, size=Model%NAtom
     !
     !----------------- values at current (T,P,X), for the end-members --
-    REAL(dp),DIMENSION(1:MaxPole):: & !
+    real(dp),dimension(1:MaxPole):: & !
     & vLnAct,  & !Ln(Activities of end-members 1:Model%nPole)
     & vLIdeal, & !Ln(ideal Activities of end-members 1:Model%nPole)
     & vLGam      !Ln(activ.coeff's)
     !! & vLMarg     !Ln(activ.coeff's related to Margules parameters)
     !
     !------------------------- values at current (T,P), for the phase --
-    REAL(dp):: Grt,H,S,V,Cp
+    real(dp):: Grt,H,S,V,Cp
     !--------------------------------------------------/variable data --
     !
-  ENDTYPE T_MixPhase
+  end type T_MixPhase
 
-  TYPE:: T_MixPhaseData
+  type:: T_MixPhaseData
   !-- variable data characteristic of a mixture phase (- symetric model)
   !-- includes composition data, activity data, etc.
     !----------------------------------------------- composition data --
-    LOGICAL :: vLPole(1:MaxPole) ! end member is present/absent
-    REAL(dp):: vXPole(1:MaxPole) ! comp'n in mole fractions of the end members
-    !REAL(dp):: vXAtom(1:MaxAtom) ! comp'n in atom fractions, size=Model%NAtom
+    logical :: vLPole(1:MaxPole) ! end member is present/absent
+    real(dp):: vXPole(1:MaxPole) ! comp'n in mole fractions of the end members
+    !real(dp):: vXAtom(1:MaxAtom) ! comp'n in atom fractions, size=Model%NAtom
     !
     !----------------- values at current (T,P,X), for the end-members --
-    REAL(dp),DIMENSION(1:MaxPole):: & !
+    real(dp),dimension(1:MaxPole):: & !
     & vLnAct,  & ! Ln(Activities of end-members 1:Model%nPole)
     & vLIdeal, & ! Ln(ideal Activities of end-members 1:Model%nPole)
     & vLGam,   & ! Ln(activ.coeff's)
     & vLMarg     ! Ln(activ.coeff's related to Margules parameters)
     !
     !------------------------- values at current (T,P), for the phase --
-    REAL(dp):: Grt,H,S,V,Cp
+    real(dp):: Grt,H,S,V,Cp
     !
-  ENDTYPE T_MixPhaseData
+  end type T_MixPhaseData
 
-CONTAINS
+contains
 
-INTEGER FUNCTION MixPhase_Index(V,Str)
+integer function MixPhase_Index(V,Str)
 !--
-!-- position of mixture phase named Str in V(1:SIZE(V))
+!-- position of mixture phase named Str in V(1:size(V))
 !--
-  TYPE(T_MixPhase),INTENT(IN)::V(:)
-  CHARACTER(*),    INTENT(IN)::Str
+  type(T_MixPhase),intent(in)::V(:)
+  character(*),    intent(in)::Str
   !
-  INTEGER::I
+  integer::I
   !
   MixPhase_Index=0
-  IF(SIZE(V)==0) RETURN
+  if(size(V)==0) return
   !
   I=0
-  DO
-    I=I+1 !; IF(iDebug>0) WRITE(fTrc,'(A)') vCpn(I)%SpName
-    IF(TRIM(Str)==TRIM(V(I)%Name)) THEN
+  do
+    I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vCpn(I)%SpName
+    if(trim(Str)==trim(V(I)%Name)) then
       MixPhase_Index= I
-      EXIT
-    ENDIF
-    IF(I==SIZE(V)) EXIT
-  ENDDO
+      exit
+    end if
+    if(I==size(V)) exit
+  end do
   !if Str not found, I=0
   !
-  RETURN
-ENDFUNCTION MixPhase_Index
+  return
+end function MixPhase_Index
 
-SUBROUTINE MixPhase_Zero(S)
-  TYPE(T_MixPhase),INTENT(OUT):: S
+subroutine MixPhase_Zero(S)
+  type(T_MixPhase),intent(out):: S
   S%Name=      "Z"
   S%iModel=  0
   !
-  S%vLPole=  .FALSE.
+  S%vLPole=  .false.
   S%vXPole=  Zero
   !S%vXAtom=  Zero
   !~ S%vLnAct=  Zero
@@ -110,87 +110,87 @@ SUBROUTINE MixPhase_Zero(S)
   S%vLGam=   Zero
   !! S%vLMarg=  Zero
   !
-ENDSUBROUTINE MixPhase_Zero
+end subroutine MixPhase_Zero
 
-SUBROUTINE MixPhase_NormCompo(Mix)
+subroutine MixPhase_NormCompo(Mix)
 !--
 !-- normalize end-member fractions to tot-100%
 !-- should not always normalize ???
 !--
-  TYPE(T_MixPhase),INTENT(INOUT):: Mix
+  type(T_MixPhase),intent(inout):: Mix
   !
-  REAL(dp),DIMENSION(1:MaxPole)::vX
+  real(dp),dimension(1:MaxPole)::vX
   ! = composition: mole fractions of the end members
-  REAL(dp):: Y,Eps
+  real(dp):: Y,Eps
   !
   Eps= EPSILON(Y)
   !
-  WHERE(.NOT. Mix%vLPole) Mix%vXPole=Zero
+  where(.not. Mix%vLPole) Mix%vXPole=Zero
   !
   vX(1:MaxPole)=Mix%vXPole(1:MaxPole)
   Y= SUM(vX(1:MaxPole),MASK=Mix%vLPole(1:MaxPole))
   !
-  IF(Y>Eps) Mix%vXPole(1:MaxPole)=vX(1:MaxPole)/Y
+  if(Y>Eps) Mix%vXPole(1:MaxPole)=vX(1:MaxPole)/Y
   !
-ENDSUBROUTINE MixPhase_NormCompo
+end subroutine MixPhase_NormCompo
 
-REAL(dp) FUNCTION MixPhase_Weit( &
+real(dp) function MixPhase_Weit( &
 & vSpc,      & !IN
 & MM,        & !IN, mixing model
 & Mix)         !IN, mixture phase, composition normalized
-  USE M_T_Species, ONLY: T_Species
+  use M_T_Species, only: T_Species
   !
-  TYPE(T_Species), INTENT(IN),DIMENSION(:)::vSpc
-  TYPE(T_MixModel),INTENT(IN)   :: MM
-  TYPE(T_MixPhase),INTENT(IN)   :: Mix !phase
+  type(T_Species), intent(in),dimension(:)::vSpc
+  type(T_MixModel),intent(in)   :: MM
+  type(T_MixPhase),intent(in)   :: Mix !phase
   !
-  REAL(dp):: Weit
-  INTEGER :: I
+  real(dp):: Weit
+  integer :: I
   !
   Weit=Zero
-  DO I=1,MM%NPole
-    IF(Mix%vLPole(I)) &
+  do I=1,MM%NPole
+    if(Mix%vLPole(I)) &
     & Weit= Weit &
     &     + Mix%vXPole(I) *vSpc(MM%vIPole(I))%WeitKg
-  ENDDO
+  end do
   !
   MixPhase_Weit= Weit
   !
-ENDFUNCTION MixPhase_Weit
+end function MixPhase_Weit
 
-REAL(dp) FUNCTION MixPhase_Volume( & !not complete,
+real(dp) function MixPhase_Volume( & !not complete,
 !& TdgK,Pbar, & !IN
 & vSpc,      & !IN, database
 & SM,        & !IN, solution model
 & Fas)         !IN, solution phase, composition normalized
-  USE M_T_Species, ONLY: T_Species
+  use M_T_Species, only: T_Species
   !
-  !REAL(dp),        INTENT(IN)   :: TdgK,Pbar
-  TYPE(T_Species), INTENT(IN):: vSpc(:)
-  TYPE(T_MixModel),INTENT(IN):: SM
-  TYPE(T_MixPhase),INTENT(IN):: Fas !phase
+  !real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_Species), intent(in):: vSpc(:)
+  type(T_MixModel),intent(in):: SM
+  type(T_MixPhase),intent(in):: Fas !phase
   !
-  REAL(dp),DIMENSION(1:MaxPole):: vX !composition: mole fractions of the end members
-  REAL(dp):: V, V_XS
-  INTEGER :: I
+  real(dp),dimension(1:MaxPole):: vX !composition: mole fractions of the end members
+  real(dp):: V, V_XS
+  integer :: I
   !
   vX(1:SM%NPole)=Fas%vXPole(1:SM%NPole)
   V= Zero
   !
-  DO I=1,SM%NPole
-    IF(Fas%vLPole(I)) &
+  do I=1,SM%NPole
+    if(Fas%vLPole(I)) &
     & V= V + vX(I) *vSpc(SM%vIPole(I))%V0
-  ENDDO
+  end do
   !
-  !V= DOT_PRODUCT(vX(1:SM%NPole),vSpc(SM%vIPole(1:SM%NPole))%V0)
+  !V= dot_product(vX(1:SM%NPole),vSpc(SM%vIPole(1:SM%NPole))%V0)
   !------------------------------ XS volume calc. not implemented !!! --
   V_XS=Zero
   !
   MixPhase_Volume= V + V_XS
   !
-ENDFUNCTION MixPhase_Volume
+end function MixPhase_Volume
 
-SUBROUTINE MixPhase_CalcMixing( & !
+subroutine MixPhase_CalcMixing( & !
 & TdgK,Pbar, & !IN
 & MM,        & !IN
 & Fas,       & !IN
@@ -201,15 +201,15 @@ SUBROUTINE MixPhase_CalcMixing( & !
 !--   GMix: free energy of mixing of phase Phase at T,P
 !--   Gibbs free energy of the solution at T,P - GMeca + GMix
 !--
-  USE M_Dtb_Const,ONLY: R_jk
+  use M_Dtb_Const,only: R_jk
   !
-  REAL(dp),        INTENT(IN) :: Pbar, TdgK
-  TYPE(T_MixModel),INTENT(IN) :: MM
-  TYPE(T_MixPhase),INTENT(IN) :: Fas
-  !REAL(dp),        INTENT(IN) :: vLPole(:),vXPole(:)
-  REAL(dp),        INTENT(OUT):: GMix,G_IdMix,G_XsMix
+  real(dp),        intent(in) :: Pbar, TdgK
+  type(T_MixModel),intent(in) :: MM
+  type(T_MixPhase),intent(in) :: Fas
+  !real(dp),        intent(in) :: vLPole(:),vXPole(:)
+  real(dp),        intent(out):: GMix,G_IdMix,G_XsMix
   !
-  ! REAL(dp),ALLOCATABLE:: vXAtom(:)
+  ! real(dp),allocatable:: vXAtom(:)
   !
   G_IdMix= MixModel_GibbsIdeal( & !
   & TdgK,Pbar,  & !IN
@@ -226,10 +226,10 @@ SUBROUTINE MixPhase_CalcMixing( & !
   !
   G_XsMix= GMix - G_IdMix
   !
-  RETURN
-ENDSUBROUTINE MixPhase_CalcMixing
+  return
+end subroutine MixPhase_CalcMixing
 
-REAL(dp) FUNCTION MixPhase_GibbsRT( & !
+real(dp) function MixPhase_GibbsRT( & !
 & TdgK,Pbar, & !IN
 & vSpc,      & !IN, database
 & MM,        & !IN, mixing model
@@ -237,17 +237,17 @@ REAL(dp) FUNCTION MixPhase_GibbsRT( & !
 !--
 !-- not complete, check the SITE models !!!
 !--
-  USE M_Dtb_Const,ONLY: R_jk
-  USE M_T_Species,ONLY: T_Species
+  use M_Dtb_Const,only: R_jk
+  use M_T_Species,only: T_Species
   !
-  REAL(dp),        INTENT(IN):: TdgK,Pbar
-  TYPE(T_Species), INTENT(IN):: vSpc(:)
-  TYPE(T_MixModel),INTENT(IN):: MM
-  TYPE(T_MixPhase),INTENT(IN):: Fas !phase
+  real(dp),        intent(in):: TdgK,Pbar
+  type(T_Species), intent(in):: vSpc(:)
+  type(T_MixModel),intent(in):: MM
+  type(T_MixPhase),intent(in):: Fas !phase
   !
-  !~ REAL(dp),ALLOCATABLE:: vXAtom(:)
-  REAL(dp):: Gmix,Gmeca
-  INTEGER :: I
+  !~ real(dp),allocatable:: vXAtom(:)
+  real(dp):: Gmix,Gmeca
+  integer :: I
   !
   Gmix= MixModel_GibbsMixRT( & !
   & TdgK,Pbar,  & !IN
@@ -257,45 +257,45 @@ REAL(dp) FUNCTION MixPhase_GibbsRT( & !
   !
   !---------------------------------------------- "mechanical" mixing --
   Gmeca= Zero
-  DO I=1,MM%NPole
-    IF(Fas%vLPole(I)) &
+  do I=1,MM%NPole
+    if(Fas%vLPole(I)) &
     & Gmeca= Gmeca &
     &      + Fas%vXPole(I) *vSpc(MM%vIPole(I))%G0rt
-  ENDDO
+  end do
   !----------------------------------------------/"mechanical" mixing --
   !
-  !~ IF(ALLOCATED(vXAtom)) DEALLOCATE(vXAtom)
+  !~ if(allocated(vXAtom)) deallocate(vXAtom)
   !
   MixPhase_GibbsRT= Gmix +Gmeca
   !
-  RETURN
-ENDFUNCTION MixPhase_GibbsRT
+  return
+end function MixPhase_GibbsRT
 
-SUBROUTINE MixPhase_CalcActivs( & !
+subroutine MixPhase_CalcActivs( & !
 & TdgK,Pbar, & ! in
 & MM,        & ! in:    mixing model
 & F)           ! inout: mixture phase
 !--
 !-- calculate activities of end-members in phase F at given T,P
 !--
-  USE M_Dtb_Const,ONLY: R_jk
+  use M_Dtb_Const,only: R_jk
   !
-  REAL(dp),        INTENT(IN)   :: Pbar, TdgK
-  TYPE(T_MixModel),INTENT(IN)   :: MM
-  TYPE(T_MixPhase),INTENT(INOUT):: F
+  real(dp),        intent(in)   :: Pbar, TdgK
+  type(T_MixModel),intent(in)   :: MM
+  type(T_MixPhase),intent(inout):: F
   !
-  LOGICAL :: Ok
-  INTEGER :: N
-  CHARACTER(LEN=80):: Msg
+  logical :: Ok
+  integer :: N
+  character(len=80):: Msg
   !
-  REAL(dp),ALLOCATABLE:: vLGam(:),vLIdeal(:),vLnAct(:) !!,vLMarg(:)
+  real(dp),allocatable:: vLGam(:),vLIdeal(:),vLnAct(:) !!,vLMarg(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)' ) "< MixPhase_CalcActivs"
+  if(iDebug>0) write(fTrc,'(/,A)' ) "< MixPhase_CalcActivs"
   !
-  N= SIZE(F%vLnAct)
-  ALLOCATE(vLGam(N),vLIdeal(N),vLnAct(N)) !!,vLMarg(N)
+  N= size(F%vLnAct)
+  allocate(vLGam(N),vLIdeal(N),vLnAct(N)) !!,vLMarg(N)
   !
-  CALL MixModel_Activities( & !
+  call MixModel_Activities( & !
   & TdgK,Pbar, & ! in
   & MM,        & ! in: mixing model
   & F%vXPole,  & ! in
@@ -310,270 +310,275 @@ SUBROUTINE MixPhase_CalcActivs( & !
   F%vLGam(:)=   vLGam(:)
   F%vLnAct(:)=  vLnAct(:)
   !
-  DEALLOCATE(vLGam,vLIdeal,vLnAct) !!,vLMarg
+  deallocate(vLGam,vLIdeal,vLnAct) !!,vLMarg
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)' ) "</ MixPhase_CalcActivs"
+  if(iDebug>0) write(fTrc,'(A,/)' ) "</ MixPhase_CalcActivs"
   !
-ENDSUBROUTINE MixPhase_CalcActivs
+end subroutine MixPhase_CalcActivs
 
-SUBROUTINE MixPhase_Constraint( &
+subroutine MixPhase_Constraint( &
 & S,         & ! in: mixing model
 & F,         & ! in: mixture phase
 & Ok, Msg,   & ! out
 & vC)          !
-  TYPE(T_MixModel),INTENT(IN) :: S
-  TYPE(T_MixPhase),INTENT(IN) :: F
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(*),    INTENT(OUT):: Msg
-  REAL(dp),        INTENT(OUT):: vC(:)
+  type(T_MixModel),intent(in) :: S
+  type(T_MixPhase),intent(in) :: F
+  logical,         intent(out):: Ok
+  character(*),    intent(out):: Msg
+  real(dp),        intent(out):: vC(:)
   !
-  INTEGER:: I
+  integer:: I
+  character:: c
   !
-  SELECT CASE(TRIM(S%Model))
+  select case(S%Model)
 
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) ! ("IDEAL","POLE","MOLECULAR","FELSPAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR" or "FELSPAR"
     vC(1)= One
-    DO I=1,S%NPole
-      IF(F%vLPole(I)) &
+    do I=1,S%NPole
+      if(F%vLPole(I)) &
       & vC(1)= vC(1) - F%vXPole(I)
-    ENDDO
+    end do
     !
-  CASE("SITE")
+  case(Mix_Site) ! ("SITE")
     vC(1)= One
-    DO I=1,S%NPole
-      IF(F%vLPole(I)) &
+    do I=1,S%NPole
+      if(F%vLPole(I)) &
       & vC(1)= vC(1) - F%vXPole(I)
-    ENDDO
+    end do
     !
-  CASE DEFAULT
-    Ok= .FALSE.
-    Msg= TRIM(S%Model)//"= invalid S%Model in MixPhase_Constraint"
+  case default
+    Ok= .false.
+    c= char(ichar('0')+S%Model)
+    Msg= c//"= invalid S%Model in MixPhase_ConstraintGrad"
+    ! Msg= trim(S%Model)//"= invalid S%Model in MixPhase_Constraint"
 
-  END SELECT
+  end select
   !
-ENDSUBROUTINE MixPhase_Constraint
+end subroutine MixPhase_Constraint
 
-SUBROUTINE MixPhase_ConstraintGrad( &
+subroutine MixPhase_ConstraintGrad( & !
 & S,         & ! in: mixing model
 & F,         & ! in: mixture phase
 & Ok, Msg,   & ! out
 & vGC)         !
-  TYPE(T_MixModel),INTENT(IN) :: S
-  TYPE(T_MixPhase),INTENT(IN) :: F
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(*),    INTENT(OUT):: Msg
-  REAL(dp),        INTENT(OUT):: vGC(:,:)
+  type(T_MixModel),intent(in) :: S
+  type(T_MixPhase),intent(in) :: F
+  logical,         intent(out):: Ok
+  character(*),    intent(out):: Msg
+  real(dp),        intent(out):: vGC(:,:)
   !
-  INTEGER:: I
+  integer:: I
+  character:: c
   !
   vGC= Zero
   !
-  SELECT CASE(TRIM(S%Model))
+  select case(S%Model)
 
-  CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+  case(Mix_Molecular,Mix_Felspar) ! ("IDEAL","POLE","MOLECULAR","FELSPAR")
   !! should consider "IDEAL","POLE" as obsolete,
   !! and recommand using "MOLECULAR" or "FELSPAR"
-    DO I=1,S%NPole
-      IF(F%vLPole(I)) vGC(1,I)= -One
-    ENDDO
+    do I=1,S%NPole
+      if(F%vLPole(I)) vGC(1,I)= -One
+    end do
     !
-  CASE("SITE")
-    DO I=1,S%NPole
-      IF(F%vLPole(I)) vGC(1,I)= -One
-    ENDDO
+  case(Mix_Site) ! ("SITE")
+    do I=1,S%NPole
+      if(F%vLPole(I)) vGC(1,I)= -One
+    end do
     !
-  CASE DEFAULT
-    Ok= .FALSE.
-    Msg= TRIM(S%Model)//"= invalid S%Model in MixPhase_ConstraintGrad"
+  case default
+    Ok= .false.
+    c= char(ichar('0')+S%Model)
+    Msg= c//"= invalid S%Model in MixPhase_ConstraintGrad"
 
-  END SELECT
+  end select
   !
-ENDSUBROUTINE MixPhase_ConstraintGrad
+end subroutine MixPhase_ConstraintGrad
 
-ENDMODULE M_T_MixPhase
+end module M_T_MixPhase
 
-!~ SUBROUTINE MixPhase_CalcActivities( & !
-!~ & TdgK,Pbar, & ! in
-!~ & MM,         & ! in: mixing model
-!~ & F,         & ! in: mixture phase
-!~ & Ok, Msg,   & ! out
-!~ & vLGam,     & !
-!~ !! & vLMarg,    & !
-!~ & vLIdeal,   & !
-!~ & vLnAct)      !
-!~ !--
-!~ !-------- calculate activities of end-members in phase F at given T,P --
-!~ !--
-  !~ USE M_Dtb_Const,ONLY: R_jk
-  !~ USE M_MixModel_Special
-  !~ !
-  !~ REAL(dp),        INTENT(IN) :: Pbar, TdgK
-  !~ TYPE(T_MixModel),INTENT(IN) :: MM
-  !~ TYPE(T_MixPhase),INTENT(IN) :: F
-  !~ LOGICAL,         INTENT(OUT):: Ok
-  !~ CHARACTER(*),    INTENT(OUT):: Msg
-  !~ REAL(dp),        INTENT(OUT):: vLGam(:)
-  !~ !! REAL(dp),        INTENT(OUT):: vLMarg(:)
-  !~ REAL(dp),        INTENT(OUT):: vLIdeal(:)
-  !~ REAL(dp),        INTENT(OUT):: vLnAct(:)
-  !~ !
-  !~ INTEGER :: iP,iM
-  !~ REAL(dp):: P
-  !~ REAL(dp),ALLOCATABLE:: vMonome(:)
-  !~ !
-  !~ P=Pbar !for future use ??
-  !~ !
-  !~ Ok= .TRUE.
-  !~ Msg= "Ok"
-  !~ !
-  !~ !F%vLPole(1:MM%NPole)= vX(1:MM%NPole)>Zero
-  !~ !
-  !~ vLGam(:)=   Zero !default
-  !~ vLIdeal(:)= Zero !default
-  !~ !
-  !~ IF(TRIM(MM%Model)=="SPECIAL") THEN
-    !~ !
-    !~ CALL MixModel_Special_Activities( &
-    !~ & MM%Name,      &
-    !~ & TdgK, Pbar,   &
-    !~ & F%vXpole,     &
-    !~ & F%vLPole,     &
-    !~ & vLIdeal,      &
-    !~ & vLGam         )
-    !~ !
-  !~ ELSE
+! subroutine MixPhase_CalcActivities( & !
+! & TdgK,Pbar, & ! in
+! & MM,         & ! in: mixing model
+! & F,         & ! in: mixture phase
+! & Ok, Msg,   & ! out
+! & vLGam,     & !
+! !! & vLMarg,    & !
+! & vLIdeal,   & !
+! & vLnAct)      !
+! !--
+! !-------- calculate activities of end-members in phase F at given T,P --
+! !--
+!   use M_Dtb_Const,only: R_jk
+!   use M_MixModel_Special
+!   !
+!   real(dp),        intent(in) :: Pbar, TdgK
+!   type(T_MixModel),intent(in) :: MM
+!   type(T_MixPhase),intent(in) :: F
+!   logical,         intent(out):: Ok
+!   character(*),    intent(out):: Msg
+!   real(dp),        intent(out):: vLGam(:)
+!   !! real(dp),        intent(out):: vLMarg(:)
+!   real(dp),        intent(out):: vLIdeal(:)
+!   real(dp),        intent(out):: vLnAct(:)
+!   !
+!   integer :: iP,iM
+!   real(dp):: P
+!   real(dp),allocatable:: vMonome(:)
+!   !
+!   P=Pbar !for future use ??
+!   !
+!   Ok= .true.
+!   Msg= "Ok"
+!   !
+!   !F%vLPole(1:MM%NPole)= vX(1:MM%NPole)>Zero
+!   !
+!   vLGam(:)=   Zero !default
+!   vLIdeal(:)= Zero !default
+!   !
+!   if(trim(MM%Model)=="SPECIAL") then
+!     !
+!     call MixModel_Special_Activities( &
+!     & MM%Name,      &
+!     & TdgK, Pbar,   &
+!     & F%vXpole,     &
+!     & F%vLPole,     &
+!     & vLIdeal,      &
+!     & vLGam         )
+!     !
+!   else
+! 
+!   select case(trim(MM%Model))
+!     !
+!     case("IDEAL","POLE","MOLECULAR","FELSPAR")
+!       call MixModel_Pole_LnActivsIdeal(MM,F%vXpole,F%vLpole,vLIdeal)
+! 
+!     case("SITE")
+!       call MixModel_Site_LnActivsIdeal(MM,F%vXatom,F%vLpole,Ok,vLIdeal)
+! 
+!     case default
+!       Ok= .false.
+!       Msg= trim(MM%Model)//"= invalid MM%Model in MixPhase_CalcActivities"
+! 
+!     end select
+!     !
+!     vLGam(1:MM%NPole)=Zero
+!     !
+!     !-------------------------- activ coeff related to Margules Terms --
+!     if(MM%NMarg>0) then
+!       allocate(vMonome(MM%NMarg))
+!       !
+!       select case(trim(MM%Model))
+!       !
+!       case("IDEAL","POLE","MOLECULAR","FELSPAR")
+!         do iM=1,MM%NMarg
+!           vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),F%vXPole)
+!         end do
+!         do iP=1,MM%NPole
+!           if(F%vLPole(iP)) then
+!             vLGam(iP)= MixModel_Pole_LnGammaMargules(MM,iP,vMonome,F%vXPole) /R_jk/TdgK
+!           end if
+!         end do
+!       !
+!       case("SITE")
+!         do iM=1,MM%NMarg
+!           vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),F%vXatom)
+!         end do
+!         do iP=1,MM%NPole
+!           if(F%vLPole(iP)) then
+!             vLGam(iP)= MixModel_Site_LnGammaMargules(MM,iP,vMonome,F%vXAtom) /R_jk/TdgK
+!           end if
+!         end do
+!       !
+!       case default
+!         Ok= .false.
+!         Msg= trim(MM%Model)//"= invalid MM%Model in MixPhase_CalcActivities"
+!       !
+!       end select
+!       !
+!       deallocate(vMonome)
+!       !
+!     end if
+!     !-------------------------/ activ coeff related to Margules Terms --
+!     !
+!   end if
+!   !
+!   vLnAct(1:MM%NPole)= vLIdeal(1:MM%NPole) + vLGam(1:MM%NPole)
+!   !
+!   if(iDebug>0) then !------------------------------------------ trace --
+!     write(fTrc,'(A)') "MixPhase_CalcActivs -> X,ActIdeal,Gamma,Activ"
+!     write(fTrc,'(4A)') "Phase=",F%Name, "MixModel=",MM%Name
+!     do iP=1,MM%NPole
+!       if(F%vLPole(iP)) then
+!         write(fTrc,'()')
+!         write(fTrc,'(A,I2,A1,A15,A1,4(A4,G11.6,A1))') &
+!         & "POLE",iP,           T_,&
+!         & trim(MM%vNamPole(iP)),T_,&
+!         & "Frc=",F%vXPole(iP), T_,&
+!         & "XId=",exp(vLIdeal(iP)),T_,&
+!         & "Gam=",exp(vLGam(iP)),  T_,&
+!         & "Act=",exp(vLnAct(iP)), T_
+!       end if
+!     end do
+!   end if !-----------------------------------------------------/ trace --
+!   !
+! end subroutine MixPhase_CalcActivities
 
-  !~ SELECT CASE(TRIM(MM%Model))
-    !~ !
-    !~ CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
-      !~ CALL MixModel_Pole_LnActivsIdeal(MM,F%vXpole,F%vLpole,vLIdeal)
-
-    !~ CASE("SITE")
-      !~ CALL MixModel_Site_LnActivsIdeal(MM,F%vXatom,F%vLpole,Ok,vLIdeal)
-
-    !~ CASE DEFAULT
-      !~ Ok= .FALSE.
-      !~ Msg= TRIM(MM%Model)//"= invalid MM%Model in MixPhase_CalcActivities"
-
-    !~ END SELECT
-    !~ !
-    !~ vLGam(1:MM%NPole)=Zero
-    !~ !
-    !~ !-------------------------- activ coeff related to Margules Terms --
-    !~ IF(MM%NMarg>0) THEN
-      !~ ALLOCATE(vMonome(MM%NMarg))
-      !~ !
-      !~ SELECT CASE(TRIM(MM%Model))
-      !~ !
-      !~ CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
-        !~ DO iM=1,MM%NMarg
-          !~ vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),F%vXPole)
-        !~ ENDDO
-        !~ DO iP=1,MM%NPole
-          !~ IF(F%vLPole(iP)) THEN
-            !~ vLGam(iP)= MixModel_Pole_LnGammaMargules(MM,iP,vMonome,F%vXPole) /R_jk/TdgK
-          !~ ENDIF
-        !~ ENDDO
-      !~ !
-      !~ CASE("SITE")
-        !~ DO iM=1,MM%NMarg
-          !~ vMonome(iM)= MixModel_Margules_Monome(MM%vMarg(iM),F%vXatom)
-        !~ ENDDO
-        !~ DO iP=1,MM%NPole
-          !~ IF(F%vLPole(iP)) THEN
-            !~ vLGam(iP)= MixModel_Site_LnGammaMargules(MM,iP,vMonome,F%vXAtom) /R_jk/TdgK
-          !~ ENDIF
-        !~ ENDDO
-      !~ !
-      !~ CASE DEFAULT
-        !~ Ok= .FALSE.
-        !~ Msg= TRIM(MM%Model)//"= invalid MM%Model in MixPhase_CalcActivities"
-      !~ !
-      !~ END SELECT
-      !~ !
-      !~ DEALLOCATE(vMonome)
-      !~ !
-    !~ ENDIF
-    !~ !-------------------------/ activ coeff related to Margules Terms --
-    !~ !
-  !~ ENDIF
-  !~ !
-  !~ vLnAct(1:MM%NPole)= vLIdeal(1:MM%NPole) + vLGam(1:MM%NPole)
-  !~ !
-  !~ IF(iDebug>0) THEN !------------------------------------------ trace --
-    !~ WRITE(fTrc,'(A)') "MixPhase_CalcActivs -> X,ActIdeal,Gamma,Activ"
-    !~ WRITE(fTrc,'(4A)') "Phase=",F%Name, "MixModel=",MM%Name
-    !~ DO iP=1,MM%NPole
-      !~ IF(F%vLPole(iP)) THEN
-        !~ WRITE(fTrc,'()')
-        !~ WRITE(fTrc,'(A,I2,A1,A15,A1,4(A4,G11.6,A1))') &
-        !~ & "POLE",iP,           T_,&
-        !~ & TRIM(MM%vNamPole(iP)),T_,&
-        !~ & "Frc=",F%vXPole(iP), T_,&
-        !~ & "XId=",EXP(vLIdeal(iP)),T_,&
-        !~ & "Gam=",EXP(vLGam(iP)),  T_,&
-        !~ & "Act=",EXP(vLnAct(iP)), T_
-      !~ ENDIF
-    !~ ENDDO
-  !~ ENDIF !-----------------------------------------------------/ trace --
-  !~ !
-!~ ENDSUBROUTINE MixPhase_CalcActivities
-
-!~ SUBROUTINE MixPhase_CalcMixing_( & !
-!~ & TdgK,Pbar, & !IN
-!~ & MM,        & !IN
-!~ & Fas,       & !IN
-!~ & GMix,G_IdMix,G_XsMix)  !OUT
-!~ !--
-!~ !-- Output -
-!~ !--   G_IdMix: ideal part of free energy of mixing of mixture Phase for a given P,T
-!~ !--   GMix: free energy of mixing of phase Phase for a given P,T
-!~ !--   Gibbs free energy of the solution at P,T - GMeca + GMix
-!~ !--
-  !~ USE M_Dtb_Const,ONLY: R_jk
-  !~ !
-  !~ REAL(dp),        INTENT(IN) :: Pbar, TdgK
-  !~ TYPE(T_MixModel),INTENT(IN) :: MM
-  !~ TYPE(T_MixPhase),INTENT(IN) :: Fas
-  !~ !REAL(dp),        INTENT(IN) :: vLPole(:),vXPole(:)
-  !~ REAL(dp),        INTENT(OUT):: GMix,G_IdMix,G_XsMix
-  !~ !
-  !~ REAL(dp),ALLOCATABLE:: vXAtom(:)
-  !~ !
-  !~ G_XsMix= Zero
-  !~ G_XsMix= Zero
-  !~ !
-  !~ IF(TRIM(MM%Model)=="SPECIAL") THEN
-
-  !~ ELSE
-    !~ !
-    !~ SELECT CASE(TRIM(MM%Model))
-    !~ !
-    !~ CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
-      !~ G_IdMix= -TdgK *MixModel_Pole_SConf(MM,Fas%vLPole,Fas%vXPole)
-      !~ !
-      !~ IF(MM%NMarg>0) G_XsMix= &
-      !~ & MixModel_Pole_XsMargules(MM, Fas%vLPole, Fas%vXpole)
-    !~ !
-    !~ CASE("SITE")
-      !~ ALLOCATE(vXAtom(MM%NAtom))
-      !~ CALL MixModel_XPoleToXSite(MM,Fas%vXPole,vXAtom)
-      !~ !
-      !~ G_IdMix= -TdgK *MixModel_Site_SConf(MM,vXAtom)
-      !~ !
-      !~ IF(MM%NMarg>0) G_XsMix= &
-      !~ & MixModel_Site_XsMargules(MM,vXAtom)
-    !~ !
-    !~ END SELECT
-    !~ !
-  !~ ENDIF
-  !~ !
-  !~ IF(ALLOCATED(vXAtom)) DEALLOCATE(vXAtom)
-  !~ !
-  !~ GMix= G_IdMix +G_XsMix
-  !~ !
-  !~ RETURN
-!~ ENDSUBROUTINE MixPhase_CalcMixing_
+! subroutine MixPhase_CalcMixing_( & !
+! & TdgK,Pbar, & !IN
+! & MM,        & !IN
+! & Fas,       & !IN
+! & GMix,G_IdMix,G_XsMix)  !OUT
+! !--
+! !-- Output -
+! !--   G_IdMix: ideal part of free energy of mixing of mixture Phase for a given P,T
+! !--   GMix: free energy of mixing of phase Phase for a given P,T
+! !--   Gibbs free energy of the solution at P,T - GMeca + GMix
+! !--
+!   use M_Dtb_Const,only: R_jk
+!   !
+!   real(dp),        intent(in) :: Pbar, TdgK
+!   type(T_MixModel),intent(in) :: MM
+!   type(T_MixPhase),intent(in) :: Fas
+!   !real(dp),        intent(in) :: vLPole(:),vXPole(:)
+!   real(dp),        intent(out):: GMix,G_IdMix,G_XsMix
+!   !
+!   real(dp),allocatable:: vXAtom(:)
+!   !
+!   G_XsMix= Zero
+!   G_XsMix= Zero
+!   !
+!   if(trim(MM%Model)=="SPECIAL") then
+! 
+!   else
+!     !
+!     select case(trim(MM%Model))
+!     !
+!     case("IDEAL","POLE","MOLECULAR","FELSPAR")
+!       G_IdMix= -TdgK *MixModel_Pole_SConf(MM,Fas%vLPole,Fas%vXPole)
+!       !
+!       if(MM%NMarg>0) G_XsMix= &
+!       & MixModel_Pole_XsMargules(MM, Fas%vLPole, Fas%vXpole)
+!     !
+!     case("SITE")
+!       allocate(vXAtom(MM%NAtom))
+!       call MixModel_XPoleToXSite(MM,Fas%vXPole,vXAtom)
+!       !
+!       G_IdMix= -TdgK *MixModel_Site_SConf(MM,vXAtom)
+!       !
+!       if(MM%NMarg>0) G_XsMix= &
+!       & MixModel_Site_XsMargules(MM,vXAtom)
+!     !
+!     end select
+!     !
+!   end if
+!   !
+!   if(allocated(vXAtom)) deallocate(vXAtom)
+!   !
+!   GMix= G_IdMix +G_XsMix
+!   !
+!   return
+! end subroutine MixPhase_CalcMixing_
 

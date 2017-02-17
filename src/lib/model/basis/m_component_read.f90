@@ -1,17 +1,17 @@
-MODULE M_Component_Read
-  USE M_Kinds
-  USE M_T_Component,ONLY: T_Component
-  USE M_Trace
+module M_Component_Read
+  use M_Kinds
+  use M_T_Component,only: T_Component
+  use M_Trace
   !
-  IMPLICIT NONE
+  implicit none
 
-  PRIVATE
+  private
 
-  PUBLIC:: Components_Read
+  public:: Components_Read
   !
-CONTAINS
+contains
 
-SUBROUTINE Components_Read( & !
+subroutine Components_Read( & !
 !--
 !-- scan the SYSTEM block -> build vCpn, read (T,P) conditions --
 !--
@@ -24,60 +24,61 @@ SUBROUTINE Components_Read( & !
 & SysType,   & !OUT
 & Ok,        & !OUT
 & Msg,       & !OUT
-& vCpn)        !INOUT
+& vCpn       & !INOUT
+)
   !---------------------------------------------------------------------
-  USE M_IoTools
-  USE M_Files,      ONLY: NamFInn
-  USE M_Dtb_Const,  ONLY: T_CK
-  USE M_Numeric_Const,ONLY: Ln10
-  USE M_T_Element,  ONLY: T_Element,Element_Index
-  USE M_T_Species,  ONLY: T_Species,Species_Index,Species_Rename
-  USE M_T_MixPhase, ONLY: T_MixPhase,MixPhase_Index
-  USE M_T_Component,ONLY: Component_Zero,CpnMolMinim
+  use M_IoTools
+  use M_Files,      only: NamFInn
+  use M_Dtb_Const,  only: T_CK
+  use M_Numeric_Const,only: Ln10
+  use M_T_Element,  only: T_Element,Element_Index
+  use M_T_Species,  only: T_Species,Species_Index,Species_Rename
+  use M_T_MixPhase, only: T_MixPhase,MixPhase_Index
+  use M_T_Component,only: Component_Zero,CpnMolMinim
   !
-  USE M_Dtb_Vars,ONLY: DtbLogK_vTPCond
+  use M_Dtb_Vars,only: DtbLogK_vTPCond
   !
-  USE M_System_Vars,ONLY: BufferIsExtern
+  use M_System_Vars,only: BufferIsExtern
   !---------------------------------------------------------------------
-  CHARACTER(LEN=*), INTENT(IN):: sKeyWord
-  TYPE(T_Element),  INTENT(IN):: vEle(:)
-  TYPE(T_Species),  INTENT(IN):: vSpc(:)
-  TYPE(T_MixPhase), INTENT(IN):: vMixFas(:)
+  character(len=*), intent(in):: sKeyWord
+  type(T_Element),  intent(in):: vEle(:)
+  type(T_Species),  intent(in):: vSpc(:)
+  type(T_MixPhase), intent(in):: vMixFas(:)
   !
-  REAL(dp),         INTENT(INOUT):: TdgK,Pbar
-  INTEGER,          INTENT(OUT)  :: N
-  CHARACTER(LEN=7), INTENT(OUT)  :: SysType
-  LOGICAL,          INTENT(OUT)  :: Ok
-  CHARACTER(*),     INTENT(OUT)  :: Msg
-  TYPE(T_Component),INTENT(OUT)  :: vCpn(:)
+  real(dp),         intent(inout):: TdgK,Pbar
+  integer,          intent(out)  :: N
+  character(len=7), intent(out)  :: SysType
+  logical,          intent(out)  :: Ok
+  character(*),     intent(out)  :: Msg
+  type(T_Component),intent(out)  :: vCpn(:)
   !---------------------------------------------------------------------
   !
   !---------------------------------------------------------development
-  LOGICAL,PARAMETER:: MoleIsTrue= .FALSE.  !.TRUE. !
+  logical,parameter:: MoleIsTrue= .false.  !.true. !
   != MoleIsTrue => when Statut is MOLE or GRAM
   != species stoichiometry is considered for
   != computation of element mole numbers
   !---------------------------------------------------------/development
-  TYPE(T_Component) :: Cpn
-  CHARACTER(LEN=255):: L,sListElem
-  CHARACTER(LEN=80) :: W0,W,V1,V2,Wnum,WType
-  CHARACTER(LEN=7)  :: Statut
-  LOGICAL :: EoL
-  LOGICAL :: bForceH2O =.false.
-  INTEGER :: f,ios,iTP
-  INTEGER :: I,iEl,iSp,iW,iH_,iO_,nEl
-  REAL(dp):: X1,Eps
-  REAL(dp),ALLOCATABLE:: vX(:)
-  INTEGER, ALLOCATABLE:: tStoikCp(:,:)
+  type(T_Component) :: Cpn
+  character(len=255):: L,sListElem
+  character(len=80) :: W0,W,V1,V2,Wnum,WType
+  character(len=7)  :: Statut
+  logical :: EoL
+  logical :: bForceH2O =.false.
+  integer :: f,ios,iTP
+  integer :: I,iEl,iSp,iW,iH_,iO_,nEl
+  real(dp):: X1,Eps
+  real(dp),allocatable:: vX(:)
+  integer, allocatable:: tStoikCp(:,:)
   !---------------------------------------------------------------------
   
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Read_Input_System"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Read_Input_System"
   !
-  Ok= .TRUE.
+  Ok= .true.
   Msg= "Ok"
   !
-  CALL GetUnit(f)
-  CALL OPENFILE(f,FILE=TRIM(NamFInn))
+  call GetUnit(f)
+  call OpenFile(f,file=trim(NamFInn))
   !
   iTP= 0
   SysType="Z"
@@ -86,63 +87,63 @@ SUBROUTINE Components_Read( & !
   N=   0
   iH_= 0
   iO_= 0
-  nEl= SIZE(vEle)
+  nEl= size(vEle)
   !
-  ALLOCATE(tStoikCp(SIZE(vCpn),0:nEl+1))
+  allocate(tStoikCp(size(vCpn),0:nEl+1))
   tStoikCp(:,:)= 0 ! stoikiometry
   tStoikCp(:,0)= 1 ! divisor
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(f,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W0,EoL)
-    IF(W0(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W0,EoL)
+    read(f,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
+    call LinToWrd(L,W0,EoL)
+    if(W0(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W0,EoL)
     !
-    IF(W0=="ENDINPUT") EXIT DoFile
-    !!SELECT CASE(W0)
-    !!  CASE("SYSTEM","SYSTEM.AQUEOUS"); SysType="AQUEOUS"
-    !!  CASE("SYSTEM.MOMAS");            SysType="MOMAS"
-    !!END SELECT
-    IF(TRIM(W0)==TRIM(sKeyWord)) THEN
+    if(W0=="ENDINPUT") exit DoFile
+    !!select case(W0)
+    !!  case("SYSTEM","SYSTEM.AQUEOUS"); SysType="AQUEOUS"
+    !!  case("SYSTEM.MOMAS");            SysType="MOMAS"
+    !!end select
+    if(trim(W0)==trim(sKeyWord)) then
       !
       !-- possibility to have several SYSTEM blocks, each with a Name,
       !-- -> to define several systems, make them react with another, etc.
-      IF ( TRIM(sKeyWord)=="SYSTEM"         .OR. &
-      &    TRIM(sKeyWord)=="SYSTEM.AQUEOUS" .OR. &
-      &    TRIM(sKeyWord)=="SYSTEM.BOX"     .OR. &
-      &    TRIM(sKeyWord)=="SYSTEM.MIX"     .OR. &
-      &    TRIM(sKeyWord)=="SYSTEM.INJECT")  &
+      if ( trim(sKeyWord)=="SYSTEM"         .or. &
+      &    trim(sKeyWord)=="SYSTEM.AQUEOUS" .or. &
+      &    trim(sKeyWord)=="SYSTEM.BOX"     .or. &
+      &    trim(sKeyWord)=="SYSTEM.MIX"     .or. &
+      &    trim(sKeyWord)=="SYSTEM.INJECT")  &
       & SysType="AQUEOUS"
       !
-      CALL Component_Zero(Cpn)
+      call Component_Zero(Cpn)
       !
       Statut= "INERT" !default value
       !
-      IF(SysType=="AQUEOUS") THEN
+      if(SysType=="AQUEOUS") then
         !
-        IF(Element_Index("O__",vEle)==0) THEN
-          Ok= .FALSE.
+        if(Element_Index("O__",vEle)==0) then
+          Ok= .false.
           Msg= "O__ not found among elements !!!"
-          RETURN
-        ENDIF
+          return
+        end if
         !
-        IF(Element_Index("H__",vEle)==0) THEN
-          Ok= .FALSE.
+        if(Element_Index("H__",vEle)==0) then
+          Ok= .false.
           Msg= "H__ not found among elements !!!"
-          RETURN
-        ENDIF
+          return
+        end if
         !
-        IF(Species_Index("H2O",vSpc)==0) THEN
-          Ok= .FALSE.
+        if(Species_Index("H2O",vSpc)==0) then
+          Ok= .false.
           Msg= "H2O not found among species  !!!"
-          RETURN
-        ENDIF
+          return
+        end if
         !
         iW= Species_Index("H2O",vSpc)
         !
-        IF(bForceH2O) THEN
+        if(bForceH2O) then
           !---------------make water (solvent) as Cpn Nr1
           !---------------------------ele-"O__",spc-'H2O"
           iO_= 1
@@ -161,338 +162,348 @@ SUBROUTINE Components_Read( & !
           !vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
           tStoikCp(N,Cpn%iEle)= 1
           !
-        ENDIF
+        end if
         !
-      ENDIF
+      end if
       !
-      DoBlock: DO
+      DoBlock: do
         !
-        READ(f,'(A)',IOSTAT=ios) L
-        IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL) !-> READ 1st word -> W
-        IF(W(1:1)=='!') CYCLE DoBlock !-> skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        read(f,'(A)',iostat=ios) L
+        if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL) !-> read 1st word -> W
+        if(W(1:1)=='!') cycle DoBlock !-> skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        IF(    W=="ENDINPUT" &
-        & .OR. W=="END"      &
-        & .OR. W=="END"//TRIM(sKeyWord)) EXIT DoFile
+        if(    W=="ENDINPUT" &
+        & .or. W=="END"      &
+        & .or. W=="END"//trim(sKeyWord)) exit DoFile
         !
         !------------------------------------read Temperature / Pressure
-        !IF(LEN_TRIM(W)>3) THEN
-        IF(IsKeyword("_TP.POINT_TPPOINT_TDGK_TDGC_PBAR_PMPA_TDEGK_TDEGC_",W)) &
-        & THEN
+        !if(len_trim(W)>3) then
+        if(IsKeyword("_TP.POINT_TPPOINT_TDGK_TDGC_PBAR_PMPA_TDEGK_TDEGC_",W)) &
+        & then
           !
-          CALL LinToWrd(L,Wnum,EoL)
+          call LinToWrd(L,Wnum,EoL)
           !-> !!!§§§ add something to check input !!
-          SELECT CASE(TRIM(W))
+          select case(trim(W))
           !
-          CASE("TP.POINT","TPPOINT")
-            ! CALL Warning_(TRIM(W)//" is Obsolete, better give TdgC, Pbar !!!")
+          case("TP.POINT","TPPOINT")
+            ! call Warning_(trim(W)//" is Obsolete, better give TdgC, Pbar !!!")
             !
-            CALL WrdToInt(Wnum,iTP)
+            call WrdToInt(Wnum,iTP)
             !
-            IF(iTP>0) THEN
-              !! CALL Warning_ &
+            if(iTP>0) then
+              !! call Warning_ &
               !! & ("keyword TP.POINT soon Obsolete !! better give TdgC, Pbar in SYSTEM")
               !
-              IF(iTP>SIZE(DtbLogK_vTPCond)) THEN
-                Ok= .FALSE.
+              if(iTP>size(DtbLogK_vTPCond)) then
+                Ok= .false.
                 Msg= "TP.POINT outside range"
-                RETURN
-              ENDIF
+                return
+              end if
               !
               TdgK= DtbLogK_vTPCond(iTP)%TdgC +T_CK
               Pbar= DtbLogK_vTPCond(iTP)%Pbar
               !
-            ENDIF
+            end if
           !
-          CASE("TDGK","TDGC","TDEGK","TDEGC","PBAR","PMPA")
-            CALL WrdToReal(Wnum,X1)
+          case("TDGK","TDGC","TDEGK","TDEGC","PBAR","PMPA")
+            call WrdToReal(Wnum,X1)
             !
-            SELECT CASE(TRIM(W))
+            select case(trim(W))
             !
-            CASE("TDGK");  TdgK= X1
-            CASE("TDGC");  TdgK= X1 + T_CK
+            case("TDGK");  TdgK= X1
+            case("TDGC");  TdgK= X1 + T_CK
+            ! print *,"debuggg Components_Read"
+            ! print *,TdgK
             !
-            CASE("PBAR");  Pbar= X1
-            CASE("PMPA");  Pbar= X1 / 10.0D0
+            case("PBAR");  Pbar= X1
+            case("PMPA");  Pbar= X1 * 1.0D-1
             !
-            CASE("TDEGK")
+            case("TDEGK")
               TdgK= X1
-              CALL Warning_("Depreciated Keyword TDEGK")
-            CASE("TDEGC")
+              call Warning_("Depreciated Keyword TDEGK")
+            case("TDEGC")
               TdgK= X1 + T_CK
-              CALL Warning_("Depreciated Keyword TDEGC")
+              call Warning_("Depreciated Keyword TDEGC")
             !
-            ENDSELECT
+            end select
           !
-          CASE DEFAULT
-            Ok= .FALSE.
-            Msg= "Unknown (or Obsolete) Keyword: "//TRIM(W)
-            RETURN
+          case default
+            Ok= .false.
+            Msg= "Unknown (or Obsolete) Keyword: "//trim(W)
+            return
           !
-          END SELECT
+          end select
           !
-          CYCLE DoBlock
+          cycle DoBlock
           !
-        ENDIF
+        end if
         !-----------------------------------/read Temperature / Pressure
         !
         !----------------------------------------------read element name
-        IF(.NOT. IsElement(vEle,W)) THEN
-          Ok= .FALSE.
-          Msg=           "Element "//TRIM(W)//" Not in Element base !!!"
-          RETURN !------------------------------------------------RETURN
-        ENDIF
+        if(.not. IsElement(vEle,W)) then
+          Ok= .false.
+          Msg=           "Element "//trim(W)//" Not in Element base !!!"
+          return !------------------------------------------------return
+        end if
         !
-        CALL Str_Append(W,3)
+        call Str_Append(W,3)
         !
         !--position of current element in vEle
-        iEl= Element_Index(TRIM(W),vEle)
+        iEl= Element_Index(trim(W),vEle)
         !
-        IF(INDEX(sListElem,TRIM(W))>0) THEN
-          Ok= .FALSE.
-          Msg=              "Component "//TRIM(W)//" Already listed !!!"
-          RETURN !------------------------------------------------RETURN
-        ENDIF
+        if(index(sListElem,trim(W))>0) then
+          Ok= .false.
+          Msg=              "Component "//trim(W)//" Already listed !!!"
+          return !------------------------------------------------return
+        end if
         !
         N=N+1
-        IF(N>SIZE(vCpn)) THEN
-          Ok= .FALSE.
+        if(N>size(vCpn)) then
+          Ok= .false.
           Msg=                                     "Too many components"
-          RETURN !------------------------------------------------RETURN
-        ENDIF
+          return !------------------------------------------------return
+        end if
         !
-        Cpn%NamCp= TRIM(W)
+        Cpn%NamCp= trim(W)
         Cpn%iEle= iEl
-        !Cpn%NamCp= TRIM(vEle(Cpn%iEle)%NamEl)
+        !Cpn%NamCp= trim(vEle(Cpn%iEle)%NamEl)
         !Cpn%vStoikCp(iEl)= 1
         tStoikCp(N,iEl)= 1
         !
-        IF(W=="H__") iH_= N
-        IF(W=="O__") iO_= N
+        if(W=="H__") iH_= N
+        if(W=="O__") iO_= N
         !
-        sListElem=TRIM(sListElem)//TRIM(W)
+        sListElem=trim(sListElem)//trim(W)
         !-> prevent reading same component in subsequent loops
         !
         !---------------------------------------------/read element name
         !
         !------------------------------------------read component status
-        CALL LinToWrd(L,WType,EoL)
+        call LinToWrd(L,WType,EoL)
         !
-        IF(.NOT. IsKeyword &
-        & ("_INERT_MOLE_GRAM_MOBILE_ACTIVITY_PK_BUFFER_BALANCE_",WType)) THEN
-          Ok= .FALSE.
-          Msg=         TRIM(WType)//" -> unrecognized species status !!"
-          RETURN !------------------------------------------------RETURN
-        ENDIF
+        !if(.not. IsKeyword &
+        !& ("_INERT_MOLE_GRAM_MOBILE_ACTIVITY_PK_BUFFER_BALANCE_",WType)) then
+        !  Ok= .false.
+        !  Msg=         trim(WType)//" -> unrecognized species status !!"
+        !  return !------------------------------------------------return
+        !end if
         !
-        SELECT CASE(TRIM(WType))
-        CASE("INERT","MOLE","GRAM")              ;  Statut="INERT"
-        CASE("MOBILE","ACTIVITY","PK")           ;  Statut="MOBILE"
-        CASE("BUFFER")                           ;  Statut="BUFFER"
-        CASE("BALANCE")                          ;  Statut="BALANCE"
-        !! CASE("STOIKIO")                ;  Statut="STOIKIO"
-        !! CASE DEFAULT
-        !!   Ok= .FALSE.
-        !!   Msg=      TRIM(WType)//" -> unrecognized species status !!"
-        !!   RETURN !---------------------------------------------RETURN
-        END SELECT
+        select case(trim(WType))
+        case("INERT","MOLE","GRAM","PPM")        ;  Statut="INERT"
+        case("MOBILE","ACTIVITY","PK")           ;  Statut="MOBILE"
+        case("BUFFER")                           ;  Statut="BUFFER"
+        case("BALANCE")                          ;  Statut="BALANCE"
+        !! case("STOIKIO")                       ;  Statut="STOIKIO"
+        case default
+          Ok= .false.
+          Msg=      trim(WType)//" -> unrecognized species status !!"
+          return !---------------------------------------------return
+        end select
         !
         !-----------------------------------------------------for Oxygen
-        IF(N==iO_ .AND. Statut/="INERT") THEN
-          Ok= .FALSE.
+        if(N==iO_ .and. Statut/="INERT") then
+          Ok= .false.
           Msg= "Oxygen should be INERT !!!"
-          RETURN
-        ENDIF
+          return
+        end if
         !----------------------------------------------------/for Oxygen
         !
         !-- assign component mobility status
-        Cpn%Statut= TRIM(Statut)
+        Cpn%Statut= trim(Statut)
         !-----------------------------------------/read component status
         !
         !----------------------------------------------read species name
-        IF(EoL) THEN
-          Ok= .FALSE.
-          Msg=                   "Species lacking for "//TRIM(Cpn%NamCp)
-          RETURN
-        ENDIF
-        CALL LinToWrd(L,V1,EoL)!= species name
+        if(EoL) then
+          Ok= .false.
+          Msg=                   "Species lacking for "//trim(Cpn%NamCp)
+          return
+        end if
+        call LinToWrd(L,V1,EoL)!= species name
         !
-        CALL Species_Rename(V1)
+        call Species_Rename(V1)
         !
         iSp=Species_Index(V1,vSpc)
         !
-        IF(iSp==0) THEN
-          Ok= .FALSE.
-          Msg=              TRIM(V1)//" <-Species NOT in database ???!!"
-          RETURN
-        ELSE
-          IF(Statut=="INERT"  .AND. vSpc(iSp)%Typ/="AQU") THEN
-            Msg=  TRIM(V1)//" <- an INERT SPECIES should be AQUEOUS !!!"
-            RETURN
-          ENDIF
+        if(iSp==0) then
+          Ok= .false.
+          Msg=              trim(V1)//" <-Species NOT in database ???!!"
+          return
+        else
+          if(Statut=="INERT"  .and. vSpc(iSp)%Typ/="AQU") then
+            Msg=  trim(V1)//" <- an INERT SPECIES should be AQUEOUS !!!"
+            return
+          end if
           !<BUFFER MODIFIED
-          IF(BufferIsExtern   .AND. &
-          &  Statut=="BUFFER" .AND. &
-          &  vSpc(iSp)%Typ=="AQU") THEN
-            Msg= TRIM(V1)//" <-a BUFFER SPECIES should NOT be AQUEOUS !!!"
-            RETURN
-          ENDIF
+          if(BufferIsExtern   .and. &
+          &  Statut=="BUFFER" .and. &
+          &  vSpc(iSp)%Typ=="AQU") then
+            Msg= trim(V1)//" <-a BUFFER SPECIES should NOT be AQUEOUS !!!"
+            return
+          end if
           !</BUFFER MODIFIED
-        ENDIF
+        end if
         !
         !------------------------------------------------- for Oxygen --
-        IF(N==iO_ .AND. TRIM(V1)/="H2O") THEN
-          Ok= .FALSE.
+        if(N==iO_ .and. trim(V1)/="H2O") then
+          Ok= .false.
           Msg=                   "for Oxygen, species should be H2O !!!"
-          RETURN
-        ENDIF
+          return
+        end if
         !------------------------------------------------/ for Oxygen --
         !
         Cpn%iSpc=iSp != index of "associated" species
         !
-        IF(Cpn%Statut=="INERT") THEN
-          IF(vSpc(iSp)%vStoikio(iEl)==0) THEN
-            Ok= .FALSE.
+        if(Cpn%Statut=="INERT") then
+          if(vSpc(iSp)%vStoikio(iEl)==0) then
+            Ok= .false.
             Msg= &
-            & "Element "//TRIM(vEle(iEl)%NamEl)// &
-            & " is not contained in species "//TRIM(vSpc(iSp)%NamSp)
-            RETURN
-          ENDIF
-        ENDIF
+            & "Element "//trim(vEle(iEl)%NamEl)// &
+            & " is not contained in species "//trim(vSpc(iSp)%NamSp)
+            return
+          end if
+        end if
         !
         !<new, 200911>
-        IF(TRIM(WType)=="MOLE" .OR. TRIM(WType)=="GRAM") THEN
-        !--------------- write species'stoichio to component'stoichio --
-          !Cpn%vStoikCp(0:nEl+1)= vSpc(iSp)%vStoikio(0:nEl+1)
+        !-----------------write species'stoichio to component'stoichio--
+        select case(trim(WType))
+        case("MOLE","GRAM","PPM")
           tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
-        ENDIF
+        end select
+        !if(trim(WType)=="MOLE" .or. trim(WType)=="GRAM") then
+        !  !Cpn%vStoikCp(0:nEl+1)= vSpc(iSp)%vStoikio(0:nEl+1)
+        !  tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
+        !end if
         !</new>
         !
         !---------------------------------------------/read species name
         !
         !------------------------- read numeric data (mole, pk, etc.) --
         X1=Zero
-        Cpn%namSol= "Z" !TRIM(vSpc(iSp)%Typ) !default value
+        Cpn%namSol= "Z" !trim(vSpc(iSp)%Typ) !default value
         !
-        IF(Statut/="BALANCE") THEN
+        if(Statut/="BALANCE") then
           !
-          IF(EoL) THEN
+          if(EoL) then
           !----------------------if no numeric data, take default values
             !
             !------------ for mobile pure species, default is saturation
-            IF(Statut=="MOBILE" .OR. Statut=="BUFFER") X1=Zero
+            if(Statut=="MOBILE" .or. Statut=="BUFFER") X1=Zero
             !
-            IF(Statut=="INERT") X1= CpnMolMinim
+            if(Statut=="INERT") X1= CpnMolMinim
             !
-          ELSE
+          else
             !
-            CALL LinToWrd(L,V2,EoL)
+            call LinToWrd(L,V2,EoL)
             !
-            IF(TRIM(V2)/="SOLUTION" .AND. TRIM(V2)/="MIXTURE") THEN
+            if(trim(V2)/="SOLUTION" .and. trim(V2)/="MIXTURE") then
               ! read real value -> total amount, colog10(activity), etc
-              CALL WrdToReal(V2,X1)
-            ELSE
+              call WrdToReal(V2,X1)
+            else
               !
-              IF(TRIM(V2)=="SOLUTION") &
-              & CALL Warning_(TRIM(V2)//" soon Obsolete, better use MIXTURE !!!")
+              if(trim(V2)=="SOLUTION") &
+              & call Warning_(trim(V2)//" soon Obsolete, better use MIXTURE !!!")
               !
-              IF(Cpn%Statut=="INERT") THEN
-                Ok= .FALSE.
+              if(Cpn%Statut=="INERT") then
+                Ok= .false.
                 Msg= "SOLUTION/MIXTURE is NOT VALID KEYWORD for INERT components !!!"
-                RETURN
-              ENDIF
+                return
+              end if
               !-------------------------read name of "controlling phase"
-              CALL LinToWrd(L,V2,EoL)
-              IF(MixPhase_Index(vMixFas,V2)==0) THEN
-                Ok= .FALSE.
-                Msg=          TRIM(V2)//" <-this phase is unknown !!!!!"
-                RETURN
-              ENDIF
+              call LinToWrd(L,V2,EoL)
+              if(MixPhase_Index(vMixFas,V2)==0) then
+                Ok= .false.
+                Msg=          trim(V2)//" <-this phase is unknown !!!!!"
+                return
+              end if
               !
-              Cpn%namSol=TRIM(V2)
-              !!print *, TRIM(V2)  ;  pause
+              Cpn%namSol=trim(V2)
+              !!print *, trim(V2)  ;  pause
               !
-            ENDIF
+            end if
             !
-          ENDIF
+          end if
           !
-        ENDIF !!IF(Statut/="BALANCE")
+        end if !!if(Statut/="BALANCE")
         !---------------------------------------------/read numeric data
         !
         !-------------------------------------------process numeric data
-        SELECT CASE(TRIM(Statut))
+        select case(trim(Statut))
         !
-        CASE("INERT") !---------------------------------------case INERT
+        case("INERT") !---------------------------------------case INERT
           !
           Cpn%Mole=X1  != tot.amount of element
           !
           Cpn%Factor= 1.D0
           !---------------------------------------------unit conversions
-          IF (TRIM(WType)=="GRAM") THEN
-            Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
-          ELSE
+          select case(trim(WType))
+          case("GRAM")  ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
+          case("PPM")   ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D6
+          end select
+          !if (trim(WType)=="GRAM") then
+          !  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
+          !else
             !---------------------------------------------------OBSOLETE
             !-------------------------------maintained for compatibility
-            IF(.NOT. EoL) THEN
+            if(.not. EoL) then
               !------------------------- read unit: MG/KG__, UG/KG__,...
-              CALL LinToWrd(L,V2,EoL)
-              SELECT CASE(TRIM(V2))
-              CASE("MG/KG","PPM")
+              call LinToWrd(L,V2,EoL)
+              select case(trim(V2))
+              case("MG/KG","PPM")
                 Cpn%Factor= vSpc(iSp)%WeitKg *1.0D6
-              CASE("UG/KG","PPB")
+              case("UG/KG","PPB")
                 Cpn%Factor= vSpc(iSp)%WeitKg *1.0D9
-              CASE DEFAULT
-              !------------------------------------unknown keyword, STOP
-                Ok= .FALSE.
-                Msg= TRIM(V2)//" = unknown unit..."
-                RETURN
-              END SELECT
-            ENDIF
+              case default
+              !------------------------------------unknown keyword, stop
+                Ok= .false.
+                Msg= trim(V2)//" = unknown unit..."
+                return
+              end select
+            end if
             !--------------------------------------------------/OBSOLETE
-          ENDIF
+          !end if
           !--------------------------------------------/unit conversions
           Cpn%Mole= Cpn%Mole /Cpn%Factor
           !
-        CASE("MOBILE","BUFFER") !----------------------------case MOBILE
+        case("MOBILE","BUFFER") !----------------------------case MOBILE
           !
           Cpn%LnAct= -X1 *Ln10 !from colog10 to ln
           !
           !---------------------------------------------unit conversions
-          SELECT CASE(TRIM(WType))
+          select case(trim(WType))
           !
-          CASE("PK")
+          case("PK")
             Cpn%LnAct= -X1 *Ln10
           !
-          CASE("ACTIVITY")
+          case("ACTIVITY")
             Eps=EPSILON(X1)
-            IF(ABS(X1)<Eps) THEN
-              Ok= .FALSE.
+            if(ABS(X1)<Eps) then
+              Ok= .false.
               Msg= "Activity cannot be Zero !!!"
-              RETURN
-            ENDIF
-            Cpn%LnAct= LOG(X1)
+              return
+            end if
+            Cpn%LnAct= log(X1)
           !
-          END SELECT
+          end select
           !--------------------------------------------/unit conversions
           !
           !<OBSOLETE>
           !!<keyword BUFFER is now placed differently>
-          !!IF(.NOT. EoL) THEN
-          !!  CALL LinToWrd(L,V2,EoL)
-          !!  IF(TRIM(V2)=="BUFFER") Statut="BUFFER"
+          !!if(.not. EoL) then
+          !!  call LinToWrd(L,V2,EoL)
+          !!  if(trim(V2)=="BUFFER") Statut="BUFFER"
           !!  !!! BUFFER MODIFIED
-          !!  IF(BufferIsExtern .AND. Statut=="BUFFER" .AND. vSpc(iSp)%Typ=="AQU") &
-          !!  & CALL Stop_(TRIM(V1)//" <-a BUFFER SPECIES should NOT be AQUEOUS !!!!!")
-          !!  !!! BUFFER MODIFIED END
-          !!ENDIF
+          !!  if(BufferIsExtern .and. Statut=="BUFFER" .and. vSpc(iSp)%Typ=="AQU") &
+          !!  & call Stop_(trim(V1)//" <-a BUFFER SPECIES should NOT be AQUEOUS !!!!!")
+          !!  !!! BUFFER MODIFIED end
+          !!end if
           !</OBSOLETE>
           !
-        END SELECT
+        end select
         !--------------------------------------/ process numeric data --
         !
-        IF (iDebug>2) WRITE(fTrc,'(3(A,A1),2(G15.6,A1))') &
+        if (iDebug>2) write(fTrc,'(3(A,A1),2(G15.6,A1))') &
         & Cpn%Statut,          T_, &
         & vEle(Cpn%iEle)%NamEl,T_, &
         & vSpc(Cpn%iSpc)%NamSp,T_, &
@@ -501,51 +512,51 @@ SUBROUTINE Components_Read( & !
         !
         vCpn(N)= Cpn
         !
-      ENDDO DoBlock
-    ENDIF !
-  ENDDO DoFile
-  CALL CLOSEFILE(f)
+      end do DoBlock
+    end if !
+  end do DoFile
+  call closeFILE(f)
   !
-  IF (iDebug>2) WRITE(fTrc,'(A)') &
+  if (iDebug>2) write(fTrc,'(A)') &
   & "========================================================================="
   !
-  IF(N==0) RETURN
+  if(N==0) return
   !
-  !~ IF(Check_TP) THEN
-    !~ IF(DtbFormat=="LOGK") THEN
-      !~ iTP_= TPcond_IndexT(TdgK,vTPCond)
-      !~ IF(iTP_==0) THEN
-        !~ PRINT '(A,G15.6)',"TdgC=", TdgK -T_CK
-        !~ CALL Stop_("Temperature not found in TP-series")
-      !~ ELSE
-        !~ TdgK= vTPCond(iTP_)%TdgC +T_CK
-        !~ Pbar= vTPCond(iTP_)%Pbar
-      !~ ENDIF
-    !~ ELSE
-      !~ iTP_= TPcond_IndexTP(TdgK,Pbar,vTPCond)
-      !~ IF(iDebug==4) CALL Pause_("TPcond_IndexTP= "//TRIM(FIntToStr3(iTP_)))
-      !~ !
-      !~ IF(TdgK <Zero) TdgK= Zero
-      !~ !
-      !~ ! prevent pressure to be below vapor saturation for pure H2O
-      !~ IF (TdgK<=647.25D0) THEN; CALL fluid_h2o_psat(TdgK,PSatBar)
-      !~ ELSE                    ; PSatBar= 220.55D0
-      !~ ENDIF
-      !~ IF(Pbar<PSatBar) Pbar=PSatBar
-    !~ ENDIF
-    !~ IF(iDebug==4) PRINT '(/,A,2G15.6,/)',"TdgC,Pbar=",TdgK-T_CK,Pbar
-  !~ ENDIF
+  !! if(Check_TP) then
+  !!   if(DtbFormat=="LOGK") then
+  !!     iTP_= TPcond_IndexT(TdgK,vTPCond)
+  !!     if(iTP_==0) then
+  !!       print '(A,G15.6)',"TdgC=", TdgK -T_CK
+  !!       call Stop_("Temperature not found in TP-series")
+  !!     else
+  !!       TdgK= vTPCond(iTP_)%TdgC +T_CK
+  !!       Pbar= vTPCond(iTP_)%Pbar
+  !!     end if
+  !!   else
+  !!     iTP_= TPcond_IndexTP(TdgK,Pbar,vTPCond)
+  !!     if(iDebug==4) call Pause_("TPcond_IndexTP= "//trim(FIntToStr3(iTP_)))
+  !!     !
+  !!     if(TdgK <Zero) TdgK= Zero
+  !!     !
+  !!     ! prevent pressure to be below vapor saturation for pure H2O
+  !!     if (TdgK<=647.25D0) then; call fluid_h2o_psat(TdgK,PSatBar)
+  !!     else                    ; PSatBar= 220.55D0
+  !!     end if
+  !!     if(Pbar<PSatBar) Pbar=PSatBar
+  !!   end if
+  !!   if(iDebug==4) print '(/,A,2G15.6,/)',"TdgC,Pbar=",TdgK-T_CK,Pbar
+  !! end if
   !
-  IF(SysType=="AQUEOUS") THEN
-    !----------------------- add O__/H2O IF not found in species list --
-    IF(iO_==0) THEN
+  if(SysType=="AQUEOUS") then
+    !---------------------------add O__/H2O if not found in species list
+    if(iO_==0) then
       !
       N= N+1
-      IF(N>SIZE(vCpn)) THEN
-        Ok= .FALSE.
+      if(N>size(vCpn)) then
+        Ok= .false.
         Msg= "Too many components"
-        RETURN
-      ENDIF
+        return
+      end if
       !
       iO_= N
       !
@@ -562,19 +573,19 @@ SUBROUTINE Components_Read( & !
       !tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
       tStoikCp(N,Cpn%iEle)= 1
       !
-      sListElem= TRIM(sListElem)//"O__"
+      sListElem= trim(sListElem)//"O__"
       !
-    ENDIF
-    !----------------------------------------------------/ add O__/H2O--
+    end if
+    !------------------------------------------------------/ add O__/H2O
     !
-    !------------------------ add H__/H+ IF not found in species list --
-    IF(iH_==0) THEN !
+    !----------------------------add H__/H+ if not found in species list
+    if(iH_==0) then !
       N=   N+1
-      IF(N>SIZE(vCpn)) THEN
-        Ok= .FALSE.
+      if(N>size(vCpn)) then
+        Ok= .false.
         Msg= "Too many components"
-        RETURN
-      ENDIF
+        return
+      end if
       !
       iH_= N
       !
@@ -591,109 +602,109 @@ SUBROUTINE Components_Read( & !
       !Cpn%vStoikCp(0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
       !tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
       !
-      sListElem=TRIM(sListElem)//"H__"
+      sListElem=trim(sListElem)//"H__"
       !
-    ENDIF
-    !----------------------------------------------------/ add H__/H+--
-  ENDIF !IF(SysType=="AQUEOUS")
+    end if
+    !-------------------------------------------------------/ add H__/H+
+  end if !if(SysType=="AQUEOUS")
   !
-  !--------------------------------- compute mole numbers of elements --
-  IF(MoleIsTrue) THEN
-    ALLOCATE(vX(N))
+  !-------------------------------------compute mole numbers of elements
+  if(MoleIsTrue) then
+    allocate(vX(N))
     vX(:)= Zero
     !
-    DO iEl=1,N
-      DO I=1,N
-        IF(vCpn(I)%Statut=="INERT") &
+    do iEl=1,N
+      do I=1,N
+        if(vCpn(I)%Statut=="INERT") &
         & vX(iEl)= vX(iEl) +vCpn(I)%Mole *tStoikCp(I,vCpn(iEl)%iEle)
-      ENDDO
-    ENDDO
+      end do
+    end do
     !
     !--- trace
-    IF(iDebug==4) THEN
-      PRINT *,"== Components_Read =="
-      DO iEl=1,N
-        PRINT *,vCpn(iEl)%NamCp,vCpn(iEl)%iEle
-        DO I=1,N
-          PRINT *, &
+    if(iDebug==4) then
+      print *,"== Components_Read =="
+      do iEl=1,N
+        print *,vCpn(iEl)%NamCp,vCpn(iEl)%iEle
+        do I=1,N
+          print *, &
           & "        ",      &
           & vCpn(I)%NamCp,    &
-          & TRIM(vSpc(vCpn(I)%iSpc)%NamSp), &
+          & trim(vSpc(vCpn(I)%iSpc)%NamSp), &
           & tStoikCp(I,vCpn(iEl)%iEle)
           !!& vCpn(I)%vStoikCp(vCpn(iEl)%iEle)
-        ENDDO
-        PRINT '(A,G15.6)',"=======================================tot=",vX(iEl)
-      ENDDO
-      CALL Pause_
-    ENDIF !==</ trace
+        end do
+        print '(A,G15.6)',"=======================================tot=",vX(iEl)
+      end do
+      call Pause_
+    end if !--</ trace
     !
     vCpn(1:N)%Mole= vX(1:N)
     !
-    DEALLOCATE(vX)
-  ENDIF
-  !--------------------------------/ compute mole numbers of elements --
+    deallocate(vX)
+  end if
+  !-----------------------------------/ compute mole numbers of elements
   !
-  DEALLOCATE(tStoikCp)
+  deallocate(tStoikCp)
   !
-  IF(iH_/=0) vCpn(iH_)%Mole= 2.0D0*vCpn(iO_)%Mole
+  if(iH_/=0) vCpn(iH_)%Mole= 2.0D0*vCpn(iO_)%Mole
   !
-  !----------------------------------------- place Oxygen as species 1--
-  IF(iO_/=0) THEN
-    IF(iO_/=1) THEN
+  !--------------------------------------------place Oxygen as species 1
+  if(iO_/=0) then
+    if(iO_/=1) then
       Cpn=       vCpn(1)
       vCpn(1)=   vCpn(iO_)
       vCpn(iO_)= Cpn
-    ENDIF
-  ENDIF
-  !----------------------------------------/ place Oxygen as species 1--
+    end if
+  end if
+  !------------------------------------------/ place Oxygen as species 1
   !
-  IF (iDebug>0) THEN
-    DO I=1,N
+  if (iDebug>0) then
+    do I=1,N
       Cpn= vCpn(I)
-      WRITE(fTrc,'(3(A,A1),2(G15.6,A1))') &
+      write(fTrc,'(3(A,A1),2(G15.6,A1))') &
       & Cpn%Statut,          T_, &
       & vEle(Cpn%iEle)%NamEl,T_, &
       & vSpc(Cpn%iSpc)%NamSp,T_, &
       & Cpn%Mole,            T_, &
       & Cpn%LnAct,           T_
-    ENDDO
-  ENDIF
+    end do
+  end if
   !
-  IF(iDebug>0) WRITE(fTrc,'(A10,A)') "LISTELEM= ",TRIM(sListElem)
+  if(iDebug>0) write(fTrc,'(A10,A)') "LISTELEM= ",trim(sListElem)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ ReadInput_System"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ ReadInput_System"
   !
-ENDSUBROUTINE Components_Read
+end subroutine Components_Read
 
-LOGICAL FUNCTION IsSpecies(vSpc,W)
-  USE M_T_Species,ONLY: T_Species,Species_Index,Species_Rename
-  TYPE(T_Species), INTENT(IN):: vSpc(:)
-  CHARACTER(LEN=*),INTENT(IN):: W
+logical function IsSpecies(vSpc,W)
+  use M_T_Species,only: T_Species,Species_Index,Species_Rename
+  type(T_Species), intent(in):: vSpc(:)
+  character(len=*),intent(in):: W
   !
-  IsSpecies= (Species_Index(TRIM(W),vSpc)/=0)
+  IsSpecies= (Species_Index(trim(W),vSpc)/=0)
   !
-END FUNCTION IsSpecies
+end function IsSpecies
 
-LOGICAL FUNCTION IsElement(vEle,W)
-  USE M_T_Element,ONLY: T_Element,Element_Index
-  USE M_IoTools,  ONLY: Str_Append
-  TYPE(T_Element), INTENT(IN):: vEle(:)
-  CHARACTER(LEN=*),INTENT(IN):: W
+logical function IsElement(vEle,W)
+  use M_T_Element,only: T_Element,Element_Index
+  use M_IoTools,  only: Str_Append
+  type(T_Element), intent(in):: vEle(:)
+  character(len=*),intent(in):: W
   !
-  CHARACTER(LEN=3):: W2
+  character(len=3):: W2
   !
   W2= W(1:3)
-  CALL Str_Append(W2,3)
-  IsElement= (Element_Index(TRIM(W2),vEle)>0)
+  call Str_Append(W2,3)
+  IsElement= (Element_Index(trim(W2),vEle)>0)
   !
-END FUNCTION IsElement
+end function IsElement
 
-LOGICAL FUNCTION IsKeyword(sList,W)
-  CHARACTER(LEN=*),INTENT(IN):: sList
-  CHARACTER(LEN=*),INTENT(IN):: W
+logical function IsKeyword(sList,W)
+  character(len=*),intent(in):: sList
+  character(len=*),intent(in):: W
   !
-  IsKeyword= (INDEX(TRIM(sList),"_"//TRIM(W)//"_")>0)
+  IsKeyword= (index(trim(sList),"_"//trim(W)//"_")>0)
   !
-END FUNCTION IsKeyword
+end function IsKeyword
 
-ENDMODULE M_Component_Read
+end module M_Component_Read

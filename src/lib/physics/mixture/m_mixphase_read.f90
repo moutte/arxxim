@@ -1,376 +1,377 @@
-MODULE M_MixPhase_Read
+module M_MixPhase_Read
 !--
-!-- tools for reading mixture phases (- phase of variable composition) from text files,
-!-- and build an array of T_MixPhase (- container for a mixture phase)
+!-- tools for reading mixture phases (phase of variable composition)
+!-- from text files,
+!-- and build an array of T_MixPhase (container for a mixture phase)
 !--
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Warning_
-  USE M_Kinds
-  USE M_T_MixPhase,ONLY: T_MixPhase
+  use M_Trace,only: iDebug,fTrc,T_,Warning_
+  use M_Kinds
+  use M_T_MixPhase,only: T_MixPhase
   !
-  IMPLICIT NONE
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: MixPhase_BuildLnk
-  PUBLIC:: MixPhase_LnkToVec
+  public:: MixPhase_BuildLnk
+  public:: MixPhase_LnkToVec
   !
-  PUBLIC:: T_LnkFas
+  public:: T_LnkFas
   !
-  TYPE:: T_LnkFas
-    TYPE(T_MixPhase):: Value
-    TYPE(T_LnkFas),POINTER ::Next
-  ENDTYPE T_LnkFas
+  type:: T_LnkFas
+    type(T_MixPhase):: Value
+    type(T_LnkFas),pointer ::Next
+  end type T_LnkFas
 
-CONTAINS
+contains
 
-SUBROUTINE LnkFas_Build(First,Input_,L,P)
-  LOGICAL               :: First
-  TYPE(T_MixPhase)      :: Input_
-  TYPE(T_LnkFas),POINTER:: L
-  TYPE(T_LnkFas),POINTER:: P
+subroutine LnkFas_Build(First,Input_,L,P)
+  logical               :: First
+  type(T_MixPhase)      :: Input_
+  type(T_LnkFas),pointer:: L
+  type(T_LnkFas),pointer:: P
   !
-  IF(First) NULLIFY(L)
+  if(First) nullify(L)
   !
-  IF(First) THEN
-    ALLOCATE(L)     ; NULLIFY(L%next)     ; L%Value=Input_     ; P=>L
-  ELSE
-    ALLOCATE(P%next); NULLIFY(P%next%next); P%next%Value=Input_; P=>P%next
-  ENDIF
+  if(First) then
+    allocate(L)     ; nullify(L%next)     ; L%Value=Input_     ; P=>L
+  else
+    allocate(P%next); nullify(P%next%next); P%next%Value=Input_; P=>P%next
+  end if
   !
-ENDSUBROUTINE LnkFas_Build
+end subroutine LnkFas_Build
 
-SUBROUTINE MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
+subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
 !--
-!-- scan the PHASE block(s)
+!-- scan the MIXTURE block(s)
 !--
-  USE M_IoTools
-  USE M_Files,     ONLY: NamFInn
-  USE M_T_Species, ONLY: T_Species,Species_Index
-  USE M_T_MixModel !,ONLY: T_MixModel,MixModel_Index,MixModel_XPoleToXSite
-  USE M_T_MixPhase,ONLY: T_MixPhase !,MixPhase_ActPole
+  use M_IoTools
+  use M_Files,     only: NamFInn
+  use M_T_Species, only: T_Species,Species_Index
+  use M_T_MixModel !,only: T_MixModel,MixModel_Index,MixModel_XPoleToXSite
+  use M_T_MixPhase,only: T_MixPhase !,MixPhase_ActPole
   !
-  TYPE(T_Species), INTENT(IN) :: vSpc(:)
-  TYPE(T_MixModel),INTENT(IN) :: vMixModel(:)
-  INTEGER,         INTENT(OUT):: N
-  TYPE(T_LnkFas),  POINTER    :: LnkFas
-  LOGICAL,         INTENT(OUT):: Ok
-  CHARACTER(*),    INTENT(OUT):: MsgError
+  type(T_Species), intent(in) :: vSpc(:)
+  type(T_MixModel),intent(in) :: vMixModel(:)
+  integer,         intent(out):: N
+  type(T_LnkFas),  pointer    :: LnkFas
+  logical,         intent(out):: Ok
+  character(*),    intent(out):: MsgError
   !
-  TYPE(T_LnkFas),POINTER:: pFas
+  type(T_LnkFas),pointer:: pFas
   !
-  TYPE(T_MixPhase)  :: MixFas
-  TYPE(T_MixModel)  :: MixModel
-  CHARACTER(LEN=255):: L !,sList0 !=elements in Database
-  CHARACTER(LEN=80) :: W !,V1,V2
-  LOGICAL :: EoL !,Ok
-  INTEGER :: iS,iEl,I,J,K !,M,iPhas,iCp,iSp,I,J,K,M,nCp,fInn !,iEl !,J
-  REAL(dp):: X1 !,Act
-  INTEGER :: ios,fInn
-  REAL(dp),ALLOCATABLE:: vXAtom(:)
+  type(T_MixPhase)  :: MixFas
+  type(T_MixModel)  :: MixModel
+  character(len=255):: L !,sList0 !=elements in Database
+  character(len=80) :: W !,V1,V2
+  logical :: EoL !,Ok
+  integer :: iS,iEl,I,J,K !,M,iPhas,iCp,iSp,I,J,K,M,nCp,fInn !,iEl !,J
+  real(dp):: X1 !,Act
+  integer :: ios,fInn
+  real(dp),allocatable:: vXAtom(:)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< MixPhase_BuildLnk"
+  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhase_BuildLnk"
   !
-  Ok= .TRUE.
+  Ok= .true.
   MsgError= "Ok"
   !
-  CALL GetUnit(fInn)
-  OPEN(fInn,FILE=TRIM(NamFInn))
-  !Ok=.FALSE.
+  call GetUnit(fInn)
+  open(fInn,file=trim(NamFInn))
+  !Ok=.false.
   !
   N=0
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(fInn,'(A)',IOSTAT=ios) L ; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(fInn,'(A)',iostat=ios) L ; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT DoFile
+    case("ENDINPUT"); exit DoFile
     !
-    CASE("SOLUTION","MIXTURE") !mixture name and composition
+    case("SOLUTION","MIXTURE") !mixture name and composition
       !
-      IF(TRIM(W)=="SOLUTION") &
-      & CALL Warning_(TRIM(W)//" soon Obsolete, better use MIXTURE !!!")
+      if(trim(W)=="SOLUTION") &
+      & call Warning_(trim(W)//" soon Obsolete, better use MIXTURE !!!")
       !
       !SOLUTION SOL1
       !  MODEL FELDSPAR_SS
       !  COMPOSITION
       !    POLE2 0.5
       !    POLE3 0.5
-      !  ENDCOMPOSITION
-      !ENDSOLUTION
+      !  endCOMPOSITION
+      !endSOLUTION
       !../..
-      CALL LinToWrd(L,W,EoL) !-> phase name, SOL1
+      call LinToWrd(L,W,EoL) !-> phase name, SOL1
 
-      IF(Species_Index(W,vSpc)>0) THEN
-        Ok= .FALSE.
+      if(Species_Index(W,vSpc)>0) then
+        Ok= .false.
         MsgError="Mixture name should not match with any species name !!!"
-        RETURN !-------------------------------------------------=RETURN
-      ENDIF
+        return !--------------------------------------------------return
+      end if
 
-      MixFas%Name=TRIM(W)
+      MixFas%Name=trim(W)
       !
-      DoMixFas: DO
+      DoMixFas: do
         !
-        READ(fInn,'(A)',IOSTAT=ios) L  ;  IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoMixFas
-        CALL AppendToEnd(L,W,EoL)
+        read(fInn,'(A)',iostat=ios) L  ;  if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoMixFas
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(W)
         !
-        CASE("ENDINPUT")                       ; EXIT DoFile
+        case("ENDINPUT")                       ; exit DoFile
         !
-        CASE("END","ENDSOLUTION","ENDMIXTURE") ; EXIT DoMixFas
+        case("END","ENDSOLUTION","ENDMIXTURE") ; exit DoMixFas
         !
         !------------------------------------------------read model name
-        CASE("MODEL")
+        case("MODEL")
         ! read model name and check it is among the model base vMixModel
         ! -> return its index, iS, in array vMixModel_
-          CALL LinToWrd(L,W,EoL)
+          call LinToWrd(L,W,EoL)
           !
           !find the mixture name in vMixModel%Name
           iS= MixModel_Index(vMixModel,W)
 
-          IF(iS==0) THEN
-            Ok= .FALSE.
-            MsgError=                 TRIM(W)//"= MIXTURE.MODEL UNKNOWN"
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+          if(iS==0) then
+            Ok= .false.
+            MsgError=                 trim(W)//"= MIXTURE.MODEL UNKNOWN"
+            return !----------------------------------------------return
+          end if
 
-          IF(iDebug>0) WRITE(fTrc,'(2A)') "MODEL=", TRIM(W)
+          if(iDebug>0) write(fTrc,'(2A)') "MODEL=", trim(W)
           MixFas%iModel=   iS
           !
           !=MixModel
-        !ENDCASE("MODEL")
+        !endcase("MODEL")
         !-----------------------------------------------/read model name
         !
         !-----------------------------------------/read phase compositon
-        CASE("COMPOSITION")
+        case("COMPOSITION")
           !
-          IF(iDebug>0) WRITE(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
+          if(iDebug>0) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
           !
-          IF(MixFas%iModel==0) THEN
-            Ok= .FALSE.
+          if(MixFas%iModel==0) then
+            Ok= .false.
             MsgError=             "must define the model beforehand ..."
-            RETURN !----------------------------------------------RETURN
-          ENDIF
+            return !----------------------------------------------return
+          end if
           !
           MixModel=vMixModel(MixFas%iModel)
           !
-          !! SELECT CASE(TRIM(MixModel%Model))
+          !! select case(trim(MixModel%Model))
 
-          !! CASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+          !! case("IDEAL","POLE","MOLECULAR","FELSPAR")
           !-------------------input on several lines, one per end-member
-            DO
+            do
               !
-              READ(fInn,'(A)') L; CALL LinToWrd(L,W,EoL)
+              read(fInn,'(A)') L; call LinToWrd(L,W,EoL)
               !-> end-member name, or "!", or "END", or "ENDCOMPOSITION"
-              IF(W=="!") CYCLE !-> comment line
-              CALL AppendToEnd(L,W,EoL)
-              IF(W=="END") EXIT
-              IF(W=="ENDCOMPOSITION") EXIT
+              if(W=="!") cycle !-> comment line
+              call AppendToEnd(L,W,EoL)
+              if(W=="END") exit
+              if(W=="ENDCOMPOSITION") exit
               !
-              I= Species_Index(TRIM(W),vSpc)
+              I= Species_Index(trim(W),vSpc)
               !
-              IF(I==0) THEN
-                Ok= .FALSE.
-                MsgError=   TRIM(W)//" <-end-member NOT FOUND in species list"
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              if(I==0) then
+                Ok= .false.
+                MsgError=   trim(W)//" <-end-member NOT FOUND in species list"
+                return !------------------------------------------return
+              end if
               !
               !--- search for the end-member with index I
               !--- in the end-member list, vIPole(:), of mixing model MixModel
               !--- and read mole fraction
               K=0
-              DO
+              do
                 K=K+1
-                IF(K>MixModel%NPole) EXIT
+                if(K>MixModel%NPole) exit
                 !
-                IF(I==MixModel%vIPole(K)) THEN
+                if(I==MixModel%vIPole(K)) then
                   !
-                  CALL LinToWrd(L,W,EoL) !-> rest of line -> composition
-                  CALL WrdToReal(W,X1)
+                  call LinToWrd(L,W,EoL) !-> rest of line -> composition
+                  call WrdToReal(W,X1)
                   MixFas%vLPole(K)= (X1>Zero)
                   MixFas%vXPole(K)=  X1 !save to MixFas%composition
                   !
-                  IF(iDebug>0) WRITE(fTrc,'(2(A,I3))') &
+                  if(iDebug>0) write(fTrc,'(2(A,I3))') &
                   & "K=",K,", (MixFas%iModel)%vIPole(K)=",MixModel%vIPole(K)
                   !
-                  EXIT
-                ENDIF
-              ENDDO
+                  exit
+                end if
+              end do
               !---/ search for the end-member named W
               !
-              IF(K>MixModel%NPole) THEN
-                Ok= .FALSE.
-                MsgError=      TRIM(W)//" is NOT AN END-MEMBER of this model"
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              if(K>MixModel%NPole) then
+                Ok= .false.
+                MsgError=      trim(W)//" is NOT AN end-MEMBER of this model"
+                return !------------------------------------------return
+              end if
               !
-            ENDDO
-          !ENDCASE("IDEAL","POLE","MOLECULAR","FELSPAR")
+            end do
+          !endcase("IDEAL","POLE","MOLECULAR","FELSPAR")
           !
           !-------------------------for SITE models: read site fractions
-          !!! CASE("SITE")
+          !!! case("SITE")
           !!! ! input should be in number of atoms (not fractions ...) (???)
           !!! ! one line per site, reproducing the structure
           !!! ! of the SITE block of the MIXTURE.MODEL
           !!!   M=0
           !!!   K=0
-          !!!   DoSite: DO !M=1,MixModel%NSite
-          !!!     READ(fInn,'(A)') L
-          !!!     CALL LinToWrd(L,W,EoL)
-          !!!     CALL AppendToEnd(L,W,EoL)
+          !!!   DoSite: do !M=1,MixModel%NSite
+          !!!     read(fInn,'(A)') L
+          !!!     call LinToWrd(L,W,EoL)
+          !!!     call AppendToEnd(L,W,EoL)
           !!!     !
-          !!!     IF(W=="!")              CYCLE DoSite !-> comment line
-          !!!     IF(W=="END")            EXIT DoSite
-          !!!     IF(W=="ENDCOMPOSITION") EXIT DoSite
+          !!!     if(W=="!")              cycle DoSite !-> comment line
+          !!!     if(W=="END")            exit DoSite
+          !!!     if(W=="ENDCOMPOSITION") exit DoSite
           !!!     !
           !!!     M= M+1 !site index
-          !!!     IF(M > MixModel%NSite) EXIT DoSite
+          !!!     if(M > MixModel%NSite) exit DoSite
           !!!     !
-          !!!     DO
+          !!!     do
           !!!     !-- scan the rest of the line
           !!!     !-- -> retrieve composition data
-          !!!       CALL LinToWrd(L,W,EoL)
-          !!!       IF(W=="!") CYCLE DoSite !END of line -> READ a new line
-          !!!       CALL WrdToReal(W,X1) !SAVE to MixFas%composition
+          !!!       call LinToWrd(L,W,EoL)
+          !!!       if(W=="!") cycle DoSite !end of line -> read a new line
+          !!!       call WrdToReal(W,X1) !save to MixFas%composition
           !!!       !MixFas%vLPole(K)=(X1>Zero)
           !!!       !
           !!!       K=K+1
-          !!!       IF(K>MixModel%NAtom) EXIT DoSite
+          !!!       if(K>MixModel%NAtom) exit DoSite
           !!!       ! save to vMixFas(J)%composition
           !!!       MixFas%vXAtom(K)= X1 / MixModel%vMulti(M)
           !!!       !
-          !!!       IF(iDebug>0) &
-          !!!       & WRITE(fTrc,'(I3,1X,2A,G15.6)') K,MixModel%vNamAtom(K),"=",X1
+          !!!       if(iDebug>0) &
+          !!!       & write(fTrc,'(I3,1X,2A,G15.6)') K,MixModel%vNamAtom(K),"=",X1
           !!!       !
-          !!!     ENDDO
-          !!!   ENDDO DoSite
-          !!! !ENDCASE("SITE")
+          !!!     end do
+          !!!   end do DoSite
+          !!! !endcase("SITE")
           !------------------------/for SITE models: read site fractions
           !
-          !! END SELECT !CASE (TRIM(MixModel%Model))
+          !! end select !case (trim(MixModel%Model))
           !
-          IF(TRIM(MixModel%Model)=="SITE") THEN
+          if(MixModel%Model==Mix_Site) then
           ! to initialize vLPole, calculate the ideal activities of the endmembers
             !
-            ALLOCATE(vXAtom(MixModel%NAtom))
-            CALL MixModel_XPoleToXSite( &
+            allocate(vXAtom(MixModel%NAtom))
+            call MixModel_XPoleToXSite( &
             & MixModel, &
             & MixFas%vXPole(1:MixModel%NPole), &
             & vXAtom(1:MixModel%NAtom))
             !
             !------------------------------------------------------trace
-            IF(iDebug>0) THEN
+            if(iDebug>0) then
               !
-              WRITE(fTrc,'(/,A,/)') "POLE FRACTIONS"
-              DO i=1,MixModel%NPole
-                WRITE(fTrc,'(G12.4,1X)',ADVANCE="NO") MixFas%vXPole(I)
-              ENDDO
-              WRITE(fTrc,*)
+              write(fTrc,'(/,A,/)') "POLE FRACTIONS"
+              do i=1,MixModel%NPole
+                write(fTrc,'(G12.4,1X)',advance="NO") MixFas%vXPole(I)
+              end do
+              write(fTrc,*)
               !
-              WRITE(fTrc,'(/,A,/)') "SITE FRACTIONS"
+              write(fTrc,'(/,A,/)') "SITE FRACTIONS"
               I= MixModel%vIAtomSite(1)
-              DO iEl=1,MixModel%NAtom
+              do iEl=1,MixModel%NAtom
                 J= MixModel%vIAtomSite(iEl)
-                IF(J/=I) THEN
+                if(J/=I) then
                   I= J
-                  WRITE(fTrc,*)
-                ENDIF
-                WRITE(fTrc,'(A,1X,G12.4,1X)',ADVANCE="NO") &
+                  write(fTrc,*)
+                end if
+                write(fTrc,'(A,1X,G12.4,1X)',advance="NO") &
                 & MixModel%vNamAtom(iEl), vXAtom(iEl)
-              ENDDO
-              WRITE(fTrc,*)
+              end do
+              write(fTrc,*)
               !
-            ENDIF
+            end if
             !-----------------------------------------------------/trace
 
-            IF(iDebug>0) &
-            & WRITE(fTrc,'(/,A,/)') "for site models, initialize vLPole"
+            if(iDebug>0) &
+            & write(fTrc,'(/,A,/)') "for site models, initialize vLPole"
             !
-            DO K=1,MixModel%NPole
-              !IF(MixModel%vHasPole(K)) THEN
+            do K=1,MixModel%NPole
+              !if(MixModel%vHasPole(K)) then
                 X1= MixModel_Site_ActivIdeal(MixModel,K,vXAtom)
-                IF(iDebug>0) WRITE(fTrc,'(A,1X,G15.6)') MixModel%vNamPole(K),X1
+                if(iDebug>0) write(fTrc,'(A,1X,G15.6)') MixModel%vNamPole(K),X1
                 MixFas%vLPole(K)= (X1>Zero)
-              !ELSE
-              !  MixFas%vLPole(K)= .FALSE.
-              !ENDIF
-            ENDDO
+              !else
+              !  MixFas%vLPole(K)= .false.
+              !end if
+            end do
             !
-            IF(iDebug>0) WRITE(fTrc,'(/,A,/)') "end vLPole"
+            if(iDebug>0) write(fTrc,'(/,A,/)') "END vLPole"
             !
-          ENDIF
+          end if
           !
           !-------------------------------------------------------------
           !-- for the model of the phase, MixModel%Model, to be accepted,
           !-- must check whether all 'active' endmembers of MixModel%Model
           !-- are found in vSpc
           !-------------------------------------------------------------
-          DO K=1,MixModel%NPole
-            IF(MixFas%vLPole(K)) THEN !ONLY for "active" endmembers
+          do K=1,MixModel%NPole
+            if(MixFas%vLPole(K)) then !only for "active" endmembers
               !
               J=Species_Index(MixModel%vNamPole(K),vSpc)
               !
-              IF(J==0) THEN
-                Ok= .FALSE.
-                MsgError= TRIM(MixFas%Name) &
-                & //" SPECIES NOT IN BASE:"//TRIM(MixModel%vNamPole(K))
-                RETURN !------------------------------------------RETURN
-              ENDIF
+              if(J==0) then
+                Ok= .false.
+                MsgError= trim(MixFas%Name) &
+                & //" SPECIES NOT IN BASE:"//trim(MixModel%vNamPole(K))
+                return !------------------------------------------return
+              end if
               !
               MixModel%vIPole(K)=J
               !
-            ENDIF
-          ENDDO
+            end if
+          end do
           N=N+1
           !
-          IF(iDebug>0) &
-          & WRITE(fTrc,'(I3,1X,A24,A24)') N, MixFas%Name, MixModel%Name
-          CALL LnkFas_Build(N==1,MixFas,LnkFas,pFas)
+          if(iDebug>0) &
+          & write(fTrc,'(I3,1X,A24,A24)') N, MixFas%Name, MixModel%Name
+          call LnkFas_Build(N==1,MixFas,LnkFas,pFas)
           !
-        !ENDCASE("COMPOSITION")
+        !endcase("COMPOSITION")
         !----------------------------------------/read phase composition
         !
-        END SELECT !CASE(W)!
+        end select !case(W)!
         !
-        IF(ALLOCATED(vXAtom)) DEALLOCATE(vXAtom)
+        if(allocated(vXAtom)) deallocate(vXAtom)
         !
-      ENDDO DoMixFas
-      !ENDCASE("MIXTURE")
-    END SELECT !CASE(W)
-  ENDDO DoFile
+      end do DoMixFas
+      !endcase("MIXTURE")
+    end select !case(W)
+  end do DoFile
   !
-  CLOSE(fInn)
+  close(fInn)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ MixPhase_BuildLnk"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ MixPhase_BuildLnk"
   !
-  RETURN
-ENDSUBROUTINE MixPhase_BuildLnk
+  return
+end subroutine MixPhase_BuildLnk
   !
-SUBROUTINE MixPhase_LnkToVec(Lnk,V)
-  USE M_T_MixPhase,ONLY: T_MixPhase
+subroutine MixPhase_LnkToVec(Lnk,V)
+  use M_T_MixPhase,only: T_MixPhase
   !
-  TYPE(T_LnkFas),               POINTER    :: Lnk
-  TYPE(T_MixPhase),DIMENSION(:),INTENT(OUT):: V
+  type(T_LnkFas),               pointer    :: Lnk
+  type(T_MixPhase),dimension(:),intent(out):: V
   !
-  TYPE(T_LnkFas),POINTER:: pCur,pPrev
-  INTEGER::I
+  type(T_LnkFas),pointer:: pCur,pPrev
+  integer::I
   !
   pCur=>Lnk
   I=0
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associateD(pCur))
     I=I+1
     V(I)=pCur%Value
-    pPrev=>pCur; pCur=> pCur%next; DEALLOCATE(pPrev)
-  ENDDO
+    pPrev=>pCur; pCur=> pCur%next; deallocate(pPrev)
+  end do
   !
-  RETURN
-ENDSUBROUTINE MixPhase_LnkToVec
+  return
+end subroutine MixPhase_LnkToVec
 
-ENDMODULE M_MixPhase_Read
+end module M_MixPhase_Read

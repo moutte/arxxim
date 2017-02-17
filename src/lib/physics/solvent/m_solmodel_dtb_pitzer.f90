@@ -1,93 +1,93 @@
-MODULE M_Solmodel_Pitzer_Dtb
+module M_Solmodel_Pitzer_Dtb
 !--
 !-- Module routines associées à Pitzer
 !-- Livraison 10/2006: Nicolas Ferrando
 !-- Remoduling : Anthony Michel
 !--
-!-- modified : J.Moutte, 11/2006
+!-- MODIFIED : J.Moutte, 11/2006
 !-- -> M_Pitzer_Dtb-  database reading, and TP computations
 !-- -> M_Pitzer_Calc- calculations
 !--
-  USE M_Kinds
-  USE M_Trace,    ONLY: fTrc,iDebug,T_,Stop_
-  USE M_T_Species,ONLY: T_Species
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,    only: fTrc,iDebug,T_,Stop_
+  use M_T_Species,only: T_Species
+  implicit none
   !
-  PRIVATE
+  private
   !
   !-- public --
-  PUBLIC:: Solmodel_Pitzer_Dtb_Init
-  PUBLIC:: Solmodel_Pitzer_Dtb_TPUpdate
-  PUBLIC:: Solmodel_Pitzer_Dtb_Clean
-  PUBLIC:: Solmodel_Pitzer_Dtb_TPtest
+  public:: Solmodel_Pitzer_Dtb_Init
+  public:: Solmodel_Pitzer_Dtb_TPUpdate
+  public:: Solmodel_Pitzer_Dtb_Clean
+  public:: Solmodel_Pitzer_Dtb_TPtest
   !
-  REAL(dp),DIMENSION(:,:),  ALLOCATABLE,PUBLIC:: tBeta0,tBeta1,tBeta2
-  REAL(dp),DIMENSION(:,:),  ALLOCATABLE,PUBLIC:: tCPhi,tTheta,tLamda
-  REAL(dp),DIMENSION(:,:),  ALLOCATABLE,PUBLIC:: tAlfa1,tAlfa2
-  REAL(dp),DIMENSION(:,:,:),ALLOCATABLE,PUBLIC:: tZeta,tPsi
+  real(dp),dimension(:,:),  allocatable,public:: tBeta0,tBeta1,tBeta2
+  real(dp),dimension(:,:),  allocatable,public:: tCPhi,tTheta,tLamda
+  real(dp),dimension(:,:),  allocatable,public:: tAlfa1,tAlfa2
+  real(dp),dimension(:,:,:),allocatable,public:: tZeta,tPsi
   !
   !-- private --
-  TYPE(T_Species),ALLOCATABLE:: vSolut(:)
+  type(T_Species),allocatable:: vSolut(:)
   !
-  INTEGER,DIMENSION(:,:),  ALLOCATABLE:: tI_Beta0,tI_Beta1,tI_Beta2
-  INTEGER,DIMENSION(:,:),  ALLOCATABLE:: tI_CPhi,tI_Theta,tI_Lamda
-  INTEGER,DIMENSION(:,:,:),ALLOCATABLE:: tI_Zeta,tI_Psi
+  integer,dimension(:,:),  allocatable:: tI_Beta0,tI_Beta1,tI_Beta2
+  integer,dimension(:,:),  allocatable:: tI_CPhi,tI_Theta,tI_Lamda
+  integer,dimension(:,:,:),allocatable:: tI_Zeta,tI_Psi
   !
-  REAL(dp),DIMENSION(:),ALLOCATABLE:: vBeta0,vBeta1,vBeta2
-  REAL(dp),DIMENSION(:),ALLOCATABLE:: vCPhi,vTheta,vLamda
-  REAL(dp),DIMENSION(:),ALLOCATABLE:: vZeta,vPsi
-  REAL(dp),DIMENSION(:),ALLOCATABLE:: vAlfa1,vAlfa2
+  real(dp),dimension(:),allocatable:: vBeta0,vBeta1,vBeta2
+  real(dp),dimension(:),allocatable:: vCPhi,vTheta,vLamda
+  real(dp),dimension(:),allocatable:: vZeta,vPsi
+  real(dp),dimension(:),allocatable:: vAlfa1,vAlfa2
   !
   ! usage:
   !  k= tI_Beta0(i,j)
-  !  IF(k/=0) THEN
+  !  if(k/=0) then
   !    tBeta0(i,j)= vBeta0(k)
 
-  ! FUNCTION CoeffAtTP()
+  ! function CoeffAtTP()
   !    Res= T%X0
   !    &  + T%X3 *(TdgK -Tref) &
   !    &  + T%X1 *(One/TdgK -One/Tref) &
   !    &  + T%x2 *log(TdgK/Tref)       &
   !    &  + T%x4 *(TdgK*TdgK -Tref*Tref)
 
-  !~ !! former version: static fitting parameter
-  !~ TYPE:: T_Fitt
-    !~ INTEGER:: iModel
-    !~ REAL(dp):: vX(1:8)
-  !~ ENDTYPE T_Fitt
+  ! !! former version: static fitting parameter
+  ! type:: T_Fitt
+  ! integer:: iModel
+  ! real(dp):: vX(1:8)
+  ! end type T_Fitt
 
-  TYPE:: T_Fitt
-    CHARACTER(LEN=30):: namModel
-    INTEGER:: iModel ! model selector
-    INTEGER:: N      ! dimension of vX (model- dependent)
-    REAL(dp),ALLOCATABLE:: vX(:)
-  ENDTYPE T_Fitt
+  type:: T_Fitt
+    character(len=30):: namModel
+    integer:: iModel ! model selector
+    integer:: N      ! dimension of vX (model- dependent)
+    real(dp),allocatable:: vX(:)
+  end type T_Fitt
   !
-  TYPE(T_Fitt),DIMENSION(:),ALLOCATABLE:: vF_Beta0,vF_Beta1,vF_Beta2
-  TYPE(T_Fitt),DIMENSION(:),ALLOCATABLE:: vF_CPhi,vF_Theta,vF_Lamda
-  TYPE(T_Fitt),DIMENSION(:),ALLOCATABLE:: vF_Zeta,vF_Psi
+  type(T_Fitt),dimension(:),allocatable:: vF_Beta0,vF_Beta1,vF_Beta2
+  type(T_Fitt),dimension(:),allocatable:: vF_CPhi,vF_Theta,vF_Lamda
+  type(T_Fitt),dimension(:),allocatable:: vF_Zeta,vF_Psi
 
-CONTAINS
+contains
 
-SUBROUTINE Solmodel_Pitzer_Dtb_Init(vSpc)
-  USE M_T_Species, ONLY: T_Species
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
+subroutine Solmodel_Pitzer_Dtb_Init(vSpc)
+  use M_T_Species, only: T_Species
+  type(T_Species),intent(in):: vSpc(:)
   !
-  LOGICAL:: Error
-  CHARACTER(LEN=80):: ErrorMsg
+  logical:: Error
+  character(len=80):: ErrorMsg
   !
-  CALL Solmodel_Pitzer_Dtb_Clean
+  call Solmodel_Pitzer_Dtb_Clean
   !
-  CALL Solmodel_Pitzer_Dtb_Read(vSpc,Error,ErrorMsg)
+  call Solmodel_Pitzer_Dtb_Read(vSpc,Error,ErrorMsg)
   !
-  IF(Error) &
-  & CALL Stop_("Error in Solmodel_PitzerDtb_Read:"//TRIM(ErrorMsg))
+  if(Error) &
+  & call Stop_("Error in Solmodel_PitzerDtb_Read:"//trim(ErrorMsg))
   !
-  !CALL Solmodel_PitzerDtb_TPUpdate(TdgK)
+  !call Solmodel_PitzerDtb_TPUpdate(TdgK)
   !
-ENDSUBROUTINE Solmodel_Pitzer_Dtb_Init
+end subroutine Solmodel_Pitzer_Dtb_Init
 
-SUBROUTINE Solmodel_Pitzer_Dtb_Read( &
+subroutine Solmodel_Pitzer_Dtb_Read( &
 & vSpc,           &
 & Error,ErrorMsg  &
 & )
@@ -96,300 +96,301 @@ SUBROUTINE Solmodel_Pitzer_Dtb_Read( &
 !-- must be called AFTER vSpc has been built
 !-- -> vPitz will be a subset of vSpc
 !--
-  USE M_IoTools
-  USE M_Files,        ONLY: NamFPtz
-  USE M_Numeric_Const,ONLY: ln10
-  USE M_T_Species,    ONLY: T_Species,Species_Index
+  use M_IoTools
+  use M_Files,        only: NamFPtz
+  use M_Numeric_Const,only: ln10
+  use M_T_Species,    only: T_Species,Species_Index
   !
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
+  type(T_Species),intent(in):: vSpc(:)
   !
-  LOGICAL,         INTENT(OUT):: Error
-  CHARACTER(LEN=*),INTENT(OUT):: ErrorMsg
+  logical,         intent(out):: Error
+  character(len=*),intent(out):: ErrorMsg
   !
-  REAL(dp),PARAMETER:: Tref= 298.15D0
+  real(dp),parameter:: Tref= 298.15_dp !kelvin
+  real(dp),parameter:: Pref= 1.0_dp    !bar
   !
-  LOGICAL:: L_ScanSpecies
+  logical:: L_ScanSpecies
   !
-  CHARACTER(LEN=512):: L,W,W2
-  LOGICAL           :: EoL
+  character(len=512):: L,W,W2
+  logical           :: EoL
   !
-  ! CHARACTER(LEN=7):: FittFormat
-  CHARACTER(LEN=30):: namModel
+  ! character(len=7):: FittFormat
+  character(len=30):: namModel
   !
-  LOGICAL :: Ok
-  INTEGER :: vISpc(3)
-  INTEGER :: iSp1,iSp2,iSp3,nSl,I,J,N
-  INTEGER :: F,ios,ff
-  INTEGER :: iModel
-  INTEGER :: iBeta0,iBeta1,iBeta2
-  INTEGER :: iCPhi,iTheta,iLamda
-  INTEGER :: iPsi,iZeta
-  REAL(dp):: vXread(dimV) !,X0,vX(dimV)
-  TYPE(T_Fitt):: Coeff
+  logical :: Ok
+  integer :: vISpc(3)
+  integer :: iSp1,iSp2,iSp3,nSl,I,J,N
+  integer :: F,ios,ff
+  integer :: iModel
+  integer :: iBeta0,iBeta1,iBeta2
+  integer :: iCPhi,iTheta,iLamda
+  integer :: iPsi,iZeta
+  real(dp):: vXread(dimV) !,X0,vX(dimV)
+  type(T_Fitt):: Coeff
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Solmodel_PitzerDtb_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Solmodel_PitzerDtb_Read"
   !
-  CALL Solmodel_Pitzer_Dtb_Clean
-  ! Pitzer_Dtb_Init_Done=.FALSE.
+  call Solmodel_Pitzer_Dtb_Clean
+  ! Pitzer_Dtb_Init_Done=.false.
   !
-  L_ScanSpecies= .FALSE.
+  L_ScanSpecies= .false.
   !
-  Error= .FALSE.
+  Error= .false.
   ErrorMsg= "OK"
   !
-  !!  IF(PRESENT(TdgK)) THEN; T=TdgK
-  !!  ELSE;                   T=298.15D0
-  !!  ENDIF
-  !!  IF(PRESENT(Pbar)) THEN; P=Pbar
-  !!  ELSE;                   P=1.01325D0 !1 atm in bars
-  !!                          !caveat: some FUNCTIONs may USE Pascal ?...
-  !!  ENDIF
+  !!  if(present(TdgK)) then; T=TdgK
+  !!  else;                   T=298.15D0
+  !!  end if
+  !!  if(present(Pbar)) then; P=Pbar
+  !!  else;                   P=1.01325D0 !1 atm in bars
+  !!                          !caveat: some functions may use Pascal ?...
+  !!  end if
   !!
-  !! nSl= SIZE(vSpc)
+  !! nSl= size(vSpc)
   !
   ! nSl is number of solute species
-  nSl= COUNT(vSpc(:)%Typ=="AQU") - 1 !mod 19/06/2008 09:38
+  nSl= count(vSpc(:)%Typ=="AQU") - 1 !mod 19/06/2008 09:38
   !
-  ALLOCATE(vSolut(1:nSl))
+  allocate(vSolut(1:nSl))
   !
   J= 0
-  DO I=1,SIZE(vSpc)
-    IF(vSpc(I)%Typ=="AQU" .AND. vSpc(I)%NamSp/="H2O") THEN
+  do I=1,size(vSpc)
+    if(vSpc(I)%Typ=="AQU" .and. vSpc(I)%NamSp/="H2O") then
       J= J+1
       vSolut(J)= vSpc(I)
-    ENDIF
-  ENDDO
+    end if
+  end do
   !
   iModel= 0
-  namModel= "NONE"
+  namModel= "none"
   !
-  ALLOCATE(tBeta0(1:nSl,1:nSl))      ;  tBeta0=Zero
-  ALLOCATE(tBeta1(1:nSl,1:nSl))      ;  tBeta1=Zero
-  ALLOCATE(tBeta2(1:nSl,1:nSl))      ;  tBeta2=Zero
-  ALLOCATE(tCPhi (1:nSl,1:nSl))      ;  tCPhi= Zero
-  ALLOCATE(tTheta(1:nSl,1:nSl))      ;  tTheta=Zero
-  ALLOCATE(tLamda(1:nSl,1:nSl))      ;  tLamda=Zero
-  ALLOCATE(tAlfa1(1:nSl,1:nSl))      ;  tAlfa1=Zero
-  ALLOCATE(tAlfa2(1:nSl,1:nSl))      ;  tAlfa2=Zero
-  ALLOCATE(tZeta (1:nSl,1:nSl,1:nSl));  tZeta= Zero
-  ALLOCATE(tPsi  (1:nSl,1:nSl,1:nSl));  tPsi=  Zero
+  allocate(tBeta0(1:nSl,1:nSl))      ;  tBeta0=Zero
+  allocate(tBeta1(1:nSl,1:nSl))      ;  tBeta1=Zero
+  allocate(tBeta2(1:nSl,1:nSl))      ;  tBeta2=Zero
+  allocate(tCPhi (1:nSl,1:nSl))      ;  tCPhi= Zero
+  allocate(tTheta(1:nSl,1:nSl))      ;  tTheta=Zero
+  allocate(tLamda(1:nSl,1:nSl))      ;  tLamda=Zero
+  allocate(tAlfa1(1:nSl,1:nSl))      ;  tAlfa1=Zero
+  allocate(tAlfa2(1:nSl,1:nSl))      ;  tAlfa2=Zero
+  allocate(tZeta (1:nSl,1:nSl,1:nSl));  tZeta= Zero
+  allocate(tPsi  (1:nSl,1:nSl,1:nSl));  tPsi=  Zero
   !
-  ALLOCATE(tI_Beta0(1:nSl,1:nSl))    ;  tI_Beta0= 0
-  ALLOCATE(tI_Beta1(1:nSl,1:nSl))    ;  tI_Beta1= 0
-  ALLOCATE(tI_Beta2(1:nSl,1:nSl))    ;  tI_Beta2= 0
-  ALLOCATE(tI_CPhi (1:nSl,1:nSl))    ;  tI_CPhi=  0
-  ALLOCATE(tI_Theta(1:nSl,1:nSl))    ;  tI_Theta= 0
-  ALLOCATE(tI_Lamda(1:nSl,1:nSl))    ;  tI_Lamda= 0
+  allocate(tI_Beta0(1:nSl,1:nSl))    ;  tI_Beta0= 0
+  allocate(tI_Beta1(1:nSl,1:nSl))    ;  tI_Beta1= 0
+  allocate(tI_Beta2(1:nSl,1:nSl))    ;  tI_Beta2= 0
+  allocate(tI_CPhi (1:nSl,1:nSl))    ;  tI_CPhi=  0
+  allocate(tI_Theta(1:nSl,1:nSl))    ;  tI_Theta= 0
+  allocate(tI_Lamda(1:nSl,1:nSl))    ;  tI_Lamda= 0
 
-  !ALLOCATE(tI_Alfa1(1:nSl,1:nSl));        tI_Alfa1=.false.
-  !ALLOCATE(tI_Alfa2(1:nSl,1:nSl));        tI_Alfa2=.false.
+  !allocate(tI_Alfa1(1:nSl,1:nSl));        tI_Alfa1=.false.
+  !allocate(tI_Alfa2(1:nSl,1:nSl));        tI_Alfa2=.false.
 
-  ALLOCATE(tI_Zeta (1:nSl,1:nSl,1:nSl)) ; tI_Zeta= 0
-  ALLOCATE(tI_Psi  (1:nSl,1:nSl,1:nSl)) ; tI_Psi=  0
+  allocate(tI_Zeta (1:nSl,1:nSl,1:nSl)) ; tI_Zeta= 0
+  allocate(tI_Psi  (1:nSl,1:nSl,1:nSl)) ; tI_Psi=  0
   !
-  CALL GetUnit(F)
+  call GetUnit(F)
   !
-  !----- reading database, FIRST PASS -> read tI_Beta0, tI_Beta1, ... --
-  OPEN(F,FILE=TRIM(NamFPtz),STATUS='OLD')
+  !----- reading database, FIRST pass -> read tI_Beta0, tI_Beta1, ... --
+  open(F,file=trim(NamFPtz),STATUS='OLD')
 
-  DoFile1: DO
+  DoFile1: do
 
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT DoFile1
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile1
     !
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE doFile1 !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle doFile1 !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT DoFile1
+    case("ENDINPUT"); exit DoFile1
     !
-    CASE("PITZER")
+    case("PITZER")
       !
-      doLine1: DO
+      doLine1: do
         !
-        READ(F,'(A)',IOSTAT=ios) L
-        IF(ios/=0) EXIT doFile1
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0) exit doFile1
         !
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE doLine1 !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle doLine1 !skip comment lines
+        call AppendToEnd(L,W,EoL)
 
-        SELECT CASE(W)
+        select case(W)
 
-        CASE("ENDINPUT");        EXIT doFile1
-        CASE("ENDPITZER","END"); EXIT doLine1
+        case("ENDINPUT");        exit doFile1
+        case("ENDPITZER","END"); exit doLine1
 
-        CASE("FORMAT")
-          CALL LinToWrd(L,W2,EoL)
-          SELECT CASE(TRIM(W2))
-          CASE("NEW")  ;  L_ScanSpecies= .TRUE.
-          CASE("OLD")  ;  L_ScanSpecies= .FALSE.
-          CASE DEFAULT
-            Error= .TRUE.
-            ErrorMsg= TRIM(W2)//"= not valid as FORMAT"
-            RETURN
-          END SELECT
+        case("FORMAT")
+          call LinToWrd(L,W2,EoL)
+          select case(trim(W2))
+          case("NEW")  ;  L_ScanSpecies= .true.
+          case("OLD")  ;  L_ScanSpecies= .false.
+          case default
+            Error= .true.
+            ErrorMsg= trim(W2)//"= not valid as format"
+            return
+          end select
 
-        CASE("FITTING")
-          !CALL LinToWrd(L,W2,EoL)
-          CYCLE doLine1
+        case("FITTING")
+          !call LinToWrd(L,W2,EoL)
+          cycle doLine1
         !
         !--------------------------------------- 2-species parameters --
-        CASE("BETA0","BETA1", "BETA2","CPHI", "LAMBDA","THETA")
-          IF(L_ScanSpecies) THEN
-            CALL LinToWrd(L,W2,EoL)
-            CALL Species_Scan(W2,2,vISpc,Error)
-            IF(Error) THEN
-              ErrorMsg= TRIM(W2)//" -> Error in species list ?"
-              RETURN
-            ELSE
+        case("BETA0","BETA1", "BETA2","CPHI", "LAMBDA","THETA")
+          if(L_ScanSpecies) then
+            call LinToWrd(L,W2,EoL)
+            call Species_Scan(W2,2,vISpc,Error)
+            if(Error) then
+              ErrorMsg= trim(W2)//" -> Error in species list ?"
+              return
+            else
               iSp1= vISpc(1)
               iSp2= vISpc(2)
-            ENDIF
-          ELSE
-            CALL LinToWrd(L,W2,EoL)  ;  iSp1= Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL)  ;  iSp2= Species_Index(W2,vSolut)
-          ENDIF
+            end if
+          else
+            call LinToWrd(L,W2,EoL)  ;  iSp1= Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL)  ;  iSp2= Species_Index(W2,vSolut)
+          end if
           !
           !--- skip the lines with species not in current species set --
-          IF(iSp1*iSp2==0) CYCLE doLine1
+          if(iSp1*iSp2==0) cycle doLine1
           !---/
           !
-          IF(TRIM(W)=="LAMBDA") THEN
-            IF(vSolut(iSp2)%Z/=0) THEN
+          if(trim(W)=="LAMBDA") then
+            if(vSolut(iSp2)%Z/=0) then
               ErrorMsg= "LAMBDA coeff: species 2 must be neutral"
-              IF(iDebug>2) WRITE(fTrc,'(A,/,A)'), &
-              & TRIM(ErrorMsg), &
-              & TRIM(vSolut(iSp1)%NamSp)//"="// &
-              & TRIM(vSolut(iSp2)%NamSp)
-              Error= .TRUE.
-              RETURN
-            END IF
-          ELSE
-            CALL Sort2sp(iSp1,iSp2,Error)
-          END IF
+              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              & trim(ErrorMsg), &
+              & trim(vSolut(iSp1)%NamSp)//"="// &
+              & trim(vSolut(iSp2)%NamSp)
+              Error= .true.
+              return
+            end if
+          else
+            call Sort2sp(iSp1,iSp2,Error)
+          end if
           !
-          IF(Error) &
-          & CALL Stop_("Pitzer database: error in line "//TRIM(W)//TRIM(W2))
+          if(Error) &
+          & call Stop_("Pitzer database: error in line "//trim(W)//trim(W2))
           !
-          !IF(iSp1*iSp2>1) THEN !-> the 2 species are in database
-          SELECT CASE(TRIM(W))
-            CASE("BETA0")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta0)
-            CASE("BETA1")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta1)
-            CASE("BETA2")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta2)
-            CASE("CPHI")      ; Ok= Ok_2Sp(iSp1,iSp2,tI_CPhi )
-            CASE("THETA")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Theta)
-            CASE("LAMBDA")    ; Ok= Ok_2Sp(iSp1,iSp2,tI_Lamda)
-            !! CASE("Alfa") !! not used
+          !if(iSp1*iSp2>1) then !-> the 2 species are in database
+          select case(trim(W))
+            case("BETA0")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta0)
+            case("BETA1")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta1)
+            case("BETA2")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Beta2)
+            case("CPHI")      ; Ok= Ok_2Sp(iSp1,iSp2,tI_CPhi )
+            case("THETA")     ; Ok= Ok_2Sp(iSp1,iSp2,tI_Theta)
+            case("LAMBDA")    ; Ok= Ok_2Sp(iSp1,iSp2,tI_Lamda)
+            !! case("Alfa") !! not used
             !!! Alfa is calculated according to Harvie-etal-84
             !!! see also Pitzer, ReviewInMineralogy-17, p104
-          END SELECT
+          end select
             !
-          !ENDIF
-        !ENDCASE Beta...
+          !end if
+        !endcase Beta...
         !--------------------------------------/ 2-species parameters --
         !
         !--------------------------------------- 3-species parameters --
-        CASE("PSI","ZETA")
+        case("PSI","ZETA")
           !
-          IF(L_ScanSpecies) THEN
-            CALL LinToWrd(L,W2,EoL)
-            CALL Species_Scan(W2,3,vISpc,Error)
-            IF(Error) THEN
-              ErrorMsg= TRIM(W2)//" -> Error in species list ?"
-              RETURN
-            ELSE
+          if(L_ScanSpecies) then
+            call LinToWrd(L,W2,EoL)
+            call Species_Scan(W2,3,vISpc,Error)
+            if(Error) then
+              ErrorMsg= trim(W2)//" -> Error in species list ?"
+              return
+            else
               iSp1= vISpc(1)
               iSp2= vISpc(2)
               iSp3= vISpc(3)
-            ENDIF
-          ELSE
-            CALL LinToWrd(L,W2,EoL); iSp1=Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL); iSp2=Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL); iSp3=Species_Index(W2,vSolut)
-          ENDIF
+            end if
+          else
+            call LinToWrd(L,W2,EoL); iSp1=Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL); iSp2=Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL); iSp3=Species_Index(W2,vSolut)
+          end if
           !
-          IF(iSp1*iSp2*iSp3==0) CYCLE doLine1
+          if(iSp1*iSp2*iSp3==0) cycle doLine1
           !
-          IF(TRIM(W)=="PSI") THEN
-            IF(vSolut(iSp1)%Z*vSolut(iSp2)%Z<0) THEN
+          if(trim(W)=="PSI") then
+            if(vSolut(iSp1)%Z*vSolut(iSp2)%Z<0) then
               ErrorMsg= "PSI coeff: Species 1 & 2 must be ions same charge"
-              IF(iDebug>2) WRITE(fTrc,'(A,/,A)'), &
-              & TRIM(ErrorMsg), &
-              & TRIM(vSolut(iSp1)%NamSp)//"="// &
-              & TRIM(vSolut(iSp2)%NamSp)//"="// &
-              & TRIM(vSolut(iSp3)%NamSp)
-              Error= .TRUE.
-              RETURN
-            END IF
-          END IF
+              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              & trim(ErrorMsg), &
+              & trim(vSolut(iSp1)%NamSp)//"="// &
+              & trim(vSolut(iSp2)%NamSp)//"="// &
+              & trim(vSolut(iSp3)%NamSp)
+              Error= .true.
+              return
+            end if
+          end if
           !
-          IF(TRIM(W)=="ZETA") THEN
-            IF(vSolut(iSp1)%Z*vSolut(iSp2)%Z>0) THEN
+          if(trim(W)=="ZETA") then
+            if(vSolut(iSp1)%Z*vSolut(iSp2)%Z>0) then
               ErrorMsg= "PSI coeff: Species 1 & 2 must be ions opposite charge"
-              IF(iDebug>2) WRITE(fTrc,'(A,/,A)'), &
-              & TRIM(ErrorMsg), &
-              & TRIM(vSolut(iSp1)%NamSp)//"="// &
-              & TRIM(vSolut(iSp2)%NamSp)//"="// &
-              & TRIM(vSolut(iSp3)%NamSp)
-              Error= .TRUE.
-              RETURN
-            END IF
-          END IF
+              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              & trim(ErrorMsg), &
+              & trim(vSolut(iSp1)%NamSp)//"="// &
+              & trim(vSolut(iSp2)%NamSp)//"="// &
+              & trim(vSolut(iSp3)%NamSp)
+              Error= .true.
+              return
+            end if
+          end if
           !
-          ! CALL Sort3sp(iSp1,iSp2,iSp3,Error)
+          ! call Sort3sp(iSp1,iSp2,iSp3,Error)
           !
-          CALL Sort2sp(iSp1,iSp2,Error)
+          call Sort2sp(iSp1,iSp2,Error)
           !
-          IF(Error) &
-          & CALL Stop_("Pitzer database: error in line "//TRIM(W)//TRIM(W2))
+          if(Error) &
+          & call Stop_("Pitzer database: error in line "//trim(W)//trim(W2))
           !
-          SELECT CASE(W)
-            !CASE("PSI");   tI_Psi (iSp1,iSp2,iSp3)= 1
-            !CASE("ZETA");  tI_Zeta(iSp1,iSp2,iSp3)= 1
-            CASE("PSI")  ;  Ok= Ok_3Sp(iSp1,iSp2,iSp3,tI_Psi )
-            CASE("ZETA") ;  Ok= Ok_3Sp(iSp1,iSp2,iSp3,tI_Zeta)
-          END SELECT
+          select case(W)
+            !case("PSI");   tI_Psi (iSp1,iSp2,iSp3)= 1
+            !case("ZETA");  tI_Zeta(iSp1,iSp2,iSp3)= 1
+            case("PSI")  ;  Ok= Ok_3Sp(iSp1,iSp2,iSp3,tI_Psi )
+            case("ZETA") ;  Ok= Ok_3Sp(iSp1,iSp2,iSp3,tI_Zeta)
+          end select
           !
-        !ENDCASE PSI...
+        !endcase PSI...
         !--------------------------------------/ 3-species parameters --
-        CASE DEFAULT
-          Error= .TRUE.
-          ErrorMsg= TRIM(W)//" is unknown keyword"
-          RETURN
+        case default
+          Error= .true.
+          ErrorMsg= trim(W)//" is unknown keyword"
+          return
         !
-        END SELECT
+        end select
 
-      ENDDO doLine1
-    !END CASE("PITZER")
+      end do doLine1
+    !end case("PITZER")
     
-    END SELECT
+    end select
 
-  ENDDO DoFile1
+  end do DoFile1
   !
-  CLOSE(F)
-  !----/ reading database, FIRST PASS -> read tI_Beta0, tI_Beta1, ... --
+  close(F)
+  !----/ reading database, FIRST pass -> read tI_Beta0, tI_Beta1, ... --
 
   !------------------------------------------------------ allocations --
-  iBeta0= COUNT(tI_Beta0(:,:)==1)
-  iBeta1= COUNT(tI_Beta1(:,:)==1)
-  iBeta2= COUNT(tI_Beta2(:,:)==1)
-  iCPhi=  COUNT(tI_CPhi (:,:)==1)
-  iTheta= COUNT(tI_Theta(:,:)==1)
-  iLamda= COUNT(tI_Lamda(:,:)==1)
+  iBeta0= count(tI_Beta0(:,:)==1)
+  iBeta1= count(tI_Beta1(:,:)==1)
+  iBeta2= count(tI_Beta2(:,:)==1)
+  iCPhi=  count(tI_CPhi (:,:)==1)
+  iTheta= count(tI_Theta(:,:)==1)
+  iLamda= count(tI_Lamda(:,:)==1)
   !
-  ALLOCATE(vBeta0(iBeta0))  ;  ALLOCATE(vF_Beta0(iBeta0))
-  ALLOCATE(vBeta1(iBeta1))  ;  ALLOCATE(vF_Beta1(iBeta1))
-  ALLOCATE(vBeta2(iBeta2))  ;  ALLOCATE(vF_Beta2(iBeta2))
+  allocate(vBeta0(iBeta0))  ;  allocate(vF_Beta0(iBeta0))
+  allocate(vBeta1(iBeta1))  ;  allocate(vF_Beta1(iBeta1))
+  allocate(vBeta2(iBeta2))  ;  allocate(vF_Beta2(iBeta2))
   !
-  ALLOCATE(vAlfa1(iBeta1))
-  ALLOCATE(vAlfa2(iBeta2))
+  allocate(vAlfa1(iBeta1))
+  allocate(vAlfa2(iBeta2))
   !
-  ALLOCATE(vCPhi (iCPhi) )  ;  ALLOCATE(vF_CPhi (iCPhi) )
-  ALLOCATE(vTheta(iTheta))  ;  ALLOCATE(vF_Theta(iTheta))
-  ALLOCATE(vLamda(iLamda))  ;  ALLOCATE(vF_Lamda(iLamda))
+  allocate(vCPhi (iCPhi) )  ;  allocate(vF_CPhi (iCPhi) )
+  allocate(vTheta(iTheta))  ;  allocate(vF_Theta(iTheta))
+  allocate(vLamda(iLamda))  ;  allocate(vF_Lamda(iLamda))
   !
   iBeta0= 0
   iBeta1= 0
@@ -398,482 +399,482 @@ SUBROUTINE Solmodel_Pitzer_Dtb_Read( &
   iTheta= 0
   iLamda= 0
   !
-  iPsi=  COUNT(tI_Psi(:,:,:)==1)
-  iZeta= COUNT(tI_Zeta(:,:,:)==1)
-  ALLOCATE(vPsi(iPsi))     ;  ALLOCATE(vF_Psi(iPsi))
-  ALLOCATE(vZeta(iZeta))   ;  ALLOCATE(vF_Zeta(iZeta))
+  iPsi=  count(tI_Psi(:,:,:)==1)
+  iZeta= count(tI_Zeta(:,:,:)==1)
+  allocate(vPsi(iPsi))     ;  allocate(vF_Psi(iPsi))
+  allocate(vZeta(iZeta))   ;  allocate(vF_Zeta(iZeta))
   !
   iPsi=  0
   iZeta= 0
   !------------------------------------------------------/allocations --
 
-  !-------- reading database, SECOND PASS -> read vBeta0, vBeta1, ... --
-  OPEN(F,FILE=TRIM(NamFPtz),STATUS='OLD')
+  !-------- reading database, SECOND pass -> read vBeta0, vBeta1, ... --
+  open(F,file=trim(NamFPtz),STATUS='OLD')
   !
-  DoFile2: DO
+  DoFile2: do
 
-    READ(F,'(A)',IOSTAT=ios) L
-    IF(ios/=0) EXIT doFile2
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit doFile2
     !
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE doFile2 !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle doFile2 !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT"); EXIT doFile2
+    case("ENDINPUT"); exit doFile2
     !
-    CASE("PITZER")
+    case("PITZER")
       !
-      doLine2: DO
+      doLine2: do
         !
-        READ(F,'(A)',IOSTAT=ios) L
-        IF(ios/=0) EXIT doFile2
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0) exit doFile2
         !
-        CALL LinToWrd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE doLine2 !skip comment lines
-        CALL AppendToEnd(L,W,EoL)
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle doLine2 !skip comment lines
+        call AppendToEnd(L,W,EoL)
         !
-        SELECT CASE(W)
+        select case(W)
         !
-        CASE("ENDINPUT");        EXIT doFile2
-        CASE("ENDPITZER","END"); EXIT doLine2
+        case("ENDINPUT");        exit doFile2
+        case("ENDPITZER","END"); exit doLine2
         !
-        CASE("FITTING")
-          CALL LinToWrd(L,W2,EoL)
-          namModel= TRIM(W2)
-          SELECT CASE(TRIM(W2))
-            CASE("NONE")               ;  iModel= 0
-            CASE("PHREEQC")            ;  iModel= 1
-            CASE("KUEHN")              ;  iModel= 2
-            CASE("CHRISTOV-2004")      ;  iModel= 3
-            CASE("PITZER-1984")        ;  iModel= 4
-            CASE("PABALAN-1987")       ;  iModel= 5
-            CASE("POLYA-2007")         ;  iModel= 6
-            CASE("LI-DUAN-2007")       ;  iModel= 7
-            CASE DEFAULT
-              Error= .TRUE.
-              ErrorMsg= TRIM(W2)//"= unknown keyword for FITTING"
-              RETURN
-          END SELECT
+        case("FITTING")
+          call LinToWrd(L,W2,EoL)
+          namModel= trim(W2)
+          select case(trim(W2))
+            case("none")               ;  iModel= 0
+            case("PHREEQC")            ;  iModel= 1
+            case("KUEHN")              ;  iModel= 2
+            case("CHRISTOV-2004")      ;  iModel= 3
+            case("PITZER-1984")        ;  iModel= 4
+            case("PABALAN-1987")       ;  iModel= 5
+            case("POLYA-2007")         ;  iModel= 6
+            case("LI-DUAN-2007")       ;  iModel= 7
+            case default
+              Error= .true.
+              ErrorMsg= trim(W2)//"= unknown keyword for FITTING"
+              return
+          end select
         !
         !------------------------------------- 2-species parameters --
-        CASE("BETA0","BETA1", "BETA2","CPHI", "LAMBDA","THETA")
+        case("BETA0","BETA1", "BETA2","CPHI", "LAMBDA","THETA")
           !------------------------------- retrieve species indexes --
-          IF(L_ScanSpecies) THEN
-            CALL LinToWrd(L,W2,EoL)
-            CALL Species_Scan(W2,2,vISpc,Error)
-            IF(Error) THEN
-              ErrorMsg= TRIM(W2)//" -> Error in species list ?"
-            ELSE
+          if(L_ScanSpecies) then
+            call LinToWrd(L,W2,EoL)
+            call Species_Scan(W2,2,vISpc,Error)
+            if(Error) then
+              ErrorMsg= trim(W2)//" -> Error in species list ?"
+            else
               iSp1= vISpc(1)
               iSp2= vISpc(2)
-            ENDIF
-          ELSE
-            CALL LinToWrd(L,W2,EoL)  ;  iSp1= Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL)  ;  iSp2= Species_Index(W2,vSolut)
-          ENDIF
+            end if
+          else
+            call LinToWrd(L,W2,EoL)  ;  iSp1= Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL)  ;  iSp2= Species_Index(W2,vSolut)
+          end if
           !
-          IF(iSp1*iSp2==0) CYCLE doLine2
+          if(iSp1*iSp2==0) cycle doLine2
           !
-          CALL Sort2sp(iSp1,iSp2,Error)
+          call Sort2sp(iSp1,iSp2,Error)
           !--------------------------------/ retrieve species indexes --
           !
         !--------------------------------------- 3-species parameters --
-        CASE("PSI","ZETA")
+        case("PSI","ZETA")
           !--------------------------------- retrieve species indexes --
-          IF(L_ScanSpecies) THEN
-            CALL LinToWrd(L,W2,EoL)
-            CALL Species_Scan(W2,3,vISpc,Error)
-            IF(Error) THEN
-              ErrorMsg= TRIM(W2)//" -> Error in species list ?"
-              RETURN
-            ELSE
+          if(L_ScanSpecies) then
+            call LinToWrd(L,W2,EoL)
+            call Species_Scan(W2,3,vISpc,Error)
+            if(Error) then
+              ErrorMsg= trim(W2)//" -> Error in species list ?"
+              return
+            else
               iSp1= vISpc(1)
               iSp2= vISpc(2)
               iSp3= vISpc(3)
-            ENDIF
-          ELSE
-            CALL LinToWrd(L,W2,EoL); iSp1=Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL); iSp2=Species_Index(W2,vSolut)
-            CALL LinToWrd(L,W2,EoL); iSp3=Species_Index(W2,vSolut)
-          ENDIF
+            end if
+          else
+            call LinToWrd(L,W2,EoL); iSp1=Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL); iSp2=Species_Index(W2,vSolut)
+            call LinToWrd(L,W2,EoL); iSp3=Species_Index(W2,vSolut)
+          end if
           !
-          IF(iSp1*iSp2*iSp3==0) CYCLE doLine2
+          if(iSp1*iSp2*iSp3==0) cycle doLine2
           !
-          !! CALL Sort3sp(iSp1,iSp2,iSp3,Error)
-          CALL Sort2sp(iSp1,iSp2,Error)
+          !! call Sort3sp(iSp1,iSp2,iSp3,Error)
+          call Sort2sp(iSp1,iSp2,Error)
           !
           !--------------------------------/ retrieve species indexes --
-        CASE DEFAULT
-          Error= .TRUE.
-          ErrorMsg= TRIM(W)//" is unknown keyword"
+        case default
+          Error= .true.
+          ErrorMsg= trim(W)//" is unknown keyword"
         !
-        END SELECT
+        end select
         !
         !-------------------------------------------- read parameters --
         !
-        CALL ReadRValsV(L,N,vXread)
+        call ReadRValsV(L,N,vXread)
         !
-        SELECT CASE(iModel)
-          CASE(0)  ;  N= 1  ! "NONE"
-          CASE(1)  ;  N= 5  ! "PHREEQ"
-          CASE(2)  ;  N= 5  ! "KUEHN"
-          CASE(3)  ;  N= 9  ! "CHRISTOV-2004"
-          CASE(4)  ;  N= 21 ! "PITZER-1984", Na+=Cl-
-          CASE(5)  ;  N= 12 ! "PABALAN-1987"
-          CASE(6)  ;  N= 8  ! "POLYA-2007"
-          CASE(7)  ;  N= 11 ! "LI-DUAN-2007"
-          CASE DEFAULT
-            CALL Stop_("Error on Pitz_Dtb / iModel")
-        END SELECT
+        select case(iModel)
+          case(0)  ;  N= 1  ! "none"
+          case(1)  ;  N= 5  ! "PHREEQ"
+          case(2)  ;  N= 5  ! "KUEHN"
+          case(3)  ;  N= 9  ! "CHRISTOV-2004"
+          case(4)  ;  N= 21 ! "PITZER-1984", Na+=Cl-
+          case(5)  ;  N= 12 ! "PABALAN-1987"
+          case(6)  ;  N= 8  ! "POLYA-2007"
+          case(7)  ;  N= 11 ! "LI-DUAN-2007"
+          case default
+            call Stop_("Error on Pitz_Dtb / iModel")
+        end select
         !
-        ALLOCATE(Coeff%vX(N))
+        allocate(Coeff%vX(N))
         !
         !!--- for static fitting model
         !Coeff%vX(1:8)= vXread(1:8)
         !Coeff%iModel= iModel
         !!---/
         Coeff%N= N
-        Coeff%namModel= TRIM(namModel)
+        Coeff%namModel= trim(namModel)
         Coeff%iModel= iModel
         Coeff%vX(1:N)= vXread(1:N)
         !
-        SELECT CASE(W)
+        select case(W)
       
         !--------------------------------------- 2-species parameters --
-        CASE("BETA0")
+        case("BETA0")
           iBeta0= iBeta0 +1
           tI_Beta0(iSp1,iSp2)= iBeta0
-          ALLOCATE(vF_Beta0(iBeta0)%vX(Coeff%N))
+          allocate(vF_Beta0(iBeta0)%vX(Coeff%N))
           vF_Beta0(iBeta0)= Coeff
-        CASE("BETA1")
+        case("BETA1")
           iBeta1= iBeta1 +1
           tI_Beta1(iSp1,iSp2)= iBeta1
-          ALLOCATE(vF_Beta1(iBeta1)%vX(Coeff%N))
+          allocate(vF_Beta1(iBeta1)%vX(Coeff%N))
           vF_Beta1(iBeta1)= Coeff
-        CASE("BETA2")
+        case("BETA2")
           iBeta2= iBeta2 +1
           tI_Beta2(iSp1,iSp2)= iBeta2
-          ALLOCATE(vF_Beta2(iBeta2)%vX(Coeff%N))
+          allocate(vF_Beta2(iBeta2)%vX(Coeff%N))
           vF_Beta2(iBeta2)= Coeff
-        CASE("CPHI")
+        case("CPHI")
           iCPhi= iCPhi +1
           tI_CPhi(iSp1,iSp2)= iCPhi
-          ALLOCATE(vF_CPhi(iCPhi)%vX(Coeff%N))
+          allocate(vF_CPhi(iCPhi)%vX(Coeff%N))
           vF_CPhi(iCPhi)= Coeff
-        CASE("THETA")
+        case("THETA")
           iTheta= iTheta +1
           tI_Theta(iSp1,iSp2)= iTheta
-          ALLOCATE(vF_Theta(iTheta)%vX(Coeff%N))
+          allocate(vF_Theta(iTheta)%vX(Coeff%N))
           vF_Theta(iTheta)= Coeff
-        CASE("LAMBDA")
+        case("LAMBDA")
           iLamda= iLamda +1
           tI_Lamda(iSp1,iSp2)= iLamda
-          ALLOCATE(vF_Lamda(iLamda)%vX(Coeff%N))
+          allocate(vF_Lamda(iLamda)%vX(Coeff%N))
           vF_Lamda(iLamda)= Coeff
 
-        !! CASE("Alfa") !! not used
+        !! case("Alfa") !! not used
         !!! Alfa is calculated according to Harvie-etal-84
         !!! see also Pitzer, ReviewInMineralogy-17, p104
 
         !--------------------------------------- 3-species parameters --
-        CASE("PSI")
+        case("PSI")
           iPsi= iPsi+1
           !vPsi(iPsi)= X
           tI_Psi(iSp1,iSp2,iSp3)= iPsi
-          ALLOCATE(vF_Psi(iPsi)%vX(Coeff%N))
+          allocate(vF_Psi(iPsi)%vX(Coeff%N))
           vF_Psi(iPsi)= Coeff
-        CASE("ZETA")
+        case("ZETA")
           iZeta= iZeta +1
           tI_Zeta(iSp1,iSp2,iSp3)= iZeta
-          ALLOCATE(vF_Zeta(iZeta)%vX(Coeff%N))
+          allocate(vF_Zeta(iZeta)%vX(Coeff%N))
           vF_Zeta(iZeta)= Coeff
 
-        END SELECT
+        end select
         !
-        DEALLOCATE(Coeff%vX)
+        deallocate(Coeff%vX)
         !-------------------------------------------/ read parameters --
         !
-      ENDDO doLine2
-    !ENDCASE("BLOCK")
+      end do doLine2
+    !endcase("block")
     
-    END SELECT
+    end select
 
-  ENDDO doFile2
+  end do doFile2
   !
-  CLOSE(F)
-  !--------/reading database, SECOND PASS -> read vBeta0, vBeta1, ... --
+  close(F)
+  !--------/reading database, SECOND pass -> read vBeta0, vBeta1, ... --
   !
   !----------------------------------------------------- Alfa1,tAlfa2 --
   !--- following Pitzer-RevMin17-p104, Harvie-etal-84
   !--- cf CHRISTOV-2004-Moeller-GCA68-3718
-  DO iSp1=1,nSl
-    DO iSp2=1,nSl
-      IF(tI_Beta1(iSp1,iSp2)>0) THEN
-        IF( ABS(vSolut(iSp1)%Z)<2 .OR. ABS(vSolut(iSp2)%Z)<2 ) THEN
+  do iSp1=1,nSl
+    do iSp2=1,nSl
+      if(tI_Beta1(iSp1,iSp2)>0) then
+        if( ABS(vSolut(iSp1)%Z)<2 .or. ABS(vSolut(iSp2)%Z)<2 ) then
           vAlfa1(tI_Beta1(iSp1,iSp2))= 2.0D0
-        ELSE
+        else
           vAlfa1(tI_Beta1(iSp1,iSp2))= 1.4D0
-        ENDIF
-      ENDIF
+        end if
+      end if
 
-      IF(tI_Beta2(iSp1,iSp2)>0) THEN
-        IF(ABS(vSolut(iSp1)%Z)<2 .OR. ABS(vSolut(iSp2)%Z)<2) THEN
+      if(tI_Beta2(iSp1,iSp2)>0) then
+        if(ABS(vSolut(iSp1)%Z)<2 .or. ABS(vSolut(iSp2)%Z)<2) then
           !-> ignore the tBeta2 term in B_MX expression
           vAlfa2(tI_Beta2(iSp1,iSp2))= Zero
-        ELSE
+        else
           vAlfa2(tI_Beta2(iSp1,iSp2))= 12.0D0
-        ENDIF
-      ENDIF
+        end if
+      end if
       !
-    ENDDO
-  ENDDO
+    end do
+  end do
   !----------------------------------------------------/ Alfa1,tAlfa2 --
   !
-  CALL Solmodel_Pitzer_Dtb_TPUpdate(298.15D0,1.0D0)
+  call Solmodel_Pitzer_Dtb_TPUpdate(Tref,Pref)
   !
-  IF(iDebug>0) THEN !=========================================< trace ==
-    CALL GetUnit(ff)
-    OPEN(ff,FILE="debug_pitzer_data.log")
+  if(iDebug>0) then !----------------------------------------------trace
+    call GetUnit(ff)
+    open(ff,file="debug_pitzer_data.log")
     !
-    CALL Solmodel_Pitzer_Dtb_Check(ff,vSolut)
-    CALL Solmodel_Pitzer_Dtb_Check_Old(ff,vSolut)
+    call Solmodel_Pitzer_Dtb_Check(ff,vSolut)
+    call Solmodel_Pitzer_Dtb_Check_Old(ff,vSolut)
     !
-    CLOSE(ff)
-  ENDIF !=====================================================< trace ==
+    close(ff)
+  end if !--------------------------------------------------------/trace
   ! Solmodel_Pitzer
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Solmodel_Pitzer_ Solmodel_PitzerDtb_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Solmodel_Pitzer_ Solmodel_PitzerDtb_Read"
   !
-CONTAINS
+contains
 
-LOGICAL FUNCTION Ok_2Sp(I1,I2,V)
+logical function Ok_2Sp(I1,I2,V)
 !--
 !-- check that a species pair is not already read,
 !-- update the table V
 !--
-  INTEGER,INTENT(IN)   :: I1,I2
-  INTEGER,INTENT(INOUT):: V(:,:)
+  integer,intent(in)   :: I1,I2
+  integer,intent(inout):: V(:,:)
   !
   Ok_2Sp= (V(I1,I2)==0)
-  IF(Ok_2Sp) THEN
+  if(Ok_2Sp) then
     V(I1,I2)= 1
-  ELSE
-    PRINT '(2(A,1X))',TRIM(vSolut(I1)%NamSp),TRIM(vSolut(I2)%NamSp)
-    CALL Stop_("Pitz_Dtb.Error: already allocated")
-  ENDIF
+  else
+    print '(2(A,1X))',trim(vSolut(I1)%NamSp),trim(vSolut(I2)%NamSp)
+    call Stop_("Pitz_Dtb.Error: already allocated")
+  end if
   !
-END FUNCTION Ok_2Sp
+end function Ok_2Sp
 
-LOGICAL FUNCTION Ok_3Sp(I1,I2,I3,V)
+logical function Ok_3Sp(I1,I2,I3,V)
 !--
 !-- check that a species triplet is not already read,
 !-- update the table V
 !--
-  INTEGER,INTENT(IN)   :: I1,I2,I3
-  INTEGER,INTENT(INOUT):: V(:,:,:)
+  integer,intent(in)   :: I1,I2,I3
+  integer,intent(inout):: V(:,:,:)
   !
   Ok_3Sp= (V(I1,I2,I3)==0)
-  IF(Ok_3Sp) THEN
+  if(Ok_3Sp) then
     V(I1,I2,I3)= 1
-  ELSE
-    CALL Stop_("Error in Pitz_Dtb: triplet already allocated")
-  ENDIF
+  else
+    call Stop_("Error in Pitz_Dtb: triplet already allocated")
+  end if
   !
-END FUNCTION Ok_3Sp
+end function Ok_3Sp
 
-END SUBROUTINE Solmodel_Pitzer_Dtb_Read
+end subroutine Solmodel_Pitzer_Dtb_Read
 
-SUBROUTINE Sort2sp(I1,I2,Error)
+subroutine Sort2sp(I1,I2,Error)
 !--
 !-- order the I1,I2 pair,
 !-- to put the data in the upper triangle
 !--
-  INTEGER,INTENT(INOUT):: I1,I2
-  LOGICAL,INTENT(OUT)  :: Error
+  integer,intent(inout):: I1,I2
+  logical,intent(out)  :: Error
   !
-  INTEGER:: J1,J2
+  integer:: J1,J2
   !
   Error= (I1==I2)
   !
-  IF(Error) RETURN
+  if(Error) return
   !
   J1= MIN(I1,I2)  ;  J2= MAX(I1,I2)
   I1= J1          ;  I2= J2
   !
-END SUBROUTINE Sort2sp
+end subroutine Sort2sp
 
-SUBROUTINE Sort3sp(I1,I2,I3,Error)
+subroutine Sort3sp(I1,I2,I3,Error)
 !-- order I1,I2,I3 to I1-I2-I3
-  INTEGER,INTENT(INOUT):: I1,I2,I3
-  LOGICAL,INTENT(OUT)  :: Error
+  integer,intent(inout):: I1,I2,I3
+  logical,intent(out)  :: Error
   !
-  INTEGER:: J1,J2,J3
+  integer:: J1,J2,J3
   !
-  Error= (I1==I2 .OR. I1==I3 .OR. I2==I3)
-  IF(Error) RETURN
+  Error= (I1==I2 .or. I1==I3 .or. I2==I3)
+  if(Error) return
   !
   J1= MIN(I1,I2,I3)
   J3= MAX(I1,I2,I3)
   !
-  IF(I1/=J1 .AND. I1/=J3) J2= I1
-  IF(I2/=J1 .AND. I2/=J3) J2= I2
-  IF(I3/=J1 .AND. I3/=J3) J2= I3
+  if(I1/=J1 .and. I1/=J3) J2= I1
+  if(I2/=J1 .and. I2/=J3) J2= I2
+  if(I3/=J1 .and. I3/=J3) J2= I3
   !
   I1= J1  ;  I2= J2  ;  I3= J3
   !
-END SUBROUTINE Sort3sp
+end subroutine Sort3sp
 
-SUBROUTINE Species_Scan(Str,N,iSpc,Error)
+subroutine Species_Scan(Str,N,iSpc,Error)
 !--
 !-- scan a species string, where species are separated by "-",
 !-- and compute corresponding indexes in vSolut
 !--
-  USE M_T_Species,ONLY: Species_Index
-  CHARACTER(LEN=*),INTENT(IN):: Str
-  INTEGER,INTENT(IN) :: N
-  INTEGER,INTENT(OUT):: iSpc(:)
-  LOGICAL,INTENT(OUT):: Error
+  use M_T_Species,only: Species_Index
+  character(len=*),intent(in):: Str
+  integer,intent(in) :: N
+  integer,intent(out):: iSpc(:)
+  logical,intent(out):: Error
   !
-  CHARACTER(LEN=23):: Str1,Str2
-  INTEGER:: I,J,K
+  character(len=23):: Str1,Str2
+  integer:: I,J,K
   !
-  Error= .FALSE.
+  Error= .false.
   !
-  Str1= TRIM(Str)//"=" !append a separator at end
+  Str1= trim(Str)//"=" !append a separator at end
   Str2= ""
   K= 0
-  DO
-    !WRITE(91,'(2A)') "str1=",TRIM(Str1)
-    I= INDEX(Str1,'=') ! first occurence of separator
-    J= LEN_TRIM(Str1)
-    IF(I==0) EXIT
-    WRITE(Str2,'(A)') TRIM(str1(1:I-1)) ! Str2= left of first separator
-    WRITE(Str1,'(A)') TRIM(str1(I+1:J)) ! Str1= right of first separator
+  do
+    !write(91,'(2A)') "str1=",trim(Str1)
+    I= index(Str1,'=') ! first occurence of separator
+    J= len_trim(Str1)
+    if(I==0) exit
+    write(Str2,'(A)') trim(str1(1:I-1)) ! Str2= left of first separator
+    write(Str1,'(A)') trim(str1(I+1:J)) ! Str1= right of first separator
     K= K+1
     iSpc(K)= Species_Index(Str2,vSolut)
-    !WRITE(91,'(A,I3,1X,A)') "    I,str2=",iSpc(K),TRIM(Str2)
-    IF(K==N) EXIT
-  ENDDO
+    !write(91,'(A,I3,1X,A)') "    I,str2=",iSpc(K),trim(Str2)
+    if(K==N) exit
+  end do
   !pause
-  !WRITE(91,*)
+  !write(91,*)
   !
   Error= (K<N)
   !
-  RETURN
-END SUBROUTINE Species_Scan
+  return
+end subroutine Species_Scan
 
-SUBROUTINE Solmodel_Pitzer_Dtb_TPUpdate(TdgK,Pbar)
-  REAL(dp),INTENT(IN):: TdgK,Pbar
+subroutine Solmodel_Pitzer_Dtb_TPUpdate(TdgK,Pbar)
+  real(dp),intent(in):: TdgK,Pbar
   !
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Beta0, vBeta0)
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Beta1, vBeta1)
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Beta2, vBeta2)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Beta0, vBeta0)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Beta1, vBeta1)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Beta2, vBeta2)
   !
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_CPhi,  vCPhi)
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Theta, vTheta)
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Lamda, vLamda)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_CPhi,  vCPhi)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Theta, vTheta)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Lamda, vLamda)
   !
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Psi,  vPsi)
-  CALL Fitt_TPUpdate(TdgK,Pbar, vF_Zeta, vZeta)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Psi,  vPsi)
+  call Fitt_TPUpdate(TdgK,Pbar, vF_Zeta, vZeta)
   !
-  CALL Pitzer_TableFill
+  call Pitzer_TableFill
   !
-  RETURN
-END SUBROUTINE  Solmodel_Pitzer_Dtb_TPUpdate
+  return
+end subroutine  Solmodel_Pitzer_Dtb_TPUpdate
 
-SUBROUTINE Pitzer_TableFill
+subroutine Pitzer_TableFill
   !
-  CALL TableFill(tI_Beta0, vBeta0, tBeta0)
-  CALL TableFill(tI_Beta1, vBeta1, tBeta1)
-  CALL TableFill(tI_Beta2, vBeta2, tBeta2)
+  call TableFill(tI_Beta0, vBeta0, tBeta0)
+  call TableFill(tI_Beta1, vBeta1, tBeta1)
+  call TableFill(tI_Beta2, vBeta2, tBeta2)
   !
-  CALL TableFill(tI_Beta1, vAlfa1, tAlfa1)
-  CALL TableFill(tI_Beta2, vAlfa2, tAlfa2)
+  call TableFill(tI_Beta1, vAlfa1, tAlfa1)
+  call TableFill(tI_Beta2, vAlfa2, tAlfa2)
   !
-  CALL TableFill(tI_CPhi,  vCPhi,  tCPhi )
-  CALL TableFill(tI_Theta, vTheta, tTheta)
-  CALL TableFill(tI_Lamda, vLamda, tLamda)
+  call TableFill(tI_CPhi,  vCPhi,  tCPhi )
+  call TableFill(tI_Theta, vTheta, tTheta)
+  call TableFill(tI_Lamda, vLamda, tLamda)
   !
-  CALL TableFill3(tI_Psi,  vPsi,  tPsi)
-  CALL TableFill3(tI_Zeta, vZeta, tZeta)
+  call TableFill3(tI_Psi,  vPsi,  tPsi)
+  call TableFill3(tI_Zeta, vZeta, tZeta)
   !
-  RETURN
-END SUBROUTINE Pitzer_TableFill
+  return
+end subroutine Pitzer_TableFill
 
-SUBROUTINE TableFill(tI_In,vCoef,tR_Out)
-  INTEGER, INTENT(IN) :: tI_In(:,:)
-  REAL(dp),INTENT(IN) :: vCoef(:)
-  REAL(dp),INTENT(OUT):: tR_Out(:,:)
+subroutine TableFill(tI_In,vCoef,tR_Out)
+  integer, intent(in) :: tI_In(:,:)
+  real(dp),intent(in) :: vCoef(:)
+  real(dp),intent(out):: tR_Out(:,:)
   !
-  INTEGER:: I,J,K
+  integer:: I,J,K
   !
-  DO I=1,SIZE(tI_In,1)
-    DO J=1,SIZE(tI_In,2)
+  do I=1,size(tI_In,1)
+    do J=1,size(tI_In,2)
       K= tI_In(I,J)
-      IF(K>0) tR_Out(I,J)= vCoef(K)
-    ENDDO
-  ENDDO
+      if(K>0) tR_Out(I,J)= vCoef(K)
+    end do
+  end do
   !
-END SUBROUTINE TableFill
+end subroutine TableFill
 
-SUBROUTINE TableFill3(tI_In,vCoef,tR_Out)
-  INTEGER, INTENT(IN) :: tI_In(:,:,:)
-  REAL(dp),INTENT(IN) :: vCoef(:)
-  REAL(dp),INTENT(OUT):: tR_Out(:,:,:)
+subroutine TableFill3(tI_In,vCoef,tR_Out)
+  integer, intent(in) :: tI_In(:,:,:)
+  real(dp),intent(in) :: vCoef(:)
+  real(dp),intent(out):: tR_Out(:,:,:)
   !
-  INTEGER:: I,J,K,L
+  integer:: I,J,K,L
   !
-  DO I=1,SIZE(tI_In,1)
-    DO J=1,SIZE(tI_In,2)
-      DO K=1,SIZE(tI_In,3)
+  do I=1,size(tI_In,1)
+    do J=1,size(tI_In,2)
+      do K=1,size(tI_In,3)
         L= tI_In(I,J,K)
-        IF(L>0) tR_Out(I,J,K)= vCoef(L)
-      ENDDO
-    ENDDO
-  ENDDO
+        if(L>0) tR_Out(I,J,K)= vCoef(L)
+      end do
+    end do
+  end do
   !
-END SUBROUTINE TableFill3
+end subroutine TableFill3
 
-SUBROUTINE Fitt_TPUpdate(T,P,vFitt,vCoef)
-  REAL(dp),INTENT(IN):: T,P !TdgK,Pbar
-  TYPE(T_Fitt),INTENT(IN):: vFitt(:)
-  REAL(dp),INTENT(OUT):: vCoef(:)
+subroutine Fitt_TPUpdate(T,P,vFitt,vCoef)
+  real(dp),intent(in):: T,P !TdgK,Pbar
+  type(T_Fitt),intent(in):: vFitt(:)
+  real(dp),intent(out):: vCoef(:)
   !
-  INTEGER:: I
-  REAL(dp),PARAMETER:: Tref= 298.15D0
-  TYPE(T_Fitt):: Fit
+  integer:: I
+  real(dp),parameter:: Tref= 298.15D0
+  type(T_Fitt):: Fit
   !
-  DO I=1,SIZE(vCoef)
+  do I=1,size(vCoef)
     !
     Fit= vFitt(I)
     !
-    SELECT CASE(Fit%iModel)
+    select case(Fit%iModel)
 
-    CASE(0) !"NONE"
-      vCoef(I)= Fit%vX(1) !"NONE"
+    case(0) !"NONE"
+      vCoef(I)= Fit%vX(1) !"none"
 
-    CASE(1) !"PHREEQ"
+    case(1) !"PHREEQ"
       vCoef(I)= Fit%vX(1) &
       &       + Fit%vX(2) *(One/T -One/Tref) &
-      &       + Fit%vX(3) *LOG(T/Tref)       &
+      &       + Fit%vX(3) *log(T/Tref)       &
       &       + Fit%vX(4) *(T     -Tref)     &
       &       + Fit%vX(5) *(T*T   -Tref*Tref)
       !
-    CASE(2) !"KUEHN"
+    case(2) !"KUEHN"
       vCoef(I)= Fit%vX(1) &
       &       + Fit%vX(2) *(One/T -One/Tref) &
-      &       + Fit%vX(3) *LOG(T/Tref)       &
+      &       + Fit%vX(3) *log(T/Tref)       &
       &       + Fit%vX(4) *(T     -Tref)     &
       &       + Fit%vX(5) *(T*T   -Tref*Tref)
       !
-    CASE(3) !"CHRISTOV-2004"
+    case(3) !"CHRISTOV-2004"
       vCoef(I)= Fit%vX(1) &              ! a1
       &       + Fit%vX(2) *T           & ! a2*T
       &       + Fit%vX(3) *T*T         & ! a3*T**2
       &       + Fit%vX(4) *T**3        & ! a4*T**3
       &       + Fit%vX(5) *(One/T)     & ! a5/T
-      &       + Fit%vX(6) *LOG(T)      & ! a6*ln(T)
+      &       + Fit%vX(6) *log(T)      & ! a6*ln(T)
       &       + Fit%vX(7) /(T-263.0D0) & ! a7/(T-263)
       &       + Fit%vX(8) /(680.0D0-T) & ! a8/(680-T)
       &       + Fit%vX(9) /(T-227.0D0)   ! a9/(T-227)
@@ -892,30 +893,30 @@ SUBROUTINE Fitt_TPUpdate(T,P,vFitt,vCoef)
       ! a7 = 8
       ! a8 = 9
       !
-    CASE(4) !"PITZER-1984", Na+=Cl-
+    case(4) !"PITZER-1984", Na+=Cl-
       ! K.S. Pitzer, J.C. Peiper and R.H. Busey, 1984
       ! Thermodynamic properties of aqueous sodium chloride solutions,
       ! Journal of Physical and Chemical Reference Data 13 (1) (1984), pp. 1-102.
       vCoef(I)= & !
       &  Fit%vX(1)/T &
       +  Fit%vX(2)   + Fit%vX(3) *P + Fit%vX(4) *P**2 + Fit%vX(5)*P**3                   &
-      +  Fit%vX(6)*LOG(T)                                                                &
+      +  Fit%vX(6)*log(T)                                                                &
       + (Fit%vX(7)   + Fit%vX(8) *P + Fit%vX(9) *P**2 + Fit%vX(10)*P**3)*T               &
       + (Fit%vX(11)  + Fit%vX(12)*P + Fit%vX(13)*P**2                  )*T**2            &
       + (Fit%vX(14)  + Fit%vX(15)*P + Fit%vX(16)*P**2 + Fit%vX(17)*P**3)/(T-227.0D0)     &
       + (Fit%vX(18)  + Fit%vX(19)*P + Fit%vX(20)*P**2 + Fit%vX(21)*P**3)/(680.0D0 - T)
       !
-    CASE(5) !"PABALAN-1987"
+    case(5) !"PABALAN-1987"
       vCoef(I)= & !
       &   Fit%vX(1)  + Fit%vX(2)*P            &
       + ( Fit%vX(3)  + Fit%vX(4)*P )  /T      &
-      +   Fit%vX(5)                   *LOG(T) &
+      +   Fit%vX(5)                   *log(T) &
       + ( Fit%vX(6)  + Fit%vX(7)*P )  *T      &
       + ( Fit%vX(8)  + Fit%vX(9)*P )  *T**2   &
       +   Fit%vX(10)                  /(T-227.0D0) &
       + ( Fit%vX(11) + Fit%vX(12)*P ) /(647.0D0-T)
       !
-    CASE(6) !"POLYA-2007"
+    case(6) !"POLYA-2007"
       vCoef(I)= & !
       & Fit%vX(1)    &
       + Fit%vX(2) *T &
@@ -926,7 +927,7 @@ SUBROUTINE Fitt_TPUpdate(T,P,vFitt,vCoef)
       + Fit%vX(7) *(P-One) &
       + Fit%vX(8) *(P-One)**2/2.0D0
 
-    CASE(7) ! "LI-DUAN-2007"
+    case(7) ! "LI-DUAN-2007"
       vCoef(I)= & !
       & Fit%vX(1)             &
       + Fit%vX(2) *T          &
@@ -934,24 +935,24 @@ SUBROUTINE Fitt_TPUpdate(T,P,vFitt,vCoef)
       + Fit%vX(4)*T**2        &
       + Fit%vX(5)/(630.0D0 - T)   &
       + Fit%vX(6) *P          &
-      + Fit%vX(7)*P*LOG(T)    &
+      + Fit%vX(7)*P*log(T)    &
       + Fit%vX(8)*P/T         &
       + Fit%vX(9) *P/(630.0D0 - T) &
       + Fit%vX(10)*P**2/(630.0D0 - T)**2  &
-      + Fit%vX(11)*T*LOG(P)
+      + Fit%vX(11)*T*log(P)
 
-    CASE DEFAULT
-      CALL Stop_("in Fitt_TPUpdate, iModel out of range")
+    case default
+      call Stop_("in Fitt_TPUpdate, iModel out of range")
 
-    END SELECT
+    end select
     !
-  END DO
+  end do
   !
-  RETURN
-END SUBROUTINE Fitt_TPUpdate
+  return
+end subroutine Fitt_TPUpdate
 
-SUBROUTINE FGENERIQUE (INDIC,NOM,T,P,A,AV,TREF1,TREF2,TREF3,FF)
-!!! UNUSED !!!
+subroutine FGENERIQUE (INDIC,NOM,T,P,A,AV,TREF1,TREF2,TREF3,FF)
+!!! unused !!!
 ! Calcul des parametres de Pitzer en fonction de T et P
 !
 ! Arguments d'entree :
@@ -971,23 +972,23 @@ SUBROUTINE FGENERIQUE (INDIC,NOM,T,P,A,AV,TREF1,TREF2,TREF3,FF)
 ! ---------------------
 ! FF : valeur calculee par la fonction
   !
-  INTEGER,      INTENT(IN):: INDIC
-  CHARACTER*200,INTENT(IN):: NOM
-  REAL(dp),     INTENT(IN):: A(10),AV(10)
-  REAL(dp),     INTENT(IN):: T,P,TREF1,TREF2,TREF3
+  integer,      intent(in):: INDIC
+  character*200,intent(in):: NOM
+  real(dp),     intent(in):: A(10),AV(10)
+  real(dp),     intent(in):: T,P,TREF1,TREF2,TREF3
   !
-  REAL(dp),     INTENT(OUT):: FF
+  real(dp),     intent(out):: FF
   !
-  REAL(dp):: F0,FV,PBAR
+  real(dp):: F0,FV,PBAR
   !
   PBAR=P*1.0d-5
   !
-  IF (INDIC==0) THEN
+  if (INDIC==0) then
     !----------------------------- Fonction par defaut (Monnin, 1999) --
     F0= A(1)                 &
     & + A(2) *T             &
     & + A(3) /T             &
-    & + A(4) *LOG(T)        &
+    & + A(4) *log(T)        &
     & + A(5) /(T - TREF1)   &
     & + A(6) *T**2          &
     & + A(7) /(TREF2 - T)   &
@@ -999,7 +1000,7 @@ SUBROUTINE FGENERIQUE (INDIC,NOM,T,P,A,AV,TREF1,TREF2,TREF3,FF)
     FV= AV(1)              &
     & + AV(2) *T            &
     & + AV(3) /T            &
-    & + AV(4) *LOG(T)       &
+    & + AV(4) *log(T)       &
     & + AV(5) /(T - TREF1)  &
     & + AV(6) *T**2         &
     & + AV(7) /(TREF2 - T)  &
@@ -1009,402 +1010,412 @@ SUBROUTINE FGENERIQUE (INDIC,NOM,T,P,A,AV,TREF1,TREF2,TREF3,FF)
     !
     FF=  F0 + PBAR * FV
     !----------------------------/ Fonction par defaut (Monnin, 1999) --
-  ELSE
-    SELECT CASE (NOM)
-      !  Ecrire ici CASE ('Nom de la nouvelle fonction')
+  else
+    select case (NOM)
+      !  Ecrire ici case ('Nom de la nouvelle fonction')
       !  Ecrire ici FF=
-      !  CASE (
-    END SELECT
-  ENDIF
+      !  case (
+    end select
+  end if
   !
-  RETURN
-END SUBROUTINE FGENERIQUE
+  return
+end subroutine FGENERIQUE
 
-!~ SUBROUTINE Fitt_TPUpdate_(TdgK,vFitt,vCoef)
-  !~ REAL(dp),INTENT(IN):: TdgK
-  !~ TYPE(T_Fitt),INTENT(IN):: vFitt(:)
-  !~ REAL(dp),INTENT(OUT):: vCoef(:)
-  !~ !
-  !~ INTEGER:: I
-  !~ REAL(dp),PARAMETER:: Tref= 298.15D0
-  !~ !
-  !~ DO I=1,SIZE(vCoef)
-    !~ vCoef(I)= vFitt(I)%X0 &
-    !~ &       + vFitt(I)%X1 *(One/TdgK -One/Tref) &
-    !~ &       + vFitt(I)%X2 *LOG(TdgK/Tref)       &
-    !~ &       + vFitt(I)%X3 *(TdgK     -Tref)     &
-    !~ &       + vFitt(I)%X4 *(TdgK*TdgK -Tref*Tref)
-  !~ END DO
-  !~ !
-  !~ RETURN
-!~ END SUBROUTINE Fitt_TPUpdate_
+! subroutine Fitt_TPUpdate_(TdgK,vFitt,vCoef)
+!   real(dp),intent(in):: TdgK
+!   type(T_Fitt),intent(in):: vFitt(:)
+!   real(dp),intent(out):: vCoef(:)
+!   !
+!   integer:: I
+!   real(dp),parameter:: Tref= 298.15D0
+!   !
+!   do I=1,size(vCoef)
+!     vCoef(I)= vFitt(I)%X0 &
+!     &       + vFitt(I)%X1 *(One/TdgK -One/Tref) &
+!     &       + vFitt(I)%X2 *log(TdgK/Tref)       &
+!     &       + vFitt(I)%X3 *(TdgK     -Tref)     &
+!     &       + vFitt(I)%X4 *(TdgK*TdgK -Tref*Tref)
+!   end do
+!   !
+!   return
+! end subroutine Fitt_TPUpdate_
 
-SUBROUTINE Solmodel_Pitzer_Dtb_TPtest
-  USE M_IoTools
-  USE M_Files,ONLY: DirOut
+subroutine Solmodel_Pitzer_Dtb_TPtest
+  use M_IoTools
+  use M_Files,only: DirOut
   !
-  INTEGER :: f1,f2
-  ! INTEGER :: I,J,K
-  REAL(dp):: vT(1:9),Pbar
-  ! TYPE(T_Fitt):: Fitt
-  ! REAL(dp),ALLOCATABLE:: Res(:,:)
-  ! CHARACTER(LEN=30):: cFormat
+  integer :: f1,f2
+  ! integer :: I,J,K
+  real(dp):: vT(1:9),Pbar
+  ! type(T_Fitt):: Fitt
+  ! real(dp),allocatable:: Res(:,:)
+  ! character(len=30):: cFormat
   !
   vT(1:9)=(/ 0.0D0,  25.0D0, 50.0D0, 75.0D0, &
   &        100.0D0, 125.0D0,150.0D0,175.0D0, &
   &        200.0D0 /)
   Pbar= 1.0D0
   !
-  !WRITE(cFormat,'(A,I3,A)') '(3(A,1X),',n,'(G12.3,1X))'
-  !WRITE(cFormat,'(A)') '(3(A,1X),5(G12.3,1X))'
+  !write(cFormat,'(A,I3,A)') '(3(A,1X),',n,'(G12.3,1X))'
+  !write(cFormat,'(A)') '(3(A,1X),5(G12.3,1X))'
   !
-  !WRITE(ff,cFormat,ADVANCE="no") "X=",(x(k),k=1,n)
+  !write(ff,cFormat,advance="no") "X=",(x(k),k=1,n)
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Pitzer_Dtb_TPtest"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Pitzer_Dtb_TPtest"
   !
-  CALL GetUnit(f1)
-  OPEN(f1,FILE=TRIM(DirOut)//"_pitzer_tptest.tab")
-  CALL GetUnit(f2)
-  OPEN(f2,FILE=TRIM(DirOut)//"_pitzer_tpcoeffs.tab")
+  call GetUnit(f1)
+  open(f1,file=trim(DirOut)//"_pitzer_tptest.tab")
+  call GetUnit(f2)
+  open(f2,file=trim(DirOut)//"_pitzer_tpcoeffs.tab")
   !
-  CALL TPtest(f1,f2, "BETA0", vT,Pbar, tI_Beta0, vF_Beta0,vBeta0)
-  CALL TPtest(f1,f2, "BETA1", vT,Pbar, tI_Beta1, vF_Beta1,vBeta1)
-  CALL TPtest(f1,f2, "BETA2", vT,Pbar, tI_Beta2, vF_Beta2,vBeta2)
-  CALL TPtest(f1,f2, "CPHI",  vT,Pbar, tI_CPhi,  vF_CPhi, vCPhi )
-  CALL TPtest(f1,f2, "THETA", vT,Pbar, tI_Theta, vF_Theta,vTheta)
-  CALL TPtest(f1,f2, "LAMBDA",vT,Pbar, tI_Lamda, vF_Lamda,vLamda)
-  !~ ALLOCATE(Res(9,SIZE(vBeta0)))
-  !~ DO I=1,9
-    !~ CALL Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_Beta0, vBeta0)
-    !~ Res(I,:)= vBeta0(:)
-  !~ ENDDO
-  !~ DO I=1,SIZE(tI_Beta0,1)
-    !~ DO J=1,SIZE(tI_Beta0,2)
+  call TPtest(f1,f2, "BETA0", vT,Pbar, tI_Beta0, vF_Beta0,vBeta0)
+  call TPtest(f1,f2, "BETA1", vT,Pbar, tI_Beta1, vF_Beta1,vBeta1)
+  call TPtest(f1,f2, "BETA2", vT,Pbar, tI_Beta2, vF_Beta2,vBeta2)
+  call TPtest(f1,f2, "CPHI",  vT,Pbar, tI_CPhi,  vF_CPhi, vCPhi )
+  call TPtest(f1,f2, "THETA", vT,Pbar, tI_Theta, vF_Theta,vTheta)
+  call TPtest(f1,f2, "LAMBDA",vT,Pbar, tI_Lamda, vF_Lamda,vLamda)
+  !
+  ! allocate(Res(9,size(vBeta0)))
+  ! do I=1,9
+  !   call Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_Beta0, vBeta0)
+  !   Res(I,:)= vBeta0(:)
+  ! end do
+  ! do I=1,size(tI_Beta0,1)
+  !   do J=1,size(tI_Beta0,2)
+  !
+  !    if(tI_Beta0(I,J)>0) then
+  !
+  !      print *, &
+  !      & trim(vSolut(I)%NamSp), " ", &
+  !      & trim(vSolut(J)%NamSp)
+  !      Fitt= vF_Beta0(tI_Beta0(I,J))
+  !
+  !      write(f1,'(3(A12,1X),9(G15.6,1X))') &
+  !      & "BETA0", &
+  !      & trim(vSolut(I)%NamSp), &
+  !      & trim(vSolut(J)%NamSp), &
+  !      & (Res(K,tI_Beta0(I,J)), K=1,9)
+  !
+  !      write(f2,'(4(A12,1X),24(G15.6,1X))') &
+  !      & trim(Fitt%namModel), &
+  !      & "BETA0", &
+  !      & trim(vSolut(I)%NamSp), &
+  !      & trim(vSolut(J)%NamSp), &
+  !      & (Fitt%vX(K),           K=1,Fitt%N)
+  !
+  !    end if
+  !
+  !   end do
+  ! end do
+  ! deallocate(Res)
+  !
+  ! allocate(Res(9,size(vBeta1)))
+  !
+  ! do I=1,9
+  !   call Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_beta1, vbeta1)
+  !   Res(I,:)= vbeta1(:)
+  ! end do
+  !
+  ! do I=1,size(tI_beta1,1)
+  !
+  !   do J=1,size(tI_beta1,2)
+  !
+  !     if(tI_beta1(I,J)>0) then
+  !       Fitt= vF_Beta1(tI_Beta1(I,J))
+  !       write(f1,'(3(A12,1X),9(G15.6,1X))') &
+  !       & "BETA1", &
+  !       & trim(vSolut(I)%NamSp), &
+  !       & trim(vSolut(J)%NamSp), &
+  !       & (Res(K,tI_beta1(I,J)), K=1,9)
+  !       write(f2,'(4(A12,1X),24(G15.6,1X))') &
+  !       & trim(Fitt%namModel), &
+  !       & "BETA1", &
+  !       & trim(vSolut(I)%NamSp), &
+  !       & trim(vSolut(J)%NamSp), &
+  !       & (Fitt%vX(K),           K=1,Fitt%N)
+  !     end if
+  !
+  !   end do
+  !
+  ! end do
+  !
+  ! deallocate(Res)
+  !
+  close(f1)
+  close(f2)
+  !
+  if(iDebug>0) print '(/,A,/)',"=!= results in pitzer_tptest.tab =!="
+  !
+  if(iDebug>0) write(fTrc,'(A,/)') "<  Solmodel_Pitzer_Pitzer_Dtb_TPtest"
+  !
+end subroutine Solmodel_Pitzer_Dtb_TPtest
 
-      !~ IF(tI_Beta0(I,J)>0) THEN
-        !~ PRINT *, &
-        !~ & TRIM(vSolut(I)%NamSp), " ", &
-        !~ & TRIM(vSolut(J)%NamSp)
-        !~ Fitt= vF_Beta0(tI_Beta0(I,J))
-        !~ WRITE(f1,'(3(A12,1X),9(G15.6,1X))') &
-        !~ & "BETA0", &
-        !~ & TRIM(vSolut(I)%NamSp), &
-        !~ & TRIM(vSolut(J)%NamSp), &
-        !~ & (Res(K,tI_Beta0(I,J)), K=1,9)
-        !~ WRITE(f2,'(4(A12,1X),24(G15.6,1X))') &
-        !~ & TRIM(Fitt%namModel), &
-        !~ & "BETA0", &
-        !~ & TRIM(vSolut(I)%NamSp), &
-        !~ & TRIM(vSolut(J)%NamSp), &
-        !~ & (Fitt%vX(K),           K=1,Fitt%N)
-      !~ ENDIF
-
-    !~ ENDDO
-  !~ ENDDO
-  !~ DEALLOCATE(Res)
+subroutine TPtest(f1,f2,Str,vT,Pbar,tI_Beta,vF_Beta,vBeta)
   !
-  !~ ALLOCATE(Res(9,SIZE(vBeta1)))
-  !~ DO I=1,9
-    !~ CALL Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_beta1, vbeta1)
-    !~ Res(I,:)= vbeta1(:)
-  !~ ENDDO
-  !~ DO I=1,SIZE(tI_beta1,1)
-
-    !~ DO J=1,SIZE(tI_beta1,2)
-
-      !~ IF(tI_beta1(I,J)>0) THEN
-        !~ Fitt= vF_Beta1(tI_Beta1(I,J))
-        !~ WRITE(f1,'(3(A12,1X),9(G15.6,1X))') &
-        !~ & "BETA1", &
-        !~ & TRIM(vSolut(I)%NamSp), &
-        !~ & TRIM(vSolut(J)%NamSp), &
-        !~ & (Res(K,tI_beta1(I,J)), K=1,9)
-        !~ WRITE(f2,'(4(A12,1X),24(G15.6,1X))') &
-        !~ & TRIM(Fitt%namModel), &
-        !~ & "BETA1", &
-        !~ & TRIM(vSolut(I)%NamSp), &
-        !~ & TRIM(vSolut(J)%NamSp), &
-        !~ & (Fitt%vX(K),           K=1,Fitt%N)
-      !~ ENDIF
-
-    !~ ENDDO
-
-  !~ ENDDO
-  !~ DEALLOCATE(Res)
+  integer,     intent(in):: f1,f2
+  character(*),intent(in):: Str
+  real(dp),    intent(in):: vT(:)
+  real(dp),    intent(in):: Pbar
+  integer,     intent(in):: tI_Beta(:,:)
+  type(T_Fitt),intent(in):: vF_Beta(:)
+  real(dp),    intent(in):: vBeta(:)
   !
-  CLOSE(f1)
-  CLOSE(f2)
-  !
-  IF(iDebug>0) PRINT '(/,A,/)',"=!= results in pitzer_tptest.tab =!="
-  !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "<  Solmodel_Pitzer_Pitzer_Dtb_TPtest"
-  !
-END SUBROUTINE Solmodel_Pitzer_Dtb_TPtest
-
-SUBROUTINE TPtest(f1,f2,Str,vT,Pbar,tI_Beta,vF_Beta,vBeta)
-  !
-  INTEGER,     INTENT(IN):: f1,f2
-  CHARACTER(*),INTENT(IN):: Str
-  REAL(dp),    INTENT(IN):: vT(:)
-  REAL(dp),    INTENT(IN):: Pbar
-  INTEGER,     INTENT(IN):: tI_Beta(:,:)
-  TYPE(T_Fitt),INTENT(IN):: vF_Beta(:)
-  REAL(dp),    INTENT(IN):: vBeta(:)
-  !
-  TYPE(T_Fitt):: Fitt
-  INTEGER:: I,J,K,nT
-  REAL(dp),ALLOCATABLE:: Res(:,:)
-  REAL(dp),ALLOCATABLE:: vX(:)
+  type(T_Fitt):: Fitt
+  integer:: I,J,K,nT
+  real(dp),allocatable:: Res(:,:)
+  real(dp),allocatable:: vX(:)
   
-  nT= SIZE(vT)
+  nT= size(vT)
   !
-  ALLOCATE(vX(SIZE(vBeta)))
-  ALLOCATE(Res(9,SIZE(vBeta)))
+  allocate(vX(size(vBeta)))
+  allocate(Res(9,size(vBeta)))
   !
-  DO I=1,nT
-    CALL Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_Beta, vX)
+  do I=1,nT
+    call Fitt_TPUpdate(vT(I)+273.15D0,Pbar, vF_Beta, vX)
     Res(I,:)= vX(:)
-  ENDDO
+  end do
   !
-  DO I=1,SIZE(tI_Beta,1)
-    DO J=1,SIZE(tI_Beta,2)
+  do I=1,size(tI_Beta,1)
+    do J=1,size(tI_Beta,2)
 
-      IF(tI_Beta(I,J)>0) THEN
-        PRINT *, &
-        & TRIM(vSolut(I)%NamSp), " ", &
-        & TRIM(vSolut(J)%NamSp)
+      if(tI_Beta(I,J)>0) then
+        print *, &
+        & trim(vSolut(I)%NamSp), " ", &
+        & trim(vSolut(J)%NamSp)
         Fitt= vF_Beta(tI_Beta(I,J))
-        WRITE(f1,'(2(A,1X),9(G15.6,1X))') &
-        & TRIM(Str), &
-        & TRIM(vSolut(I)%NamSp)//"="//TRIM(vSolut(J)%NamSp), &
+        !
+        write(f1,'(2(A,1X),9(G15.6,1X))') &
+        & trim(Str), &
+        & trim(vSolut(I)%NamSp)//"="//trim(vSolut(J)%NamSp), &
         & (Res(K,tI_Beta(I,J)), K=1,nT)
-        WRITE(f2,'(3(A,1X),24(G15.6,1X))') &
-        & TRIM(Fitt%namModel), &
-        & TRIM(Str), &
-        & TRIM(vSolut(I)%NamSp)//"="//TRIM(vSolut(J)%NamSp), &
+        !
+        write(f2,'(3(A,1X),24(G15.6,1X))') &
+        & trim(Fitt%namModel), &
+        & trim(Str), &
+        & trim(vSolut(I)%NamSp)//"="//trim(vSolut(J)%NamSp), &
         & (Fitt%vX(K), K=1,Fitt%N)
-      ENDIF
+      end if
 
-    ENDDO
-  ENDDO
+    end do
+  end do
   !
-  DEALLOCATE(Res)
-  DEALLOCATE(vX)
+  deallocate(Res)
+  deallocate(vX)
 
-END SUBROUTINE TPtest
+end subroutine TPtest
 
-SUBROUTINE ReadRVals4(Line,x1,x2,x3,x4)
-  USE M_IOTools,ONLY:LinToWrd,WrdToReal
-  CHARACTER(LEN=*) Line
-  CHARACTER(255)   Word
-  REAL(dp)::x1,x2,x3,x4
-  INTEGER  ::i
-  LOGICAL  ::EoL
-  REAL(dp),DIMENSION(1:4)::vX
+subroutine ReadRVals4(Line,x1,x2,x3,x4)
+  use M_IOTools,only:LinToWrd,WrdToReal
+  character(len=*) Line
+  character(255)   Word
+  real(dp)::x1,x2,x3,x4
+  integer  ::i
+  logical  ::EoL
+  real(dp),dimension(1:4)::vX
   vX=0.0
-  EoL=.TRUE.
-  DO i=1,4
-    CALL LinToWrd(Line,Word,EoL)
-    CALL WrdToReal(Word,vX(i))
-    IF(EoL) EXIT
-  ENDDO
+  EoL=.true.
+  do i=1,4
+    call LinToWrd(Line,Word,EoL)
+    call WrdToReal(Word,vX(i))
+    if(EoL) exit
+  end do
   x1=vX(1) ; x2=vX(2) ; x3=vX(3) ; x4=vX(4)
-ENDSUBROUTINE ReadRVals4
+end subroutine ReadRVals4
 
-SUBROUTINE Solmodel_Pitzer_Dtb_Check(ff,vSpc)
-  USE M_T_Species,ONLY: T_Species
+subroutine Solmodel_Pitzer_Dtb_Check(ff,vSpc)
+  use M_T_Species,only: T_Species
   
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  INTEGER,INTENT(IN):: ff
+  type(T_Species),intent(in):: vSpc(:)
+  integer,intent(in):: ff
   
-  CALL Dtb_Check(ff,"BETA0",    vSpc, tI_Beta0 , vBeta0)
-  CALL Dtb_Check(ff,"BETA1",    vSpc, tI_Beta1 , vBeta1)
-  CALL Dtb_Check(ff,"BETA2",    vSpc, tI_Beta2 , vBeta2)
-  CALL Dtb_Check(ff,"ALFA1",    vSpc, tI_Beta1 , vAlfa1)
-  CALL Dtb_Check(ff,"ALFA2",    vSpc, tI_Beta2 , vAlfa2)
-  CALL Dtb_Check(ff,"CPHI",     vSpc, tI_CPhi  , vCPhi)
-  CALL Dtb_Check(ff,"THETA",    vSpc, tI_Theta , vTheta)
-  CALL Dtb_Check(ff,"LAMBDA",   vSpc, tI_Lamda , vLamda)
-  CALL Dtb_Check_Dim3(ff,"ZETA",vSpc, tI_Zeta  , vZeta)
-  CALL Dtb_Check_Dim3(ff,"PSI", vSpc, tI_Psi   , vPsi)
+  call Dtb_Check(ff,"BETA0",    vSpc, tI_Beta0 , vBeta0)
+  call Dtb_Check(ff,"BETA1",    vSpc, tI_Beta1 , vBeta1)
+  call Dtb_Check(ff,"BETA2",    vSpc, tI_Beta2 , vBeta2)
+  call Dtb_Check(ff,"ALFA1",    vSpc, tI_Beta1 , vAlfa1)
+  call Dtb_Check(ff,"ALFA2",    vSpc, tI_Beta2 , vAlfa2)
+  call Dtb_Check(ff,"CPHI",     vSpc, tI_CPhi  , vCPhi)
+  call Dtb_Check(ff,"THETA",    vSpc, tI_Theta , vTheta)
+  call Dtb_Check(ff,"LAMBDA",   vSpc, tI_Lamda , vLamda)
+  call Dtb_Check_Dim3(ff,"ZETA",vSpc, tI_Zeta  , vZeta)
+  call Dtb_Check_Dim3(ff,"PSI", vSpc, tI_Psi   , vPsi)
   
-  RETURN
-END SUBROUTINE Solmodel_Pitzer_Dtb_Check
+  return
+end subroutine Solmodel_Pitzer_Dtb_Check
 
-SUBROUTINE Solmodel_Pitzer_Dtb_Check_Old(ff,vSpc)
-  USE M_T_Species,ONLY: T_Species
+subroutine Solmodel_Pitzer_Dtb_Check_Old(ff,vSpc)
+  use M_T_Species,only: T_Species
   
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  INTEGER,INTENT(IN):: ff
+  type(T_Species),intent(in):: vSpc(:)
+  integer,intent(in):: ff
   
-  CALL Dtb_Check_Old(ff,"BETA0",vSpc,tBeta0)
-  CALL Dtb_Check_Old(ff,"BETA1",vSpc,tBeta1)
-  CALL Dtb_Check_Old(ff,"BETA2",vSpc,tBeta2)
-  CALL Dtb_Check_Old(ff,"ALFA1",vSpc,tAlfa1)
-  CALL Dtb_Check_Old(ff,"ALFA2",vSpc,tAlfa2)
-  CALL Dtb_Check_Old(ff,"CPHI", vSpc,tCPhi)
-  CALL Dtb_Check_Old(ff,"THETA",vSpc,tTheta)
-  CALL Dtb_Check_Old(ff,"LAMBDA",vSpc,tLamda)
-  CALL Dtb_Check_Dim3_Old(ff,"ZETA",vSpc,tZeta)
-  CALL Dtb_Check_Dim3_Old(ff,"PSI", vSpc,tPsi)
+  call Dtb_Check_Old(ff,"BETA0",vSpc,tBeta0)
+  call Dtb_Check_Old(ff,"BETA1",vSpc,tBeta1)
+  call Dtb_Check_Old(ff,"BETA2",vSpc,tBeta2)
+  call Dtb_Check_Old(ff,"ALFA1",vSpc,tAlfa1)
+  call Dtb_Check_Old(ff,"ALFA2",vSpc,tAlfa2)
+  call Dtb_Check_Old(ff,"CPHI", vSpc,tCPhi)
+  call Dtb_Check_Old(ff,"THETA",vSpc,tTheta)
+  call Dtb_Check_Old(ff,"LAMBDA",vSpc,tLamda)
+  call Dtb_Check_Dim3_Old(ff,"ZETA",vSpc,tZeta)
+  call Dtb_Check_Dim3_Old(ff,"PSI", vSpc,tPsi)
   
-  RETURN
-END SUBROUTINE Solmodel_Pitzer_Dtb_Check_Old
+  return
+end subroutine Solmodel_Pitzer_Dtb_Check_Old
 
-SUBROUTINE Dtb_Check(f,Str,vSpc,tI_Coef,vCoef)
+subroutine Dtb_Check(f,Str,vSpc,tI_Coef,vCoef)
 
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !
-  INTEGER,        INTENT(IN):: f
-  CHARACTER(*),   INTENT(IN):: Str
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  INTEGER,        INTENT(IN):: tI_Coef(:,:)
-  REAL(dp),       INTENT(IN):: vCoef(:)
+  integer,        intent(in):: f
+  character(*),   intent(in):: Str
+  type(T_Species),intent(in):: vSpc(:)
+  integer,        intent(in):: tI_Coef(:,:)
+  real(dp),       intent(in):: vCoef(:)
   !
-  INTEGER :: I,J
-  REAL(dp):: X
+  integer :: I,J
+  real(dp):: X
   !
-  WRITE(f,'(/,A,/)') TRIM(Str)
-  DO I=1,SIZE(tI_Coef,1)
-    DO J=1,SIZE(tI_Coef,2)
-      IF(tI_Coef(I,J)>0) THEN
+  write(f,'(/,A,/)') trim(Str)
+  do I=1,size(tI_Coef,1)
+    do J=1,size(tI_Coef,2)
+      if(tI_Coef(I,J)>0) then
         X= vCoef(tI_Coef(I,J))
-        WRITE(f,'(G15.6,A1,2(A,A1))') &
-        & X,t_,TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_
-      ENDIF
-    ENDDO
-  ENDDO
+        write(f,'(G15.6,A1,2(A,A1))') &
+        & X,t_,trim(vSpc(I)%NamSp),t_,trim(vSpc(J)%NamSp),t_
+      end if
+    end do
+  end do
   !
-ENDSUBROUTINE Dtb_Check
+end subroutine Dtb_Check
 
-SUBROUTINE Dtb_Check_Dim3(f,Str,vSpc,tI_Coef,vCoef)
+subroutine Dtb_Check_Dim3(f,Str,vSpc,tI_Coef,vCoef)
 !--
 !-- same as Dtb_Check, for 3D tables
 !--
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !
-  INTEGER,        INTENT(IN):: f
-  CHARACTER(*),   INTENT(IN):: Str
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  INTEGER,        INTENT(IN):: tI_Coef(:,:,:)
-  REAL(dp),       INTENT(IN):: vCoef(:)
+  integer,        intent(in):: f
+  character(*),   intent(in):: Str
+  type(T_Species),intent(in):: vSpc(:)
+  integer,        intent(in):: tI_Coef(:,:,:)
+  real(dp),       intent(in):: vCoef(:)
   !---------------------------------------------------------------------
-  INTEGER :: I,J,K
-  REAL(dp):: X
+  integer :: I,J,K
+  real(dp):: X
   !
-  WRITE(f,'(/,A,/)') TRIM(Str)
-  DO I=1,SIZE(tI_Coef,1)
-    DO J=1,SIZE(tI_Coef,2)
-      DO K=1,SIZE(tI_Coef,3)
-        IF(tI_Coef(I,J,K)>0) THEN
+  write(f,'(/,A,/)') trim(Str)
+  do I=1,size(tI_Coef,1)
+    do J=1,size(tI_Coef,2)
+      do K=1,size(tI_Coef,3)
+        if(tI_Coef(I,J,K)>0) then
           X= vCoef(tI_Coef(I,J,K))
-          WRITE(f,'(G15.6,A1,3(A,A1))') &
+          write(f,'(G15.6,A1,3(A,A1))') &
           & X,t_, &
-          & TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_,TRIM(vSpc(K)%NamSp),t_
-        ENDIF
-      ENDDO
-    ENDDO
-  ENDDO
+          & trim(vSpc(I)%NamSp),t_,trim(vSpc(J)%NamSp),t_,trim(vSpc(K)%NamSp),t_
+        end if
+      end do
+    end do
+  end do
   
-  RETURN
-ENDSUBROUTINE Dtb_Check_Dim3
+  return
+end subroutine Dtb_Check_Dim3
 
-SUBROUTINE Dtb_Check_Old(f,Str,vSpc,vCoef)
+subroutine Dtb_Check_Old(f,Str,vSpc,vCoef)
 !-- 
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !---------------------------------------------------------------------
-  INTEGER,        INTENT(IN):: f
-  CHARACTER(*),   INTENT(IN):: Str
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  REAL(dp),       INTENT(IN):: vCoef(:,:)
+  integer,        intent(in):: f
+  character(*),   intent(in):: Str
+  type(T_Species),intent(in):: vSpc(:)
+  real(dp),       intent(in):: vCoef(:,:)
   !
-  INTEGER :: I,J
-  REAL(dp):: X
+  integer :: I,J
+  real(dp):: X
   !---------------------------------------------------------------------
   
-  WRITE(f,'(/,A,/)') TRIM(Str)
-  DO I=1,SIZE(vCoef,1)
-    DO J=1,SIZE(vCoef,2)
+  write(f,'(/,A,/)') trim(Str)
+  do I=1,size(vCoef,1)
+    do J=1,size(vCoef,2)
       X= vCoef(I,J)
-      IF(X/=Zero) &
-      & WRITE(f,'(G15.6,A1,2(A,A1))') &
-      & X,t_,TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_
-    ENDDO
-  ENDDO
+      if(X/=Zero) &
+      & write(f,'(G15.6,A1,2(A,A1))') &
+      & X,t_,trim(vSpc(I)%NamSp),t_,trim(vSpc(J)%NamSp),t_
+    end do
+  end do
   
-  RETURN
-ENDSUBROUTINE Dtb_Check_Old
+  return
+end subroutine Dtb_Check_Old
 
-SUBROUTINE Dtb_Check_Dim3_Old(f,Str,vSpc,vCoef)
+subroutine Dtb_Check_Dim3_Old(f,Str,vSpc,vCoef)
 ! same as Dtb_Check, for 3D tables
-  USE M_T_Species,ONLY: T_Species
+  use M_T_Species,only: T_Species
   !
-  INTEGER,        INTENT(IN):: f
-  CHARACTER(*),   INTENT(IN):: Str
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
-  REAL(dp),       INTENT(IN):: vCoef(:,:,:)
+  integer,        intent(in):: f
+  character(*),   intent(in):: Str
+  type(T_Species),intent(in):: vSpc(:)
+  real(dp),       intent(in):: vCoef(:,:,:)
   !
-  INTEGER :: I,J,K
-  REAL(dp):: X
+  integer :: I,J,K
+  real(dp):: X
   !
-  WRITE(f,'(/,A,/)') TRIM(Str)
-  DO I=1,SIZE(vCoef,1)
-    DO J=1,SIZE(vCoef,2)
-      DO K=1,SIZE(vCoef,3)
+  write(f,'(/,A,/)') trim(Str)
+  do I=1,size(vCoef,1)
+    do J=1,size(vCoef,2)
+      do K=1,size(vCoef,3)
         X= vCoef(I,J,K)
-        IF(X/=Zero) &
-        & WRITE(f,'(G15.6,A1,3(A,A1))') &
-        & X,t_,TRIM(vSpc(I)%NamSp),t_,TRIM(vSpc(J)%NamSp),t_,TRIM(vSpc(K)%NamSp),t_
-      ENDDO
-    ENDDO
-  ENDDO
+        if(X/=Zero) &
+        & write(f,'(G15.6,A1,3(A,A1))') &
+        & X,t_,trim(vSpc(I)%NamSp),t_,trim(vSpc(J)%NamSp),t_,trim(vSpc(K)%NamSp),t_
+      end do
+    end do
+  end do
   !
-ENDSUBROUTINE Dtb_Check_Dim3_Old
+end subroutine Dtb_Check_Dim3_Old
 
-SUBROUTINE Solmodel_Pitzer_Dtb_Clean
+subroutine Solmodel_Pitzer_Dtb_Clean
   !
-  IF (ALLOCATED(vSolut)) DEALLOCATE(vSolut)
+  if (allocated(vSolut)) deallocate(vSolut)
   !
-  IF (ALLOCATED(tBeta0))   DEALLOCATE(tBeta0)
-  IF (ALLOCATED(tBeta1))   DEALLOCATE(tBeta1)
-  IF (ALLOCATED(tBeta2))   DEALLOCATE(tBeta2)
-  IF (ALLOCATED(tCPhi))    DEALLOCATE(tCPhi)
-  IF (ALLOCATED(tTheta))   DEALLOCATE(tTheta)
-  IF (ALLOCATED(tLamda))   DEALLOCATE(tLamda)
-  IF (ALLOCATED(tAlfa1))   DEALLOCATE(tAlfa1)
-  IF (ALLOCATED(tAlfa2))   DEALLOCATE(tAlfa2)
-  IF (ALLOCATED(tZeta))    DEALLOCATE(tZeta)
-  IF (ALLOCATED(tPsi))     DEALLOCATE(tPsi)
+  if (allocated(tBeta0))   deallocate(tBeta0)
+  if (allocated(tBeta1))   deallocate(tBeta1)
+  if (allocated(tBeta2))   deallocate(tBeta2)
+  if (allocated(tCPhi))    deallocate(tCPhi)
+  if (allocated(tTheta))   deallocate(tTheta)
+  if (allocated(tLamda))   deallocate(tLamda)
+  if (allocated(tAlfa1))   deallocate(tAlfa1)
+  if (allocated(tAlfa2))   deallocate(tAlfa2)
+  if (allocated(tZeta))    deallocate(tZeta)
+  if (allocated(tPsi))     deallocate(tPsi)
   !
-  IF (ALLOCATED(tI_Beta0))   DEALLOCATE(tI_Beta0)
-  IF (ALLOCATED(tI_Beta1))   DEALLOCATE(tI_Beta1)
-  IF (ALLOCATED(tI_Beta2))   DEALLOCATE(tI_Beta2)
-  IF (ALLOCATED(tI_CPhi))    DEALLOCATE(tI_CPhi)
-  IF (ALLOCATED(tI_Theta))   DEALLOCATE(tI_Theta)
-  IF (ALLOCATED(tI_Lamda))   DEALLOCATE(tI_Lamda)
-  IF (ALLOCATED(tI_Zeta))    DEALLOCATE(tI_Zeta)
-  IF (ALLOCATED(tI_Psi))     DEALLOCATE(tI_Psi)
+  if (allocated(tI_Beta0))   deallocate(tI_Beta0)
+  if (allocated(tI_Beta1))   deallocate(tI_Beta1)
+  if (allocated(tI_Beta2))   deallocate(tI_Beta2)
+  if (allocated(tI_CPhi))    deallocate(tI_CPhi)
+  if (allocated(tI_Theta))   deallocate(tI_Theta)
+  if (allocated(tI_Lamda))   deallocate(tI_Lamda)
+  if (allocated(tI_Zeta))    deallocate(tI_Zeta)
+  if (allocated(tI_Psi))     deallocate(tI_Psi)
   !
-  IF (ALLOCATED(vF_Beta0))   DEALLOCATE(vF_Beta0)
-  IF (ALLOCATED(vF_Beta1))   DEALLOCATE(vF_Beta1)
-  IF (ALLOCATED(vF_Beta2))   DEALLOCATE(vF_Beta2)
-  IF (ALLOCATED(vF_CPhi))    DEALLOCATE(vF_CPhi)
-  IF (ALLOCATED(vF_Theta))   DEALLOCATE(vF_Theta)
-  IF (ALLOCATED(vF_Lamda))   DEALLOCATE(vF_Lamda)
-  IF (ALLOCATED(vF_Zeta))    DEALLOCATE(vF_Zeta)
-  IF (ALLOCATED(vF_Psi))     DEALLOCATE(vF_Psi)
+  if (allocated(vF_Beta0))   deallocate(vF_Beta0)
+  if (allocated(vF_Beta1))   deallocate(vF_Beta1)
+  if (allocated(vF_Beta2))   deallocate(vF_Beta2)
+  if (allocated(vF_CPhi))    deallocate(vF_CPhi)
+  if (allocated(vF_Theta))   deallocate(vF_Theta)
+  if (allocated(vF_Lamda))   deallocate(vF_Lamda)
+  if (allocated(vF_Zeta))    deallocate(vF_Zeta)
+  if (allocated(vF_Psi))     deallocate(vF_Psi)
   !
-  IF (ALLOCATED(vBeta0))   DEALLOCATE(vBeta0)
-  IF (ALLOCATED(vBeta1))   DEALLOCATE(vBeta1)
-  IF (ALLOCATED(vBeta2))   DEALLOCATE(vBeta2)
-  IF (ALLOCATED(vAlfa1))   DEALLOCATE(vAlfa1)
-  IF (ALLOCATED(vAlfa2))   DEALLOCATE(vAlfa2)
-  IF (ALLOCATED(vCPhi))    DEALLOCATE(vCPhi)
-  IF (ALLOCATED(vTheta))   DEALLOCATE(vTheta)
-  IF (ALLOCATED(vLamda))   DEALLOCATE(vLamda)
-  IF (ALLOCATED(vZeta))    DEALLOCATE(vZeta)
-  IF (ALLOCATED(vPsi))     DEALLOCATE(vPsi)
+  if (allocated(vBeta0))   deallocate(vBeta0)
+  if (allocated(vBeta1))   deallocate(vBeta1)
+  if (allocated(vBeta2))   deallocate(vBeta2)
+  if (allocated(vAlfa1))   deallocate(vAlfa1)
+  if (allocated(vAlfa2))   deallocate(vAlfa2)
+  if (allocated(vCPhi))    deallocate(vCPhi)
+  if (allocated(vTheta))   deallocate(vTheta)
+  if (allocated(vLamda))   deallocate(vLamda)
+  if (allocated(vZeta))    deallocate(vZeta)
+  if (allocated(vPsi))     deallocate(vPsi)
   !
-ENDSUBROUTINE Solmodel_Pitzer_Dtb_Clean
+end subroutine Solmodel_Pitzer_Dtb_Clean
 
-ENDMODULE M_Solmodel_Pitzer_Dtb
+end module M_Solmodel_Pitzer_Dtb

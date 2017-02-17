@@ -1,39 +1,39 @@
-MODULE M_Formula_Utils
-  IMPLICIT NONE
+module M_Formula_Utils
+  implicit none
   
-  PRIVATE
+  private
   
-  PUBLIC :: Name_Index
+  public :: Name_Index
 
-  CONTAINS
+  contains
   
   !---
   
-  FUNCTION Name_Index(Str,V) RESULT(index)
+  function Name_Index(Str,V) result(index)
     !=====================================================
     ! Position of Name with Name==Str in VName
     !=====================================================
-    USE m_trace, ONLY : iDebug
-    IMPLICIT NONE
-    CHARACTER(LEN=*),              INTENT(IN)::Str
-    CHARACTER(LEN=*), DIMENSION(:),INTENT(IN)::V
+    use m_trace, only : iDebug
+    implicit none
+    character(len=*),              intent(in)::Str
+    character(len=*), dimension(:),intent(in)::V
     !---
-    INTEGER :: I
-    INTEGER :: index
+    integer :: I
+    integer :: index
     !---
     index=0
-    IF(SIZE(V)==0) RETURN
+    if(size(V)==0) return
     I=0
-    DO
+    do
       I=I+1 
-      IF(iDebug==5) WRITE(*,*) "Testing" , TRIM(Str), TRIM(V(I))
-      IF(TRIM(Str)==TRIM(V(I))) THEN
+      if(iDebug==5) write(*,*) "Testing" , trim(Str), trim(V(I))
+      if(trim(Str)==trim(V(I))) then
         index=I
-        EXIT
-      ENDIF
-      IF(I==SIZE(V)) EXIT
-    ENDDO !IF Str not found -> I=0
-    RETURN
-  END FUNCTION Name_Index
+        exit
+      end if
+      if(I==size(V)) exit
+    end do !if Str not found -> I=0
+    return
+  end function Name_Index
  
-END MODULE M_Formula_Utils
+end module M_Formula_Utils

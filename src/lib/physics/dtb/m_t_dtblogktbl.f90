@@ -1,193 +1,193 @@
-MODULE M_T_DtbLogKTbl
+module M_T_DtbLogKTbl
   !--------------------------------------------------------------
-  ! Purpose : DATA TYPE T_DtbLogKTbl
+  ! Purpose : data type T_DtbLogKTbl
   ! thermodynamic data given as logK's along a TP.TABLE
   !--------------------------------------------------------------
-  USE M_Kinds
-  USE M_Trace
-  USE M_T_Tpcond,ONLY: T_TPCond
+  use M_Kinds
+  use M_Trace
+  use M_T_Tpcond,only: T_TPCond
   !
-  IMPLICIT NONE
-  PRIVATE
+  implicit none
+  private
   !
   !//Public derived type
-  PUBLIC:: T_DtbLogKTbl
+  public:: T_DtbLogKTbl
   !
   !//Public variables
-  PUBLIC:: DimLogK_Max
-  INTEGER,PARAMETER:: DimLogK_Max= 16
+  public:: DimLogK_Max
+  integer,parameter:: DimLogK_Max= 32
+  !MODIFIED_JM_2016_01 DimLogK_Max was 16, changed to 32 (same as dimV)
   !
   !//Public functions
-  PUBLIC  :: DtbLogKTbl_Calc_Init
-  PUBLIC  :: DtbLogKTbl_Calc
+  public  :: DtbLogKTbl_Calc_Init
+  public  :: DtbLogKTbl_Calc
   !
-  TYPE:: T_DtbLogKTbl
+  type:: T_DtbLogKTbl
     !
-    CHARACTER(LEN=15):: Num
-    CHARACTER(LEN=23):: Name
-    CHARACTER(LEN=71):: Formula
-    CHARACTER(LEN=3) :: Typ     ! AQU:MIN:GAS
-    INTEGER :: Div=1
-    INTEGER :: Chg
-    REAL(dp):: WeitKg
-    REAL(dp):: V0R ! Volume IF MIN
-    REAL(dp):: AquSize
+    character(len=15):: Num
+    character(len=23):: Name
+    character(len=71):: Formula
+    character(len=3) :: Typ     ! AQU:MIN:GAS:XCH
+    integer :: Div=1
+    integer :: Chg
+    real(dp):: WeitKg
+    real(dp):: V0R ! Volume if MIN
+    real(dp):: AquSize
 
     !----------- LogK Table Mod
-    INTEGER :: DimLogK
-    REAL(dp):: vTdgK(DimLogK_Max)
-    REAL(dp):: vLogK(DimLogK_Max)
+    integer :: DimLogK
+    real(dp):: vTdgK(DimLogK_Max)
+    real(dp):: vLogK(DimLogK_Max)
 
     !----------- Spline Coeffs
-    REAL(dp):: vSplineB(DimLogK_Max)
-    REAL(dp):: vSplineC(DimLogK_Max)
-    REAL(dp):: vsplineD(DimLogK_Max)
+    real(dp):: vSplineB(DimLogK_Max)
+    real(dp):: vSplineC(DimLogK_Max)
+    real(dp):: vsplineD(DimLogK_Max)
 
     !---------- Memory of current state
-    !! REAL(dp):: G0rt
+    !! real(dp):: G0rt
     !
-  END TYPE T_DtbLogKTbl
+  end type T_DtbLogKTbl
 
   !// Private Functions
-  PRIVATE :: DtbLogKTbl_LogKSpline_Compute
-  PRIVATE :: DtbLogKTbl_LogKSpline_Eval
+  private :: DtbLogKTbl_LogKSpline_Compute
+  private :: DtbLogKTbl_LogKSpline_Eval
 
-CONTAINS
+contains
 
-  SUBROUTINE DtbLogKTbl_Calc_Init(M)
+  subroutine DtbLogKTbl_Calc_Init(M)
     !---------------------------------------------------
     ! Purpose : Prepare Spline Interpolator
     !---------------------------------------------------
-    TYPE(T_DtbLogKTbl),INTENT(INOUT) :: M
+    type(T_DtbLogKTbl),intent(inout) :: M
 
-    IF(M%DimLogK>1) CALL DtbLogKTbl_LogKSpline_Compute(M)
+    if(M%DimLogK>1) call DtbLogKTbl_LogKSpline_Compute(M)
 
-  END SUBROUTINE DtbLogKTbl_Calc_Init
+  end subroutine DtbLogKTbl_Calc_Init
 
   !---
 
-  SUBROUTINE DtbLogKTbl_Calc(M,TdgK,Pbar,S)
+  subroutine DtbLogKTbl_Calc(M,TdgK,Pbar,S)
     !---------------------------------------------------
     ! Purpose : update values of S%G0RT,S%V0
     !---------------------------------------------------
-    USE M_T_Species,    ONLY: T_Species
-    USE M_Dtb_Const,    ONLY: R_jK
-    USE M_Numeric_Const,ONLY: Ln10
-    !! USE M_T_Tpcond,     ONLY: TPcond_IndexTP
-
-    TYPE(T_DtbLogKTbl),INTENT(IN):: M
-    REAL(dp),          INTENT(IN):: TdgK,Pbar
-    TYPE(T_Species),   INTENT(INOUT):: S
-
-    REAL(dp):: LogK
-
+    use M_T_Species,    only: T_Species
+    use M_Dtb_Const,    only: R_jK
+    use M_Numeric_Const,only: Ln10
+    !-------------------------------------------------------------------
+    type(T_DtbLogKTbl),intent(in):: M
+    real(dp),          intent(in):: TdgK,Pbar
+    type(T_Species),   intent(inout):: S
+    !-------------------------------------------------------------------
+    real(dp):: LogK
+    !-------------------------------------------------------------------
     S%WeitKg= M%WeitKg
-
-    !// ref state potential
-    IF(M%DimLogK>1) THEN
-      CALL DtbLogKTbl_LogKSpline_Eval(M,TdgK,LogK)
-    ELSE
+    !
+    !------------------------------------------------ref state potential
+    if(M%DimLogK>1) then
+      call DtbLogKTbl_LogKSpline_Eval(M,TdgK,LogK)
+    else
       LogK= M%vLogK(1)
-    ENDIF
+    end if
     S%G0rt= -LogK *Ln10
-
-    !// molar volume
-    SELECT CASE(TRIM(M%Typ))
-    CASE("MIN")
+    !
+    !-------------------------------------------------------molar volume
+    select case(trim(M%Typ))
+    case("MIN")
       S%V0= M%V0R
-    CASE("GAS")
+    case("GAS")
       S%V0= R_jK *TdgK / Pbar/ 1.D5 ! -> perfect gas molar volume
-    CASE("AQU")
+    case("AQU")
       S%AquSize= M%AquSize
-    END SELECT
+    end select
 
-  END SUBROUTINE DtbLogKTbl_Calc
+  end subroutine DtbLogKTbl_Calc
 
   !---
 
-  SUBROUTINE DtbLogKTbl_LogKSpline_Compute(M)
+  subroutine DtbLogKTbl_LogKSpline_Compute(M)
     !---------------------------------------------------
     ! Purpose : compute Spline Coeffs
     !---------------------------------------------------
-    USE M_CMM_Spline
-    USE M_IoTools,ONLY: GetUnit
+    use M_CMM_Spline
+    use M_IoTools,only: GetUnit
 
-    TYPE(T_DtbLogKTbl), INTENT(INOUT) :: M
+    type(T_DtbLogKTbl), intent(inout) :: M
 
-    INTEGER :: I, n
-    REAL(dp),ALLOCATABLE :: B(:), C(:), D(:)
-    INTEGER :: ff
+    integer :: I, n
+    real(dp),allocatable :: B(:), C(:), D(:)
+    integer :: ff
     !---
     n= M%DimLogK
 
 
-    IF(N==1) THEN
+    if(N==1) then
       M% vSplineB(1:N)= zero
       M% vSplineC(1:N)= zero
       M% vSplineD(1:N)= zero
-      RETURN
-    ENDIF
+      return
+    end if
 
     FF= 0
-    IF(iDebug==4) THEN
-      CALL GetUnit(FF)
-      OPEN(FF,file="debug_spline.log")
-    ENDIF
+    if(iDebug==4) then
+      call GetUnit(FF)
+      open(FF,file="debug_spline.log")
+    end if
 
-    !// ALLOCATE temporary vectors for output
-    ALLOCATE(B(n))
-    ALLOCATE(C(n))
-    ALLOCATE(D(n))
+    !// allocate temporary vectors for output
+    allocate(B(n))
+    allocate(C(n))
+    allocate(D(n))
 
     !// compute spline coefficients
-    CALL CMM_Spline_Compute (N,M%vTdgK(1:N),M%vLogK(1:N),B,C,D)
-    !! CALL Spline_Compute_NR(M%vTdgK(1:n),M%vLogK(1:n),B)
+    call CMM_Spline_Compute (N,M%vTdgK(1:N),M%vLogK(1:N),B,C,D)
+    !! call Spline_Compute_NR(M%vTdgK(1:n),M%vLogK(1:n),B)
 
     M% vSplineB(1:n)= B(1:n)
     M% vSplineC(1:n)= C(1:n)
     M% vSplineD(1:n)= D(1:n)
 
     !// Debug
-    IF(ff>0) THEN
-      DO I=1, n
-        WRITE(FF,'(F8.3,4G15.6)') M%vTdgK(I),M%vLogK(I),B(I),C(I),D(I)
-      END DO
-    ENDIF
+    if(ff>0) then
+      do I=1, n
+        write(FF,'(F8.3,4G15.6)') M%vTdgK(I),M%vLogK(I),B(I),C(I),D(I)
+      end do
+    end if
 
     !// clean temporary vectors
-    DEALLOCATE(B,C,D)
+    deallocate(B,C,D)
     !
-    IF(FF>0) CLOSE(FF)
-  END SUBROUTINE DtbLogKTbl_LogKSpline_Compute
+    if(FF>0) close(FF)
+  end subroutine DtbLogKTbl_LogKSpline_Compute
 
   !---
 
-  SUBROUTINE DtbLogKTbl_LogKSpline_Eval(M,TdgK,LogK)
+  subroutine DtbLogKTbl_LogKSpline_Eval(M,TdgK,LogK)
     !---------------------------------------------------
     ! Purpose : eval LogK with Spline Function
     !---------------------------------------------------
-    USE M_CMM_Spline
-    !! USE M_Numeric_Interpol
+    use M_CMM_Spline
+    !! use M_Numeric_Interpol
     !
-    TYPE(T_DtbLogKTbl), INTENT(IN) :: M
-    REAL(dp), INTENT(IN)  :: TdgK
-    REAL(dp), INTENT(OUT) :: LogK
+    type(T_DtbLogKTbl), intent(in) :: M
+    real(dp), intent(in)  :: TdgK
+    real(dp), intent(out) :: LogK
 
-    INTEGER :: n
+    integer :: n
     !---
     n= M%DimLogK
 
     LogK= Zero
 
-    CALL CMM_Spline_Eval(n, &
+    call CMM_Spline_Eval(n, &
     & M%vTdgK(1:n) , M%vLogK(1:n),&
     & M%vSplineB(1:n) , M%vSplineC(1:n), M%vSplineD(1:n),&
     & TdgK, LogK )
 
-    !~ LogK= Spline_Eval_NR( &
-    !~ & M%vTdgK(1:n) , M%vLogK(1:n), M%vSplineB(1:n), TdgK)
+    !! LogK= Spline_Eval_NR( &
+    !! & M%vTdgK(1:n) , M%vLogK(1:n), M%vSplineB(1:n), TdgK)
 
-  END SUBROUTINE DtbLogKTbl_LogKSpline_Eval
+  end subroutine DtbLogKTbl_LogKSpline_Eval
 
-ENDMODULE M_T_DtbLogKTbl
+end module M_T_DtbLogKTbl
 

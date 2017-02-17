@@ -1,45 +1,45 @@
-MODULE M_T_Component
-  USE M_Kinds
-  USE M_T_Species,ONLY: nElMax
+module M_T_Component
+  use M_Kinds
+  use M_T_Species,only: nElMax
   ! 
-  IMPLICIT NONE 
-  PRIVATE 
-  PUBLIC:: T_Component 
-  PUBLIC:: Component_Zero
-  PUBLIC:: Component_Index
-  PUBLIC:: Component_Print
-  PUBLIC:: Component_Stoikio
-  PUBLIC:: CpnMolMinim
+  implicit none 
+  private 
+  public:: T_Component 
+  public:: Component_Zero
+  public:: Component_Index
+  public:: Component_Print
+  public:: Component_Stoikio
+  public:: CpnMolMinim
   !
-  TYPE:: T_Component !container for storing a thermodynamic component
-    CHARACTER(LEN=23):: NamCp
-    CHARACTER(LEN=71):: Formula !-> currently used only for simplex !!!
-    CHARACTER(LEN=7) :: Statut  !status of component; INERT,MOBILE,BALANCE,BUFFER,...
-    INTEGER :: vStoikCp(0:nElMax)
-    INTEGER :: iEle
-    INTEGER :: iSpc
-    REAL(dp):: Factor
+  type:: T_Component !container for storing a thermodynamic component
+    character(len=23):: NamCp
+    character(len=71):: Formula !-> currently used only for simplex !!!
+    character(len=7) :: Statut  !status of component; INERT,MOBILE,BALANCE,BUFFER,...
+    integer :: vStoikCp(0:nElMax)
+    integer :: iEle
+    integer :: iSpc
+    real(dp):: Factor
     !
-    CHARACTER(LEN=23):: namSol
+    character(len=23):: namSol
     ! namSol= name of phase controlling this component (used for mobile cpn') 
     !   for an aqueous species or a pure species, namSol="Z" 
     !   for a non aqueous solution, %namSol is the name of the solid or gas solution phase 
     !iMix, iPol = used for multi-solution system (e.g. SS-AS)
     !-> iFas is calculated from %namSol, c%iFas=MixPhase_Index(IN=vMixFas,IN=c%namSol) 
-    INTEGER :: iMix !index of "controlling" mixture phase in vMixPhase (iFas=0 for aqu. or pure species)
-    INTEGER :: iPol !index of the species in the end-member list of that phase 
+    integer :: iMix !index of "controlling" mixture phase in vMixPhase (iFas=0 for aqu. or pure species)
+    integer :: iPol !index of the species in the end-member list of that phase 
     ! 
-    REAL(dp):: Mole   !stores the current mole number (for inert component) 
-    REAL(dp):: LnAct  !stores the current activity (for mobile component) 
+    real(dp):: Mole   !stores the current mole number (for inert component) 
+    real(dp):: LnAct  !stores the current activity (for mobile component) 
     ! 
-  ENDTYPE T_Component
+  end type T_Component
   !
-  REAL(dp):: CpnMolMinim= 1.D-16
+  real(dp):: CpnMolMinim= 1.D-16
  
-CONTAINS 
+contains 
 
-SUBROUTINE Component_Zero(C)
-  TYPE(T_Component),INTENT(OUT):: C
+subroutine Component_Zero(C)
+  type(T_Component),intent(out):: C
   !
   C%NamCp=   "Z"
   C%Formula= "Z"
@@ -55,71 +55,71 @@ SUBROUTINE Component_Zero(C)
   C%Mole=     Zero
   C%LnAct=    Zero
   !
-END SUBROUTINE Component_Zero
+end subroutine Component_Zero
  
-INTEGER FUNCTION Component_Index(Str,V)
+integer function Component_Index(Str,V)
 !--
 !-- finds component index according to its %NamCp
 !--
-  CHARACTER(LEN=*), INTENT(IN):: Str
-  TYPE(T_Component),INTENT(IN):: V(:)
+  character(len=*), intent(in):: Str
+  type(T_Component),intent(in):: V(:)
   !
-  INTEGER::I 
+  integer::I 
   
   Component_Index=0
-  IF(SIZE(V)==0) RETURN
+  if(size(V)==0) return
   !
   I=0
-  DO 
+  do 
     I=I+1 
-    IF(TRIM(Str)==TRIM(V(I)%NamCp)) THEN
-      Component_Index=I  ;  EXIT
-    ENDIF 
-    IF(I==SIZE(V)) EXIT 
-  ENDDO !IF Str not found -> I=0
+    if(trim(Str)==trim(V(I)%NamCp)) then
+      Component_Index=I  ;  exit
+    end if 
+    if(I==size(V)) exit 
+  end do !if Str not found -> I=0
   
-  RETURN
-END FUNCTION Component_Index
+  return
+end function Component_Index
  
-SUBROUTINE Component_Print(f,vEle,vSpc,C) 
-  USE M_T_Element,ONLY: T_Element 
-  USE M_T_Species,ONLY: T_Species 
+subroutine Component_Print(f,vEle,vSpc,C) 
+  use M_T_Element,only: T_Element 
+  use M_T_Species,only: T_Species 
   ! 
-  INTEGER,          INTENT(IN):: f 
-  TYPE(T_Element),  INTENT(IN):: vEle(:) 
-  TYPE(T_Species),  INTENT(IN):: vSpc(:) 
-  TYPE(T_Component),INTENT(IN):: C 
+  integer,          intent(in):: f 
+  type(T_Element),  intent(in):: vEle(:) 
+  type(T_Species),  intent(in):: vSpc(:) 
+  type(T_Component),intent(in):: C 
   
-  WRITE(f,'(3(A,1X),2(A15,1X),2G12.3)') & 
+  write(f,'(3(A,1X),2(A15,1X),2G12.3)') & 
   &  C%NamCp, vEle(C%iEle)%NamEl,C%Statut, &
   &  vSpc(C%iSpc)%NamSp, &
   &  C%NamSol, &
   &  C%Mole,C%LnAct
   
-  RETURN
-END SUBROUTINE Component_Print 
+  return
+end subroutine Component_Print 
  
-SUBROUTINE Component_Stoikio(vEle,ieOx,Cpn,fOk)
+subroutine Component_Stoikio(vEle,ieOx,Cpn,fOk)
 !--
 !-- !!! currently used only in simplex routines !!!
 !-- build stoichiometry vector of component Cpn according to element base vEle
 !-- NEW: stoichiometry saved as S%vStoikCp
 !--
-  USE M_T_Element,ONLY: T_Element,Formula_Read
+  use M_T_Element,only: T_Element,Formula_Read
   !
-  TYPE(T_Element),  INTENT(IN)::    vEle(:)
-  INTEGER,          INTENT(IN)::    ieOx
-  TYPE(T_Component),INTENT(INOUT):: Cpn
-  LOGICAL,          INTENT(OUT)::   fOk
+  type(T_Element),  intent(in)::    vEle(:)
+  integer,          intent(in)::    ieOx
+  type(T_Component),intent(inout):: Cpn
+  logical,          intent(out)::   fOk
   !
-  INTEGER:: vStoik(1:SIZE(vEle))
-  INTEGER:: ZSp,nDiv,nEl,ZExc
+  integer:: vStoik(1:size(vEle))
+  integer:: ZSp,nDiv,nEl,ZExc
   !
-  ! print *,"=Component_Stoikio=",TRIM(Cpn%Formula)  ;  pause
+  ! print *,"=Component_Stoikio=",trim(Cpn%Formula)  ;  pause
   !
-  nEl=  SIZE(vEle)
+  nEl=  size(vEle)
   !
-  CALL Formula_Read(  &
+  call Formula_Read(  &
   & Cpn%Formula,vEle, &
   & ZSp,nDiv,fOk,vStoik)
   !
@@ -128,17 +128,17 @@ SUBROUTINE Component_Stoikio(vEle,ieOx,Cpn,fOk)
   Cpn%vStoikCp(0)=     nDiv
   Cpn%vStoikCp(nEl+1)= ZSp  !-> component charge
   !
-  RETURN
+  return
   !
-  ZExc=DOT_PRODUCT(vStoik(1:nEl),vEle(1:nEl)%Z) !-> oxidation state
+  ZExc=dot_product(vStoik(1:nEl),vEle(1:nEl)%Z) !-> oxidation state
   !
-  IF(ieOx/=0) THEN
+  if(ieOx/=0) then
     Cpn%vStoikCp(ieOx)= ZSp - ZExc
-    fOk=.TRUE.
-  ENDIF
+    fOk=.true.
+  end if
   !
-  RETURN
-END SUBROUTINE Component_Stoikio
+  return
+end subroutine Component_Stoikio
 
-END MODULE M_T_Component
+end module M_T_Component
  

@@ -1,433 +1,433 @@
-MODULE M_SpeciesDtb_Read
+module M_SpeciesDtb_Read
 !--
 !-- routines for reading data for species from the databases
 !--
-  USE M_Kinds
-  USE M_Trace,    ONLY: iDebug,fTrc,fHtm,Stop_,T_,Warning_,Pause_
-  USE M_T_Species,ONLY: T_SpeciesDtb
-  IMPLICIT NONE
+  use M_Kinds
+  use M_Trace,    only: iDebug,fTrc,fHtm,Stop_,T_,Warning_,Pause_
+  use M_T_Species,only: T_SpeciesDtb
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: SpeciesDtb_BuildLnk
-  PUBLIC:: SpeciesDtb_LnkToVec
-  PUBLIC:: LnkSpc_Build
-  PUBLIC:: Species_Read_AquSize
-  PUBLIC:: Species_Write_AquSize
+  public:: SpeciesDtb_BuildLnk
+  public:: SpeciesDtb_LnkToVec
+  public:: LnkSpc_Build
+  public:: Species_Read_AquSize
+  public:: Species_Write_AquSize
   !
-  PUBLIC:: T_LnkSpc
+  public:: T_LnkSpc
   !
-  TYPE:: T_LnkSpc
-    TYPE(T_SpeciesDtb)      :: Value
-    TYPE(T_LnkSpc), POINTER :: Next
-  ENDTYPE T_LnkSpc
+  type:: T_LnkSpc
+    type(T_SpeciesDtb)      :: Value
+    type(T_LnkSpc), pointer :: Next
+  end type T_LnkSpc
   !
-CONTAINS
+contains
 
-SUBROUTINE Species_RemoveDoublons
-  USE M_T_Species,  ONLY: T_Species,Species_Index
-  USE M_Global_Vars,ONLY: vSpc
+subroutine Species_RemoveDoublons
+  use M_T_Species,  only: T_Species,Species_Index
+  use M_Global_Vars,only: vSpc
   !
-  ! TYPE(T_Species),ALLOCATABLE:: vSpcNew(:)
-  ! LOGICAL,ALLOCATABLE:: vSkip(:)
-  INTEGER:: N,NNew,I
+  ! type(T_Species),allocatable:: vSpcNew(:)
+  ! logical,allocatable:: vSkip(:)
+  integer:: N,NNew,I
 
-  N= SIZE(vSpc)
+  N= size(vSpc)
   NNew= N
-  DO WHILE(N>0)
+  do while(N>0)
     I= Species_Index(vSpc(N)%NamSp,vSpc)
-    IF(I<N) THEN
-      PRINT *,"replace species ",trim(vSpc(N)%NamSp), trim(vSpc(I)%NamSp)
-      CALL Pause_
+    if(I<N) then
+      print *,"replace species ",trim(vSpc(N)%NamSp), trim(vSpc(I)%NamSp)
+      call Pause_
       vSpc(I)= vSpc(N)
       NNew= NNew -1
-    ENDIF
+    end if
     N= N-1
-  ENDDO
+  end do
 
-  IF(NNew<N) THEN
-    PRINT *,"Old/NewDim",N,NNew
-    CALL Pause_
-  ENDIF
+  if(NNew<N) then
+    print *,"Old/NewDim",N,NNew
+    call Pause_
+  end if
 
-  RETURN
-END SUBROUTINE Species_RemoveDoublons
+  return
+end subroutine Species_RemoveDoublons
 
-SUBROUTINE LnkSpc_Build(Init,Inputt,L,P)
-  LOGICAL,           INTENT(IN):: init
-  TYPE(t_SpeciesDtb),INTENT(IN):: inputt
-  TYPE(t_Lnkspc),    POINTER   :: l,p
+subroutine LnkSpc_Build(Init,Inputt,L,P)
+  logical,           intent(in):: init
+  type(t_SpeciesDtb),intent(in):: inputt
+  type(t_Lnkspc),    pointer   :: l,p
 
-  IF(init) THEN
-    NULLIFY(l)
-    ALLOCATE(l)
-    NULLIFY(l%next)
+  if(init) then
+    nullify(l)
+    allocate(l)
+    nullify(l%next)
     l%Value=inputt
     p=>l
-  ELSE
-    ALLOCATE(p%next)
-    NULLIFY(p%next%next)
+  else
+    allocate(p%next)
+    nullify(p%next%next)
     p%next%Value=inputt
     p=>p%next
-  ENDIF
+  end if
 
-  RETURN
-ENDSUBROUTINE LnkSpc_Build
+  return
+end subroutine LnkSpc_Build
 
-SUBROUTINE SpeciesDtb_BuildLnk(LnkSpc,N)
+subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
 !--
 !-- build vSpc directly from HSV files
 !-- implements the S%Model and S%Indx
 !-- which link the species S with the database models
 !--
-  USE M_Dtb_Vars, ONLY: vDtbMinHkf,vDtbMinThr,vDtbAquHkf,vDtbLogKtbl,vDtbLogKAnl
+  use M_Dtb_Vars, only: vDtbMinHkf,vDtbMinThr,vDtbAquHkf,vDtbLogKtbl,vDtbLogKAnl
   !
-  TYPE(T_LnkSpc),POINTER    :: LnkSpc
-  INTEGER,       INTENT(OUT):: N
+  type(T_LnkSpc),pointer    :: LnkSpc
+  integer,       intent(out):: N
   !
-  TYPE(T_LnkSpc),POINTER:: pCur !, pPrev
-  TYPE(T_SpeciesDtb):: S
-  INTEGER:: I
+  type(T_LnkSpc),pointer:: pCur
+  type(T_SpeciesDtb):: S
+  integer:: I
   !
   N= 0
-  IF(SIZE(vDtbLogKtbl)>0) THEN
-    DO I=1,SIZE(vDtbLogKtbl)
+  if(size(vDtbLogKtbl)>0) then
+    do I=1,size(vDtbLogKtbl)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbLogKtbl
       S%DtbModel= "LOGKTBL"
-      S%DtbTrace= TRIM(vDtbLogKtbl(I)%Num)
-      CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
-    ENDDO
+      S%DtbTrace= trim(vDtbLogKtbl(I)%Num)
+      call LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    end do
     ! stop here,
     ! because logK discrete databases can't be mixed
     ! with bases of other type
-    RETURN !------------------------------------------------------RETURN
-  ENDIF
+    return !------------------------------------------------------return
+  end if
   !
   N= 0
-  IF(SIZE(vDtbLogKAnl)>0) THEN
-    DO I=1,SIZE(vDtbLogKAnl)
+  if(size(vDtbLogKAnl)>0) then
+    do I=1,size(vDtbLogKAnl)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbLogKAnl
       S%DtbModel= "LOGKANL"
-      S%DtbTrace= TRIM(vDtbLogKAnl(I)%Num)
-      CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
-    ENDDO
+      S%DtbTrace= trim(vDtbLogKAnl(I)%Num)
+      call LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    end do
     ! stop here,
     ! because logK analytic databases can't be mixed
     ! with bases of other type
-    RETURN !------------------------------------------------------RETURN
-  ENDIF
+    return !------------------------------------------------------return
+  end if
   !
   N= 0
   !------------------------------------------------------aqueous species 
   !-------------------------------------place H2O as species Nr1 in list
-  IF(SIZE(vDtbAquHkf)>0) THEN
+  if(size(vDtbAquHkf)>0) then
     ! if there are aqueous species following the HKF equation of state,
     ! then the eos for H2O is necessarily the Haar-Gallagher-Kell model
     N=N+1
     S%Indx= 1
     S%DtbModel= "H2O_HGK" != Haar-Gallagher-Kell
     S%DtbTrace= "HAAR_etal"
-    CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     !
-    DO I=1,SIZE(vDtbAquHkf)
+    do I=1,size(vDtbAquHkf)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbAquHkf
       S%DtbModel= "AQU_HKF"
-      S%DtbTrace= TRIM(vDtbAquHkf(I)%Num)
-      CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
-    ENDDO
-  ENDIF
+      S%DtbTrace= trim(vDtbAquHkf(I)%Num)
+      call LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    end do
+  end if
   !
   !---------------------------------------then mineral (& gas ?) species
-  IF(SIZE(vDtbMinHkf)>0) THEN
-    DO I=1,SIZE(vDtbMinHkf)
+  if(size(vDtbMinHkf)>0) then
+    do I=1,size(vDtbMinHkf)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbMinHkf
-      S%DtbModel= TRIM(vDtbMinHkf(I)%Typ)//"_HKF"
-      S%DtbTrace= TRIM(vDtbMinHkf(I)%Num)
-      CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
-    ENDDO
-  ENDIF
+      S%DtbModel= trim(vDtbMinHkf(I)%Typ)//"_HKF"
+      S%DtbTrace= trim(vDtbMinHkf(I)%Num)
+      call LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    end do
+  end if
   !
   !---------------------------------------idem, for Theriak-like formats
-  IF(SIZE(vDtbMinThr)>0) THEN
-    DO I=1,SIZE(vDtbMinThr)
+  if(size(vDtbMinThr)>0) then
+    do I=1,size(vDtbMinThr)
       N=N+1
       S%Indx=     I
-      S%DtbModel= TRIM(vDtbMinThr(I)%Typ)//"_THR"
-      S%DtbTrace= TRIM(vDtbMinThr(I)%Num)
-      CALL LnkSpc_Build(N==1,S,LnkSpc,pCur)
-    ENDDO
-  ENDIF
+      S%DtbModel= trim(vDtbMinThr(I)%Typ)//"_THR"
+      S%DtbTrace= trim(vDtbMinThr(I)%Num)
+      call LnkSpc_Build(N==1,S,LnkSpc,pCur)
+    end do
+  end if
 
-  RETURN
-ENDSUBROUTINE SpeciesDtb_BuildLnk
+  return
+end subroutine SpeciesDtb_BuildLnk
 
-SUBROUTINE SpeciesDtb_LnkToVec(Lnk,vSpc)
+subroutine SpeciesDtb_LnkToVec(Lnk,vSpc)
 !--
 !-- transfer the content of a linked list of species
 !-- to an array of species,
 !-- then deallocate the list
 !--
-  TYPE(T_LnkSpc),    POINTER    :: Lnk
-  TYPE(T_SpeciesDtb),INTENT(OUT):: vSpc(:)
+  type(T_LnkSpc),    pointer    :: Lnk
+  type(T_SpeciesDtb),intent(out):: vSpc(:)
   !
-  TYPE(T_LnkSpc),POINTER:: pCur, pPrev
-  TYPE(T_SpeciesDtb):: S
-  INTEGER:: N
+  type(T_LnkSpc),pointer:: pCur, pPrev
+  type(T_SpeciesDtb):: S
+  integer:: N
 
   N= 0
   pCur=> Lnk
-  DO WHILE (ASSOCIATED(pCur))
+  do while (associateD(pCur))
     S= pCur%Value
     N= N+1
     vSpc(N)= S
     pPrev=>  pCur
     pCur=>   pCur%next
-    DEALLOCATE(pPrev)
-  ENDDO
+    deallocate(pPrev)
+  end do
 
-  RETURN
-ENDSUBROUTINE SpeciesDtb_LnkToVec
+  return
+end subroutine SpeciesDtb_LnkToVec
 
-SUBROUTINE Species_Read_AquSize(vSpc)
+subroutine Species_Read_AquSize(vSpc)
 !--
 !-- read size parameters of (some) aqueous species
 !-- -> overwrite current value in vSpc
 !--
-  USE M_IOTools
-  USE M_Files,    ONLY: NamFInn
-  USE M_T_Species,ONLY: T_Species,Species_Index
+  use M_IOTools
+  use M_Files,    only: NamFInn
+  use M_T_Species,only: T_Species,Species_Index
   !
-  TYPE(T_Species),INTENT(INOUT):: vSpc(:)
+  type(T_Species),intent(inout):: vSpc(:)
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios,i
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios,i
   !
-  LOGICAL,ALLOCATABLE:: vIsPresent(:)
+  logical,allocatable:: vIsPresent(:)
 
-  IF(COUNT(vSpc(:)%Typ=="AQU")==0) RETURN
+  if(count(vSpc(:)%Typ=="AQU")==0) return
 
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Species_Read_AquSize"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Read_AquSize"
 
-  CALL GetUnit(F)
-  OPEN(F,FILE=TRIM(NamFInn))
+  call GetUnit(F)
+  open(F,file=trim(NamFInn))
 
-  ALLOCATE(vIsPresent(SIZE(vSpc)))
+  allocate(vIsPresent(size(vSpc)))
   vIsPresent(:)= vSpc(:)%Z==0
 
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
     !
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
 
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("SPECIES.SIZE")
+    case("SPECIES.size")
 
-      DoBlock: DO
+      DoBlock: do
 
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        CALL AppendToEnd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        call AppendToEnd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
 
-        SELECT CASE(W)
-          CASE("END","ENDSPECIES.SIZE")
-            EXIT DoFile
-        ENDSELECT
+        select case(W)
+          case("END","ENDSPECIES.size")
+            exit DoFile
+        end select
 
         i= Species_Index(W,vSpc)
 
-        IF(i>0) THEN
-          IF(vSpc(i)%Typ/="AQU") THEN
-            CALL Warning_("Species "//TRIM(W)//" is not aqueous")
-          ELSE
-            CALL LinToWrd(L,W,EoL)
-            CALL WrdToReal(W,vSpc(i)%AquSize)
-            vIsPresent(i)= .TRUE.
+        if(i>0) then
+          if(vSpc(i)%Typ/="AQU") then
+            call Warning_("Species "//trim(W)//" is not aqueous")
+          else
+            call LinToWrd(L,W,EoL)
+            call WrdToReal(W,vSpc(i)%AquSize)
+            vIsPresent(i)= .true.
             !print '(A,I3,1X,F7.2,1X,A)', &
             !& "AquSize ... ",i,vSpc(i)%AquSize,vSpc(I)%NamSp
             !pause_
-          ENDIF
-        ELSE
-          CALL Warning_("Species "//TRIM(W)//" not in base")
-        ENDIF
+          end if
+        else
+          call Warning_("Species "//trim(W)//" not in base")
+        end if
 
-      ENDDO DoBlock
+      end do DoBlock
 
-    ENDSELECT
+    end select
 
-  ENDDO DoFile
-  CLOSE(F)
+  end do DoFile
+  close(F)
 
-  IF(iDebug>0) THEN
-    WRITE(fTrc,'(A,/)') "aqu'size parameters"
-    DO i=1,SIZE(vSpc)
-      IF(vSpc(i)%Typ=="AQU" .and. vSpc(i)%Z/=0) THEN
-        IF(vSpc(I)%AquSize >1.E-6) THEN
-          WRITE(fTrc,"(A,A1,F7.2)") &
+  if(iDebug>0) then
+    write(fTrc,'(A,/)') "aqu'size parameters"
+    do i=1,size(vSpc)
+      if(vSpc(i)%Typ=="AQU" .and. vSpc(i)%Z/=0) then
+        if(vSpc(I)%AquSize >1.E-6) then
+          write(fTrc,"(A,A1,F7.2)") &
           & vSpc(I)%NamSp, T_, vSpc(I)%AquSize
-        ELSE
-          WRITE(fTrc,"(A,A1,A)") &
-          & vSpc(I)%NamSp, T_, " <- SIZE PARAMETER not defined"
-        ENDIF
-      ENDIF
-    ENDDO
-  ENDIF
+        else
+          write(fTrc,"(A,A1,A)") &
+          & vSpc(I)%NamSp, T_, " <- size parameter not defined"
+        end if
+      end if
+    end do
+  end if
 
-  DEALLOCATE(vIsPresent)
+  deallocate(vIsPresent)
 
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Species_Read_AquSize"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Read_AquSize"
 
-  RETURN
-ENDSUBROUTINE Species_Read_AquSize
+  return
+end subroutine Species_Read_AquSize
 
-SUBROUTINE Species_Write_AquSize(vSpc)
+subroutine Species_Write_AquSize(vSpc)
 !--
 !-- write size parameters of charged aqueous species
 !--
-  USE M_IOTools
-  USE M_T_Species,ONLY: T_Species
+  use M_IOTools
+  use M_T_Species,only: T_Species
   !
-  TYPE(T_Species),INTENT(IN):: vSpc(:)
+  type(T_Species),intent(in):: vSpc(:)
   !
-  INTEGER:: F,i
+  integer:: F,i
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Species_Write_AquSize"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Write_AquSize"
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE="aqusize.tab")
+  call GetUnit(F)
+  open(F,file="aqusize.tab")
   !
-  WRITE(F,'(A)') "SPECIES.SIZE"
+  write(F,'(A)') "SPECIES.size"
   !
-  DO i=1,SIZE(vSpc)
-    IF(vSpc(i)%Typ=="AQU" .AND. vSpc(i)%Z/=0) &
-    & WRITE(F,'(A,A1,F12.2)') vSpc(I)%NamSp, T_, vSpc(i)%AquSize
-  ENDDO
+  do i=1,size(vSpc)
+    if(vSpc(i)%Typ=="AQU" .and. vSpc(i)%Z/=0) &
+    & write(F,'(A,A1,F12.2)') vSpc(I)%NamSp, T_, vSpc(i)%AquSize
+  end do
   !
-  WRITE(F,'(A)') "END"
+  write(F,'(A)') "END"
   !
-  CLOSE(F)
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Species_Write_AquSize"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Write_AquSize"
 
-  RETURN
-ENDSUBROUTINE Species_Write_AquSize
+  return
+end subroutine Species_Write_AquSize
 
-SUBROUTINE Canevas
+subroutine Canevas
 !--
 !-- template for file reading
 !--
-  USE M_IOTools !, ONLY:dimV,LinToWrd,GetUnit
+  use M_IOTools !, only:dimV,LinToWrd,GetUnit
   !
-  CHARACTER(LEN=512):: L,W
-  LOGICAL:: EoL
-  INTEGER:: F,ios
+  character(len=512):: L,W
+  logical:: EoL
+  integer:: F,ios
   !
-  IF(iDebug>0) WRITE(fTrc,'(/,A)') "< Canevas"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Canevas"
   !
-  CALL GetUnit(F)
-  OPEN(F,FILE="XXX")
+  call GetUnit(F)
+  open(F,file="XXX")
   !
-  DoFile: DO
+  DoFile: do
     !
-    READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-    CALL LinToWrd(L,W,EoL)
-    IF(W(1:1)=='!') CYCLE DoFile !skip comment lines
-    CALL AppendToEnd(L,W,EoL)
+    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    call LinToWrd(L,W,EoL)
+    if(W(1:1)=='!') cycle DoFile !skip comment lines
+    call AppendToEnd(L,W,EoL)
     !
-    SELECT CASE(W)
+    select case(W)
     !
-    CASE("ENDINPUT")
-      EXIT DoFile
+    case("ENDINPUT")
+      exit DoFile
     !
-    CASE("BLOCK") !!!!!!canevas for READing one "block"
+    case("block") !!!!!!canevas for reading one "block"
       !... I=0
-      DoBlock: DO
+      DoBlock: do
         !
-        READ(F,'(A)',IOSTAT=ios) L; IF(ios/=0) EXIT DoFile
-        CALL LinToWrd(L,W,EoL)
-        CALL AppendToEnd(L,W,EoL)
-        IF(W(1:1)=='!') CYCLE DoBlock !skip comment lines
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        call AppendToEnd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
         !
-        SELECT CASE(W)
-        CASE("ENDINPUT")
-          EXIT DoFile
-        CASE("END","ENDBLOCK")
-          EXIT DoBlock
-          !-> in case reading data from several BLOCK..END blocks
-          !CASE("END"); EXIT DoFile
-          !!-> in CASE reading only the first available BLOCK
-        CASE("XXX")
+        select case(W)
+        case("ENDINPUT")
+          exit DoFile
+        case("END","ENDblock")
+          exit DoBlock
+          !-> in case reading data from several block..end blocks
+          !case("END"); exit DoFile
+          !!-> in case reading only the first available block
+        case("XXX")
           !....
-        CASE("YYY")
+        case("YYY")
           !....
-        ENDSELECT
+        end select
         !...
         !
-      ENDDO DoBlock
+      end do DoBlock
     !
-    ENDSELECT
+    end select
     !
-  ENDDO DoFile
-  CLOSE(F)
+  end do DoFile
+  close(F)
   !
-  IF(iDebug>0) WRITE(fTrc,'(A,/)') "</ Canevas"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Canevas"
 
-  RETURN
-ENDSUBROUTINE Canevas
+  return
+end subroutine Canevas
 
-ENDMODULE M_SpeciesDtb_Read
+end module M_SpeciesDtb_Read
 
-!! INTEGER FUNCTION SpeciesDtb_Index(Str,V)
+!! integer function SpeciesDtb_Index(Str,V)
 !! !.position of species with %NamSp==Str in vSpc_(1:nSpc_)
-!!   CHARACTER(LEN=*),INTENT(IN):: Str
-!!   TYPE(T_SpeciesDtb), INTENT(IN):: V(:)
+!!   character(len=*),intent(in):: Str
+!!   type(T_SpeciesDtb), intent(in):: V(:)
 !!   !
-!!   INTEGER     ::I
+!!   integer     ::I
 !!   SpeciesDtb_Index=0
-!!   IF(SIZE(V)==0) RETURN
+!!   if(size(V)==0) return
 !!   I=0
-!!   DO
-!!     I=I+1 !; IF(iDebug>0) WRITE(fTrc,'(A)') vCpn(I)%SpName
-!!     IF(TRIM(Str)==TRIM(V(I)%NamSp)) THEN
+!!   do
+!!     I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vCpn(I)%SpName
+!!     if(trim(Str)==trim(V(I)%NamSp)) then
 !!       SpeciesDtb_Index=I
-!!       EXIT
-!!     ENDIF
-!!     IF(I==SIZE(V)) EXIT
-!!   ENDDO !IF Str not found -> I=0
-!!   RETURN
-!! ENDFUNCTION SpeciesDtb_Index
+!!       exit
+!!     end if
+!!     if(I==size(V)) exit
+!!   end do !if Str not found -> I=0
+!!   return
+!! end function SpeciesDtb_Index
 !! 
-!! LOGICAL FUNCTION LnkSpc_Found(L,W,Spc)
+!! logical function LnkSpc_Found(L,W,Spc)
 !! !.find index of string W in linked list LnkSp
-!! !.RETURN corresponding species Spc
+!! !.return corresponding species Spc
 !!   !
-!!   !INTEGER::I_LnkSpc
-!!   TYPE(T_LnkSpc),    POINTER    :: L
-!!   CHARACTER(LEN=*),  INTENT(IN) :: W
-!!   TYPE(T_SpeciesDtb),INTENT(OUT):: Spc
-!!   TYPE(T_LnkSpc),    POINTER    :: P,pPrev
-!!   INTEGER::I
+!!   !integer::I_LnkSpc
+!!   type(T_LnkSpc),    pointer    :: L
+!!   character(len=*),  intent(in) :: W
+!!   type(T_SpeciesDtb),intent(out):: Spc
+!!   type(T_LnkSpc),    pointer    :: P,pPrev
+!!   integer::I
 !!   !
 !!   P=>L; I=0
-!!   LnkSpc_Found=.FALSE.
-!!   DO WHILE (ASSOCIATED(P))
+!!   LnkSpc_Found=.false.
+!!   do while (associateD(P))
 !!     I=I+1
-!!     IF(TRIM(w)==TRIM(P%Value%NamSp)) THEN
-!!       LnkSpc_Found=.TRUE.
+!!     if(trim(w)==trim(P%Value%NamSp)) then
+!!       LnkSpc_Found=.true.
 !!       Spc=P%Value
-!!       EXIT;
-!!     ENDIF
+!!       exit;
+!!     end if
 !!     pPrev=>P
 !!     P=> P%next
-!!   ENDDO
-!! ENDFUNCTION LnkSpc_Found
+!!   end do
+!! end function LnkSpc_Found
 

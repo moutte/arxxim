@@ -1,155 +1,155 @@
-MODULE M_Dynam_Residual
-  USE M_Kinds
-  USE M_Trace,ONLY: iDebug,fTrc,T_,Stop_
-  IMPLICIT NONE
+module M_Dynam_Residual
+  use M_Kinds
+  use M_Trace,only: iDebug,fTrc,T_,Stop_
+  implicit none
   !
-  PRIVATE
+  private
   !
-  PUBLIC:: Dynam_Residual
-  PUBLIC:: Dynam_Converge
-  PUBLIC:: vTolCoef,vNewtTolF
+  public:: Dynam_Residual
+  public:: Dynam_Converge
+  public:: vTolCoef,vNewtTolF
   !
-  REAL(dp),ALLOCATABLE:: vTolCoef(:)
-  REAL(dp),ALLOCATABLE:: vNewtTolF(:)
+  real(dp),allocatable:: vTolCoef(:)
+  real(dp),allocatable:: vNewtTolF(:)
   !
-  LOGICAL:: UseTolCoef= .FALSE.  !! .TRUE. !!
+  logical:: UseTolCoef= .false.  !! .true. !!
 
-CONTAINS
+contains
 
-LOGICAL FUNCTION Dynam_Converge(vF,vTolF)
+logical function Dynam_Converge(vF,vTolF)
 !--
 !-- makes possible adaptation of convergence criteria to type of condition
 !-- e.g. material conservation vs potential, kinetic, etc.
 !--
-  REAL(dp),INTENT(IN):: vF(:),vTolF(:)
+  real(dp),intent(in):: vF(:),vTolF(:)
   !
-  IF(UseTolCoef) THEN
-    Dynam_Converge= ALL(ABS(vF(:)) < vNewtTolF(:) *vTolCoef(:))
-  ELSE
-    Dynam_Converge= ALL(ABS(vF(:)) < vNewtTolF(:))
-  ENDIF
+  if(UseTolCoef) then
+    Dynam_Converge= all(ABS(vF(:)) < vNewtTolF(:) *vTolCoef(:))
+  else
+    Dynam_Converge= all(ABS(vF(:)) < vNewtTolF(:))
+  end if
   !
-ENDFUNCTION Dynam_Converge
+end function Dynam_Converge
 
-SUBROUTINE BuildVecs( & !
+subroutine BuildVecs( & !
 & LogForAqu,          & !IN
 & LogForMin,          & !IN
 & nF,nEqA,nMkA,       & !IN
 & vX,                 & !IN
 & vXf,vLnXf,vXeq,vXmk)
   !
-  USE M_Safe_Functions
-  USE M_Numeric_Const,ONLY: MinExpDP,MaxExpDP,Ln10
+  use M_Safe_Functions
+  use M_Numeric_Const,only: MinExpDP,MaxExpDP,Ln10
   !
-  LOGICAL, INTENT(IN) :: LogForAqu
-  LOGICAL, INTENT(IN) :: LogForMin
-  INTEGER, INTENT(IN) :: nF,nEqA,nMkA
-  REAL(dp),INTENT(IN) :: vX(:)
-  REAL(dp),INTENT(OUT):: vXf(:),vLnXf(:)
-  REAL(dp),INTENT(OUT):: vXeq(:),vXmk(:)
+  logical, intent(in) :: LogForAqu
+  logical, intent(in) :: LogForMin
+  integer, intent(in) :: nF,nEqA,nMkA
+  real(dp),intent(in) :: vX(:)
+  real(dp),intent(out):: vXf(:),vLnXf(:)
+  real(dp),intent(out):: vXeq(:),vXmk(:)
   !
-  INTEGER:: N
+  integer:: N
   !
-  IF(LogForAqu) THEN
+  if(LogForAqu) then
     vXf(1:nF)= FSafe_vExp(vX(1:nF)) !-> avoid overflow
     vLnXf(:)= vX(1:nF)
-  ELSE
+  else
     vXf(1:nF)= vX(1:nF)
     vLnXf(:)= FSafe_vLog(vX(1:nF))
-  ENDIF
+  end if
   !
-  IF(nEqA>0) THEN
+  if(nEqA>0) then
     vXeq=Zero
     N= nF
-    IF(LogForMin) THEN
+    if(LogForMin) then
       != works with log(mineral amount)
       vXeq(1:nEqA)= FSafe_vExp(vX(N+1:N+nEqA))
-    ELSE
+    else
       != works directly with mineral amounts
       vXeq(1:nEqA)=vX(N+1:N+nEqA)
-    ENDIF
-  ENDIF
+    end if
+  end if
   !
-  IF(nMkA>0) THEN
+  if(nMkA>0) then
     vXmk= Zero
     N= nF+nEqA
-    IF(LogForMin) THEN
+    if(LogForMin) then
       != works with log(mineral amount)
       vXmk(1:nMkA)= FSafe_vExp(vX(N+1:N+nMkA))
-    ELSE
+    else
       != works directly with mineral amounts
       vXmk(1:nMkA)=vX(N+1:N+nMkA)
-    ENDIF
-  ENDIF
+    end if
+  end if
   !
-END SUBROUTINE BuildVecs
+end subroutine BuildVecs
 
-FUNCTION Dynam_Residual(vX) RESULT(vFunc)
+function Dynam_Residual(vX) result(vFunc)
 !--
 !-- system to be solved
 !--
-  USE M_Global_Vars,  ONLY: vKinFas,nAq,vFas
-  USE M_T_KinFas,     ONLY: KinFas_CalcSurf
-  USE M_KinFas_Surf,  ONLY: KinFas_Surf_Calc
-  USE M_KinRate
+  use M_Global_Vars,  only: vKinFas,nAq,vFas
+  use M_T_KinFas,     only: KinFas_CalcSurf
+  use M_KinFas_Surf,  only: KinFas_Surf_Calc
+  use M_KinRate
   !
-  USE M_Basis_Vars, ONLY: MWSv,isW,nCi,nAs,nAx,nMx
-  USE M_Basis_Vars, ONLY: tAlfPr,tAlfAs,tNuAs
-  USE M_Dynam_Vars, ONLY: LogForAqu, LogForMin, DirectSub, CoupledCoores
-  USE M_Dynam_Vars, ONLY: PhiF,PhiInert,VBox,UDarcy,dX,dTime
-  USE M_Dynam_Vars, ONLY: vQTotInj,vTotInj,vTotF,Fout
-  USE M_Dynam_Vars, ONLY: vLnGam,vLnBuf,vLnAct,vMolSec
-  USE M_Dynam_Vars, ONLY: vLKinActiv,vLEquActiv
-  USE M_Dynam_Vars, ONLY: vKinMod,vMolarVol
-  USE M_Dynam_Vars, ONLY: vMolK,vSurfK,vMolK0,vSurfK0
-  USE M_Dynam_Vars, ONLY: vVmQsK,vVmAct
-  USE M_Dynam_Vars, ONLY: tNu_Kin,tAlfKin,vDG_Kin,vDG_As,vDLGam_As
-  USE M_Dynam_Vars, ONLY: nEvalFunc
+  use M_Basis_Vars, only: MWSv,isW,nCi,nAs,nAx,nMx
+  use M_Basis_Vars, only: tAlfPr,tAlfAs,tNuAs
+  use M_Dynam_Vars, only: LogForAqu, LogForMin, DirectSub, CoupledCoores
+  use M_Dynam_Vars, only: PhiF,PhiInert,VBox,UDarcy,dX,dTime
+  use M_Dynam_Vars, only: vQTotInj,vTotInj,vTotF,Fout
+  use M_Dynam_Vars, only: vLnGam,vLnBuf,vLnAct,vMolSec
+  use M_Dynam_Vars, only: vLKinActiv,vLEquActiv
+  use M_Dynam_Vars, only: vKinMod,vMolarVol
+  use M_Dynam_Vars, only: vMolK,vSurfK,vMolK0,vSurfK0
+  use M_Dynam_Vars, only: vVmQsK,vVmAct
+  use M_Dynam_Vars, only: tNu_Kin,tAlfKin,vDG_Kin,vDG_As,vDLGam_As
+  use M_Dynam_Vars, only: nEvalFunc
   !
-  USE M_Dynam_Solve_Vars
+  use M_Dynam_Solve_Vars
   !
-  REAL(dp),DIMENSION(:),INTENT(IN):: vX
+  real(dp),dimension(:),intent(in):: vX
   !
-  REAL(dp),DIMENSION(:),ALLOCATABLE:: vXf,vLnXf,vXmk,vXeq,vVm,vMolal,vSumNuAs
+  real(dp),dimension(:),allocatable:: vXf,vLnXf,vXmk,vXeq,vVm,vMolal,vSumNuAs
   !
-  REAL(dp),DIMENSION(1:SIZE(vX)):: vFunc
+  real(dp),dimension(1:size(vX)):: vFunc
   !
-  REAL(dp):: QTotInjPr,X,TotFF
-  INTEGER :: I,J,iPsi,iPr,iAs,iMk,iMkA,nF,nMk,nMkA,nEqA,nCx
+  real(dp):: QTotInjPr,X,TotFF
+  integer :: I,J,iPsi,iPr,iAs,iMk,iMkA,nF,nMk,nMkA,nEqA,nCx
   !
   !-----------------------------------------------under construction ...
-  IF(nAx>0) THEN
-    ALLOCATE(vMolal(nAx))
+  if(nAx>0) then
+    allocate(vMolal(nAx))
     !update molalities of aqueous "mobile" species (i.e. buffered)
     !-> used to calculate mole number= molality * solvent'mass
     !! vMolal(1:nAx)= &
-    !! & EXP(vLnAct(vOrdPr(nCi+1:nCi+nAx))-vLnGam(vOrdPr(nCi+1:nCi+nAx)))
+    !! & exp(vLnAct(vOrdPr(nCi+1:nCi+nAx))-vLnGam(vOrdPr(nCi+1:nCi+nAx)))
     !-> molality
-  ENDIF
+  end if
   !----------------------------------------------/under construction ...
   !
-  IF(iDebug>2) nEvalFunc= nEvalFunc +1
+  if(iDebug>2) nEvalFunc= nEvalFunc +1
   !
   nCx=  nAx+nMx
-  nMk=  SIZE(vKinFas)
-  nMkA= COUNT(vLKinActiv)
-  nEqA= COUNT(vLEquActiv)
+  nMk=  size(vKinFas)
+  nMkA= count(vLKinActiv)
+  nEqA= count(vLEquActiv)
   !
-  IF(DirectSub) THEN  ;  nF= nCi
-  ELSE                ;  nF= nAq
-  ENDIF
+  if(DirectSub) then  ;  nF= nCi
+  else                ;  nF= nAq
+  end if
   !
-  ALLOCATE(vXf(nF))
-  ALLOCATE(vLnXf(nF))
-  ALLOCATE(vXmk(nMkA))
-  ALLOCATE(vXeq(nEqA))
-  ALLOCATE(vVm(nMk))
+  allocate(vXf(nF))
+  allocate(vLnXf(nF))
+  allocate(vXmk(nMkA))
+  allocate(vXeq(nEqA))
+  allocate(vVm(nMk))
   !
-  CALL BuildVecs( & !
+  call BuildVecs( & !
   & LogForAqu,LogForMin,nF,nEqA,nMkA,vX, & !
   & vXf,vLnXf,vXeq,vXmk)
   !
-  CALL KinRate_Calc( & !
+  call KinRate_Calc( & !
   & dTime,                 & !IN
   & vLKinActiv,            & !IN
   & vLnXf,vXmk,            & !IN
@@ -160,24 +160,24 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
   !
   vVm(:)= vSurfK(:) *vVmAct(:) *vVmQsK(:)
   !
-  CALL PhiF_Calc( & !
+  call PhiF_Calc( & !
   & PhiInert,              & !IN
   & vLKinActiv,vLEquActiv, & !IN
   & vXmk,vXeq,             & !IN
   & PhiF)                    !OUT
   !
-  !~ IF(LogForAqu) THEN
-  ALLOCATE(vSumNuAs(nAs))
-  DO iAs=1,nAs
+  !~ if(LogForAqu) then
+  allocate(vSumNuAs(nAs))
+  do iAs=1,nAs
     X= Zero
-    DO I=1,nCi
-      IF(I/=isW) X= X+tNuAs(iAs,I)
-    ENDDO
+    do I=1,nCi
+      if(I/=isW) X= X+tNuAs(iAs,I)
+    end do
     vSumNuAs(iAs)= X
-  ENDDO
-  !~ ENDIF
+  end do
+  !~ end if
   !
-  !--------------------------------FINITE DIFFERENCE SYSTEM TO BE SOLVED
+  !--------------------------------FINITE DifFERENCE SYSTEM TO BE SOLVED
   !Psi(iCi)=
   !  N_iPi_(t) - N_iPi_(t-1) &
   !+ U.(dt/dX).Sum( Alfa(iCi,iAq).(n_iAq_(t) - n_iAq_(inj)) )
@@ -195,75 +195,75 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
   vFunc=Zero
   !
   !-------------------------------Second'Aqu.Species (same as for Equil)
-  IF(LogForAqu) THEN
+  if(LogForAqu) then
     !----------------------------------------------------------LogForAqu
-    DO iAs=1,nAs
+    do iAs=1,nAs
       X=  vLnAct(1) *tNuAs(iAs,1) ! Solvent
-      DO J=1,nCi
-        IF(J/=1) X= X + vX(J) *tNuAs(iAs,J) ! Prim'Solute species
-      ENDDO
-      X= X - (vSumNuAs(iAs) -One)*(vX(1) +LOG(MWSv)) & ! mole nr -> molality
+      do J=1,nCi
+        if(J/=1) X= X + vX(J) *tNuAs(iAs,J) ! Prim'Solute species
+      end do
+      X= X - (vSumNuAs(iAs) -One)*(vX(1) +log(MWSv)) & ! mole nr -> molality
       &    - vDG_As(iAs)     & !
       &    - vDLGam_As(iAs)
       !
       !----------------"buffered" min'species -> add Sum(Nu_iMx*Act_iMx)
-      DO J=1,nCx
+      do J=1,nCx
         X=  X + vLnBuf(J) *tNuAs(iAs,nCi+J)
-      ENDDO
+      end do
       !
-      IF(DirectSub) THEN
+      if(DirectSub) then
         !--------------------------------------------direct substitution
-        vMolSec(iAs)= EXP(X)
-      ELSE
+        vMolSec(iAs)= exp(X)
+      else
         ! Psi(nCi+1:nAq)=  equilibrium constraints (ChemicalAffinity=0)
         vFunc(nCi+iAs)= X - vX(nCi+iAs)
         vTolCoef(nCi+iAs)= MAX(One,ABS(vDG_As(iAs)+vDLGam_As(iAs)))
         !if(iDebug>2) write(73,'(I3,1X,G15.6)') nCi+iAs, vTolCoef(nCi+iAs)
-      ENDIF
+      end if
       !
-    ENDDO
+    end do
     !---------------------------------------------------------/LogForAqu
-  ELSE
+  else
     !------------------------------------------------------NOT LogForAqu
-    !~ print *,"size(vMolSec)=",size(vMolSec)  ;  pause
-    DO iAs=1,nAs
+    !~ print *,"SIZE(vMolSec)=",size(vMolSec)  ;  pause
+    do iAs=1,nAs
       !
       X= vLnAct(1)*tNuAs(iAs,1) -vDG_As(iAs) -vDLGam_As(iAs)
       !
       !------------ "buffered" min'species -> add Sum(Nu_iMx*Act_iMx) --
-      DO J=1,nCx
+      do J=1,nCx
         X= X + vLnBuf(J) *tNuAs(iAs,nCi+J)
-      ENDDO
+      end do
       !
-      X= EXP(X)
+      X= exp(X)
       !
-      DO iPr=1,nCi
-        IF(iPr /= 1) THEN
-          IF(tNuAs(iAs,iPr)/=Zero) X= X *vX(iPr)**tNuAs(iAs,iPr)
+      do iPr=1,nCi
+        if(iPr /= 1) then
+          if(tNuAs(iAs,iPr)/=Zero) X= X *vX(iPr)**tNuAs(iAs,iPr)
           !& X= X *(vX(iPr)/vX(1)/MWSv)**tNuAs(iAs,iPr)
-        ENDIF
-      END DO
+        end if
+      end do
       vMolSec(iAs)= X *(vX(1)*MWSv)**(One -vSumNuAs(iAs))
       !~ print *,"iAs,vMolSec(iAs)=",iAs," _ ",vMolSec(iAs)  ;  pause
       !
-      IF(.NOT. DirectSub) vFunc(nCi+iAs)= vMolSec(iAs) - vX(nCi+iAs)
+      if(.not. DirectSub) vFunc(nCi+iAs)= vMolSec(iAs) - vX(nCi+iAs)
       !
-    END DO
+    end do
     !-----------------------------------------------------/NOT LogForAqu
-  ENDIF
+  end if
   !--------------------------------------------------/Second'Aqu.Species
   !
   !-----------------------------------------------component conservation
   iPsi= 0
   !--------------------------------------------------------- iPsi- 1:nCi
-  DO iPr=1,nCi
+  do iPr=1,nCi
     !
     !---------------------------------------------mole nr injected /time
-    IF (CoupledCoores) THEN
+    if (CoupledCoores) then
       QTotInjPr= vQTotInj(iPr) /Vbox
       ! mol.s-1 molar rate (explicit rates)
       ! Fout given
-    ELSE
+    else
       ! nota: vTotInj= vTotInj /DotProd(vWeitCp,vTotInj) *RhoF *VBox
       ! -> mole/vol related to Box
       !
@@ -274,33 +274,33 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
       QTotInjPr= vTotInj(iPr) *UDarcy /dX   !! section S= (Vbox/dX)
       Fout=      UDarcy *Vbox /dX /PhiF     !! m3.s-1 flow related to porous volume
       !
-    ENDIF
+    end if
     !--------------------------------------------/mole nr injected /time
     !
-    !! InFluid= DOT_PRODUCT(tAlfPr(iPr,1:nCi), vXf(1:nCi))          & ! # moles in fluid, from prim'species
-    !! &      + DOT_PRODUCT(tAlfAs(iPr,1:nAs), vXf(nCi+1:nCi+nAs))    ! # moles in fluid
-    !! InMin=   DOT_PRODUCT(tAlfKin(iPr,1:nMk),vVm(1:nMk)) * dTime    ! to/from minerals
+    !! InFluid= dot_product(tAlfPr(iPr,1:nCi), vXf(1:nCi))          & ! # moles in fluid, from prim'species
+    !! &      + dot_product(tAlfAs(iPr,1:nAs), vXf(nCi+1:nCi+nAs))    ! # moles in fluid
+    !! InMin=   dot_product(tAlfKin(iPr,1:nMk),vVm(1:nMk)) * dTime    ! to/from minerals
     !
     !-------------------------------mole nrs in fluid, from prim'species
-    TotFF= DOT_PRODUCT(tAlfPr(iPr,1:nCi),vXf(1:nCi))
+    TotFF= dot_product(tAlfPr(iPr,1:nCi),vXf(1:nCi))
     !
     !-------------------------------moles nrs in fluid, from sec'species
-    DO iAs=1,nAs
-      IF(DirectSub) THEN
+    do iAs=1,nAs
+      if(DirectSub) then
         TotFF= TotFF + vMolSec(iAs) *tAlfAs(iPr,iAs)
-      ELSE
-        !TotFF= TotFF + EXP(vX(nCi+iAs)) *tAlfAs(iPr,iAs)
-        IF(LogForAqu) THEN  ;  TotFF= TotFF + vXf(nCi+iAs) *tAlfAs(iPr,iAs)
-        ELSE                ;  TotFF= TotFF + vX(nCi+iAs)  *tAlfAs(iPr,iAs)
-        ENDIF
-      ENDIF
-    ENDDO
+      else
+        !TotFF= TotFF + exp(vX(nCi+iAs)) *tAlfAs(iPr,iAs)
+        if(LogForAqu) then  ;  TotFF= TotFF + vXf(nCi+iAs) *tAlfAs(iPr,iAs)
+        else                ;  TotFF= TotFF + vX(nCi+iAs)  *tAlfAs(iPr,iAs)
+        end if
+      end if
+    end do
     !------------------------------/moles nrs in fluid, from sec'species
     !
     !--------------moles nrs in fluid, from the aqueous "mobile" species
-    DO J=1,nAx
+    do J=1,nAx
       TotFF= TotFF + MWSv *vXf(isW) *vMolal(J) *tAlfPr(iPr,nCi+J)
-    ENDDO
+    end do
     !---/
     !
     X=  TotFF *(One + dTime *Fout /Vbox) & ! Ci = (ni*Vbox )/ (Vbox*PhiW) = ni/Phiw
@@ -308,23 +308,23 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
     & - dTime *QTotInjPr                   ! # moles injection
     !
     !-------------------------------------------------------equil'phases
-    IF(nEqA>0) THEN
+    if(nEqA>0) then
       J=0
-      DO iMk=1,nMk
-        IF(vLEquActiv(iMk)) THEN
+      do iMk=1,nMk
+        if(vLEquActiv(iMk)) then
           J=J+1
           X= X + tAlfKin(iPr,iMk)*(vXeq(J) -vMolK(iMk))
-        ENDIF
-      ENDDO
-    ENDIF
+        end if
+      end do
+    end if
     !------------------------------------------------------/equil'phases
     !
     !---------------------------------------------------------kin'phases
-    IF(nMkA>0) THEN
-      DO iMk=1,nMk
-        IF(vLKinActiv(iMk)) X= X + tAlfKin(iPr,iMk) *dTime *vVm(iMk)
-      ENDDO
-    ENDIF
+    if(nMkA>0) then
+      do iMk=1,nMk
+        if(vLKinActiv(iMk)) X= X + tAlfKin(iPr,iMk) *dTime *vVm(iMk)
+      end do
+    end if
     !--------------------------------------------------------/kin'phases
     !
     ! vFunc(iPr)= & !
@@ -342,42 +342,42 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
     !
     vFunc(iPsi)= X
     !
-  ENDDO
+  end do
   !----------------------------------------------/component conservation
   !
-  if(iDebug>2 .AND. DirectSub) then
+  if(iDebug>2 .and. DirectSub) then
     write(71,'(A)') "==RESIDUAL============"
     do I=1,nAs
       write(71,'(A,G15.6)') "secc",vMolSec(I)
-    enddo
+    end do
     do I=1,nCi
       write(71,'(A,G15.6)') "prim",vXf(I)
-    enddo
+    end do
     do I=1,nCi
       write(71,'(A,G15.6)') "vFunc",vFunc(I)
     end do
-  endif
+  end if
   !
-  IF(.NOT. DirectSub) iPsi= iPsi +nAs
+  if(.not. DirectSub) iPsi= iPsi +nAs
   !
   !---------------------------------------------------equilibrium phases
   !---------------------------------------------------iPsi- nF+1:nF+nEqA
-  IF(nEqA>0) THEN
-    DO iMk=1,nMk
-      IF(vLEquActiv(iMk)) THEN
+  if(nEqA>0) then
+    do iMk=1,nMk
+      if(vLEquActiv(iMk)) then
         !
         !--- add one equation for each equ'phase
         X=   vLnAct(isW) *tNu_Kin(iMk,isW)                     & ! Solvent activity
-        &  - SUM(tNu_Kin(iMk,2:nCi))*(vLnXf(isW) +LOG(MWSv))   & ! Solvent term (mole nr -> molality
-        &  + DOT_PRODUCT(tNu_Kin(iMk,2:nCi),vLnGam(2:nCi))     & ! gamma prim'solute species
+        &  - SUM(tNu_Kin(iMk,2:nCi))*(vLnXf(isW) +log(MWSv))   & ! Solvent term (mole nr -> molality
+        &  + dot_product(tNu_Kin(iMk,2:nCi),vLnGam(2:nCi))     & ! gamma prim'solute species
         &  - vDG_Kin(iMk)
-        DO J=1,nCi
-          IF(J/=isW) X= X + vLnXf(J) *tNu_Kin(iMk,J)
-        ENDDO
+        do J=1,nCi
+          if(J/=isW) X= X + vLnXf(J) *tNu_Kin(iMk,J)
+        end do
         !---------- "buffered" min'species -> add Sum(Nu_iMx*Act_iMx) --
-        DO J=1,nCx
+        do J=1,nCx
           X= X + vLnBuf(J) *tNu_Kin(iMk,nCi+J)
-        ENDDO
+        end do
         !---/
         !
         iPsi= iPsi+1
@@ -385,26 +385,26 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
         !
         ! vFunc(iPsi)= &
         ! &             tNu_Kin(iMk,  isW) * vLnAct(isW)          & ! Solvent
-        ! + DOT_PRODUCT(tNu_Kin(iMk,2:nCi), vX(2:nCi))            & ! prim' solute species
-        ! + DOT_PRODUCT(tNu_Kin(iMk,2:nCi), vLnGam(2:nCi))        & ! gamma prim'solute species
-        ! -         SUM(tNu_Kin(iMk,2:nCi))*(vX(isW) +LOG(MWSv))  & ! Solvent term (mole nr -> molality
+        ! + dot_product(tNu_Kin(iMk,2:nCi), vX(2:nCi))            & ! prim' solute species
+        ! + dot_product(tNu_Kin(iMk,2:nCi), vLnGam(2:nCi))        & ! gamma prim'solute species
+        ! -         SUM(tNu_Kin(iMk,2:nCi))*(vX(isW) +log(MWSv))  & ! Solvent term (mole nr -> molality
         ! - vDG_Kin(iMk)
         ! !
         ! !---------- "buffered" min'species -> add Sum(Nu_iMx*Act_iMx) --
-        ! IF(nCx>0) &
+        ! if(nCx>0) &
         ! & vFunc(iPsi)= vFunc(iPsi) &
-        ! + DOT_PRODUCT(tNu_Kin(iMk,nCi+1:nCi+nCx),vLnBuf(1:nCx))
-      ENDIF
-    ENDDO
-  ENDIF
+        ! + dot_product(tNu_Kin(iMk,nCi+1:nCi+nCx),vLnBuf(1:nCx))
+      end if
+    end do
+  end if
   !--------------------------------------------------/equilibrium phases
   !
   !-------------------------------------------------------kinetic phases
   !---------------------------- iPsi- nCi+nAs+nEqA+1 : nCi+nAs+nEqA+nMkA
-  IF(nMkA>0) THEN
+  if(nMkA>0) then
     iMkA= 0
-    DO iMk=1,nMk
-      IF(vLKinActiv(iMk)) THEN
+    do iMk=1,nMk
+      if(vLKinActiv(iMk)) then
         iMkA= iMkA + 1
         !--- add one equation for each kin'phase
         iPsi= iPsi+1
@@ -412,30 +412,30 @@ FUNCTION Dynam_Residual(vX) RESULT(vFunc)
         vTolCoef(iPsi)= MAX(One,ABS(vMolK(iMk)))
         if(iDebug>2) write(73,'(I3,1X,G15.6)') iPsi, vTolCoef(iPsi)
         !---/
-      ENDIF
-    ENDDO
-  ENDIF
+      end if
+    end do
+  end if
   !------------------------------------------------------/kinetic phases
   !
-  IF(nAx>0) DEALLOCATE(vMolal)
+  if(nAx>0) deallocate(vMolal)
   !
-  DEALLOCATE(vXf)
-  DEALLOCATE(vLnXf)
-  DEALLOCATE(vVm)
-  DEALLOCATE(vXmk)
-  DEALLOCATE(vXeq)
-  DEALLOCATE(vSumNuAs)
+  deallocate(vXf)
+  deallocate(vLnXf)
+  deallocate(vVm)
+  deallocate(vXmk)
+  deallocate(vXeq)
+  deallocate(vSumNuAs)
   !
   !do i=1,size(vFunc)
   !  write(81,'(G12.3,1X)',advance="no") vFunc(I)
-  !enddo
+  !end do
   !write(81,*)
   !Dynam_Residual= vFunc
   !
-  RETURN
-ENDFUNCTION Dynam_Residual
+  return
+end function Dynam_Residual
 
-SUBROUTINE KinRate_Calc( & !
+subroutine KinRate_Calc( & !
 & dTime,                 & !IN
 & vLKinActiv,            & !IN
 & vX,vXmk,               & !IN
@@ -448,15 +448,15 @@ SUBROUTINE KinRate_Calc( & !
 !-- compute mineral rates --
 !--
   !
-  USE M_T_KinFas,   ONLY: KinFas_CalcSurf
-  USE M_KinFas_Surf,ONLY: KinFas_Surf_Calc
-  USE M_KinRate
+  use M_T_KinFas,   only: KinFas_CalcSurf
+  use M_KinFas_Surf,only: KinFas_Surf_Calc
+  use M_KinRate
   !
-  USE M_Global_Vars,ONLY: vKinFas,nAq,vFas
-  USE M_Basis_Vars, ONLY: MWSv,isW,nCi,nAx,nMx
-  USE M_Basis_Vars, ONLY: tAlfPr,tAlfAs,tNuAs
+  use M_Global_Vars,only: vKinFas,nAq,vFas
+  use M_Basis_Vars, only: MWSv,isW,nCi,nAx,nMx
+  use M_Basis_Vars, only: tAlfPr,tAlfAs,tNuAs
   !
-  USE M_Dynam_Vars, ONLY:  & !
+  use M_Dynam_Vars, only:  & !
   & Implicit_Surface,      & !
   & Implicit_ActivFactor,  & !
   & QsK_Iota, VBox,        & !
@@ -466,23 +466,23 @@ SUBROUTINE KinRate_Calc( & !
   & tNu_Kin,tAlfKin,       & !
   & vDG_Kin,vDG_As
   !
-  REAL(dp),INTENT(IN) :: dTime
-  LOGICAL, INTENT(IN) :: vLKinActiv(:)
-  REAL(dp),INTENT(IN) :: vX(:),vXmk(:)
-  REAL(dp),INTENT(INOUT):: vSurfK(:),vVmQsK(:),vVmAct(:)
-  REAL(dp),INTENT(OUT):: dSRdXm(:,:),dSRdLnXm(:,:)
-  REAL(dp),INTENT(OUT):: dVmQdLnXf(:,:)
-  REAL(dp),INTENT(OUT):: dVMdLnXf(:,:),dVMdLnXm(:,:)
+  real(dp),intent(in) :: dTime
+  logical, intent(in) :: vLKinActiv(:)
+  real(dp),intent(in) :: vX(:),vXmk(:)
+  real(dp),intent(inout):: vSurfK(:),vVmQsK(:),vVmAct(:)
+  real(dp),intent(out):: dSRdXm(:,:),dSRdLnXm(:,:)
+  real(dp),intent(out):: dVmQdLnXf(:,:)
+  real(dp),intent(out):: dVMdLnXf(:,:),dVMdLnXm(:,:)
   !
-  REAL(dp),DIMENSION(1:nCi):: dQsKdLnXi
-  REAL(dp):: QsK,QskIota,varMaxM,X
-  INTEGER :: nMkA,nMk,nCx
-  INTEGER :: iPr,iMk,iMkA
-  CHARACTER(LEN=7):: cSatur
+  real(dp),dimension(1:nCi):: dQsKdLnXi
+  real(dp):: QsK,QskIota,varMaxM,X
+  integer :: nMkA,nMk,nCx
+  integer :: iPr,iMk,iMkA
+  character(len=7):: cSatur
   !
   nCx=  nAx+nMx
-  nMk= SIZE(vKinFas)
-  nMkA= COUNT(vLKinActiv)
+  nMk= size(vKinFas)
+  nMkA= count(vLKinActiv)
   !
   vVmQsK=   Zero
   dSRdLnXm= Zero
@@ -491,37 +491,37 @@ SUBROUTINE KinRate_Calc( & !
   dVMdLnXf(:,1:nCi)= Zero
   dVMdLnXm(:,1:nMk)= Zero
   !
-  !IF(Implicit_ActivFactor) THEN !update activities
+  !if(Implicit_ActivFactor) then !update activities
   !  !Nota: as Activity Coeffs are not Implicited, Rate_Act is better not Implicited
   !  dVmAdLnXf=Zero
-  !  vLnAct(2:nAq)=vX(2:nAq)+vLnGam(2:nAq)-vX(isW)-LOG(MWSv)
-  !ENDIF
+  !  vLnAct(2:nAq)=vX(2:nAq)+vLnGam(2:nAq)-vX(isW)-log(MWSv)
+  !end if
   !
   QskIota= QsK_Iota !Zero !mod 10/06/2008 17:02
   !
-  ! IF(nMkA + nEqA >0) THEN
-  IF(nMkA > 0) THEN
+  ! if(nMkA + nEqA >0) then
+  if(nMkA > 0) then
     !
     varMaxM= Zero
     iMkA= 0
     iMk=  0
     !
-    DO
+    do
       !
       iMk= iMk+1
-      IF(iMk>SIZE(vKinFas)) EXIT
+      if(iMk>size(vKinFas)) exit
       !
       !--------------------------------------------iMk is kinetic active
-      IF(vLKinActiv(iMk)) THEN
+      if(vLKinActiv(iMk)) then
         !
         iMkA= iMkA + 1
         !
         !--------------------------------------------------calc. surface
-        IF(Implicit_Surface) THEN
+        if(Implicit_Surface) then
           !X= vXmk(iMkA)
           X= MAX(vXmk(iMkA),vKinMinim(iMkA))
-          CALL KinFas_Surf_Calc( & !
-          & .TRUE.,             & !IN: bImplicit
+          call KinFas_Surf_Calc( & !
+          & .true.,             & !IN: bImplicit
           & vKinFas(iMk)%cMode, & !IN: kinetic model
           & X,                  & !IN: Nr Moles of mineral
           & vMolK0(iMk),        & !IN: Nr Moles of phase at given state
@@ -529,12 +529,12 @@ SUBROUTINE KinRate_Calc( & !
           & vSurfK(iMk),        & !OUT: Surface
           & dSRdLnXm(iMk,iMk),  & !OUT:
           & dSRdXm(iMk,iMk))      !OUT:
-        ENDIF
+        end if
         !-------------------------------------------------/calc. surface
         !
         !----------------------------------calc mineral rate per surface
         !--------------------------------------(- only "chemical" terms)
-        CALL KinRate_CalcQsK( & !
+        call KinRate_CalcQsK( & !
         & nCi,nCx,        & !
         & vDG_Kin(iMk),   & !
         & tNu_Kin(iMk,:), & !
@@ -548,7 +548,7 @@ SUBROUTINE KinRate_Calc( & !
         !
         !-----------------------------------------from QsK deduce cSatur
         !---------------------------------for branching to dissol/precip
-        CALL KinRate_SatState( &
+        call KinRate_SatState( &
         & vKinFas(iMk),   & !IN:  mineral: for cSatur, QsKseuil
         & vXmk(iMkA),     & !IN:  Nr Moles of mineral, used to check nMol<=MolMinim
         !& vKinMinim(iMk), & !IN:
@@ -559,8 +559,8 @@ SUBROUTINE KinRate_Calc( & !
         !----------------------------------------/from QsK deduce cSatur
         !
         !----------------------------------------compute affinity factor
-        !! IF(cSatur/="MINIMAL") & !
-        CALL KinRate_CalcQsKFactor( &
+        !! if(cSatur/="MINIMAL") & !
+        call KinRate_CalcQsKFactor( &
         & cSatur,      & !IN
         & vKinMod(vKinFas(iMk)%iKin),&  !IN
         & QsK,         & !IN
@@ -572,32 +572,32 @@ SUBROUTINE KinRate_Calc( & !
         !---------------------------------------------------calc. vVmAct
         !provisionally, dVmAdLnX_M is not computed in this new version  !!!!!!!!!!!!!
         !-> we assume that this factor will not be implicited           !!!!!!!!!!!!!
-        !!!  IF(Implicit_ActivFactor) & !else will use current values obtained in Dynam_OneStep_KinFasUpd
-        !!!  & CALL KinRate_CalcActivFactor(&
+        !!!  if(Implicit_ActivFactor) & !else will use current values obtained in Dynam_OneStep_KinFasUpd
+        !!!  & call KinRate_CalcActivFactor(&
         !!!  & vKinFas(iMk)%cSatur, & !IN
-        !!!  & vKinMod(vKinFas(iMk)%iKin), & !IN: kinetic PARAMETERs
+        !!!  & vKinMod(vKinFas(iMk)%iKin), & !IN: kinetic parameters
         !!!  & vLnAct,           & !LnActH_,LnActOH,LnActCO2, & !activators
         !!!  & vVmAct(iMk),      & !OUT
         !!!  & dVmAdLnXf(iMk,:))   !OUT
         !
-        !! IF(TestMax .AND. vMolK(iMk)>1.0D-6) &
+        !! if(TestMax .and. vMolK(iMk)>1.0D-6) &
         !! & varMaxM=MAX(varMaxM, ABS( dTime*vVm(iMk) / vMolK(iMk) ))
         !
-      ENDIF
+      end if
       !-------------------------------------------/iMk is kinetic active
       !
-    ENDDO
+    end do
     !
-    !! IF(TestMax .AND. varMaxM>1.0D0) THEN
+    !! if(TestMax .and. varMaxM>1.0D0) then
     !!   dTime=dTime * 0.5_dp
-    !!   IF(iDebug>0) WRITE(fTrc,'(A)') "dtime adjusted in vFunc"
-    !! ENDIF
-  ENDIF
+    !!   if(iDebug>0) write(fTrc,'(A)') "dtime adjusted in vFunc"
+    !! end if
+  end if
   !
   !----------------------------------------------------/CalcMineralRates
-END SUBROUTINE KinRate_Calc
+end subroutine KinRate_Calc
 
-SUBROUTINE PhiF_Calc( & !
+subroutine PhiF_Calc( & !
 !--
 !-- compute porosity
 !--
@@ -606,54 +606,54 @@ SUBROUTINE PhiF_Calc( & !
 & vXmk,vXeq,             & !IN
 & PhiF)                    !OUT
   !
-  USE M_T_KinFas,   ONLY: KinFas_CalcSurf
-  USE M_KinFas_Surf,ONLY: KinFas_Surf_Calc
-  USE M_KinRate
+  use M_T_KinFas,   only: KinFas_CalcSurf
+  use M_KinFas_Surf,only: KinFas_Surf_Calc
+  use M_KinRate
   !
-  USE M_Global_Vars,ONLY: vKinFas
-  USE M_Dynam_Vars, ONLY: VBox, vMolarVol
+  use M_Global_Vars,only: vKinFas
+  use M_Dynam_Vars, only: VBox, vMolarVol
   !
-  REAL(dp),INTENT(IN) :: PhiInert
-  LOGICAL, INTENT(IN) :: vLKinActiv(:),vLEquActiv(:)
-  REAL(dp),INTENT(IN) :: vXmk(:),vXeq(:)
-  REAL(dp),INTENT(OUT):: PhiF
+  real(dp),intent(in) :: PhiInert
+  logical, intent(in) :: vLKinActiv(:),vLEquActiv(:)
+  real(dp),intent(in) :: vXmk(:),vXeq(:)
+  real(dp),intent(out):: PhiF
   !
-  INTEGER :: nMk
-  INTEGER :: iMk,iMkA,iEqA
+  integer :: nMk
+  integer :: iMk,iMkA,iEqA
   !
-  nMk= SIZE(vKinFas)
+  nMk= size(vKinFas)
   !
   PhiF= One - PhiInert
   !-> take account of minerals that are "inactive" during current time step
   !
-  IF(COUNT(vLKinActiv) + COUNT(vLEquActiv) >0) THEN
+  if(count(vLKinActiv) + count(vLEquActiv) >0) then
     !
     iMkA= 0
     iEqA= 0
     iMk=  0
     !
-    DO
+    do
       iMk= iMk+1
-      IF(iMk>nMk) EXIT
+      if(iMk>nMk) exit
       !
       !---------------------------------------- iMk is kinetic active --
-      IF(vLKinActiv(iMk)) THEN
+      if(vLKinActiv(iMk)) then
         iMkA= iMkA + 1
         PhiF= PhiF - vXmk(iMkA) * vMolarVol(iMk) /VBox
-      ENDIF
+      end if
       !---------------------------------------/ iMk is kinetic active --
       !
       !------------------------------------ iMk is equilibrium active --
-      IF(vLEquActiv(iMk)) THEN
+      if(vLEquActiv(iMk)) then
         iEqA= iEqA +1
         PhiF= PhiF - vXeq(iEqA) * vMolarVol(iMk) /VBox
-      ENDIF
+      end if
       !-----------------------------------/ iMk is equilibrium active --
       !
-    ENDDO
+    end do
     !
-  ENDIF
+  end if
   !
-END SUBROUTINE PhiF_Calc
+end subroutine PhiF_Calc
 
-ENDMODULE M_Dynam_Residual
+end module M_Dynam_Residual
