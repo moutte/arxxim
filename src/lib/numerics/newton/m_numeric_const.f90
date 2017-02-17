@@ -3,14 +3,14 @@ module M_Numeric_Const !useful constants
   implicit none
   private
   real(dp),parameter,public:: &
-    Pi=        3.14159265359979_dp, &
-    !Pi43=      4._dp*Pi/3._dp, & !4.18879020479972_dp, & != 4.pi/3
-    Ln10=      2.302585092994_dp, & != log(10.0_dp)
-    !MaxExpDP=  200.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    !MinExpDP= -200.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    MaxExpDP=  300.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    MinExpDP= -300.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    TinyDP=    1.0E-300_dp      !TINY(Pi)
+  & Pi=        3.14159265359979_dp, &
+  & !Pi43=      4._dp*Pi/3._dp, & !4.18879020479972_dp, & != 4.pi/3
+  & Ln10=      2.302585092994_dp, & != log(10.0_dp)
+  & !MaxExpDP=  200.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+  & !MinExpDP= -200.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+  & MaxExpDP=  300.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+  & MinExpDP= -300.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+  & TinyDP=    1.0E-300_dp      !TINY(Pi)
   !TINY(x)->smallest number in model of same type and kind parameters as x
   !  ex:real(8) r -> TINY(r)=2.22...E-308
   !HUGE(x)->largest number in model of same type and kind parameters as x
