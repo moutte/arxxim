@@ -4,10 +4,17 @@ module M_Numeric_Const !useful constants
   private
   real(dp),parameter,public:: &
   & Pi=        3.14159265359979_dp, &
+<<<<<<< HEAD
   ! Pi43=      4._dp*Pi/3._dp, & !4.18879020479972_dp, & != 4.pi/3
   & Ln10=      2.302585092994_dp, & != log(10.0_dp)
   ! MaxExpDP=  200.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
   ! MinExpDP= -200.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+=======
+  & !Pi43=      4._dp*Pi/3._dp, & !4.18879020479972_dp, & != 4.pi/3
+  & Ln10=      2.302585092994_dp, & != log(10.0_dp)
+  & !MaxExpDP=  200.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+  & !MinExpDP= -200.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+>>>>>>> e0a920ff638eb13c73a8febd0502bf2266bcf332
   & MaxExpDP=  300.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
   & MinExpDP= -300.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
   & TinyDP=    1.0E-300_dp      !TINY(Pi)
