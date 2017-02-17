@@ -1,4 +1,4 @@
-module M_SolGas_Spycher
+module M_Solmodel_Calc_Spycher
 !---------------------------------------------------------------------
 ! Spycher Fugacity Model 
 ! empirical relation from Spycher & Reed,'88, as implemented by TOUGH2
@@ -6,7 +6,7 @@ module M_SolGas_Spycher
 
 use M_Kinds
 
-public::SolGas_GammaSpycher
+public:: SolGas_GammaSpycher
 
 contains
 
@@ -27,4 +27,4 @@ real(dp) function SolGas_GammaSpycher(TdgK,Pbar) !-> ln(fugacity)
 
 end function SolGas_GammaSpycher
 
-end module M_SolGas_Spycher
+end module M_Solmodel_Calc_Spycher
