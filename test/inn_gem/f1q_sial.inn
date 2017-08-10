@@ -1,0 +1,19 @@
+TEST
+  COMPUTE GEM
+  COMPUTE Q
+END
+
+CONDITIONS
+  TITLE  al-silicate
+  OUTPUT out\f1q
+  DEBUG  1
+END CONDITIONS
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\hsvthr_thcalc_db55_min.tab
+!SPECIES HSV.THR
+!TYPE NAME   SCFORM  SOURCE  FORMAT   PARAMETERS
+!GAS  WATER  H2O     haar    THERIAK  SPECIAL H2O_HGK
+!END
+
+INCLUDE inn_gem/f1q_sial.include
