@@ -87,18 +87,14 @@ end subroutine Dynam_Box
 
 subroutine Dynam_Initialize
   use M_Dynam_Tools
-  use M_System_Tools
-  use M_Basis,only: Basis_Change
-  use M_Equil
   !
-  use M_Global_Vars,only: vEle,vSpc
+  use M_Global_Vars,only: vEle !,vSpc
   use M_System_Vars,only: vCpn,vCpnTot
   use M_Dynam_Vars, only: vCpnInj,vCpnBox
   !
   logical:: OkInj,OkBox
   integer:: iCp,J,N
   !
-  call System_Build !-> build 'master' vCpn
   N= size(vCpn)
   !
   if(allocated(vCpnTot)) deallocate(vCpnTot)

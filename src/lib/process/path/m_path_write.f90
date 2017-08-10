@@ -31,8 +31,8 @@ subroutine Path_Write_FasEnTete
 !-- write entete for the file of affinities of pure phases
 !-- (i.e. non-aqu'species)
 !--
-  use M_IOTools,   only: GetUnit
-  use M_Files,     only: cTitle,DirOut, Files_Index_Write
+  use M_IOTools,    only: GetUnit
+  use M_Files,      only: DirOut, Files_Index_Write
   use M_Global_Vars,only: vFas
   !
   integer :: iFs
@@ -56,7 +56,7 @@ subroutine Path_Write_FasAff(iStep)
 !-- write affinity of pure phases (i.e. non-aqu'species)
 !--
   use M_Numeric_Const,only: Ln10
-  use M_Global_Vars,  only: vFas,vSpc
+  use M_Global_Vars,  only: vFas,vSpc,vSpcDat
   use M_Basis_Vars,   only: tNuFas,vOrdPr
   !
   integer,intent(in):: iStep
@@ -69,8 +69,8 @@ subroutine Path_Write_FasAff(iStep)
     X= &
     & vFas(iFs)%Grt &
     - dot_product( tNuFas(iFs,:), &
-    &              vSpc(vOrdPr(:))%Dat%LAct+vSpc(vOrdPr(:))%G0rt )
-    X= - X /SUM(ABS(tNuFas(iFs,:))) /Ln10
+    &              vSpcDat(vOrdPr(:))%LAct+vSpc(vOrdPr(:))%G0rt )
+    X= - X /sum(abs(tNuFas(iFs,:))) /Ln10
     !!write(fQsK,'(G15.6,A1)',advance="no") -vFasAff(iFs) /Ln10,T_ !-> log10(QsK)= - Affinity /Ln10
     write(fQsK,'(G15.6,A1)',advance="no") X,T_ !-> log10(QsK)= - Affinity /Ln10
   end do
@@ -87,26 +87,26 @@ subroutine Path_Write_Distrib(N)
 !--
 !-- if Speciation succeeds, 
 !-- then we should have
-!--   vCpn(iEl)%Mole=dot_product(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)),
+!--   vCpn(iEl)%Mole=dot_product(tFormula(iEl,1:nAq),vSpcDat(1:nAq)%Mole)),
 !-- except for element iBal or for a mobile element
 !--
 !-- Output format is designed for easy data processing w/ spreadsheet
 !-- (sort according to column vNamEl, -> produce tables for the different elements)
 !-- currently no special treatment for Redox !!! should do something...
 !--
-  use M_IoTools,only: GetUnit
-  use M_Numeric_Const,  only: Ln10
+  use M_IoTools,       only: GetUnit
+  use M_Numeric_Const, only: Ln10
   use M_SolModel_Tools,only: Solmodel_pHpE
   !
-  use M_Global_Vars, only: vEle,nAq,vSpc,tFormula
+  use M_Global_Vars, only: vEle,nAq,vSpc,tFormula,SolModel,vSpcDat
   use M_System_Vars, only: vCpn
   use M_Files,       only: DirOut
-  use M_Basis_Vars,  only: isW,iOx,isH_,isO2
   !
-  integer ::fDist,N,iAq,iEl,nCp
-  real(dp)::Tot, X, pH_,pE_
+  integer :: fDist,N,iAq,iEl,isW,nCp
+  real(dp):: Tot, X, pH_,pE_
   !
-  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  isW= SolModel%iSolvent
+  call Solmodel_pHpE(SolModel,vSpc,vSpcDat,pH_,pE_)
   !
   nCp=size(vCpn)
   !
@@ -122,32 +122,30 @@ subroutine Path_Write_Distrib(N)
     & file=trim(DirOut)//"_distrib_"//trim(vEle(vCpn(iEl)%iEle)%NamEl)//".restab", &
     & ACCESS='APPend')
     !
-    Tot=dot_product(tFormula(iEl,1:nAq),vSpc(1:nAq)%Dat%Mole)
+    Tot=dot_product(tFormula(iEl,1:nAq),vSpcDat(1:nAq)%Mole)
     if(trim(vCpn(iEl)%Statut)/="INERT") vCpn(iEl)%Mole=Tot
     !
     write(fDist,'(I3,A1,A,A1,F7.3,A1,F7.3,A1)',advance="no") &
     &             N,T_,trim(vEle(vCpn(iEl)%iEle)%NamEl),T_,pH_,T_,pE_,T_
     !
     do iAq=2,nAq
-      !if(iAq/=iH_) then
-        if(tFormula(iEl,iAq)/=0) then
-          X=vSpc(iAq)%Dat%Mole/tFormula(iEl,iAq)/Tot*1000.0D0
-          !divides vMolF of species iAq by number of moles of iEl in one mole of iAq
-          !if(X>1.0D-3) then; write(fDist,'(F12.3,A1)',advance="no") X,T_ 
-          !             else; write(fDist,'(A12,A1)',  advance="no") "0",T_; end if 
-          write(fDist,'(G15.6,A1)',advance="no") X,T_
-        end if
-      !end if
+      if(tFormula(iEl,iAq)/=0) then
+        X=vSpcDat(iAq)%Mole/tFormula(iEl,iAq)/Tot*1000.0D0
+        !divides vMolF of species iAq by number of moles of iEl in one mole of iAq
+        !if(X>1.0D-3) then; write(fDist,'(F12.3,A1)',advance="no") X,T_ 
+        !             else; write(fDist,'(A12,A1)',  advance="no") "0",T_; end if 
+        write(fDist,'(G15.6,A1)',advance="no") X,T_
+      end if
     end do
     !
     do iAq=2,nAq
       if(tFormula(iEl,iAq)/=0) &
-      & write(fDist,'(G15.6,A1)',advance="no") 1.0E6*vSpc(iAq)%Dat%Mole,T_
+      & write(fDist,'(G15.6,A1)',advance="no") 1.0E6*vSpcDat(iAq)%Mole,T_
       !*1.0E6 -> output in MICROMOLES !!!
     end do
     do iAq=2,nAq
       if(tFormula(iEl,iAq)/=0) &
-      & write(fDist,'(G15.6,A1)',advance="no") exp(vSpc(iAq)%Dat%LGam),T_ !vSpc(iAq)%LnGam/Ln10
+      & write(fDist,'(G15.6,A1)',advance="no") exp(vSpcDat(iAq)%LGam),T_ !vSpc(iAq)%LnGam/Ln10
     end do
     !
     write(fDist,'(2(G15.6,A1))') 1.0E6*Tot,T_,1.0E6*vCpn(iEl)%Mole
@@ -213,16 +211,16 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
 !-- element abundance on _moles
 !--
   use M_IOTools
-  use M_Files,        only: DirOut,cTitle,Files_Index_Write
+  use M_Files,        only: DirOut,Files_Index_Write
   use M_Dtb_Const,    only: T_CK
   use M_Dtb_Const,    only: R_JK,Tref
   use M_Numeric_Const,only: Ln10
   use M_SolModel_Tools, only: Solmodel_pHpE,Solmodel_CalcMolal
   use M_T_Species,    only: Species_EntropyZero
   !
-  use M_Global_Vars,only: vEle,vSpc,vFas,nAq,SolModel !!,Solvent
-  use M_System_Vars,only: TdgK,Pbar,vCpn
-  use M_Basis_Vars, only: isW,MWsv,iOx,isH_,isO2,tStoikio,tAlfFs
+  use M_Global_Vars,only: vEle,vSpc,vFas,nAq,SolModel,vSpcDat
+  use M_System_Vars,only: TdgK,Pbar,vCpn,iOx
+  use M_Basis_Vars, only: tStoikio,tAlfFs
   use M_Basis_Vars, only: vLCi,vLAs,vLAx,vLMx !,nAx,nMx,vYesList
   use M_Path_Vars,  only: DimPath,tPathResults
   !
@@ -236,7 +234,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   real(dp):: vMolal(1:nAq)
   real(dp):: ZBal,ZRdx,IonStr,xTotF
   real(dp):: pH_,pE_,X,nOx
-  integer :: iPr,I,N,K,nCp
+  integer :: iPr,I,K,nCp,isW
   !
   real(dp),allocatable:: vS0Ele(:)
   real(dp),allocatable:: vPot(:)
@@ -251,7 +249,8 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
     vS0Ele(I)= Species_EntropyZero(vEle,vSpc(I))
   end do
   !
-  call Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+  isW= SolModel%iSolvent
+  call Solmodel_pHpE(SolModel,vSpc,vSpcDat,pH_,pE_)
   !
   !--------------------------------------------------ACTIV'COEFFS.HEADER
   if(fGamma==0) then
@@ -408,11 +407,11 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   !
   !call OutStrVec(fMoles,vCpn(1:nCp)%Mole,I=WrCount,S="TotEle=",C="F")
   !_____________________________________Output
-  !call OutStrVec(fMoles,vSpc(1:nAq)%Dat%Mole,I=WrCount,S="MolNum=",C="F")
+  !call OutStrVec(fMoles,vSpcDat(1:nAq)%Mole,I=WrCount,S="MolNum=",C="F")
   !
-  ZBal=dot_product(vSpc(1:nAq)%Dat%Mole,vSpc(1:nAq)%Z)
+  ZBal=dot_product(vSpcDat(1:nAq)%Mole,vSpc(1:nAq)%Z)
   !
-  call Solmodel_CalcMolal(vSpc,isW,vMolal,IonStr)
+  call Solmodel_CalcMolal(Solmodel,vSpc,vSpcDat,vMolal,IonStr)
   !
   !--------------------------------------------------left part of tables
   !
@@ -439,7 +438,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   write(fMolal,'(3(G15.6,A1))',advance="no") IonStr,T_,pH_,T_,ZBal,T_
   !
   if(iOx/=0) then
-    ZRdx= dot_product(vSpc(1:nAq)%Dat%Mole,tStoikio(iOx,1:nAq))
+    ZRdx= dot_product(vSpcDat(1:nAq)%Mole,tStoikio(iOx,1:nAq))
     write(fActiv,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
     write(fPoten,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
     write(fGamma,'(2(G15.6,A1))',advance="no") pE_,T_,ZRdx,T_
@@ -448,7 +447,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   !
   do iPr=1,size(vCpn)
     !
-    xTotF= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole)
+    xTotF= sum(tStoikio(iPr,1:nAq)*vSpcDat(1:nAq)%Mole)
     !
     write(fActiv,'(G15.8,A1)',advance="no") xTotF,T_
     write(fPoten,'(G15.8,A1)',advance="no") xTotF,T_
@@ -480,14 +479,12 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   !! end do
   !! print *,"OutStrVec"  ;  call pause_
   call OutStrVec( &
-  & fActiv,vSpc(:)%Dat%LAct/Ln10) !, &
-  ! & vLc(:)= vLCi &
-  ! & .or.vLAs &
-  ! & .or.vLAx &
-  ! & .or.vLMx)
+  & fOut= fActiv, &
+  & Vec=  vSpcDat(:)%LAct/Ln10, &
+  & vL=   vLCi.or.vLAs.or.vLAx.or.vLMx)
   !
-  !---------------------------------------------------POTENTIALS.resultS
-  vPot(:)= vSpc(:)%Dat%LAct +vSpc(:)%G0rt !-> "reduced"potential, dimensionless
+  !---------------------------------------------------POTENTIALS.results
+  vPot(:)= vSpcDat(:)%LAct +vSpc(:)%G0rt !-> "reduced"potential, dimensionless
   vPot(:)= vPot(:) *R_JK *TdgK            !-> potential in Joule
   ! vPot(:)= vPot(:) - Tref*vS0Ele(:)       !-> in Berman-Brown convention
   !
@@ -496,16 +493,15 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   & Vec=  vPot(:), &
   & vL=   vLCi.or.vLAs.or.vLAx.or.vLMx)
   !
-  !--------------------------------------------------ACTIV'COEFF'.resultS
+  !-------------------------------------------------ACTIV'COEFF'.results
   call OutStrVec( &
   & fOut= fGamma,&
-  & Vec=  vSpc(:)%Dat%LGam/Ln10, &
+  & Vec=  vSpcDat(:)%LGam/Ln10, &
   & vL=   vLCi.or.vLAs.or.vLAx)
   !
-  !---------------------------------------------------MOLALITIES.resultS
+  !---------------------------------------------------MOLALITIES.results
   call OutStrVec( &
-  & fOut= fMolal,&
-  & Vec=  vMolal(:))
+  & fOut= fMolal, Vec= vMolal(:))
   !------------------------------------------------/RIGHT PART OF TABLES
   !
   !---------------------------------------------------------------------
@@ -523,7 +519,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
     & "PATH: mole nrs of elements, influid, in system, mole nrs of other phases")
     !
     if(present(WrTitl)) write(fMoles,'(A,A1)',advance="no") ".Title",T_
-    write(fMoles,'(4(A,A1))',advance="no") "count",T_,"TdgC",T_,"Pbar",T_,"RhoW",T_
+    write(fMoles,'(4(A,A1))',advance="no") "COUNT",T_,"TdgC",T_,"Pbar",T_,"RhoW",T_
     write(fMoles,'(2(A,A1))',advance="no") "pH",T_,"pE",T_
     !
     !----------------------------------------------write component names
@@ -581,7 +577,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
   !
   !-----------------------------------------write total element in fluid
   do iPr=1,size(vCpn)
-    X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> mole nrs in fluid
+    X= sum(tStoikio(iPr,1:nAq)*vSpcDat(1:nAq)%Mole) !-> mole nrs in fluid
     write(fMoles,'(G15.8,A1)',advance="no") X,T_
     if(allocated(tPathResults)) &
     & tPathResults(WrCount,iPr+2)= X !-------------write IN BUFFER TABLE
@@ -592,7 +588,7 @@ subroutine Path_Write_Line(WrCount,WrCod,vYes,WrTitl)
     !
     do iPr=1,size(vCpn)
       !
-      X= SUM(tStoikio(iPr,1:nAq)*vSpc(1:nAq)%Dat%Mole) !-> mole nrs in fluid
+      X= sum(tStoikio(iPr,1:nAq)*vSpcDat(1:nAq)%Mole) !-> mole nrs in fluid
       !
       do I=1,size(vFas)
         if(vYes(I) .and. vFas(I)%MolFs>Zero) &
@@ -672,7 +668,7 @@ subroutine WriteBuffer
   use M_IOTools
   use M_Files,    only: DirOut
   !
-  use M_Global_Vars,only: vFas,vEle
+  use M_Global_Vars,only: vEle
   use M_System_Vars,only: vCpn
   use M_Path_Vars,only: tPathResults
   !
@@ -684,7 +680,7 @@ subroutine WriteBuffer
   allocate(vIsZero(nYes))
   !
   do J=1,nYes
-    vIsZero(J)= (ABS(MAXVAL(tPathResults(:,2+2*nCp+J)))<1.D-16)
+    vIsZero(J)= (abs(maxval(tPathResults(:,2+2*nCp+J)))<1.D-16)
   end do
   !
   !print *,"=====nYes-count(vIsZero)===",nYes-count(vIsZero)
@@ -694,10 +690,10 @@ subroutine WriteBuffer
   open(FF,file=trim(DirOut)//"_moles_clean.restab")
   !
   !-------------------------------------------------------------HEADER--
-  write(FF,'(A,A1)',advance="no") "count",T_
+  write(FF,'(A,A1)',advance="no") "COUNT",T_
   write(FF,'(2(A,A1))',advance="no") "TdgC",T_,"Pbar",T_
-  !~ write(FF,'(3(A,A1))',advance="no") "RhoW",T_,"pH",T_,"pE",T_
-  !~ !
+  !! write(FF,'(3(A,A1))',advance="no") "RhoW",T_,"pH",T_,"pE",T_
+  !! !
   !-----------------------------------------------write component names--
   do I=1,size(vCpn)
     write(FF,'(A,A1)',advance="no") &

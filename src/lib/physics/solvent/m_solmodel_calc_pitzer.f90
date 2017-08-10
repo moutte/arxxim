@@ -61,7 +61,7 @@ subroutine Solmodel_Calc_Pitzer( &
   & vSolut,Aphi,vMolalSolut, & !IN
   & Osmo,vLnGam) !OUT
   !
-  LnActSv= -Osmo *MWsv * (SUM(vMolalSolut))
+  LnActSv= -Osmo *MWsv * (sum(vMolalSolut))
   
   deallocate(vSolut)
   deallocate(vMolalSolut)
@@ -130,7 +130,7 @@ subroutine Pitzer_Calc_Gamma( &
   !real(dp) FONC2
   !integer  IonType
   !
-  if(iDebug>0) write(fTrc,'(A)') "< Pitzer_Calc_Gamma"
+  if(idebug>1) write(fTrc,'(A)') "< Pitzer_Calc_Gamma"
   !
   nSp= size(vSpc)
   !
@@ -194,7 +194,7 @@ subroutine Pitzer_Calc_Gamma( &
         &        /Ionic
         !
         if (vCharge(I)*vCharge(J)/=0) then !C_cation-anion eq24, Moeller'98
-          Cmx(I,J)=  0.5d0*tCPhi(I,J) / (ABS(vCharge(I)*vCharge(J)))**0.5
+          Cmx(I,J)=  0.5d0*tCPhi(I,J) / (abs(vCharge(I)*vCharge(J)))**0.5
         else
           Cmx(I,J)=  Zero
         end if
@@ -233,7 +233,7 @@ subroutine Pitzer_Calc_Gamma( &
           Tmp=  Zero
           do K=1,nSp !if K is anion
             !N.Ferrando considers K is anion or neutral
-            !Tmp= Tmp + vMolal(K)*tPsi(C1,C2,K) *(MAX(IonType(K,-1),IonType(K,0)))
+            !Tmp= Tmp + vMolal(K)*tPsi(C1,C2,K) *(max(IonType(K,-1),IonType(K,0)))
             Tmp= Tmp + vMolal(K) *tPsi(C1,C2,K) *IonType(K,-1)
           end do
           call EThetaCalc(vCharge(C1),vCharge(C2), RI, Aphi, ETheta, ETheta1)
@@ -323,8 +323,8 @@ subroutine Pitzer_Calc_Gamma( &
       do jC=1,nSp
         if(vCharge(jC)>0) then
           call EThetaCalc(vCharge(iC),vCharge(jC), RI, Aphi, ETheta, ETheta1)
-          !Tmp= Tmp + vMolal(jC)*( tTheta(MIN(iC,jC),MAX(iC,jC)) + ETheta )
-          Tmp= Tmp + 2.0d0*vMolal(jC)*( tTheta(MIN(iC,jC),MAX(iC,jC)) + ETheta )
+          !Tmp= Tmp + vMolal(jC)*( tTheta(min(iC,jC),MAX(iC,jC)) + ETheta )
+          Tmp= Tmp + 2.0d0*vMolal(jC)*( tTheta(min(iC,jC),MAX(iC,jC)) + ETheta )
         end if
       end do
       if(iDebug>2) write(ff,'(A,G15.6)') " cations=", Tmp
@@ -338,7 +338,7 @@ subroutine Pitzer_Calc_Gamma( &
           &  + vMolal(J)*vMolal(K) &
           &    * ( vCharge(iC)**2 *Bmx2(J,K)   &
           &      + vCharge(iC)    *Cmx(J,K)    &
-          &      + tPsi(MIN(iC,J),MAX(iC,J),K) &
+          &      + tPsi(min(iC,J),MAX(iC,J),K) &
           &      ) &
           &    * IonType(J,1)*IonType(K,-1)
         end do
@@ -422,7 +422,7 @@ subroutine Pitzer_Calc_Gamma( &
         !ZJ=  vCharge(jA)
         if(vCharge(jA)<0) then
           call EThetaCalc(zA,vCharge(jA), RI, Aphi, ETheta, ETheta1)
-          Tmp=  Tmp + 2.0d0*vMolal(jA)*(tTheta(MIN(iA,jA),MAX(iA,jA)) +ETheta) 
+          Tmp=  Tmp + 2.0d0*vMolal(jA)*(tTheta(min(iA,jA),MAX(iA,jA)) +ETheta) 
         endIf
       end do
       if(iDebug>2) write(ff,'(A,G15.6)') " anions =", Tmp
@@ -435,8 +435,8 @@ subroutine Pitzer_Calc_Gamma( &
           Tmp= Tmp &
           &  + vMolal(J)*vMolal(K) &
           &    * ( zA**2   *Bmx2(J,K)   &
-          &      + ABS(zA) *Cmx (J,K)    &
-          &      + tPsi(MIN(iA,K),MAX(iA,K),J)   &
+          &      + abs(zA) *Cmx (J,K)    &
+          &      + tPsi(min(iA,K),MAX(iA,K),J)   &
           &      ) &
           &    *IonType(J,1) *IonType(K,-1)
         end do
@@ -547,7 +547,7 @@ subroutine Pitzer_Calc_Gamma( &
   !
   if(iDebug>2) close(ff)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Pitzer_Calc_Gamma"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Pitzer_Calc_Gamma"
   !
   return
     
@@ -718,10 +718,10 @@ subroutine Pitzer_Calc_APhi(RhoW,EpsW,TdgK,APhi)
   &   /SQRT((EpsW*TdgK)**3) &
   &   *1.0D+3
   
-  !~ APhi_DH= 1.824829238D6 *SQRT(RhoW) /SQRT((EpsW*TdgK)**3)
-  !~ call Pitzer_Calc_APhiMonnin(TdgK,1.0D0,Aphi_)
-  !~ print '(A,3G15.6)',"Aphi, AphiMonnin,APhi_DH:", Aphi,Aphi_,APhi_DH
-  !~ pause
+  !! APhi_DH= 1.824829238D6 *SQRT(RhoW) /SQRT((EpsW*TdgK)**3)
+  !! call Pitzer_Calc_APhiMonnin(TdgK,1.0D0,Aphi_)
+  !! print '(A,3G15.6)',"Aphi, AphiMonnin,APhi_DH:", Aphi,Aphi_,APhi_DH
+  !! pause
   
   return
 end subroutine Pitzer_Calc_APhi

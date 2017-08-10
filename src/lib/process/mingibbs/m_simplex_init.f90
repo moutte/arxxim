@@ -189,7 +189,7 @@ subroutine Species_Select(nEl,vCpn)
         ! then add to vSpc
         N= N+1
         vTmp(N)= vSpc(iS)
-        !~ write(6,'(2A)') "OK SPECIES= ", trim(vSpc(is)%NamSp)
+        !! write(6,'(2A)') "OK SPECIES= ", trim(vSpc(is)%NamSp)
         if(iDebug>2) write(fTrc,'(A)') trim(vSpc(iS)%NamSp)
       end if
       
@@ -237,9 +237,9 @@ subroutine Check_Independent(tStoikio,Ok)
       Y= tStoikTmp(K,vIPivot(J))
       tStoikTmp(K,:)= tStoikTmp(K,:)- Y*tStoikTmp(J,:)
     end do
-    vIPivot(K)= iMaxLoc_R(ABS(tStoikTmp(K,:)))
+    vIPivot(K)= iMaxLoc_R(abs(tStoikTmp(K,:)))
     Pivot= tStoikTmp(K,vIPivot(K))
-    if(ABS(Pivot)<1.D-9) then
+    if(abs(Pivot)<1.D-9) then
       != all coeff's are 0 -> this species is not independent -> exit ==
       Ok= .false.
       deallocate(tStoikTmp,vIPivot) !tStoikio,
@@ -297,7 +297,7 @@ subroutine Component_Read(vEle)
   integer:: fFormula
   character(len=2),dimension(:),allocatable:: vElement
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Component_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Component_Read"
   !
   !CodFormula= "ECFORM"
   fFormula= 0
@@ -382,7 +382,7 @@ subroutine Component_Read(vEle)
         !if(CodFormula=="SCFORM") then
           call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
           if(.not.EcformIsOk) then
-            if(iDebug>0) print '(3A)',trim(W)," =ERROR IN FORMULA, SKIPPED !!"
+            if(idebug>1) print '(3A)',trim(W)," =ERROR IN FORMULA, SKIPPED !!"
             cycle DoBlock
           end if
         !end if
@@ -414,9 +414,9 @@ subroutine Component_Read(vEle)
               Cpn%Formula= trim(Cpn%Formula)//"OX("//trim(adjustl(Str))//")"
             else
               print *,"ZSp,Stoikio=",ZSp,Ztest
-              if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
+              if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39)') &
               & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-              if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+              if(idebug>1) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
               cycle
             end if
           end if
@@ -425,7 +425,7 @@ subroutine Component_Read(vEle)
           !
           Cpn%iMix= 0
           !
-          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
+          if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
           & "ACCEPT",T_,Cpn%NamCp,T_,Cpn%Formula,T_,N
           if(iDebug>2) print '(3A)',"accepted: ",Cpn%NamCp,Cpn%Formula
           !
@@ -446,9 +446,9 @@ subroutine Component_Read(vEle)
         else
           !
           print *,"ZSp,Stoikio=",ZSp,Ztest
-          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
+          if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39)') &
           & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-          if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+          if(idebug>1) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
           !
         end if
         !-------------------------------------------/ process formula --
@@ -482,7 +482,7 @@ subroutine Component_Read(vEle)
   deallocate(tStoikio)
   !-----------------------------------------------/check independency --
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Component_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Component_Read"
   !
   return
 end subroutine Component_Read
@@ -523,7 +523,7 @@ subroutine Element_Select(vCpn)
   !
   !---------------------------select elements involved in the components
   do I=1,nEl
-    if(ANY(tStoik(:,i)/=0)) then
+    if(any(tStoik(:,i)/=0)) then
       N=N+1
       vE(N)= vEle(I) !-> new element list
       if(iDebug>2) write(fTrc,'(I3,1X,A)') N,vEle(I)%NamEl
@@ -629,7 +629,7 @@ end function iMaxLoc_I
 !old!  integer:: nEl,nSp,ieOx,I,N
 !old!  logical:: fOk
 !old!  !
-!old!  if(iDebug>0) write(fTrc,'(/,A)') "< SplSpecies_Alloc"
+!old!  if(idebug>1) write(fTrc,'(/,A)') "< SplSpecies_Alloc"
 !old!  !
 !old!  nSp=  size(vSpc)
 !old!  nEl=  size(vEle)
@@ -653,20 +653,20 @@ end function iMaxLoc_I
 !old!  vSpc(1:N)=   vSpc_(1:N)
 !old!  deallocate(vSpc_)
 !old!  !
-!old!  !~ nSp=  size(vSpc)
-!old!  !~ call Warning_("vTPpath must be allocated before Spl_Species_Alloc")
-!old!  !~ nTP=  size(vTPpath)
-!old!  !~ if(allocated(tGrt)) deallocate(tGrt); allocate(tGrt(1:nSp,1:nTP))
-!old!  !~ call DtbSpc_Table_Write(vTPpath,vSpcDtb,vSpc,tGrt)
-!old!  !~ !
-!old!  if(iDebug>0) then
+!old!  !! nSp=  size(vSpc)
+!old!  !! call Warning_("vTPpath must be allocated before Spl_Species_Alloc")
+!old!  !! nTP=  size(vTPpath)
+!old!  !! if(allocated(tGrt)) deallocate(tGrt); allocate(tGrt(1:nSp,1:nTP))
+!old!  !! call DtbSpc_Table_Write(vTPpath,vSpcDtb,vSpc,tGrt)
+!old!  !! !
+!old!  if(idebug>1) then
 !old!    write(fTrc,'(A)') "-> New Species List"
 !old!    do i=1,size(vSpc)
 !old!      write(fTrc,'(I3,1X,A)') I,vSpc(I)%NamSp
 !old!    end do
 !old!  end if
 !old!  !
-!old!  if(iDebug>0) write(fTrc,'(A,/)') "</ SplSpecies_Alloc"
+!old!  if(idebug>1) write(fTrc,'(A,/)') "</ SplSpecies_Alloc"
 !old!  !
 !old!end subroutine Spl_Species_Alloc
 
@@ -686,7 +686,7 @@ subroutine Spl_Tables_Build(vEle,vSpc,vFas)
   integer:: nEl,nFs,I
   integer,dimension(:),allocatable:: vStoik
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_BuildTables"
+  if(idebug>1) write(fTrc,'(/,A)') "< Spl_BuildTables"
   !
   nEl=size(vEle)
   nFs=size(vFas)
@@ -703,7 +703,7 @@ subroutine Spl_Tables_Build(vEle,vSpc,vFas)
   !
   deallocate(vStoik)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_BuildTables"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Spl_BuildTables"
 end subroutine Spl_Tables_Build
 
 subroutine Spl_Stoikio_Calc( &
@@ -740,7 +740,7 @@ subroutine Spl_Stoikio_Calc( &
   real(dp):: D
   integer :: I,nEl,nCp,nFs
   !---------------------------------------------------------------------
-  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
+  if(idebug>1) write(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
   !
   nFs=size(vFas)
   nCp=size(vCpn)
@@ -777,7 +777,7 @@ subroutine Spl_Stoikio_Calc( &
   !
   deallocate(tStoik)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
   !
 contains
 
@@ -791,9 +791,9 @@ subroutine Spl_Stoikio_Show
   integer:: I,iEl
   integer:: FF
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< ShowStoikio"
+  if(idebug>1) write(fTrc,'(/,A)') "< ShowStoikio"
   !
-  if(iDebug>0) write(fTrc,'(A)') &
+  if(idebug>1) write(fTrc,'(A)') &
   & "Spl_Stoikio_Show -> "//trim(DirOut)//"_spl_stoikio.log"
   !
   call GetUnit(FF)
@@ -841,7 +841,7 @@ subroutine Spl_Stoikio_Show
   !
   close(FF)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ ShowStoikio"
+  if(idebug>1) write(fTrc,'(A,/)') "</ ShowStoikio"
 end subroutine Spl_Stoikio_Show
 
 end subroutine Spl_Stoikio_Calc

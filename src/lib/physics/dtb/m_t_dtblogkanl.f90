@@ -40,9 +40,9 @@ contains
   subroutine DtbLogKAnl_New(M)
     type(T_DtbLogKAnl),intent(out) :: M
     !
-    M%Num="none"
-    M%Name="none"
-    M%Formula="none"
+    M%Num="NONE"
+    M%Name="NONE"
+    M%Formula="NONE"
     M%Typ="NON"
     !
     M%iFitting= 0
@@ -78,14 +78,14 @@ contains
       LogK = M%vX(1)
     
     case(1) !"PHREEQC"
-    !~ if(trim(M%Fitting)=="PHREEQ") then
-      !~ T = TdgK
-      !~ LogK = M%A               &
-      !~ &    + M%B * T           &
-      !~ &    + M%C * 1.D0/T      &
-      !~ &    + M%D * Log(T)/LN10 &
-      !~ &    + M%E * 1.D0/T/T
-    !~ end if
+    !! if(trim(M%Fitting)=="PHREEQC") then
+      !! T = TdgK
+      !! LogK = M%A               &
+      !! &    + M%B * T           &
+      !! &    + M%C * 1.D0/T      &
+      !! &    + M%D * Log(T)/LN10 &
+      !! &    + M%E * 1.D0/T/T
+    !! end if
       LogK = M%vX(1)               &
       &    + M%vX(2) * T           &
       &    + M%vX(3) * 1.D0/T      &

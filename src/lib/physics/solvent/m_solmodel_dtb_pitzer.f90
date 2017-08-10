@@ -128,7 +128,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
   real(dp):: vXread(dimV) !,X0,vX(dimV)
   type(T_Fitt):: Coeff
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Solmodel_PitzerDtb_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Solmodel_PitzerDtb_Read"
   !
   call Solmodel_Pitzer_Dtb_Clean
   ! Pitzer_Dtb_Init_Done=.false.
@@ -162,7 +162,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
   end do
   !
   iModel= 0
-  namModel= "none"
+  namModel= "NONE"
   !
   allocate(tBeta0(1:nSl,1:nSl))      ;  tBeta0=Zero
   allocate(tBeta1(1:nSl,1:nSl))      ;  tBeta1=Zero
@@ -444,7 +444,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
           call LinToWrd(L,W2,EoL)
           namModel= trim(W2)
           select case(trim(W2))
-            case("none")               ;  iModel= 0
+            case("NONE")               ;  iModel= 0
             case("PHREEQC")            ;  iModel= 1
             case("KUEHN")              ;  iModel= 2
             case("CHRISTOV-2004")      ;  iModel= 3
@@ -517,8 +517,8 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
         call ReadRValsV(L,N,vXread)
         !
         select case(iModel)
-          case(0)  ;  N= 1  ! "none"
-          case(1)  ;  N= 5  ! "PHREEQ"
+          case(0)  ;  N= 1  ! "NONE"
+          case(1)  ;  N= 5  ! "PHREEQC"
           case(2)  ;  N= 5  ! "KUEHN"
           case(3)  ;  N= 9  ! "CHRISTOV-2004"
           case(4)  ;  N= 21 ! "PITZER-1984", Na+=Cl-
@@ -612,7 +612,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
   do iSp1=1,nSl
     do iSp2=1,nSl
       if(tI_Beta1(iSp1,iSp2)>0) then
-        if( ABS(vSolut(iSp1)%Z)<2 .or. ABS(vSolut(iSp2)%Z)<2 ) then
+        if( abs(vSolut(iSp1)%Z)<2 .or. abs(vSolut(iSp2)%Z)<2 ) then
           vAlfa1(tI_Beta1(iSp1,iSp2))= 2.0D0
         else
           vAlfa1(tI_Beta1(iSp1,iSp2))= 1.4D0
@@ -620,7 +620,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
       end if
 
       if(tI_Beta2(iSp1,iSp2)>0) then
-        if(ABS(vSolut(iSp1)%Z)<2 .or. ABS(vSolut(iSp2)%Z)<2) then
+        if(abs(vSolut(iSp1)%Z)<2 .or. abs(vSolut(iSp2)%Z)<2) then
           !-> ignore the tBeta2 term in B_MX expression
           vAlfa2(tI_Beta2(iSp1,iSp2))= Zero
         else
@@ -634,7 +634,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
   !
   call Solmodel_Pitzer_Dtb_TPUpdate(Tref,Pref)
   !
-  if(iDebug>0) then !----------------------------------------------trace
+  if(idebug>1) then !----------------------------------------------trace
     call GetUnit(ff)
     open(ff,file="debug_pitzer_data.log")
     !
@@ -644,7 +644,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
     close(ff)
   end if !--------------------------------------------------------/trace
   ! Solmodel_Pitzer
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Solmodel_Pitzer_ Solmodel_PitzerDtb_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Solmodel_Pitzer_ Solmodel_PitzerDtb_Read"
   !
 contains
 
@@ -699,7 +699,7 @@ subroutine Sort2sp(I1,I2,Error)
   !
   if(Error) return
   !
-  J1= MIN(I1,I2)  ;  J2= MAX(I1,I2)
+  J1= min(I1,I2)  ;  J2= max(I1,I2)
   I1= J1          ;  I2= J2
   !
 end subroutine Sort2sp
@@ -714,8 +714,8 @@ subroutine Sort3sp(I1,I2,I3,Error)
   Error= (I1==I2 .or. I1==I3 .or. I2==I3)
   if(Error) return
   !
-  J1= MIN(I1,I2,I3)
-  J3= MAX(I1,I2,I3)
+  J1= min(I1,I2,I3)
+  J3= max(I1,I2,I3)
   !
   if(I1/=J1 .and. I1/=J3) J2= I1
   if(I2/=J1 .and. I2/=J3) J2= I2
@@ -852,7 +852,7 @@ subroutine Fitt_TPUpdate(T,P,vFitt,vCoef)
     select case(Fit%iModel)
 
     case(0) !"NONE"
-      vCoef(I)= Fit%vX(1) !"none"
+      vCoef(I)= Fit%vX(1) !"NONE"
 
     case(1) !"PHREEQ"
       vCoef(I)= Fit%vX(1) &
@@ -1051,9 +1051,8 @@ subroutine Solmodel_Pitzer_Dtb_TPtest
   ! real(dp),allocatable:: Res(:,:)
   ! character(len=30):: cFormat
   !
-  vT(1:9)=(/ 0.0D0,  25.0D0, 50.0D0, 75.0D0, &
-  &        100.0D0, 125.0D0,150.0D0,175.0D0, &
-  &        200.0D0 /)
+  vT(1:9)=(/ 0.0D0,  25.0D0, 50.0D0, 75.0D0, 100.0D0,  &
+  &        125.0D0, 150.0D0,175.0D0, 200.0D0          /)
   Pbar= 1.0D0
   !
   !write(cFormat,'(A,I3,A)') '(3(A,1X),',n,'(G12.3,1X))'
@@ -1061,7 +1060,7 @@ subroutine Solmodel_Pitzer_Dtb_TPtest
   !
   !write(ff,cFormat,advance="no") "X=",(x(k),k=1,n)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Pitzer_Dtb_TPtest"
+  if(idebug>1) write(fTrc,'(/,A)') "< Pitzer_Dtb_TPtest"
   !
   call GetUnit(f1)
   open(f1,file=trim(DirOut)//"_pitzer_tptest.tab")
@@ -1144,9 +1143,9 @@ subroutine Solmodel_Pitzer_Dtb_TPtest
   close(f1)
   close(f2)
   !
-  if(iDebug>0) print '(/,A,/)',"=!= results in pitzer_tptest.tab =!="
+  if(idebug>1) print '(/,A,/)',"=!= results in pitzer_tptest.tab =!="
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "<  Solmodel_Pitzer_Pitzer_Dtb_TPtest"
+  if(idebug>1) write(fTrc,'(A,/)') "<  Solmodel_Pitzer_Pitzer_Dtb_TPtest"
   !
 end subroutine Solmodel_Pitzer_Dtb_TPtest
 

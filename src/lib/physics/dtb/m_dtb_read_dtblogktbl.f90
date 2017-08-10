@@ -123,7 +123,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
   ! character(len=12):: vStrUnit(1:nField)
   !-------------------------------------------/var for header processing
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbLogKTbl_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbLogKTbl_Read"
   !
   !----------------------------------------------------------------trace
   if(iDebug>2) then
@@ -316,16 +316,16 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
     & ) then
       !! print *,"M%Name=",M%Name
       select case(M%Typ)
-        case("AQU")
-          M%AquSize=X
-        case("MIN","GAS")
-          if(vifield(12)/=0) then
-            M%V0R= X *1.0D-6 ! for THERMODDEM database, CM^3 to M^3
-            Rho= M%WeitKg /M%V0R
-          else
-            Rho=X
-            M%V0R= M%WeitKg /Rho
-          end if
+      case("AQU")
+        M%AquSize=X
+      case("MIN","GAS")
+        if(vifield(12)/=0) then
+          M%V0R= X *1.0D-6 ! for THERMODDEM database, CM^3 to M^3
+          Rho= M%WeitKg /M%V0R
+        else
+          Rho=X
+          M%V0R= M%WeitKg /Rho
+        end if
       end select
     end if
     !--default value of size parameter for charged aqu'species
@@ -372,7 +372,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
   !
   if(iDebug>2) close(ff)!--trace
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "< DtbLogKTbl_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "< DtbLogKTbl_Read"
   if(N==0) call Stop_("NO SPECIES FOUND ....")
   !
 end subroutine DtbLogKTbl_Read
@@ -485,7 +485,7 @@ subroutine DtbLogK_TPCond_Read(N)
   real(dp):: vX(dimV)
   type(T_TPCond):: vCond(dimV)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbLogK_TPCond_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbLogK_TPCond_Read"
   !
   call GetUnit(f)
   open(f,file=trim(NamFInn))
@@ -495,7 +495,7 @@ subroutine DtbLogK_TPCond_Read(N)
   !
   vCond(:)%TdgC= Zero
   vCond(:)%Pbar= Zero
-  vCond(:)%Name= "none"
+  vCond(:)%Name= "NONE"
   !
   DoFile: do
     !
@@ -552,7 +552,7 @@ subroutine DtbLogK_TPCond_Read(N)
           mDum= i
           N=min(N,mDum)
           !
-          if(iDebug>0) write(fTrc,'(A,A1,A,2I3)') trim(W),T_," DIM= ", mDum, N
+          if(idebug>1) write(fTrc,'(A,A1,A,2I3)') trim(W),T_," DIM= ", mDum, N
           !
           select case(trim(W))
           case("TDGC");  vCond(:)%TdgC=vX(:)
@@ -574,7 +574,7 @@ subroutine DtbLogK_TPCond_Read(N)
             i=i+1
             if(I>DimV) exit
             vCond(i)%Name=trim(W)
-            if(iDebug>0) write(fTrc,'(I3,1X,A15)') i,vCond(i)%Name
+            if(idebug>1) write(fTrc,'(I3,1X,A15)') i,vCond(i)%Name
             if(EoL) exit
           end do
         !endcase("NAME")
@@ -594,7 +594,7 @@ subroutine DtbLogK_TPCond_Read(N)
   !
   if(Ok) then
     !! if(any(vCond(1:N)%TdgC<Zero)) call Stop_("all temperatures should be >0 !!!")
-    if(ANY(vCond(1:N)%Pbar<1.D-9)) call Stop_("all pressures should be >0 !!!")
+    if(any(vCond(1:N)%Pbar<1.D-9)) call Stop_("all pressures should be >0 !!!")
     !
     do I=1,N
       TdgK= vCond(I)%TdgC +T_CK
@@ -624,7 +624,7 @@ subroutine DtbLogK_TPCond_Read(N)
     !
   end if
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbLogK_TPCond_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbLogK_TPCond_Read"
   !
 end subroutine DtbLogK_TPCond_Read
 

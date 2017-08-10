@@ -24,9 +24,9 @@ logical function Dynam_Converge(vF,vTolF)
   real(dp),intent(in):: vF(:),vTolF(:)
   !
   if(UseTolCoef) then
-    Dynam_Converge= all(ABS(vF(:)) < vNewtTolF(:) *vTolCoef(:))
+    Dynam_Converge= all(abs(vF(:)) < vNewtTolF(:) *vTolCoef(:))
   else
-    Dynam_Converge= all(ABS(vF(:)) < vNewtTolF(:))
+    Dynam_Converge= all(abs(vF(:)) < vNewtTolF(:))
   end if
   !
 end function Dynam_Converge
@@ -88,12 +88,12 @@ function Dynam_Residual(vX) result(vFunc)
 !--
 !-- system to be solved
 !--
-  use M_Global_Vars,  only: vKinFas,nAq,vFas
+  use M_Global_Vars,  only: vKinFas,nAq,vFas,SolModel
   use M_T_KinFas,     only: KinFas_CalcSurf
   use M_KinFas_Surf,  only: KinFas_Surf_Calc
   use M_KinRate
   !
-  use M_Basis_Vars, only: MWSv,isW,nCi,nAs,nAx,nMx
+  use M_Basis_Vars, only: nCi,nAs,nAx,nMx
   use M_Basis_Vars, only: tAlfPr,tAlfAs,tNuAs
   use M_Dynam_Vars, only: LogForAqu, LogForMin, DirectSub, CoupledCoores
   use M_Dynam_Vars, only: PhiF,PhiInert,VBox,UDarcy,dX,dTime
@@ -114,9 +114,11 @@ function Dynam_Residual(vX) result(vFunc)
   !
   real(dp),dimension(1:size(vX)):: vFunc
   !
-  real(dp):: QTotInjPr,X,TotFF
-  integer :: I,J,iPsi,iPr,iAs,iMk,iMkA,nF,nMk,nMkA,nEqA,nCx
+  real(dp):: MWSv,QTotInjPr,X,TotFF
+  integer :: isW,I,J,iPsi,iPr,iAs,iMk,iMkA,nF,nMk,nMkA,nEqA,nCx
   !
+  isW=  SolModel%iSolvent
+  MWSv= SolModel%MolWeitSv
   !-----------------------------------------------under construction ...
   if(nAx>0) then
     allocate(vMolal(nAx))
@@ -166,7 +168,7 @@ function Dynam_Residual(vX) result(vFunc)
   & vXmk,vXeq,             & !IN
   & PhiF)                    !OUT
   !
-  !~ if(LogForAqu) then
+  !! if(LogForAqu) then
   allocate(vSumNuAs(nAs))
   do iAs=1,nAs
     X= Zero
@@ -175,7 +177,7 @@ function Dynam_Residual(vX) result(vFunc)
     end do
     vSumNuAs(iAs)= X
   end do
-  !~ end if
+  !! end if
   !
   !--------------------------------FINITE DifFERENCE SYSTEM TO BE SOLVED
   !Psi(iCi)=
@@ -217,7 +219,7 @@ function Dynam_Residual(vX) result(vFunc)
       else
         ! Psi(nCi+1:nAq)=  equilibrium constraints (ChemicalAffinity=0)
         vFunc(nCi+iAs)= X - vX(nCi+iAs)
-        vTolCoef(nCi+iAs)= MAX(One,ABS(vDG_As(iAs)+vDLGam_As(iAs)))
+        vTolCoef(nCi+iAs)= max(One,abs(vDG_As(iAs)+vDLGam_As(iAs)))
         !if(iDebug>2) write(73,'(I3,1X,G15.6)') nCi+iAs, vTolCoef(nCi+iAs)
       end if
       !
@@ -225,7 +227,7 @@ function Dynam_Residual(vX) result(vFunc)
     !---------------------------------------------------------/LogForAqu
   else
     !------------------------------------------------------NOT LogForAqu
-    !~ print *,"SIZE(vMolSec)=",size(vMolSec)  ;  pause
+    !! print *,"SIZE(vMolSec)=",size(vMolSec)  ;  pause
     do iAs=1,nAs
       !
       X= vLnAct(1)*tNuAs(iAs,1) -vDG_As(iAs) -vDLGam_As(iAs)
@@ -244,7 +246,7 @@ function Dynam_Residual(vX) result(vFunc)
         end if
       end do
       vMolSec(iAs)= X *(vX(1)*MWSv)**(One -vSumNuAs(iAs))
-      !~ print *,"iAs,vMolSec(iAs)=",iAs," _ ",vMolSec(iAs)  ;  pause
+      !! print *,"iAs,vMolSec(iAs)=",iAs," _ ",vMolSec(iAs)  ;  pause
       !
       if(.not. DirectSub) vFunc(nCi+iAs)= vMolSec(iAs) - vX(nCi+iAs)
       !
@@ -329,15 +331,15 @@ function Dynam_Residual(vX) result(vFunc)
     !
     ! vFunc(iPr)= & !
     ! & ( One + dTime /dX *UDarcy /PhiF )           & ! Ci = (ni*Vbox )/ (Vbox*PhiW) = ni/Phiw
-    ! * SUM(tAlfAq(iPr,1:nAq) * vXf(1:nAq)          & ! # moles in fluid
+    ! * sum(tAlfAq(iPr,1:nAq) * vXf(1:nAq)          & ! # moles in fluid
     ! - vTotF(iPr)                                  & ! # moles in fluid at previous step
     ! - dTime /dX *UDarcy *vTotInj(iPr)             & ! # moles injection
-    ! + dTime *SUM(tAlfKin(iPr,1:nMk)*vVm(1:nMk))   & ! # moles from/to kin'phases
-    ! + SUM(tAlfEqu(iPr,1:nEq)*(vVeq(:)-vMolEq(:))) & ! # moles from/to kin'phases
+    ! + dTime *sum(tAlfKin(iPr,1:nMk)*vVm(1:nMk))   & ! # moles from/to kin'phases
+    ! + sum(tAlfEqu(iPr,1:nEq)*(vVeq(:)-vMolEq(:))) & ! # moles from/to kin'phases
     !
     iPsi= iPsi+1
     !
-    vTolCoef(iPsi)= MAX(One,ABS(TotFF))
+    vTolCoef(iPsi)= max(One,abs(TotFF))
     !if(iDebug>2) write(73,'(I3,1X,G15.6)') iPsi, vTolCoef(iPsi)
     !
     vFunc(iPsi)= X
@@ -368,7 +370,7 @@ function Dynam_Residual(vX) result(vFunc)
         !
         !--- add one equation for each equ'phase
         X=   vLnAct(isW) *tNu_Kin(iMk,isW)                     & ! Solvent activity
-        &  - SUM(tNu_Kin(iMk,2:nCi))*(vLnXf(isW) +log(MWSv))   & ! Solvent term (mole nr -> molality
+        &  - sum(tNu_Kin(iMk,2:nCi))*(vLnXf(isW) +log(MWSv))   & ! Solvent term (mole nr -> molality
         &  + dot_product(tNu_Kin(iMk,2:nCi),vLnGam(2:nCi))     & ! gamma prim'solute species
         &  - vDG_Kin(iMk)
         do J=1,nCi
@@ -387,7 +389,7 @@ function Dynam_Residual(vX) result(vFunc)
         ! &             tNu_Kin(iMk,  isW) * vLnAct(isW)          & ! Solvent
         ! + dot_product(tNu_Kin(iMk,2:nCi), vX(2:nCi))            & ! prim' solute species
         ! + dot_product(tNu_Kin(iMk,2:nCi), vLnGam(2:nCi))        & ! gamma prim'solute species
-        ! -         SUM(tNu_Kin(iMk,2:nCi))*(vX(isW) +log(MWSv))  & ! Solvent term (mole nr -> molality
+        ! -         sum(tNu_Kin(iMk,2:nCi))*(vX(isW) +log(MWSv))  & ! Solvent term (mole nr -> molality
         ! - vDG_Kin(iMk)
         ! !
         ! !---------- "buffered" min'species -> add Sum(Nu_iMx*Act_iMx) --
@@ -409,7 +411,7 @@ function Dynam_Residual(vX) result(vFunc)
         !--- add one equation for each kin'phase
         iPsi= iPsi+1
         vFunc(iPsi)= vXmk(iMkA) -vMolK(iMk) -dTime *vVm(iMk)
-        vTolCoef(iPsi)= MAX(One,ABS(vMolK(iMk)))
+        vTolCoef(iPsi)= max(One,abs(vMolK(iMk)))
         if(iDebug>2) write(73,'(I3,1X,G15.6)') iPsi, vTolCoef(iPsi)
         !---/
       end if
@@ -452,8 +454,8 @@ subroutine KinRate_Calc( & !
   use M_KinFas_Surf,only: KinFas_Surf_Calc
   use M_KinRate
   !
-  use M_Global_Vars,only: vKinFas,nAq,vFas
-  use M_Basis_Vars, only: MWSv,isW,nCi,nAx,nMx
+  use M_Global_Vars,only: vKinFas,nAq,vFas,SolModel
+  use M_Basis_Vars, only: nCi,nAx,nMx
   use M_Basis_Vars, only: tAlfPr,tAlfAs,tNuAs
   !
   use M_Dynam_Vars, only:  & !
@@ -476,9 +478,11 @@ subroutine KinRate_Calc( & !
   !
   real(dp),dimension(1:nCi):: dQsKdLnXi
   real(dp):: QsK,QskIota,varMaxM,X
-  integer :: nMkA,nMk,nCx
+  integer :: nMkA,nMk,nCx,isW
   integer :: iPr,iMk,iMkA
   character(len=7):: cSatur
+  !
+  isW=  SolModel%iSolvent
   !
   nCx=  nAx+nMx
   nMk= size(vKinFas)
@@ -519,7 +523,7 @@ subroutine KinRate_Calc( & !
         !--------------------------------------------------calc. surface
         if(Implicit_Surface) then
           !X= vXmk(iMkA)
-          X= MAX(vXmk(iMkA),vKinMinim(iMkA))
+          X= max(vXmk(iMkA),vKinMinim(iMkA))
           call KinFas_Surf_Calc( & !
           & .true.,             & !IN: bImplicit
           & vKinFas(iMk)%cMode, & !IN: kinetic model
@@ -581,7 +585,7 @@ subroutine KinRate_Calc( & !
         !!!  & dVmAdLnXf(iMk,:))   !OUT
         !
         !! if(TestMax .and. vMolK(iMk)>1.0D-6) &
-        !! & varMaxM=MAX(varMaxM, ABS( dTime*vVm(iMk) / vMolK(iMk) ))
+        !! & varMaxM=MAX(varMaxM, abs( dTime*vVm(iMk) / vMolK(iMk) ))
         !
       end if
       !-------------------------------------------/iMk is kinetic active
@@ -590,7 +594,7 @@ subroutine KinRate_Calc( & !
     !
     !! if(TestMax .and. varMaxM>1.0D0) then
     !!   dTime=dTime * 0.5_dp
-    !!   if(iDebug>0) write(fTrc,'(A)') "dtime adjusted in vFunc"
+    !!   if(idebug>1) write(fTrc,'(A)') "dtime adjusted in vFunc"
     !! end if
   end if
   !

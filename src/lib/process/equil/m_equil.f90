@@ -20,6 +20,7 @@ subroutine Equil_Calc(Cod)
 !--   EQn>-> global equilibrium,
 !--          using either "reaction advancement" or direct strategy, or both
 !--
+  use M_Global_Vars, only: vSpcDat
   use M_System_Vars, only: vCpn,TdgK,Pbar
   !
   use M_Basis,       only: Basis_Change
@@ -37,8 +38,8 @@ subroutine Equil_Calc(Cod)
   integer:: iErr
   ! logical:: Singular
   !
-  if(iDebug>0) flush(fTrc)
-  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Calc"
+  if(idebug>1) flush(fTrc)
+  if(idebug>1) write(fTrc,'(/,A)') "< Equil_Calc"
   !
   !Singular= .false.
   !
@@ -70,7 +71,7 @@ subroutine Equil_Calc(Cod)
     call Equil_Eq2(.true.,iErr)
     ! then take account of mixtures
     call Equil_Eq2(.false.,iErr)
-    !~ if(iErr<0) call Equil_Eq2(.false.,iErr,"2")
+    !! if(iErr<0) call Equil_Eq2(.false.,iErr,"2")
 
   case("EQ1")
     ! calculate "global" equilibrium of (aqueous + rock) system
@@ -98,7 +99,7 @@ subroutine Equil_Calc(Cod)
   !
   if(iErr/=0) call Equil_Errors(iErr)
   !
-  !~ if(iDebug>2) call Basis_Change_Wrk(vCpn)
+  !! if(iDebug>2) call Basis_Change_Wrk(vCpn)
   !
   call Equil_Trace_Close
   !
@@ -106,45 +107,45 @@ subroutine Equil_Calc(Cod)
   call Equil_Vars_Clean
   !
   !--- screen output
-  if(iDebug>0) call Equil_Write_ShoDetail(Cod,TdgK,Pbar,vCpn)
+  if(idebug>1) call Equil_Write_ShoDetail(Cod,TdgK,Pbar,vCpn,vSpcDat)
   !
   !--- file output
   call Equil_Write_Detail(Cod,TdgK,Pbar,vCpn)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Calc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Equil_Calc"
 end subroutine Equil_Calc
 
 subroutine Equil_Spl
 !calculate stable assemblage excluding solute species
-  !~ use M_Global_Vars
-  !~ use M_System_Vars, only: vCpn
-  !~ use M_Simplex_Vars,only: tStoikSpl,tSimplex,IZROV,iPosV,Simplex_Vars_Alloc,Simplex_Vars_Clean
-  !~ use M_Numeric_Simplex
-  !~ !
-  !~ integer:: iError,nC,nF
-  !~ integer:: i
-  !~ !
-  !~ write(fTrc,'(/,A,/)') "Equil_Spl, init"
-  !~ do i= 1, size(vCpn)
-  !~ !transform the current component set for use with simplex
-    !~ print *,vCpn(i)%Name
-  !~ end do
-  !~ call Pause_
-  !~ return
-  !~ nC= size(vCpn)
-  !~ nF= size(vFas)
-  !~ !
-  !~ call Simplex_Vars_Alloc(nC,nF)
-  !~ !
-  !~ tSimplex(1:nC,0   )=  vCpn(1:nC)%Mole !first column= bulk compos'n
-  !~ tSimplex(1:nC,1:nF)= -transpose(tStoikSpl(1:nF,1:nC)) !main = stoikiometry matrix
-  !~ tSimplex(0,   1:nF)= -vFas(1:nF)%Grt  !first row= Gibbs energy of phases 1:nF at 'point' iTP
-  !~ !
-  !~ ! call Simplex_Calc(iError)
-  !~ call Simplex_Calc_( &
-  !~ & nC,nF, &
-  !~ & tSimplex,IZROV,IPOSV, &
-  !~ & iError) !,n1,n2)
+  !! use M_Global_Vars
+  !! use M_System_Vars, only: vCpn
+  !! use M_Simplex_Vars,only: tStoikSpl,tSimplex,IZROV,iPosV,Simplex_Vars_Alloc,Simplex_Vars_Clean
+  !! use M_Numeric_Simplex
+  !! !
+  !! integer:: iError,nC,nF
+  !! integer:: i
+  !! !
+  !! write(fTrc,'(/,A,/)') "Equil_Spl, init"
+  !! do i= 1, size(vCpn)
+  !! !transform the current component set for use with simplex
+    !! print *,vCpn(i)%Name
+  !! end do
+  !! call Pause_
+  !! return
+  !! nC= size(vCpn)
+  !! nF= size(vFas)
+  !! !
+  !! call Simplex_Vars_Alloc(nC,nF)
+  !! !
+  !! tSimplex(1:nC,0   )=  vCpn(1:nC)%Mole !first column= bulk compos'n
+  !! tSimplex(1:nC,1:nF)= -transpose(tStoikSpl(1:nF,1:nC)) !main = stoikiometry matrix
+  !! tSimplex(0,   1:nF)= -vFas(1:nF)%Grt  !first row= Gibbs energy of phases 1:nF at 'point' iTP
+  !! !
+  !! ! call Simplex_Calc(iError)
+  !! call Simplex_Calc_( &
+  !! & nC,nF, &
+  !! & tSimplex,IZROV,IPOSV, &
+  !! & iError) !,n1,n2)
   !
 end subroutine Equil_Spl
 
@@ -165,19 +166,20 @@ subroutine Equil_Tst
   return
 end subroutine Equil_Tst
 
-subroutine Equil_Get_vMolF(vX)
-  use M_Global_Vars, only : vSpc
-  use M_Basis_Vars, only : vOrdAq
+subroutine Equil_Get_vMolF(vSpcDat,vOrdAq,vX)
+  use M_T_Species,  only: T_SpcData
 
-  real(dp), intent(out)::vX(:)
+  type(T_SpcData), intent(in) :: vSpcDat(:)
+  integer,         intent(in) :: vOrdAq(:)
+  real(dp),        intent(out):: vX(:)
 
   integer :: nAq, iAq
 
-  vX = Zero
-  nAq = size(vOrdAq)
+  vX=  Zero
+  nAq= size(vOrdAq)
 
-  do iAq=1, nAq
-    vX(iAq) =  vSpc(vOrdAq(iAq))%Dat%Mole
+  do iAq=1,nAq
+    vX(iAq)= vSpcDat(vOrdAq(iAq))%Mole
   end do
 
   return

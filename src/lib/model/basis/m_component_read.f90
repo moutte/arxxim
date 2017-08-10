@@ -66,13 +66,14 @@ subroutine Components_Read( & !
   logical :: EoL
   logical :: bForceH2O =.false.
   integer :: f,ios,iTP
-  integer :: I,iEl,iSp,iW,iH_,iO_,nEl
+  integer :: I,iEl,iSp,nEl
+  integer :: iW,iH_,iO_
   real(dp):: X1,Eps
   real(dp),allocatable:: vX(:)
   integer, allocatable:: tStoikCp(:,:)
   !---------------------------------------------------------------------
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Read_Input_System"
+  if(idebug>1) write(fTrc,'(/,A)') "< Read_Input_System"
   !
   Ok= .true.
   Msg= "Ok"
@@ -153,7 +154,7 @@ subroutine Components_Read( & !
           Cpn%Mole=     One /vSpc(iW)%WeitKg
           Cpn%LnAct=    Zero
           Cpn%Statut=   "INERT"
-          Cpn%namSol=   "Z"
+          Cpn%namMix=   "Z"
           !
           sListElem=    "O__"
           N=N+1
@@ -268,8 +269,6 @@ subroutine Components_Read( & !
         !
         Cpn%NamCp= trim(W)
         Cpn%iEle= iEl
-        !Cpn%NamCp= trim(vEle(Cpn%iEle)%NamEl)
-        !Cpn%vStoikCp(iEl)= 1
         tStoikCp(N,iEl)= 1
         !
         if(W=="H__") iH_= N
@@ -371,17 +370,13 @@ subroutine Components_Read( & !
         case("MOLE","GRAM","PPM")
           tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
         end select
-        !if(trim(WType)=="MOLE" .or. trim(WType)=="GRAM") then
-        !  !Cpn%vStoikCp(0:nEl+1)= vSpc(iSp)%vStoikio(0:nEl+1)
-        !  tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
-        !end if
         !</new>
         !
         !---------------------------------------------/read species name
         !
         !------------------------- read numeric data (mole, pk, etc.) --
         X1=Zero
-        Cpn%namSol= "Z" !trim(vSpc(iSp)%Typ) !default value
+        Cpn%namMix= "Z" !trim(vSpc(iSp)%Typ) !default value
         !
         if(Statut/="BALANCE") then
           !
@@ -418,7 +413,7 @@ subroutine Components_Read( & !
                 return
               end if
               !
-              Cpn%namSol=trim(V2)
+              Cpn%namMix=trim(V2)
               !!print *, trim(V2)  ;  pause
               !
             end if
@@ -478,7 +473,7 @@ subroutine Components_Read( & !
           !
           case("ACTIVITY")
             Eps=EPSILON(X1)
-            if(ABS(X1)<Eps) then
+            if(abs(X1)<Eps) then
               Ok= .false.
               Msg= "Activity cannot be Zero !!!"
               return
@@ -566,11 +561,9 @@ subroutine Components_Read( & !
       Cpn%Mole=   One /vSpc(iW)%WeitKg
       Cpn%LnAct=  Zero
       Cpn%Statut= "INERT"
-      Cpn%namSol= "Z"
+      Cpn%namMix= "Z"
       !
       vCpn(N)= Cpn
-      !Cpn%vStoikCp(0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
-      !tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
       tStoikCp(N,Cpn%iEle)= 1
       !
       sListElem= trim(sListElem)//"O__"
@@ -595,12 +588,10 @@ subroutine Components_Read( & !
       !!Cpn%Mole=   2.0D0 /vSpc(iW)%WeitKg
       Cpn%LnAct=  Zero
       Cpn%Statut= "INERT"
-      Cpn%namSol= "Z"
+      Cpn%namMix= "Z"
       !
       vCpn(N)= Cpn
       tStoikCp(N,Cpn%iEle)= 1
-      !Cpn%vStoikCp(0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
-      !tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
       !
       sListElem=trim(sListElem)//"H__"
       !
@@ -631,7 +622,6 @@ subroutine Components_Read( & !
           & vCpn(I)%NamCp,    &
           & trim(vSpc(vCpn(I)%iSpc)%NamSp), &
           & tStoikCp(I,vCpn(iEl)%iEle)
-          !!& vCpn(I)%vStoikCp(vCpn(iEl)%iEle)
         end do
         print '(A,G15.6)',"=======================================tot=",vX(iEl)
       end do
@@ -658,7 +648,7 @@ subroutine Components_Read( & !
   end if
   !------------------------------------------/ place Oxygen as species 1
   !
-  if (iDebug>0) then
+  if (idebug>1) then
     do I=1,N
       Cpn= vCpn(I)
       write(fTrc,'(3(A,A1),2(G15.6,A1))') &
@@ -670,9 +660,9 @@ subroutine Components_Read( & !
     end do
   end if
   !
-  if(iDebug>0) write(fTrc,'(A10,A)') "LISTELEM= ",trim(sListElem)
+  if(idebug>1) write(fTrc,'(A10,A)') "LISTELEM= ",trim(sListElem)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ ReadInput_System"
+  if(idebug>1) write(fTrc,'(A,/)') "</ ReadInput_System"
   !
 end subroutine Components_Read
 

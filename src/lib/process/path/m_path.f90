@@ -34,16 +34,15 @@ subroutine Path_Execute(EquMod5)
   !
   use M_Global_Vars, only: vFas
   use M_System_Vars, only: TdgK,Pbar,vCpn
-  use M_Path_Vars,   only: Path_Vars_Clean,vTPpath,vFasFound
+  use M_Path_Vars,   only: Path_Vars_Clean,vFasFound
   !---------------------------------------------------------------------
   character(len=5), intent(in):: EquMod5
   !
   character(len=3) :: PathMod3
   character(len=3) :: EquMod3
   character(len=80):: Msg
-  logical:: Ok,OkGrid,OkMix,Singular
+  logical:: Ok,OkGrid,OkMix
   logical:: TPpath
-  integer:: iErr,I
   !---------------------------------------------------------------------
   
   allocate(vFasFound(1:size(vFas)))
@@ -75,7 +74,7 @@ subroutine Path_Execute(EquMod5)
     & PathMod3,Ok,Msg)
     !
     if(.not.Ok) then
-      if(iDebug>0) call Warning_(trim(Msg))
+      if(idebug>1) call Warning_(trim(Msg))
       return !--=================================< i/o error, return ==
     end if
     !
@@ -135,7 +134,7 @@ subroutine Path_Execute(EquMod5)
     end if
     !
     if(.not.Ok) then
-      if(iDebug>0) call Warning_(trim(Msg))
+      if(idebug>1) call Warning_(trim(Msg))
       return !--==================================< i/o error, return ==
     end if
     !
@@ -174,17 +173,17 @@ subroutine Path_Single(PathMod3,EquMod3)
   use M_Equil_Write
   use M_Path_Write
   !
-  use M_Global_Vars, only: vFas
+  use M_Global_Vars, only: vFas,vSpcDat
   use M_System_Vars, only: TdgK,Pbar,vCpn
   use M_Equil_Vars,  only: Equil_Vars_Clean,vYesList
-  use M_Path_Vars,   only: vTPpath,vFasFound,DimPath,TotalMixStep,vLPath
+  use M_Path_Vars,   only: vTPpath,vFasFound,DimPath,TotalMixStep
   !---------------------------------------------------------------------
   character(len=3),intent(in):: PathMod3
   character(len=3),intent(in):: EquMod3
   !---------------------------------------------------------------------
   real(dp):: CpuBegin,CpuEnd
-  integer :: I,nCp,nStep,iErr
-  logical :: PathExit,PathRedox
+  integer :: I,nStep,iErr
+  logical :: PathExit !,PathRedox
   !---------------------------------------------------------------------
   
   call System_TP_Update(TdgK,Pbar)
@@ -243,6 +242,7 @@ subroutine Path_Single(PathMod3,EquMod3)
   if(iDebug>2) call CPU_TIME(CpuBegin)
   !
   !----------------------------------------------------------- path loop
+  ! print *,"vTPpath",size(vTPpath)  ;  call pause_
   nStep=1
   do
     !
@@ -251,11 +251,11 @@ subroutine Path_Single(PathMod3,EquMod3)
       exit !to prevent unterminated loops !!!
     end if
     !
-    !if(nStep>size(vTPpath)) exit !---------------------- exit path loop
     !
     if(PathMod3 /= "LGK") then
-      if( ABS(vTPpath(nStep)%TdgC +T_CK -TdgK) > 1.D-2 .or. &
-      &   ABS(vTPpath(nStep)%Pbar       -Pbar) > 1.D-2) then
+      if(nStep>size(vTPpath)) exit !--------------------- exit path loop
+      if( abs(vTPpath(nStep)%TdgC +T_CK -TdgK) > 1.D-2 .or. &
+      &   abs(vTPpath(nStep)%Pbar       -Pbar) > 1.D-2) then
         !
         TdgK= vTPpath(nStep)%TdgC +T_CK
         Pbar= vTPpath(nStep)%Pbar
@@ -282,11 +282,11 @@ subroutine Path_Single(PathMod3,EquMod3)
       !! !---/
       !
     case("PHP")
-      call Path_NewStep_pHpE(PathExit)
+      call Path_NewStep_pHpE(vSpcDat,PathExit)
       if(PathExit) pH_= pH_ +1.0D0
       if(pH_>13.0D0) exit
       !
-    case("ADD","ADA","MIX","CHG","EVP","LGK")
+    case("ADD","ADA","MIX","CHG","LGK")
     !--- chemical path defined by the PATH block --
       !
       !--- conditions of new step --
@@ -313,9 +313,9 @@ subroutine Path_Single(PathMod3,EquMod3)
       call Equil_Eq2(.true.,iErr)
       if(iErr<0) call Equil_Eq1(.true.,iErr)
       call FasFound_Record(vFas,vFasFound)
-    !~ case("EQ3")
-      !~ call Equil_Eq3(iErr)
-      !~ call FasFound_Record(vFas,vFasFound)
+    !! case("EQ3")
+      !! call Equil_Eq3(iErr)
+      !! call FasFound_Record(vFas,vFasFound)
     !
     end select
     !
@@ -327,7 +327,7 @@ subroutine Path_Single(PathMod3,EquMod3)
       cycle
     end if
     !
-    !~ if(iDebug==4) call Basis_Change_Wrk(vCpn)
+    !! if(iDebug==4) call Basis_Change_Wrk(vCpn)
     !
     call Equil_Save
     !-------------------------------------------------/ compute new step
@@ -353,7 +353,7 @@ subroutine Path_Single(PathMod3,EquMod3)
   if(iDebug>2) call CPU_TIME(CpuEnd)
   if(iDebug>2) print '(A,G15.6)',"CPU=", CpuEnd -CpuBegin
   !
-  if(iDebug>0 .and. EquMod3(1:2)=="EQ") call FasFound_Sho(vFas,vFasFound)
+  if(idebug>1 .and. EquMod3(1:2)=="EQ") call FasFound_Sho(vFas,vFasFound)
   !
   call Equil_Trace_Close
   call Equil_Vars_Clean
@@ -362,7 +362,7 @@ subroutine Path_Single(PathMod3,EquMod3)
   return
 end subroutine Path_Single
 
-subroutine Path_NewStep_pHpE(PathExit)
+subroutine Path_NewStep_pHpE(vSpcDat,PathExit)
 !
 ! 2.H2O=  O2 + 4.H+ + 4.e-
 ! 2.G(H2O)+lnA_H2O=  G(O2)+lnA_O2  +4.lnA_H+ +4.lnA_e-
@@ -373,26 +373,24 @@ subroutine Path_NewStep_pHpE(PathExit)
 ! 2H+ + 2E-=  H2 -> pH + pE=  -( vSpc(iOx)%G0 + vLnAct(iOx)) /2
 !
 !  pE= & 
-!  & (  vSpc(isO2)%G0rt + vSpc(isO2)%Dat%LAct          &
-!  &  -(vSpc(isW )%G0rt + vSpc(isW )%Dat%LAct) *Two  ) &
+!  & (  vSpc(isO2)%G0rt + vSpcDat(isO2)%LAct          &
+!  &  -(vSpc(isW )%G0rt + vSpcDat(isW )%LAct) *Two  ) &
 !  & /LN10 /4.0D0 &
 !  & - pH
 !  
 !  pE= vSpc(isO2)%G0rt     -vSpc(isW )%G0rt     *Two &
-!  & + vSpc(isO2)%Dat%LAct -vSpc(isW )%Dat%LAct *Two
+!  & + vSpcDat(isO2)%LAct  -vSpcDat(isW )%LAct *Two
 !  pE= pE /LN10 /4.0D0 - pH
 !
   use M_Numeric_Const,only: Ln10
-  use M_Global_Vars,  only: vSpc
-  use M_Basis_Vars,   only: isH_,isO2
+  use M_T_Species,    only: T_SpcData
+  use M_Global_Vars,  only: SolModel
   !
-  logical,intent(out):: PathExit
+  type(T_SpcData), intent(inout):: vSpcDat(:)
+  logical,         intent(out)  :: PathExit
   !
-  real(dp):: pHmin,pHmax !,pEmin,pEmax
-  real(dp):: pH,pK_O2 !,pE
-  !
-  vSpc(isH_)%Dat%LAct= -pH_ *LN10
-  vSpc(isO2)%Dat%LAct= -pO2 *LN10
+  vSpcDat(SolModel%isH_)%LAct= -pH_ *LN10
+  vSpcDat(SolModel%isO2)%LAct= -pO2 *LN10
   !
   pO2= pO2 + 1.0D0
   PathExit= (pO2>1.0D0)
@@ -407,7 +405,7 @@ subroutine FasFound_Sho(vFas,vFasFound)
   integer:: I
   !
   if(count(vFasFound)>0) then
-    if(iDebug>0) then
+    if(idebug>1) then
       print '(/,A,/)',"phases encountered in PATHEQU:"
       do I=1,size(vFas)
         if(vFasFound(I)) print '(A)',vFas(I)%NamFs
@@ -441,9 +439,10 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
   use M_T_Species,    only: Species_Index
   use M_T_MixPhase,   only: T_MixPhase, MixPhase_CalcActivs
   !
-  use M_Global_Vars,only: vEle,vSpc,vFas,vMixFas,vMixModel,nAq
-  use M_System_Vars,only: vCpn,TdgK,Pbar
-  use M_Basis_Vars, only: isW,iH_,MWSv,tAlfFs,iBal
+  use M_Global_Vars,only: vEle,vSpc,vMixModel,SolModel
+  use M_Global_Vars,only: vFas,vMixFas,vSpcDat
+  use M_System_Vars,only: vCpn,TdgK,Pbar,iH_
+  use M_Basis_Vars, only: tAlfFs,iBal
   use M_Path_Vars,  only: &
   & vPhasBegin,vPhasFinal,vFasFound, &
   & vLPath,tPathData,DimPath,TotalMixStep, &
@@ -453,18 +452,19 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
   integer,         intent(in) :: nStep
   logical,         intent(out):: PathExit
   !
-  integer,parameter:: AdjustMode= 1
+  integer,parameter:: AdjustMode= 2 !1
   !
-  integer :: iCp,J,iFs,iP,NPole,nCp
+  integer :: iCp,J,iFs,iP,NPole,nCp,isW
   real(dp):: X
   !
   type(T_MixPhase):: Fas, PhasBegin, PhasFinal
   
   PathExit=.false.
   !
-  nCp= size(vCpn)
+  isW=  SolModel%iSolvent
+  nCp=  size(vCpn)
   !
-  if (iDebug>0) write(fTrc,'(/,A,I3)') "< Path_NewStep ==== step= ", nStep
+  if (idebug>1) write(fTrc,'(/,A,I3)') "< Path_NewStep ==== step= ", nStep
   
   select case(PathMod3)
   
@@ -482,18 +482,10 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
     !pause
   !---------------------------------------------------------/ case "LGK"
   
-  !--------------------------------------------- case "EVP" (-EVAPORATE)
-  case("EVP")
-    X= vCpn(isW)%Mole *0.10D0
-    vCpn(isW)%Mole= vCpn(isW)%Mole - X
-    vCpn(iH_)%Mole= vCpn(iH_)%Mole - X*2.0D0
-    PathExit= nStep==255
-    
   !------------------------------------------------ case "CHG" (-CHANGE)
   case("CHG")
-  ! case("CHG","EVP")
     !
-    if(iDebug>0) print '(A,I3)',"nStep",nStep
+    if(idebug>1) print '(A,I3)',"nStep",nStep
     !
     DoComponent: do iCp=1,nCp
       !
@@ -510,7 +502,7 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
           if(vCpn(iCp)%iMix==0) then
           !------------------ mobile species is aqueous or in pure phase
             vCpn(iCp)%LnAct= - tPathData(iCp,nStep) *Ln10
-            vSpc(J)%Dat%LAct= vCpn(iCp)%LnAct
+            vSpcDat(J)%LAct= vCpn(iCp)%LnAct
             !
             PathExit= (nStep==DimPath)
             !
@@ -552,13 +544,13 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
             end if
             !-----------------------------------------------------/debug
             !
-            vSpc(J)%Dat%LAct= Fas%vLnAct(vCpn(iCp)%iPol) !not necessary ???
-            vCpn(iCp)%LnAct=  vSpc(J)%Dat%LAct
+            vSpcDat(J)%LAct= Fas%vLnAct(vCpn(iCp)%iPol) !not necessary ???
+            vCpn(iCp)%LnAct= vSpcDat(J)%LAct
             !
-            if(iDebug>0) write(fTrc,'(A4,A3,A1, A4,A23,A1, A7,G15.6)') &
+            if(idebug>1) write(fTrc,'(A4,A3,A1, A4,A23,A1, A7,G15.6)') &
             & "Cpn=",vEle(vCpn(iCp)%iEle)%NamEl,T_, &
             & "Spc=",vSpc(J)%NamSp,T_, &
-            & "LogAct=", vSpc(J)%Dat%LAct/Ln10
+            & "LogAct=", vSpcDat(J)%LAct/Ln10
             !
             PathExit=(nStep==99)
             !
@@ -593,12 +585,6 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
       end if ! if(vLPath(iCp))
     end do DoComponent ! 
     !
-    if(PathMod3=="EVP") then
-      do iFs=1,size(vFas)
-        if(vFas(iFs)%MolFs>Zero) vFas(iFs)%MolFs= 1.D-12
-      end do
-    end if
-    !
     call NewStep_Adjust_TotO_TotH( & !
     & AdjustMode,        &           !
     & iBal,isW,iH_,vEle, &           !IN
@@ -609,7 +595,7 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
   !---------------------------------------------------------- case "ADD"
   case("ADD","ADA")
     !
-    if(iDebug>0) print '(A,I3)',"nStep",nStep
+    if(idebug>1) print '(A,I3)',"nStep",nStep
     !
     vCpn(:)%Mole= tPathData(:,nStep)
     !
@@ -648,7 +634,7 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
         vCpn(iCp)%Mole= vSys1(iCp) &
         &             + (vSys2(iCp) -vSys1(iCp)) *nStep/real(TotalMixStep)
         !
-        if(iDebug>0) write(fTrc,'(A3,1X,3G15.6,1X,A)') &
+        if(idebug>1) write(fTrc,'(A3,1X,3G15.6,1X,A)') &
         & vEle(vCpn(iCp)%iEle)%NamEl, &
         & vSys1(iCp),vSys2(iCp),vCpn(iCp)%Mole,&
         & vCpn(iCp)%Statut
@@ -665,7 +651,7 @@ subroutine Path_NewStep(PathMod3,nStep,PathExit)
     if(vFas(iFs)%MolFs>Zero) vFasFound(iFs)=.true.
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Path_NewStep"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Path_NewStep"
   !
 end subroutine Path_NewStep
 
@@ -690,7 +676,7 @@ subroutine NewStep_Adjust_TotO_TotH( & !
   real(dp):: Zbalance,TotO_
   integer :: I,iBal_
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< NewStep_Adjust_TotO_TotH"
+  if(idebug>1) write(fTrc,'(/,A)') "< NewStep_Adjust_TotO_TotH"
   !
   TotO_= vCpn(ic_W)%Mole
   !
@@ -714,7 +700,6 @@ subroutine NewStep_Adjust_TotO_TotH( & !
   !pause
 
   select case(AdjustMode)
-  
   case(1)
     !--- if excess cation, equiv'Na > equiv'Cl, adjust with OH
     if(Zbalance > Zero) then
@@ -725,12 +710,10 @@ subroutine NewStep_Adjust_TotO_TotH( & !
       vCpn(ic_W)%Mole=  TotO_
       vCpn(iBal_)%Mole= (TotO_*Two -Zbalance) /real(vEle(iBal_)%Z)
     end if
-
   case(2)
     !---------- Oxygen number unchanged, equilibrate using hydrogen only
     vCpn(ic_W)%Mole= TotO_
     vCpn(iBal_)%Mole= TotO_*Two -Zbalance
-    
   end select
   
   !! !write(12,'(3G15.6)') Zbalance,vCpn(ic_W)%Mole,vCpn(iBal_)%Mole
@@ -773,7 +756,7 @@ subroutine NewStep_Adjust_TotO_TotH( & !
     write(fTrc,'(A,G15.6)')  "vCpn(ic_H)%Mole=", vCpn(ic_H)%Mole
   end if
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ NewStep_Adjust_TotO_TotH"
+  if(idebug>1) write(fTrc,'(A,/)') "</ NewStep_Adjust_TotO_TotH"
   !
 end subroutine NewStep_Adjust_TotO_TotH
   !

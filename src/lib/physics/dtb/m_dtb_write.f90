@@ -949,7 +949,7 @@ subroutine DtbH2OHkf_Tabulate(vTPCond)
   call OutStrVec(fLogK,vDtbH2OHkf(1:NN)%Eps, Opt_S="Eps")
   call OutStrVec(fLogK,vDtbH2OHkf(1:NN)%dhA, Opt_S="DHA")
   call OutStrVec(fLogK,vDtbH2OHkf(1:NN)%dhB, Opt_S="DHB")
-  !! call OutStrVec(fLogK,vDtbH2OHkf(1:NN)%bdot,Opt_S="BdoT")
+  !! call OutStrVec(fLogK,vDtbH2OHkf(1:NN)%bdot,Opt_S="BDOT")
   !
   write(fLogK,'(A,/)') "END"
   !
@@ -1002,7 +1002,7 @@ subroutine DtbMinHkf_Write
   integer       :: I,f
   real(dp)      :: X
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbMinHkf_Write"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbMinHkf_Write"
   !
   call GetUnit(f)
   open(f,file=trim(DirDtbOut)//"hkf_min.restab")
@@ -1054,7 +1054,7 @@ subroutine DtbMinHkf_Write
   
   close(f)
   
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbMinHkf_Write"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbMinHkf_Write"
 end subroutine DtbMinHkf_Write
 
 subroutine DtbAquHkf_Write
@@ -1072,7 +1072,7 @@ subroutine DtbAquHkf_Write
   integer:: I,f
   
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbAquHkf_Write"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbAquHkf_Write"
   !
   call GetUnit(f)
   open(f,file=trim(DirDtbOut)//"_aqu_hkf.restab")
@@ -1103,7 +1103,7 @@ subroutine DtbAquHkf_Write
   !
   close(f)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbAquHkf_Write"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbAquHkf_Write"
   
   return
 end subroutine DtbAquHkf_Write
@@ -1142,7 +1142,7 @@ subroutine DtbMinThr_Write
   !  logical::Dis !,Min,VdW,RdK !,TL1
   !!--------------------------------------------------------------------
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbMinThr_Write"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbMinThr_Write"
   !
   call GetUnit(f)
   open(f,file=trim(DirDtbOut)//"_min_thr.restab")
@@ -1216,7 +1216,7 @@ subroutine DtbMinThr_Write
   !
   call Warning_("Data written to "//trim(DirDtbOut)//"_min_thr.restab")
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbMinThr_Write"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbMinThr_Write"
 end subroutine DtbMinThr_Write
 
 end module M_Dtb_Write

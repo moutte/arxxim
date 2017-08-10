@@ -40,9 +40,9 @@ module M_Dynam_Cell  !!_Types
   !! !                 !-> sat'states of kin'phases
   !! vStatusK(1:nMk)=  vKinFas(1:nMk)%Dat%cSat
   !! !
-  !! PhiF= One - SUM(vKinFas(1:nMk)%Dat%PhiM)
+  !! PhiF= One - sum(vKinFas(1:nMk)%Dat%PhiM)
   !! !                 !-> vol'fraction of fluid
-  !! vMolF(1:nAq)= vSpc(vOrdAq(1:nAq))%Dat%Mole
+  !! vMolF(1:nAq)= vSpcDat(vOrdAq(1:nAq))%Mole
   !! !                 !-> mole nr's of aqu'species in box
   
 contains

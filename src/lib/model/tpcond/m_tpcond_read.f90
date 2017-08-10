@@ -40,7 +40,7 @@ subroutine TPpath_Read(TdgK0,Pbar0)
   real(dp):: vX(dimV)
   type(T_TPCond):: vCond(dimV)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< TPpath_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< TPpath_Read"
   !
   call GetUnit(f)
   open(f,file=trim(NamFInn))
@@ -63,11 +63,11 @@ subroutine TPpath_Read(TdgK0,Pbar0)
     !
     case("TP.TABLE","TPTABLE","TP.PATH")
 
-      if(iDebug>0 .and. &
-      &   DtbFormat=="LOGKTBL" .and. &
-      &  (trim(W)=="TP.TABLE" .or. trim(W)=="TPTABLE")) then
-        call Warning_("with logK table, use TP.PATH, to distinguish from TP.TABLE")
-      end if
+      !!if(idebug>1 .and. &
+      !!&   DtbFormat=="LOGKTBL" .and. &
+      !!&  (trim(W)=="TP.TABLE" .or. trim(W)=="TPTABLE")) then
+      !!  call Warning_("with logK table, use TP.PATH, to distinguish from TP.TABLE")
+      !!end if
 
       Ok=  .true.
       N= dimV
@@ -111,7 +111,7 @@ subroutine TPpath_Read(TdgK0,Pbar0)
           !
           mDum= i
           N=MIN(N,mDum)
-          if(iDebug>0) &
+          if(idebug>1) &
           & write(fTrc,'(A,A1,A,2I3)') trim(W),T_," DIM= ", mDum, N
           !
           select case(trim(W))
@@ -165,7 +165,7 @@ subroutine TPpath_Read(TdgK0,Pbar0)
       vCond(I)%TdgC= TdgK -T_CK
       vCond(I)%Pbar= Pbar
       !
-      if(iDebug>0) &
+      if(idebug>1) &
       & write(fTrc,'(2(G12.3,1X))') vCond(I)%TdgC, vCond(I)%Pbar !!i,vCond(i)%Name
     end do
 
@@ -189,7 +189,7 @@ subroutine TPpath_Read(TdgK0,Pbar0)
   !
   !!if(.not.Ok) call Stop_("Block TP.PATH not Found ...!!!")
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ TPpath_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ TPpath_Read"
   !
 end subroutine TPpath_Read
 
@@ -210,7 +210,7 @@ subroutine TPgrid_Read( &
   integer :: F,ios
   real(dp):: rBegin,rFinal,rRatio,rDelta
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dtb_Read_TPgrid"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dtb_Read_TPgrid"
   !
   Ok= .false.
   call GetUnit(F)
@@ -283,7 +283,7 @@ subroutine TPgrid_Read( &
   end do DoFile
   close(F)
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dtb_Read_TPgrid"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dtb_Read_TPgrid"
 
   return
 end subroutine TPgrid_Read

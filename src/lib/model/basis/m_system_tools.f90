@@ -31,11 +31,11 @@ subroutine System_Build
   use M_DiscretModel_Tools
   !
   !--global variables--
-  use M_Global_Vars,  only: vEle,vSpc,vMixFas,tFormula
+  use M_Global_Vars,  only: vEle,vSpc,vMixFas,tFormula,vSpcDat
   use M_Global_Vars,  only: vMixModel,vDiscretModel,vDiscretParam
-  use M_Global_Vars,  only: SolModel
-  use M_Global_Vars,  only: vSolModel,vSolFas,vFas
+  use M_Global_Vars,  only: vSolModel,SolModel
   use M_Global_Vars,  only: nAq,nMn,nGs
+  use M_Global_Vars,  only: vSolFas,vFas
   !
   !--database variables--
   use M_Dtb_Vars,      only: DtbFormat,DtbLogK_Dim,DtbLogK_vTPCond
@@ -53,7 +53,7 @@ subroutine System_Build
   real(dp),allocatable:: vTdgC(:)
   type(T_Species),allocatable:: vSpcTmp(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< System_Build"
+  if(idebug>1) write(fTrc,'(/,A)') "< System_Build"
   !
   call System_Zero
   !
@@ -62,6 +62,7 @@ subroutine System_Build
   & "SYSTEM",            & !
   & vEle,vSpc,vMixFas,   & !in
   & TdgK,Pbar,           & !
+  & vCpn,                & !inout
   & System_Type)           !out
   !
   !-- rebuild vEle, with only elements pointed to by vCpn(1:N)
@@ -72,7 +73,7 @@ subroutine System_Build
   call System_TP_Check(TdgK,Pbar,Ok,Msg)
   if(.not. Ok) call Stop_(trim(Msg))
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     do i=1,size(vCpn)
       write(fTrc,'(2A,2(G15.6,1X))') &
       & vCpn(i)%NamCp,vCpn(i)%Statut,vCpn(i)%Mole,vCpn(i)%LnAct
@@ -80,7 +81,7 @@ subroutine System_Build
   end if
   !
   !-- rebuild vSpc, updating vCpn%iSpc
-  call Species_Alloc_forSystem(vEle,vCpn)
+  call Species_Alloc_forSystem(vEle,vCpn, vSpc)
   !
   !--------------------------------------------- update vSpc(:)%vStoikio
   call Species_Stoikio_Calc(vEle,vSpc,fOk)
@@ -117,35 +118,24 @@ subroutine System_Build
   end if
   !-----------------------------------------------/ add discrete species
   !
+  if(allocated(vSpcDat)) deallocate(vSpcDat)
+  N= size(vSpc)
+  allocate(vSpcDat(1:N))
+  vSpcDat(1:N)%Mole= Zero
+  vSpcDat(1:N)%LAct= Zero
+  vSpcDat(1:N)%LGam= Zero
+  !
   nAq= count(vSpc%Typ=="AQU")
   nMn= count(vSpc%Typ=="MIN")
   nGs= count(vSpc%Typ=="GAS")
   nMn= nMn + nGs
-  !
-  !! !--- NEW2010-10-29
-  !! N= size(vCpn)
-  !! if(CpnIsSpc) then
-  !!   do i=1,N
-  !!     vCpn(i)%iEle= I
-  !!     J= vCpn(i)%iSpc
-  !!     vCpn(i)%vStoikCp(0:N+1)= vSpc(J)%vStoikio(0:N+1)
-  !!   end do
-  !! else
-  !!   do i=1,N
-  !!     vCpn(i)%iEle= I
-  !!     vCpn(i)%vStoikCp(0)= 1 !formula divider !!
-  !!     vCpn(i)%vStoikCp(:)= 0
-  !!     vCpn(i)%vStoikCp(i)= 1
-  !!   end do
-  !! end if
-  !! !---/ NEW2010-10-29
   !
   !------------------------------------------------ update formula table
   deallocate(tFormula)
   allocate(tFormula(1:size(vEle),1:size(vSpc)))
   call FormulaTable_Calc(vSpc,tFormula)
   !
-  if(iDebug>0) call FormulaTable_Sho(vEle,vSpc,tFormula)
+  if(idebug>1) call FormulaTable_Sho(vEle,vSpc,tFormula)
   !-----------------------------------------------/ update formula table
   !
   !--- read phase compositions, allocate vMixFas --
@@ -185,14 +175,22 @@ subroutine System_Build
     !
     !----------------------------------------------------------------NEW
     !--- initialize indexes of the sol'model
+    if(allocated(vSolModel)) deallocate(vSolModel)
+    call SolModel_Alloc(1,vSolModel)
+    !
     call SolModel_Spc_Init("H2O",vSpc,SolModel,Ok,Msg)
-    call SolModel_Alloc ! allocate vSolModel
+    !-- initialize S%iSolvent, S%nSolute, S%vISolute, S%MolWeitSv, etc
+    !-- according to the current species database vSpc,
+    !-- and given the name, SolvName, of the solvent species
     vSolModel(1)= SolModel
     !
-    call SolPhase_Alloc ! allocate vSolFas
+    if(allocated(vSolFas)) deallocate(vSolFas)
+    call SolPhase_Alloc(1,vSolFas) ! allocate vSolFas
+    ! vSolFas(1)%Name=   "WATER"
+    ! vSolFas(1)%iModel= 1
     call SolPhase_Init( & !
     & 1,          & !IN, model index
-    & vSolModel,  & !IN, base of solution models
+    & vSolModel(1)%nSolute,  & !IN, set of solution models
     & vSolFas(1), & !INOUT, solution phase
     & Ok,Msg)       !OUT
     !
@@ -222,26 +220,66 @@ subroutine System_Build
   end if
   !
   !! call Basis_Init(vCpn,TdgK,Pbar)
+  if(iDebug==1) call System_To_File(vEle,vSpc)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ System_Build"
+  if(idebug>1) write(fTrc,'(A,/)') "</ System_Build"
   !
 end subroutine System_Build
 
-subroutine Species_Alloc_forSystem(vEle,vCpn)
+subroutine System_To_File(vEle,vSpc)
+  use M_IoTools,     only: GetUnit
+  use M_T_Element,   only: T_Element
+  use M_T_Species,   only: T_Species!
+  !
+  type(T_Element),   intent(in):: vEle(:)
+  type(T_Species),   intent(in):: vSpc(:)
+  ! 
+  integer:: F,i
+  character(len=30):: myform
+  !
+  call GetUnit(F)
+  open(F,file="tmp_element.txt")
+  !write(myform,'(1A1,1I3,1A)') '(',size(vSpc),'A)'
+  !write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
+  do i=1,size(vEle)
+    write(F,'(A)') trim(vEle(i)%NamEl)
+  end do
+  close(F)
+  !
+  call GetUnit(F)
+  open(F,file="tmp_species.txt")
+  !write(myform,'(1A1,1I3,1A)') '(',size(vSpc),'A)'
+  !write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
+  do i=1,size(vSpc)
+    write(F,'(2(A,1A1))') trim(vSpc(i)%NamSp),T_,trim(vSpc(i)%Typ),T_
+  end do
+  close(F)
+  !
+  call GetUnit(F)
+  open(F,file="tmp_species.tab")
+  write(myform,'(1A1,1I3,1A2)') '(',size(vSpc),'A)'
+  write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
+  write(F,myform) ( trim(vSpc(i)%Typ)//T_ ,   i=1,size(vSpc) )
+  close(F)
+  !
+  return
+end subroutine System_To_File
+
+subroutine Species_Alloc_forSystem(vEle,vCpn, vSpc)
 !--
 !-- from general vSpc built from database,
 !-- reduce vSpc to species involved in the run
 !--
-  use M_Numeric_Const,       only: Ln10
-  use M_T_Component, only: T_Component
-  use M_T_Element,   only: T_Element,Element_Index,Formula_Read
-  use M_T_Species,   only: T_Species,Species_Index
+  use M_Numeric_Const,only: Ln10
+  use M_T_Component,  only: T_Component
+  use M_T_Element,    only: T_Element,Element_Index,Formula_Read
+  use M_T_Species,    only: T_Species,Species_Index
   !
-  use M_Global_Vars,only: vSpc,tFormula
   use M_System_Vars,only: System_Type
   !
-  type(T_Element),   intent(inout):: vEle(:)
-  type(T_Component), intent(inout):: vCpn(:)
+  type(T_Element),  intent(inout):: vEle(:)
+  type(T_Component),intent(inout):: vCpn(:)
+  type(T_Species),  intent(inout),allocatable:: vSpc(:)
   !
   character(len=23),dimension(:),allocatable:: vNamSpc
   !
@@ -255,7 +293,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
   logical        :: fOk
   integer        :: nCp,iCp,nSp,iSp,iOx_,ZSp,Z_,i,nAq,nMn,nGs
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "< Species_Alloc"
+  if(idebug>1) write(fTrc,'(/,A,/)') "< Species_Alloc"
   !
   nCp=size(vCpn)
   !
@@ -267,17 +305,17 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
   !
   call Redox_Calc(vSpc, vEle,vCpn)
   !
-  !! !------------------ read SPECIES.include and SPECIES.EXCLUDE blocks --
+  !! !------------------ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
   !! allocate(vExclude(1:size(vSpc)))  ;  vExclude(:)= .false.
   !! allocate(vInclude(1:size(vSpc)))  ;  vInclude(:)= .true.
   !! call Species_Read_Excluded(vSpc,vExclude,vInclude)
-  !! !-----------------/ read SPECIES.include and SPECIES.EXCLUDE blocks --
+  !! !-----------------/ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
   !
   !----------------------------------------------------species selection
   !-- from the vSpc built from database,
   !-- retrieve species consistent
   !-- with vEle & redox
-  if(iDebug>0) write(fTrc,'(A)') &
+  if(idebug>1) write(fTrc,'(A)') &
   & "< Restrict database to species consistent with element list and redox state"
   !
   allocate(vSpcNew(size(vSpc)))
@@ -306,7 +344,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
         !
         vSpcNew(nSp)= S_
         !
-        if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39,A1,2I3)') &
+        if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39,A1,2I3)') &
         & "ACCEPT",T_,S_%NamSp,T_,S_%Formula,T_,S_%Z,nSp
       end if
       !
@@ -317,6 +355,8 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
   !! deallocate(vExclude)
   !! deallocate(vInclude)
   !! deallocate(vStoik)
+  !
+  if(idebug>1) write(fTrc,'(A,/)') "</ Restrict database"
   !--------------------------------------------------/ species selection
   !
   !----------------------------------------------- build new sorted vSpc
@@ -349,22 +389,27 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
   deallocate(vSpcNew)
   !----------------------------------------------/ build new sorted vSpc
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Restrict database"
+  nAq= count(vSpc%Typ=="AQU")
+  nMn= count(vSpc%Typ=="MIN")
+  nGs= count(vSpc%Typ=="GAS")
+  nMn= nMn + nGs
   !
   if(count(vSpc%Typ=="AQU")==0 .and. System_Type=="AQUEOUS") &
   & call Stop_("Found NO Aqueous Species ...") !--------------------stop
   !
   !-------------------------------------------then relate vCpn with vSpc
-  if(iDebug>0) write(fTrc,'(/,A,/)') &
-  & "Species_Alloc_forSystem, Element/ Component/ Status/ iSpc"
-  !
   !vSpc may have changed
-  !-> need to check whether the species pointed to by Cpn's are in the new vSpc
+  !-> need to check whether the species pointed to by Cpn's 
+  !   are in the new vSpc
+  !
+  if(idebug>1) write(fTrc,'(/,A,/)') &
+  & "Species_Alloc_forSystem, Element/ Component/ Status/ iSpc"
   !
   do iCp=1,nCp
   !---------------------find which vSpc(iSp) matches with vNamSpc(iCp)--
     !
-    iSp= Species_Index(vNamSpc(iCp),vSpc) !-> index of Prim'species in new vSpc
+    iSp= Species_Index(vNamSpc(iCp),vSpc)
+    !-> index of Prim'species in new vSpc
     !
     if(iSp==0) call Stop_(trim(vNamSpc(iCp))//" Not Found as Species")
     !
@@ -379,7 +424,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
     !update %iSpc (link between vSpc and vCpn)
     vCpn(iCp)%iSpc= iSp
     !
-    if(iDebug>0) write(fTrc,'(A3,A23,A7)') &
+    if(idebug>1) write(fTrc,'(A3,A23,A7)') &
     & vEle(iCp)%NamEl,vNamSpc(iCp),vCpn(iCp)%Statut
     !
   end do
@@ -393,7 +438,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn)
     end do
   end if
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "</ Species_Alloc"
+  if(idebug>1) write(fTrc,'(/,A,/)') "</ Species_Alloc"
   !
 end subroutine Species_Alloc_forSystem
 
@@ -416,12 +461,12 @@ subroutine System_Species_Check(vSpc,Ok,Msg)
     Ok=  .false.
     return
   end if
-  if(Species_Index("OH-",vSpc)==0 .and. Species_Index("OH[-]",vSpc)==0) then
+  if(Species_Index("OH-",vSpc)==0) then
     Msg= "species OH- not found !!!"
     Ok=  .false.
     return
   end if
-  if(Species_Index("H+", vSpc)==0 .and. Species_Index("H[+]",vSpc)==0) then
+  if(Species_Index("H+", vSpc)==0) then
     Msg= "species H+ not found !!!"
     Ok=  .false.
     return
@@ -441,7 +486,9 @@ subroutine System_TP_Check(TdgK,Pbar,Ok,Msg)
   !
   Ok=  .true.
   Msg= "OK"
-  call Dtb_TP_Check(DtbFormat,DtbLogK_vTPCond,Psat_Auto,TdgK,Pbar,Ok,Msg)
+  call Dtb_TP_Check( &
+  & DtbFormat,DtbLogK_vTPCond,Psat_Auto,TdgK,Pbar, &
+  & Ok,Msg)
   !
 end subroutine System_TP_Check
 
@@ -471,7 +518,7 @@ subroutine MixPhase_CheckFound( &
 & vMixFas,vCpn)
 !--
 !-- check whether phases have been found
-!-- for all components with %namSol /- "AQU"
+!-- for all components with %namMix /- "AQU"
 !--
   use M_T_Component,only: T_Component
   use M_T_Element,  only: T_Element
@@ -493,7 +540,7 @@ subroutine MixPhase_CheckFound( &
   real(dp),allocatable:: vXAtom(:)
   !-> check that phase for each component is described in input
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "< MixPhases_CheckFound"
+  if(idebug>1) write(fTrc,'(/,A,/)') "< MixPhases_CheckFound"
   !
   nCp= size(vCpn)
   !
@@ -503,22 +550,22 @@ subroutine MixPhase_CheckFound( &
     !
     iSp=vCpn(iCp)%iSpc
     !
-    if(iDebug>0) write(fTrc,'(I3,6A)') &
+    if(idebug>1) write(fTrc,'(I3,6A)') &
     & iCp, &
     & " >> ELE=",  vEle(vCpn(iCp)%iEle)%NamEl, &
     & " >> SPC=",  vSpc(vCpn(iCp)%iSpc)%NamSp, &
-    & " >> PHASE=",trim(vCpn(iCp)%namSol)
+    & " >> PHASE=",trim(vCpn(iCp)%namMix)
     !
     if(iSp==0) call Stop_ &
     & ("NO SPECIES FOR COMPONENT "//trim(vEle(vCpn(iCp)%iEle)%NamEl))
     !
-    if(trim(vCpn(iCp)%namSol)=="Z") then
+    if(trim(vCpn(iCp)%namMix)=="Z") then
       !
       Phase_Found(iCp)=.true.
       !
     else
       !
-      iMix= MixPhase_Index(vMixFas,vCpn(iCp)%namSol)
+      iMix= MixPhase_Index(vMixFas,vCpn(iCp)%namMix)
       !
       if(iMix==0) call Stop_ & !------------------------------------stop
       & ("PHASE NOT FOUND FOR COMPONENT "//trim(vEle(vCpn(iCp)%iEle)%NamEl))
@@ -526,7 +573,7 @@ subroutine MixPhase_CheckFound( &
       Phase_Found(iCp)=.true.
       vCpn(iCp)%iMix= iMix !!vSpc(iSp)%iMix=iMix
       !
-      if(iDebug>0) write(fTrc,'(4(A,1X))') &
+      if(idebug>1) write(fTrc,'(4(A,1X))') &
       & "COMPONENT", vEle(vCpn(iCp)%iEle)%NamEl, &
       & "PHASE", trim(vMixFas(vCpn(iCp)%iMix)%Name)
       !
@@ -538,7 +585,7 @@ subroutine MixPhase_CheckFound( &
       end do
       !-----------------/
       !
-      if(iDebug>0) write(fTrc,'(2A,/)') &
+      if(idebug>1) write(fTrc,'(2A,/)') &
       & "END-MEMB  ", trim(vSpc(iSp)%NamSp)
       !
       if(J==0) call Stop_& !----------------------------------------stop
@@ -554,7 +601,7 @@ subroutine MixPhase_CheckFound( &
         !
         Act= MixModel_Site_ActivIdeal(SM,J,vXAtom)
         !
-        if(iDebug>0) &
+        if(idebug>1) &
         & write(fTrc,'(A,A,G15.6)') trim(vSpc(iSp)%NamSp),">> ACT=",Act
         !
         if(Act/=0.0D0) vMixFas(iMix)%vLPole=.true.
@@ -568,12 +615,12 @@ subroutine MixPhase_CheckFound( &
   !
   do J=1,nCp
     if(.not. Phase_Found(J)) & !------------------------------------stop
-    & call Stop_( "DESCRIPTION NOT FOUND FOR "//trim(vCpn(J)%namSol) )
+    & call Stop_( "DESCRIPTION NOT FOUND FOR "//trim(vCpn(J)%namMix) )
   end do
   !
   deallocate(Phase_Found)
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "</ MixPhases_CheckFound"
+  if(idebug>1) write(fTrc,'(/,A,/)') "</ MixPhases_CheckFound"
 end subroutine MixPhase_CheckFound
 
 subroutine Components_Alloc(  & !
@@ -583,6 +630,7 @@ subroutine Components_Alloc(  & !
 !--
 & sKeyWord,vEle,vSpc,vMixFas, & !IN
 & TdgK,Pbar,                  & !INOUT
+& vCpn,                       & !INOUT
 & SysType)                      !OUT
   use M_T_Element,  only: T_Element
   use M_T_Species,  only: T_Species
@@ -590,17 +638,16 @@ subroutine Components_Alloc(  & !
   use M_T_Tpcond,   only: T_TPcond
   use M_T_MixPhase, only: T_MixPhase
   use M_Component_Read,only: Components_Read
-  !
-  use M_System_Vars,only: vCpn
-  !
+  !---------------------------------------------------------------------
   character(len=*),intent(in):: sKeyWord
   type(T_Element), intent(in):: vEle(:)
   type(T_Species), intent(in):: vSpc(:)
   type(T_MixPhase),intent(in):: vMixFas(:)
   !
   real(dp),        intent(inout):: TdgK,Pbar
+  type(T_Component),allocatable,intent(inout):: vCpn(:)
   character(len=7),intent(out)  :: SysType
-  !
+  !---------------------------------------------------------------------
   integer,parameter:: MaxCpn= 60  ! dimension of temporary vCpn
   !
   type(T_Component):: vTmp(MaxCpn)
@@ -608,7 +655,7 @@ subroutine Components_Alloc(  & !
   logical:: Ok
   integer:: N,I
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Components_Alloc"
+  if(idebug>1) write(fTrc,'(/,A)') "< Components_Alloc"
   !
   do I=1,size(vTmp)
     call Component_Zero(vTmp(I))
@@ -631,20 +678,21 @@ subroutine Components_Alloc(  & !
   allocate(vCpn(1:N))
   vCpn(1:N)= vTmp(1:N)
 
-  if(iDebug>0) then
+  if(idebug>1) then
     do i=1,N
       write(fTrc,'(A)') vCpn(I)%NamCp
     end do
   end if
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Components_Alloc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Components_Alloc"
 
   return
 end subroutine Components_Alloc
 
 subroutine System_Build_Custom( &
 !--
-!-- from block sKeyWord, build a (sub)system vCpn of master system vCpnMaster
+!-- from block sKeyWord,
+!-- build a (sub)system vCpn of master system vCpnMaster
 !--
 & sKeyWord,          & !IN
 & vEle,vSpc,vMixFas, & !IN
@@ -683,7 +731,7 @@ subroutine System_Build_Custom( &
   !!logical:: Ok
   character(len=80):: Msg
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< System_Build_Custom"
+  if(idebug>1) write(fTrc,'(/,A)') "< System_Build_Custom"
   !
   !-------------------default values for component not found in BuildLnk
   vCpn= vCpnMaster  !! <-must be done "outside" ???
@@ -705,14 +753,14 @@ subroutine System_Build_Custom( &
   & Msg,        & !OUT
   & vCpnNew)      !OUT
   !
-  !~ if(.not. Ok) call Stop_(trim(Msg))
+  !! if(.not. Ok) call Stop_(trim(Msg))
   if(.not. Ok) return
   !
   
   ! print *,"debuggg System_Build_Custom"
   ! print *,TdgK
   call System_TP_Check(TdgK,Pbar,Ok,Msg)
-  !~ if(.not. Ok) call Stop_(trim(Msg))
+  !! if(.not. Ok) call Stop_(trim(Msg))
   if(.not. Ok) return
   !
   !if(N==0) call Stop_("NO COMPONENTS FOUND")
@@ -781,7 +829,7 @@ subroutine System_Build_Custom( &
   end if
   !---------------------------------------------------------------/trace
   
-  if(iDebug>0) write(fTrc,'(A,/)') "</ System_Build_Custom"
+  if(idebug>1) write(fTrc,'(A,/)') "</ System_Build_Custom"
   
 end subroutine System_Build_Custom
 
@@ -837,7 +885,7 @@ subroutine Redox_Calc(vSpc,vEle,vCpn)
   integer:: ieOx, iCp, nCp, Z !, Zsp
   logical:: fOk
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Redox_Calc"
+  if(idebug>1) write(fTrc,'(/,A)') "< Redox_Calc"
   !
   ieOx= Element_Index("OX_",vEle)
   !
@@ -865,7 +913,7 @@ subroutine Redox_Calc(vSpc,vEle,vCpn)
       !
       vEle(iCp)%Z= (S%Z-Z) / S%vStoikio(iCp)
       !
-      if(iDebug>0) write(fTrc,'(2I3,A,A3,A1,3I3)') &
+      if(idebug>1) write(fTrc,'(2I3,A,A3,A1,3I3)') &
       & S%Z-Z, S%vStoikio(iCp), &
       & " -> Default Valency of ", vEle(iCp)%NamEl, "=", vEle(iCp)%Z
       
@@ -874,7 +922,7 @@ subroutine Redox_Calc(vSpc,vEle,vCpn)
     end if
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Redox_Calc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Redox_Calc"
   !
 end subroutine Redox_Calc
   !
@@ -889,7 +937,7 @@ subroutine FormulaTable_Calc(vSpc,T)
   !
   integer:: I, N
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "< FormulaTable_Calc"
+  if(idebug>1) write(fTrc,'(/,A,/)') "< FormulaTable_Calc"
   !
   N= size(T,1)
   do I=1,size(vSpc)
@@ -900,7 +948,7 @@ subroutine FormulaTable_Calc(vSpc,T)
     !-> T is the "Formula Matrix" a la SmithMissen
   end do
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "</ FormulaTable_Calc"
+  if(idebug>1) write(fTrc,'(/,A,/)') "</ FormulaTable_Calc"
   !
 end subroutine FormulaTable_Calc
 

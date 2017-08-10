@@ -23,7 +23,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
   !---------------------------------------------------------------------
   use M_Global_Vars, only: vSpc,SolModel
   use M_System_Vars, only: TdgK,Pbar,vCpn
-  use M_Basis_Vars,  only: isW,nAx,vOrdAq,vLAx,MWSv,nCi,nAs
+  use M_Basis_Vars,  only: nAx,vOrdAq,vLAx,nCi,nAs
   !
   use M_Equil_Vars,  only: vMolF,vFasMole
   use M_Equil_Vars,  only: vLnGam,vLnAct,vDGapp_As
@@ -38,16 +38,18 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
   real(dp),dimension(:),allocatable:: vX,vLnGamOld,vLnActOld !,vXsec
   logical, dimension(:),allocatable:: vXisPlus
   !real(dp),dimension(:),allocatable:: vTolF,vTolX,
-  integer :: nAq,iGam,iCount,I,J,Newt_nIts
+  integer :: nAq,iGam,iCount,I,J,Newt_nIts,isW
   real(dp):: r1,r2
-  real(dp):: OsmoSv
+  real(dp):: OsmoSv,MWSv
   logical :: OkConverged
 
   integer:: nF !nr of aqu'species in array vX of residual
   integer:: nM !nr of non-aqu'species in array vX of residual
 
   nAq= count(vSpc(:)%Typ(1:3)=="AQU")
-  !~ OsmoSv= One
+  isW= SolModel%iSolvent
+  MWSv = SolModel%MolWeitSv
+  !! OsmoSv= One
 
   !allocate(vTolF(1:nF+nM))   ;  vTolF= NewtTolF !; vTolF(nCi+1:nAs)= 1.0E-06_dp
   !allocate(vTolX(1:nF+nM))   ;  vTolX= NewtTolX
@@ -65,7 +67,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
   allocate(vX(1:nF+nM))
   allocate(vXisPlus(1:nF+nM))
   !
-  !~ if(DirectSub) allocate(vXsec(1:nAs))
+  !! if(DirectSub) allocate(vXsec(1:nAs))
   !
   vX(1:nF)= vMolF(vOrdAq(1:nF))
   vXisPlus(:)= .false.
@@ -108,18 +110,18 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     if(LogForAqu) then
       !--- Back to Mole Quantities
       if(DirectSub) then
-        !~ call Compute_SecondSpecies(vX,vXsec)
+        !! call Compute_SecondSpecies(SolModel,vX,vXsec)
         vMolF(vOrdAq(1:nCi))= exp(vX(1:nF))
-        !~ vMolF(vOrdAq(nCi+1:nCi+nAs))= exp(vXsec(1:nAs))
+        !! vMolF(vOrdAq(nCi+1:nCi+nAs))= exp(vXsec(1:nAs))
         vMolF(vOrdAq(nCi+1:nCi+nAs))= vMolSec(1:nAs)
       else
         vMolF(vOrdAq(1:nF))= exp(vX(1:nF))
       end if
     else
       if(DirectSub) then
-        !~ call Compute_SecondSpecies(vX,vXsec)
+        !! call Compute_SecondSpecies(SolModel,vX,vXsec)
         vMolF(vOrdAq(1:nCi))= vX(1:nF)
-        !~ vMolF(vOrdAq(nCi+1:nCi+nAs))= vXsec(1:nAs)
+        !! vMolF(vOrdAq(nCi+1:nCi+nAs))= vXsec(1:nAs)
         vMolF(vOrdAq(nCi+1:nCi+nAs))= vMolSec(1:nAs)
       else
         vMolF(vOrdAq(1:nF))= vX(1:nF)
@@ -141,7 +143,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     call Solmodel_CalcGamma( & !
     & TdgK,Pbar,     & !
     & SolModel,      & !IN
-    & isW,vSpc,      & !IN
+    & vSpc,          & !IN
     & vLAx,          & !IN
     & vMolF(1:nAq),  & !IN
     & vLnAct(1:nAq), & !OUT
@@ -151,13 +153,13 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     if(fActiZ>0) call OutStrVec(fActiz,vLnAct(1:nAq)/Ln10,Opt_I=iGam)
     !------------------------------------------/ update activ'coeff's --
     !
-    !if(all(ABS(vLnGamOld-vLnGam)<TolGam)) exit !exit when convergence on gammas
-    ! r1= MAXVAL(ABS((vLnGamOld-vLnGam)/vLnGam))
-    ! r2= MAXVAL(ABS((vLnActOld-vLnAct)/vLnAct))
-    r1= MAXVAL(ABS(vLnGamOld-vLnGam))
-    r2= MAXVAL(ABS(vLnActOld-vLnAct))
+    !if(all(abs(vLnGamOld-vLnGam)<TolGam)) exit !exit when convergence on gammas
+    ! r1= maxval(abs((vLnGamOld-vLnGam)/vLnGam))
+    ! r2= maxval(abs((vLnActOld-vLnAct)/vLnAct))
+    r1= maxval(abs(vLnGamOld-vLnGam))
+    r2= maxval(abs(vLnActOld-vLnAct))
     !
-    !if(iDebug>0) write(fTrc,'(2(A,I3),2(A,G15.6))') &
+    !if(idebug>1) write(fTrc,'(2(A,I3),2(A,G15.6))') &
     !& "iGam=",iGam,"/ Newt_nIts=",Newt_nIts,"/ deltaGamma=",r1,"/ OsmoSv=",OsmoSv
     !if(iDebug>3) print '(2(A,I3),2(A,G15.6))', &
     !& "iGam=",iGam,"/ Newt_nIts=",Newt_nIts,"/ deltaGamma=",r1,"/ OsmoSv=",OsmoSv
@@ -172,8 +174,8 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     !------------------------------------------------- if Convergence --
     ! test convergence on activ'coeffs and on activities
     ! -> update mole nrs according to current activ'coeffs
-    !OkConverged= (r1< TolGam *MAX(One,MAXVAL(ABS(vLnGam))) &
-    !&       .and. r2< TolAct *MAX(One,MAXVAL(ABS(vLnAct))) )
+    !OkConverged= (r1< TolGam *MAX(One,maxval(abs(vLnGam))) &
+    !&       .and. r2< TolAct *MAX(One,maxval(abs(vLnAct))) )
     OkConverged= (r1<TolGam .and. r2<TolAct)
     !------------------------------------------------/ if Convergence --
     !
@@ -199,7 +201,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
   deallocate(vMolSec)
   deallocate(vX)
   deallocate(vXisPlus)
-  !~ if(DirectSub) deallocate(vXsec)
+  !! if(DirectSub) deallocate(vXsec)
   deallocate(vLnGamOld)
   deallocate(vLnActOld)
   !
@@ -223,22 +225,27 @@ subroutine Update_DGapp_As(vDGapp_As,vLnGam)
   end do
 end subroutine Update_DGapp_As
 
-subroutine Compute_SecondSpecies(vX,vXsec)
-  use M_Basis_Vars,only: nAs,nAx,nMx,tNuAs,nCi,isW,MWSv,vOrdPr
+subroutine Compute_SecondSpecies(SolModel,vX,vXsec)
+  use M_T_SolModel,only: T_SolModel
+  use M_Basis_Vars,only: nAs,nAx,nMx,tNuAs,nCi,vOrdPr
   use M_Equil_Vars,only: vDGapp_As,vLnGam,vLnAct,LogForAqu
-  !
+  !---------------------------------------
+  type(T_SolModel), intent(in):: SolModel
   real(dp),intent(in) :: vX(:)
   real(dp),intent(out):: vXsec(:)
-  !
-  integer :: iAs,iCi,i
-  real(dp):: X
+  !---------------------------------------
+  integer :: iAs,iCi,i,isW
+  real(dp):: X,MWSv
+  !---------------------------------------
+  isW= SolModel%iSolvent
+  MWSv = SolModel%MolWeitSv
   !
   if(LogForAqu) then
 
     do iAs=1,nAs
       !
       X=   vLnAct(isW) *tNuAs(iAs,isW) &
-      &  + (One - SUM(tNuAs(iAs,2:nCi)))*(vX(isW) +log(MWSv)) &
+      &  + (One - sum(tNuAs(iAs,2:nCi)))*(vX(isW) +log(MWSv)) &
       &  - vDGapp_As(iAs)
       do iCi=1,nCi
         if(iCi/=isW) X= X + vX(iCi) *tNuAs(iAs,iCi)
@@ -346,8 +353,8 @@ subroutine Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
     & JacobNumeric,   & !in=    use numeric Jacobian
     & NewtMaxIts,     & !in=    maximum number of iterations
 
-    & Error_F,    & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,    & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,    & !out=   maxval(abs(fVec(:)))
+    & Delta_X,    & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Newt_Nits,  & !out=   number of iterations
     & Newt_iErr)    !out=   error code
   !
@@ -365,8 +372,8 @@ subroutine Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
     & JacobNumeric,  & !in= use numeric Jacobian
     & NewtMaxIts,    & !in=    maximum number of iterations
 
-    & Error_F,    & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,    & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,    & !out=   maxval(abs(fVec(:)))
+    & Delta_X,    & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Newt_Nits,  & !out=   number of iterations
     & Newt_iErr   & !out=   error code
     & )
@@ -385,8 +392,8 @@ subroutine Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
     & JacobNumeric,  & !in= use numeric Jacobian
     & NewtMaxIts,    & !in=    maximum number of iterations
 
-    & Error_F,    & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,    & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,    & !out=   maxval(abs(fVec(:)))
+    & Delta_X,    & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Newt_Nits,  & !out=   number of iterations
     & Newt_iErr   & !out=   error code
     & )
@@ -401,9 +408,9 @@ subroutine Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
 
     & JacobNumeric, & !in=   use numeric Jacobian
     & NewtMaxIts,  & !in=    maximum number of iterations
-    & Error_F,     & !out=   MAXVAL(ABS(fVec(:)))
+    & Error_F,     & !out=   maxval(abs(fVec(:)))
 
-    & Delta_X,     & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Delta_X,     & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Gradient,    & !out=
     & Newt_Nits,   & !out=   number of iterations
     & Check,       & !out=   if Check, should check convergence

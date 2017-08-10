@@ -211,7 +211,7 @@ subroutine Species_Read_AquSize(vSpc)
 
   if(count(vSpc(:)%Typ=="AQU")==0) return
 
-  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Read_AquSize"
+  if(idebug>1) write(fTrc,'(/,A)') "< Species_Read_AquSize"
 
   call GetUnit(F)
   open(F,file=trim(NamFInn))
@@ -267,7 +267,7 @@ subroutine Species_Read_AquSize(vSpc)
   end do DoFile
   close(F)
 
-  if(iDebug>0) then
+  if(idebug>1) then
     write(fTrc,'(A,/)') "aqu'size parameters"
     do i=1,size(vSpc)
       if(vSpc(i)%Typ=="AQU" .and. vSpc(i)%Z/=0) then
@@ -284,7 +284,7 @@ subroutine Species_Read_AquSize(vSpc)
 
   deallocate(vIsPresent)
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Read_AquSize"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Species_Read_AquSize"
 
   return
 end subroutine Species_Read_AquSize
@@ -300,7 +300,7 @@ subroutine Species_Write_AquSize(vSpc)
   !
   integer:: F,i
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Write_AquSize"
+  if(idebug>1) write(fTrc,'(/,A)') "< Species_Write_AquSize"
   !
   call GetUnit(F)
   open(F,file="aqusize.tab")
@@ -316,7 +316,7 @@ subroutine Species_Write_AquSize(vSpc)
   !
   close(F)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Write_AquSize"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Species_Write_AquSize"
 
   return
 end subroutine Species_Write_AquSize
@@ -331,7 +331,7 @@ subroutine Canevas
   logical:: EoL
   integer:: F,ios
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Canevas"
+  if(idebug>1) write(fTrc,'(/,A)') "< Canevas"
   !
   call GetUnit(F)
   open(F,file="XXX")
@@ -379,7 +379,7 @@ subroutine Canevas
   end do DoFile
   close(F)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Canevas"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Canevas"
 
   return
 end subroutine Canevas
@@ -396,7 +396,7 @@ end module M_SpeciesDtb_Read
 !!   if(size(V)==0) return
 !!   I=0
 !!   do
-!!     I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vCpn(I)%SpName
+!!     I=I+1 !; if(idebug>1) write(fTrc,'(A)') vCpn(I)%SpName
 !!     if(trim(Str)==trim(V(I)%NamSp)) then
 !!       SpeciesDtb_Index=I
 !!       exit

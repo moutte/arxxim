@@ -3,7 +3,7 @@ module M_KinFas_Read
 !-- routines for reading kinetic models
 !--
   use M_Kinds
-  use M_Trace,   only: iDebug,fTrc,T_,Stop_,Warning_
+  use M_Trace,   only: iDebug,fTrc,T_,Stop_,Warning_,Pause_
   use M_T_KinFas,only: T_KinFas
   use M_T_Phase, only: T_Phase
   implicit none
@@ -22,15 +22,15 @@ module M_KinFas_Read
 contains
 
 subroutine KinFas_LnkToVec(LnkKin,vFas,vKinFas)
-  !
+  !---------------------------------------------------------------------
   type(T_LnkKin),pointer    :: LnkKin
   type(T_Phase), intent(in) :: vFas(:)
   type(T_KinFas),intent(out):: vKinFas(:)
-  !
+  !---------------------------------------------------------------------
   type(T_LnkKin),pointer::pCur, pPrev
   integer:: I, J
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< KinFas_LnkToVec"
+  if(idebug>1) write(fTrc,'(/,A)') "< KinFas_LnkToVec"
   !
   I=0
   J=0
@@ -40,7 +40,7 @@ subroutine KinFas_LnkToVec(LnkKin,vFas,vKinFas)
     I= I+1
     vKinFas(I)= pCur%Value
     !
-    if(iDebug>0) write(fTrc,'(I4,A1,A12)') I," ",vKinFas(I)%NamKF
+    if(idebug>1) write(fTrc,'(I4,A1,A12)') I," ",vKinFas(I)%NamKF
     !
     pPrev=>pCur
     pCur=> pCur%next
@@ -48,7 +48,7 @@ subroutine KinFas_LnkToVec(LnkKin,vFas,vKinFas)
     !
   enddo
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ KinFas_LnkToVec"
+  if(idebug>1) write(fTrc,'(A,/)') "</ KinFas_LnkToVec"
   !
 end subroutine KinFas_LnkToVec
 
@@ -57,8 +57,10 @@ subroutine BuildLnkKin(B,E,L,P)
   type(T_KinFas)        ::E
   type(T_LnkKin),pointer::L,P
   if(B) nullify(L)
-  if(B) then; allocate(L);      nullify(L%next);      L%Value=E;       P=>L
-  else;       allocate(P%next); nullify(P%next%next); P%next%Value=E;  P=>P%next
+  if(B) then
+    allocate(L);      nullify(L%next);      L%Value=E;       P=>L
+  else
+    allocate(P%next); nullify(P%next%next); P%next%Value=E;  P=>P%next
   end if
 end subroutine BuildLnkKin
 
@@ -94,11 +96,15 @@ subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
   call GetUnit(f_)
   open(f_,file=trim(NamFInn))
   !
+  do i=1,size(vFas)
+    print *,"NamFs= ",trim(vFas(i)%NamFs)
+  end do
+  call pause_
   N= 0
   !
   BlockFound= .false.
   OldFormat=  .false.
-  if(iDebug>0) write(fTrc,'(/,A)') "< KinFas_BuildLnk"
+  if(idebug>1) write(fTrc,'(/,A)') "< KinFas_BuildLnk"
   DoFile: do 
     !
     read(F_,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
@@ -169,7 +175,7 @@ subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
             M%iFas=I
             M%iKin=jKin
             !
-            if(iDebug>0) write(fTrc,'(3(A12,1X))') &
+            if(idebug>1) write(fTrc,'(3(A12,1X))') &
             !& M%Name,vSpc(M%iSpc)%Name,vKinModel(M%iKin)%Name
             & M%NamKF,vFas(M%iFas)%NamFs,vKinModel(M%iKin)%Name
             !
@@ -301,7 +307,7 @@ subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
   !
   if(.not. BlockFound) print '(A)',"!!!WARNING!!! Block DYNAMIC.ROCK Not Found"
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ KinFas_BuildLnk"
+  if(idebug>1) write(fTrc,'(A,/)') "</ KinFas_BuildLnk"
   !
 end subroutine KinFas_BuildLnk
 

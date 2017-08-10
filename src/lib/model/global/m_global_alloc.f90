@@ -27,7 +27,7 @@ subroutine Elements_Alloc_forDtb(vEle,nEle)
   !
   type(T_LnkEle),pointer:: LnkEle
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< Elements_Alloc_forDtb"
+  if(idebug>1) write(fTrc,"(/,A)") "< Elements_Alloc_forDtb"
   !
   call Elements_BuildLnk(LnkEle,nEle)
   !
@@ -43,7 +43,7 @@ subroutine Elements_Alloc_forDtb(vEle,nEle)
     !
   end if
   !
-  if(iDebug>0) write(fTrc,"(A,/)") "</ Elements_Alloc_forDtb"
+  if(idebug>1) write(fTrc,"(A,/)") "</ Elements_Alloc_forDtb"
 end subroutine Elements_Alloc_forDtb
 
 subroutine SpeciesDtb_Alloc(vSpcDtb,N) !-> build vSpcDtb
@@ -101,23 +101,23 @@ subroutine MixModels_Alloc(vSpc,    vMixModel) !-> build vMixModel
   !
 end subroutine MixModels_Alloc
 
-subroutine MixPhases_Alloc(vSpc,vMixModel, vMixFas)
+subroutine MixPhases_Alloc(vSpc,vMixModel,    vMixFas)
   use M_T_Species,    only: T_Species
   use M_T_MixModel,   only: T_MixModel
   use M_T_MixPhase,   only: T_MixPhase
   use M_T_MixPhase,   only: MixPhase_Zero
   use M_MixPhase_Read,only: T_LnkFas,MixPhase_BuildLnk,MixPhase_LnkToVec
   !
-  type(T_Species),             dimension(:),intent(in)   :: vSpc
-  type(T_MixModel),            dimension(:),intent(in)   :: vMixModel
-  type(T_MixPhase),allocatable,dimension(:),intent(inout):: vMixFas
+  type(T_Species),             intent(in)   :: vSpc(:)
+  type(T_MixModel),            intent(in)   :: vMixModel(:)
+  type(T_MixPhase),allocatable,intent(inout):: vMixFas(:)
   !
   type(T_LnkFas),pointer:: Lnk
   integer::I,nMixFas
   logical:: Ok
   character(len=80):: MsgError
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhases_Alloc"
+  if(idebug>1) write(fTrc,'(/,A)') "< MixPhases_Alloc"
   !
   call MixPhase_BuildLnk(vSpc,vMixModel,nMixFas,Lnk,Ok,MsgError)
   !
@@ -136,10 +136,10 @@ subroutine MixPhases_Alloc(vSpc,vMixModel, vMixFas)
     !
   end if
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ MixPhases_Alloc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ MixPhases_Alloc"
 end subroutine MixPhases_Alloc
 
-subroutine Phases_Alloc(vSpc,vMixFas, vFas)
+subroutine Phases_Alloc(vSpc,vMixFas,    vFas)
 !--
 !-- -> build vFas
 !-- vFas- (H2O) U (non-aqueous pure species) U (solution phases)
@@ -149,9 +149,9 @@ subroutine Phases_Alloc(vSpc,vMixFas, vFas)
   use M_T_MixPhase, only: T_MixPhase
   use M_T_Phase,    only: Phase_Zero
   !
-  type(T_Species),          dimension(:),intent(in) :: vSpc
-  type(T_MixPhase),         dimension(:),intent(in) :: vMixFas
-  type(T_Phase),allocatable,dimension(:),intent(out):: vFas
+  type(T_Species),          intent(in) :: vSpc(:)
+  type(T_MixPhase),         intent(in) :: vMixFas(:)
+  type(T_Phase),allocatable,intent(out):: vFas(:)
   !
   integer:: I,N
   !
@@ -305,12 +305,12 @@ subroutine DiscretParam_Alloc(vDiscretModel, vDiscretParam)
   use M_T_MixModel,only: T_MixModel
   use M_T_DiscretModel !T_DiscretModel,T_DiscretParam
   !
-  type(T_DiscretModel),            intent(in)  :: vDiscretModel(:)
+  type(T_DiscretModel),            intent(in)   :: vDiscretModel(:)
   type(T_DiscretParam),allocatable,intent(inout):: vDiscretParam(:)
   !
   integer:: N,iM
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretParam_Alloc"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretParam_Alloc"
   !
   N= 0
   do iM= 1, size(vDiscretModel)
@@ -319,7 +319,7 @@ subroutine DiscretParam_Alloc(vDiscretModel, vDiscretParam)
   deallocate(vDiscretParam)
   allocate(vDiscretParam(N))
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretParam_Alloc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretParam_Alloc"
   !
 end subroutine DiscretParam_Alloc
 

@@ -19,17 +19,17 @@ subroutine Equil_Specia(iErr)
   integer,intent(out):: iErr
   !
   integer :: nIts
-  !~ real(dp):: CpuBegin,CpuEnd
+  !! real(dp):: CpuBegin,CpuEnd
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Equil_Specia >"
-  !~ if(iDebug>0) call CPU_TIME(CpuBegin)
+  if(idebug>1) write(fTrc,'(/,A)') "< Equil_Specia >"
+  !! if(idebug>1) call CPU_TIME(CpuBegin)
   !
   call Equil_Solve(nIts,iErr)
   !
-  !~ if(iDebug>0) call CPU_TIME(CpuEnd)
-  !~ if(iDebug>0) write(fTrc,'(/,A,G15.6,/)') "CPU-Time",1.D3*(CpuEnd-CpuBegin)
+  !! if(idebug>1) call CPU_TIME(CpuEnd)
+  !! if(idebug>1) write(fTrc,'(/,A,G15.6,/)') "CPU-Time",1.D3*(CpuEnd-CpuBegin)
   
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Equil_Specia >"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Equil_Specia >"
   
   return
 end subroutine Equil_Specia

@@ -25,10 +25,6 @@ module M_IOTools
 
 contains
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ModIORead
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ModIORead
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ModIORead
-
 character function cUpper(c)
   character,intent(in):: c
   integer:: j,d
@@ -48,7 +44,7 @@ character function cLower(c)
 end function cLower
 
 subroutine GetUnit(F) !returns a free unit number.
-!-- Author:John Burkardt
+!-- Author: John Burkardt
 !-- A "free" FORTRAN unit number is an integer between 1 and 99
 !-- which is not currently associated with an I/O device.
 !-- A free FORTRAN unit number is needed in order to open a file 
@@ -62,14 +58,14 @@ subroutine GetUnit(F) !returns a free unit number.
   F= 0
   do i=10,200
     !if (i/=5 .and. i/=6 .and. i/=9) then
-      !units 5-6-9 are commonly reserved for console I/O
-      inquire(unit=i,opened=lopen,iostat=ios)
-      if (ios==0) then
-        if (.not. lOpen) then
-          F=i
-          return
-        end if
+    !units 5-6-9 are commonly reserved for console I/O
+    inquire(unit=i,opened=lopen,iostat=ios)
+    if (ios==0) then
+      if (.not. lOpen) then
+        F=i
+        return
       end if
+    end if
     !end if
   end do
   return
@@ -125,9 +121,12 @@ subroutine WrdToInt(StrIn,IOut) !conversion of string StrIn to integer IOut
   integer:: Pos,LenStr, I, iSign
   !
   Pos=1; IOut=0; iSign=1; LenStr=len(StrIn)
-  do while (POS<=LenStr.and.StrIn(POS:POS)==' '); POS=POS+1; end do !find first non blank
+  do while (POS<=LenStr.and.StrIn(POS:POS)==' ')
+    POS=POS+1
+  end do !find first non blank
   do while (POS<=LenStr.and.StrIn(Pos:Pos)/=' ') !do until find EoL or first blank
-    if (StrIn(Pos:Pos)=='-') then; ISIGN=-1
+    if (StrIn(Pos:Pos)=='-') then
+      ISIGN=-1
     else
       I=ichar(StrIn(POS:POS))
       if (I>=ichar('0').and.I<=ichar('9')) then; IOut=  IOut*10 + I - ichar('0')
@@ -573,23 +572,23 @@ subroutine Str_Upper(Str)
   return
 end subroutine Str_Upper
 
-!~ character(len=*) function FStr_Upper(Str)
-  !~ implicit none
-  !~ character(len=*), intent(in):: Str
-  !~ !
-  !~ integer:: I,J,D
-  !~ character(len=len(Str)):: UpStr
-  !~ !
-  !~ D= ichar('A') - ichar('a')
-  !~ UpStr= trim(Str)
-  !~ do I=1,len(Str)
-    !~ J= ichar(Str(I:I))
-    !~ if(J>=ichar('a') .and. J<=ichar('z')) UpStr(I:I)= char(J+D)
-  !~ end do
-  !~ FStr_Upper= trim(UpStr)
-  !~ !
-  !~ return
-!~ end function FStr_Upper
+!! character(len=*) function FStr_Upper(Str)
+  !! implicit none
+  !! character(len=*), intent(in):: Str
+  !! !
+  !! integer:: I,J,D
+  !! character(len=len(Str)):: UpStr
+  !! !
+  !! D= ichar('A') - ichar('a')
+  !! UpStr= trim(Str)
+  !! do I=1,len(Str)
+    !! J= ichar(Str(I:I))
+    !! if(J>=ichar('a') .and. J<=ichar('z')) UpStr(I:I)= char(J+D)
+  !! end do
+  !! FStr_Upper= trim(UpStr)
+  !! !
+  !! return
+!! end function FStr_Upper
 
 !---
 

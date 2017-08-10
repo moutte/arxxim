@@ -126,9 +126,9 @@ subroutine Simplex_Path(Cod)
     if(allocated(tSimplexResult)) deallocate(tSimplexResult)
     allocate(tSimplexResult(1:nC+nF+2,1:dimPath)); tSimplexResult=Zero
     !
-    !~ call Global_TP_Update( &
-    !~ & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
-    !~ & vSpc,vMixModel,vMixFas,vFas)
+    !! call Global_TP_Update( &
+    !! & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
+    !! & vSpc,vMixModel,vMixFas,vFas)
     !
     do i=1,dimPath
       !
@@ -170,7 +170,7 @@ subroutine Simplex_Path(Cod)
       tSimplex(1:nC,0)=  vCpnGEM(1:nC)%Mole
       !----------------------------------------------------------------/
       
-      if(iDebug==1) print *,"Simplex_Run_Step=",i
+      if(iDebug==2) print *,"Simplex_Run_Step=",i
       if(iDebug>2) then
       print *,'call Simplex_Run'  ;  call pause_
       end if
@@ -235,7 +235,7 @@ subroutine Simplex_Path(Cod)
       !----------- first row- Gibbs energy of phases 1:nF at 'point' iTP
       tSimplex(0,1:nF)= -vFas(1:nF)%Grt
       !
-      if(iDebug==1) print *,"Simplex_Run_Step=",i
+      if(iDebug==2) print *,"Simplex_Run_Step=",i
       if(iDebug==4) then
         write(fTrc,'(I3,A1,2(G15.6,A1))',advance="NO") &
         & I,T_, TdgK-T_CK,T_, Pbar,T_
@@ -377,19 +377,19 @@ subroutine Simplex_Run( &
   case(1)
 
     write(fTrc,'(A)') "Unbounded Objective Function"
-    if(iDebug>0) &
+    if(idebug>1) &
     & print *,"SIMPLEX, Error: Unbounded Objective Function"
 
   case(-1)
 
     write(fTrc,'(A)') "No Solutions Satisfy Constraints Given"
-    if(iDebug>0) &
+    if(idebug>1) &
     & print *,"SIMPLEX, Error: No Solutions Satisfy Constraints Given"
 
   case(-2)
 
     write(fTrc,'(A)') "BAD INPUT TABLEAU IN SIMPLX"
-    if(iDebug>0) &
+    if(idebug>1) &
     & print *,"SIMPLEX, Error: BAD INPUT TABLEAU IN SIMPLX"
 
   end select
@@ -502,10 +502,10 @@ subroutine WriteSysComp(DimPath,vCpn)
       end do
       !---/mole numbers of components
 
-      !~ Sum_=SUM(tSimplexResult(1:nC,iPath))
-      !~ do iFs=1,nC
-        !~ write(F,'(G15.6,A1)',advance="no") tSimplexResult(iFs,iPath)/Sum_,T_
-      !~ end do
+      !! Sum_=sum(tSimplexResult(1:nC,iPath))
+      !! do iFs=1,nC
+        !! write(F,'(G15.6,A1)',advance="no") tSimplexResult(iFs,iPath)/Sum_,T_
+      !! end do
 
       do iFs=1,nF
 
@@ -762,7 +762,7 @@ subroutine Simplex_WriteResult( &
     !do iCpn=1,nCpn
     !  X=X + tSimplex(iCpn,0)*tStoikioCpn(IPOSV(iCpn),I)
     !end do
-    X=SUM(tSimplex(1:nCpn,0)*tStoikioCpn(IPOSV(1:nCpn),I))
+    X=sum(tSimplex(1:nCpn,0)*tStoikioCpn(IPOSV(1:nCpn),I))
     write(fSpl2,'(G15.6,A1)',advance="no") X, T_
   end do
   write(fSpl2,*)

@@ -97,7 +97,7 @@ integer function DtbMinThr_Index(Str,V)
   !
   I=0
   do
-    I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vEle(I)%SpName
+    I=I+1 !; if(idebug>1) write(fTrc,'(A)') vEle(I)%SpName
     if(trim(Str)==trim(V(I)%Name)) then;
       DtbMinThr_Index=I
       exit
@@ -167,7 +167,7 @@ subroutine DtbMinThr_Calc(M,TdgK,Pbar,S)
   !
   !-- first heat the mineral or gas from Tref to T current
   !-- at constant P(-Pref)
-  call Heating(M,Tref,TdgK,DH,DS,DCp)
+  call Heating(M,Tref,TdgK,    DH,DS,DCp)
   !
   HR=    HR + DH     !H(T,P0)=H(T0,P0) + Sum<T0->T><(@H@T)dT>
   SR=    SR + DS     !S(T,P0)=S(T0,P0) + Sum<T0->T><(@S@T)dT>
@@ -176,14 +176,14 @@ subroutine DtbMinThr_Calc(M,TdgK,Pbar,S)
   GR=    GR + DG
   !
   !-- Now add volume term to G(T,P0) to obtain G(T,P)
-  call Compressing(M,Tref,TdgK,Pref,Pbar,DH,DS,DG,Volum,LnFug)
+  call Compressing(M,Tref,TdgK,Pref,Pbar,    DH,DS,DG,Volum,LnFug)
   !
   HR= HR + DH
   SR= SR + DS
   GR= GR + DG
   !
   do I=1,M%NLANDA
-    call Capitani_Landau(M,I,TdgK,Pbar,DH,DS,DG,DV,DCp)
+    call Capitani_Landau(M,I,TdgK,Pbar,    DH,DS,DG,DV,DCp)
     HR=    HR  + DH
     SR=    SR  + DS
     GR=    GR  + DG
@@ -458,7 +458,7 @@ subroutine Capitani_Landau(M,K,TdgK,Pbar,FGTR,FHTR,FSTR,FVTR,FCPTR)
   real(dp),      intent(in)   :: Pbar,TdgK
   real(dp),      intent(out)  :: FGTR,FHTR,FSTR,FVTR,FCPTR
   !---------------------------------------------------------------------
-  ! parameterS in tMin
+  ! parameters in tMin
   !   TQ1B(1:3),TRE(1:3), ASPK(1:3),BSPK(1:3),DHTR(1:3),&
   !   TEQ(1:3), DVTR(1:3),DVDT(1:3),DVDP(1:3)
   !
@@ -509,7 +509,7 @@ subroutine Capitani_Landau(M,K,TdgK,Pbar,FGTR,FHTR,FSTR,FVTR,FCPTR)
   L22= M%BSPK(K)**2
   CTR= M%TEQ(K)*(Pbar-Pr)
   TQP= M%TQ1B(K) + CTR
-  T2=  MIN(TdgK,TQP)
+  T2=  min(TdgK,TQP)
   !
   if (M%BSPK(K)/=Zero) then  ;  T1= -M%ASPK(K)/M%BSPK(K) + CTR
   else                       ;  T1= T2
@@ -579,7 +579,7 @@ subroutine Berman_Disorder(M,TdgK,Pbar,Hdis,Sdis,Gdis,Vdis,Cpdis)
   !---------------------------------------------------------------------
   real(dp):: TD, CpRdT, CpRTdT
   !---------------------------------------------------------------------
-  TD= MIN(TdgK,M%TDMax) !DMIN1(T,M%TDMax) DMIN1: arg=Real, res=Real
+  TD= min(TdgK,M%TDMax) !DMIN1(T,M%TDMax) DMIN1: arg=Real, res=Real
   
   CpDis=  M%D1 &
   &     + M%D2 *TD &
@@ -611,7 +611,7 @@ subroutine Berman_Disorder(M,TdgK,Pbar,Hdis,Sdis,Gdis,Vdis,Cpdis)
   &     - M%D8 *(One/(TD**3) -One/(M%TD0**3)   )/3.0D0 &
   &     + M%D9 *(TD**3       -M%TD0**3         )/3.0D0
   !
-  if (ABS(M%VAdj)>10.0D0) then  ;  VDis= CpRdT/(10.0D0*M%VAdj)
+  if (abs(M%VAdj)>10.0D0) then  ;  VDis= CpRdT/(10.0D0*M%VAdj)
   else                          ;  VDis= Zero
   end if
   !

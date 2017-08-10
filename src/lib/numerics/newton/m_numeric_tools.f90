@@ -63,7 +63,7 @@ contains
     !
     I=1; do while(T>vT(I)); I=I+1; end do !-> find upper bound
     !
-    if(ABS(T-vT(I))<=Iota) then
+    if(abs(T-vT(I))<=Iota) then
        P= vP(I)
     else
        K1= (T-vT(I)  ) /(vT(I-1) - vT(I)  )
@@ -418,7 +418,7 @@ contains
     !
     N=   size(x)
     Xsav=X
-    H=   EPS*ABS(Xsav)
+    H=   EPS*abs(Xsav)
     where (H==Zero) H=Eps
     Xph=Xsav+H
     H=  Xph-Xsav !Trick to reduce finite precision error.
@@ -452,7 +452,7 @@ contains
     
     !--
     N = size(x)
-    H = EPS*ABS(X)
+    H = EPS*abs(X)
 
     do j=1,N
        if (H(j)==Zero) H(j)=Eps

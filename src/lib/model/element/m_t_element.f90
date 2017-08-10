@@ -24,8 +24,6 @@ module M_T_Element
   !
   type:: T_Element
   !-- container for storing a CHEMICAL ELEMENT
-  !-- currently not used, because of near equivalence element - component in closed systems
-  !-- should be used in future developement (element-chemistry, component-termodynamics)
     character(len=3):: NamEl
     character(len=3):: Redox !either "FIX", or "VAR" (for Cl, Fe, Cr, As, ...)
     !=> whether the default oxydation state of the element is fixed or variable !!

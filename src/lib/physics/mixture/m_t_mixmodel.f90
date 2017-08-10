@@ -328,7 +328,7 @@ subroutine MixModel_Name(S,Str,Err)
   case(Mix_Surface)    ; Str= "SURFACE"
   !
   case default
-    Str= "none"
+    Str= "NONE"
     Err= .true.
   end select
   !
@@ -615,11 +615,11 @@ real(dp) function MixModel_Pole_LnGammaMargules( & !
   integer :: dSi_dXj
   !
   ! RT.LnGam(j)=      &
-  !   SUM(i=1..NMarg) &
+  !   sum(i=1..NMarg) &
   !   W_i1..ip . X_i1..X_ip (S_i)^(-k_i) &
   !   ( (1 - p_i + k_i) + q_j / X_j - (k_i/S_i).dSi_dXj ) )
-  ! P_i = degree of monomial X_i1... = SUM(M%vDegree(:))
-  ! S_i = sum of mole fractions involved in term = SUM(vX(M%iPol(1:M%NPole)))
+  ! P_i = degree of monomial X_i1... = sum(M%vDegree(:))
+  ! S_i = sum of mole fractions involved in term = sum(vX(M%iPol(1:M%NPole)))
   ! Q_j = number of indices, among i1..ip, equal to j,
   !     = M%vDegree(j)
   !
@@ -629,7 +629,7 @@ real(dp) function MixModel_Pole_LnGammaMargules( & !
 
     M= MM%vMarg(iM)
     Y= vMonome(iM)
-    Z= M%vDegree(iP) /vXpole(iP) +One -SUM(M%vDegree(:))
+    Z= M%vDegree(iP) /vXpole(iP) +One -sum(M%vDegree(:))
     !
     if(M%Kohler/=0) then
       S_i= Zero
@@ -669,7 +669,7 @@ real(dp) function MixModel_Site_LnGammaMargules( & !
   integer :: iM,J,iEl,iS
   !
   ! n * RT.LnGam_m=   &
-  !   SUM(i=1..NMarg) &
+  !   sum(i=1..NMarg) &
   !   [ W_i1..ip . X_i1..X_ip  * ( Q_m /X_m - 2 ) ] !for degree 3 Margules !!
   ! n   = number of sites on which mixing occurs
   ! q_m = number of indices, among i1..ip, equal to m,
@@ -688,7 +688,7 @@ real(dp) function MixModel_Site_LnGammaMargules( & !
           M= MM%vMarg(iM)
           X=   X &
           &  + vMonome(iM) &
-          &    *(M%vDegree(iEl) /vXatom(iEl) +One -SUM(M%vDegree(:))) &
+          &    *(M%vDegree(iEl) /vXatom(iEl) +One -sum(M%vDegree(:))) &
           &    /real(MM%vAtomMulti(iEl))
         end if
       end do
@@ -1010,7 +1010,7 @@ real(dp) function MixModel_GibbsIdeal( & !
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
-    G_IdMix= SUM(vXPole(:)*vLIdeal(:), MASK=vLPole(:)) *R_jk  *TdgK
+    G_IdMix= sum(vXPole(:)*vLIdeal(:), MASK=vLPole(:)) *R_jk  *TdgK
     !
     deallocate(vLIdeal)
     deallocate(vLGam)
@@ -1078,8 +1078,8 @@ real(dp) function MixModel_GibbsMixRT( & !
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
-    G_IdMixRT= SUM(vXPole(:)*vLIdeal(:), MASK=vLPole(:))
-    G_XSMixRT= SUM(vXPole(:)*vLGam(:),   MASK=vLPole(:))
+    G_IdMixRT= sum(vXPole(:)*vLIdeal(:), MASK=vLPole(:))
+    G_XSMixRT= sum(vXPole(:)*vLGam(:),   MASK=vLPole(:))
     !
     deallocate(vLIdeal)
     deallocate(vLGam)

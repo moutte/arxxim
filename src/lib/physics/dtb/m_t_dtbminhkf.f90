@@ -124,22 +124,22 @@ subroutine DtbMinHkf_Zero(M)
   M%MK3(1:3)= Zero
 end subroutine DtbMinHkf_Zero
 
-!~ integer function DtbMinHkf_Index(Str,V) 
-!~ !.-> index of mineral named Str in vDtbMinHkf
-  !~ character(*),                  intent(in):: Str
-  !~ type(T_DtbMinHkf),dimension(:),intent(in):: V
-  !~ integer     ::I
-  !~ DtbMinHkf_Index=0
-  !~ I=0
-  !~ do
-    !~ I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vEle(I)%SpName
-    !~ if(trim(Str)==trim(V(I)%Name)) then;
-      !~ DtbMinHkf_Index=I
-      !~ exit
-    !~ end if
-    !~ if(I==size(V)) exit
-  !~ end do !if Str not found -> DtbMinThr_Index=0
-!~ end function DtbMinHkf_Index
+!! integer function DtbMinHkf_Index(Str,V) 
+!! !.-> index of mineral named Str in vDtbMinHkf
+  !! character(*),                  intent(in):: Str
+  !! type(T_DtbMinHkf),dimension(:),intent(in):: V
+  !! integer     ::I
+  !! DtbMinHkf_Index=0
+  !! I=0
+  !! do
+    !! I=I+1 !; if(idebug>1) write(fTrc,'(A)') vEle(I)%SpName
+    !! if(trim(Str)==trim(V(I)%Name)) then;
+      !! DtbMinHkf_Index=I
+      !! exit
+    !! end if
+    !! if(I==size(V)) exit
+  !! end do !if Str not found -> DtbMinThr_Index=0
+!! end function DtbMinHkf_Index
 
 function Cp(T,a,b,c)
 !.standard molal heat capacity at T.

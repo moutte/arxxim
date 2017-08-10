@@ -45,7 +45,7 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
   integer :: I,J,K,nS,N
   real(dp):: X1
 
-  if(iDebug>0) write(fTrc,'(/,A)') "< SolPhase_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< SolPhase_Read"
 
   Ok= .true.
   MsgError= "Ok"
@@ -56,6 +56,7 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
   N=0
   !
   DoFile: do
+    !
     read(fInn,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
     call LinToWrd(L,W,EoL)
     if(W(1:1)=='!') cycle DoFile !skip comment lines
@@ -122,10 +123,10 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
             return !----------------------------------------------return
           end if
 
-          if(iDebug>0) write(fTrc,'(2A)') "MODEL=", trim(W)
+          if(idebug>1) write(fTrc,'(2A)') "MODEL=", trim(W)
           SolFas%iModel= K
 
-          nS= vSolModel(K)%nSpecies
+          nS= vSolModel(K)%nSolute
           allocate(SolFas%vXSpecies(nS))
           SolFas%vXSpecies(:)= Zero !!1.0D-32
 
@@ -135,7 +136,7 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
         !-----------------------------------------/read phase compositon
         case("COMPOSITION")
           !
-          if(iDebug>0) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
+          if(idebug>1) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
           !
           if(SolFas%iModel==0) then
             Ok= .false.
@@ -157,13 +158,13 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
 
             I= Species_Index(trim(W),vSpc)
             !--- search for the species with global index I
-            !--- in the species list, vISpecies(:), of solution model SolModel
+            !--- in the species list, vISolute(:), of solution model SolModel
             !--- and read mole fraction
             J= 0
-            !~ print *,"I=",I
-            do K=1,SolModel%nSpecies
-              !~ print *,"  vISpecies(K)=",SolModel%vISpecies(K)
-              if(SolModel%vISpecies(K)==I) then
+            !! print *,"I=",I
+            do K=1,SolModel%nSolute
+              !! print *,"  vISolute(K)=",SolModel%vISolute(K)
+              if(SolModel%vISolute(K)==I) then
                 J= I
                 exit
               end if
@@ -184,12 +185,12 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
           !
           N=N+1
           !
-          if(iDebug>0) &
+          if(idebug>1) &
           & write(fTrc,'(I3,1X,A24,A24)') N, SolFas%Name, SolModel%Name
 
           vSolTmp(N)%Name=   SolFas%Name
           vSolTmp(N)%iModel= SolFas%iModel
-          nS= vSolModel(SolFas%iModel)%nSpecies
+          nS= vSolModel(SolFas%iModel)%nSolute
           allocate(vSolTmp(N)%vXSpecies(nS))
           vSolTmp(N)%vXSpecies(:)= SolFas%vXSpecies(:)
 
@@ -215,13 +216,13 @@ subroutine SolPhase_Read(vSpc,vSolModel,Ok,MsgError)
     do I=1,N
       vSolFas(I)%Name= vSolTmp(I)%Name
       vSolFas(I)%iModel= vSolTmp(I)%iModel
-      nS= vSolModel(vSolFas(I)%iModel)%nSpecies
+      nS= vSolModel(vSolFas(I)%iModel)%nSolute
       allocate(vSolFas(I)%vXSpecies(nS))
       vSolFas(I)%vXSpecies(:)= vSolTmp(I)%vXSpecies(:)
     end do
   end if
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ SolPhase_BuildLnk"
+  if(idebug>1) write(fTrc,'(A,/)') "</ SolPhase_BuildLnk"
 
   return
 end subroutine SolPhase_Read

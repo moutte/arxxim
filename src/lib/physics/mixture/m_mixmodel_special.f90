@@ -1037,8 +1037,8 @@ subroutine Chlorite_HPWeb( & !
   P3= vX(3)  ! AMESITE      
   P4= vX(4)  ! DAPHNITE     
   !
-  !~ print *,"P1..P4=",P1,P2,P3,P4
-  !~ pause
+  !! print *,"P1..P4=",P1,P2,P3,P4
+  !! pause
   Y=(One +P3 -P1)/Two
   N=(One -P3 -P1)/Two
   !X= 5*P4 /(5*P4+6*P1+5*P2+4*P3)= 5*P4 /(5 + P1- P3)
@@ -1048,8 +1048,8 @@ subroutine Chlorite_HPWeb( & !
   Y= N + P3
   X= P4
   !
-  !~ print *,"X,Y,Z=",X,Y,N
-  !~ pause
+  !! print *,"X,Y,Z=",X,Y,N
+  !! pause
   !--- ideal activities (mixing on sites)
   vActId(1)= (One-X)**6 *(One-Y+N)*(One-Y-N)*(One-Y)*(One-Y)   ! CHLORITE-ALFREE
   vActId(2)= (One-X)**5 *(One-Y+N)*(    Y+N)*(One-Y)*Y  *4.0D0 ! CLINOCHLORE
@@ -1513,12 +1513,12 @@ subroutine Biotite_HP05( &
   &     - P4 *P3       *10.0D3 &
   &     - P3 *P1       *10.0D3
   !
-  !~ vLG(3)= P1 *(One-P3) *10.0D3 &
-  !~ &     + P2 *(One-P3) *(-1.0D3) &
-  !~ &     + P4 *(One-P3) *10.0D3 &
-  !~ &     - P1 *P2       *9.0D3  &
-  !~ &     - P4 *P2       *6.0D3  &
-  !~ &     - P4 *P1       *3.0D3
+  !! vLG(3)= P1 *(One-P3) *10.0D3 &
+  !! &     + P2 *(One-P3) *(-1.0D3) &
+  !! &     + P4 *(One-P3) *10.0D3 &
+  !! &     - P1 *P2       *9.0D3  &
+  !! &     - P4 *P2       *6.0D3  &
+  !! &     - P4 *P1       *3.0D3
   !
   vLG(3)= (One-P3)             &
   &       *( P1 *10.0D3        &

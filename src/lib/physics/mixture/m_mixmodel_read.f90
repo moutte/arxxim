@@ -65,7 +65,7 @@ subroutine MixModel_BuildLnk( &
   character(3*MaxMulti):: vSiteString(1:MaxSite)
   !--------------------------------------------------------------------/
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "<-----------------MixModel_BuildLnk"
+  if(idebug>1) write(fTrc,'(/,A)') "<-----------------MixModel_BuildLnk"
   !
   Ok= .true.
   MsgError= "Ok"
@@ -98,7 +98,7 @@ subroutine MixModel_BuildLnk( &
       call LinToWrd(L,W,sEol) !MIXTURE.MODEL OLIVINE ->S%Name="OLIVINE"
       S%Name=trim(W)
       !
-      if(iDebug>0) write(fTrc,'(/,2A)') "MIXTURE=",trim(S%Name)
+      if(idebug>1) write(fTrc,'(/,2A)') "MIXTURE=",trim(S%Name)
       if(iDebug>2) print '(/,A,/)',"Reading mixture model "//trim(S%Name)
       !
       DoSol: do
@@ -160,7 +160,7 @@ subroutine MixModel_BuildLnk( &
             MsgError=trim(W)//"= Unknown MODEL in MIXTURE.MODEL"
           end select
           !
-          if(iDebug>0) write(fTrc,'(2A)') "MODEL=",trim(W)
+          if(idebug>1) write(fTrc,'(2A)') "MODEL=",trim(W)
           !
           S%NSite=1
           if(.not. sEol) then !=former version, read MULTIplicity
@@ -185,7 +185,7 @@ subroutine MixModel_BuildLnk( &
           !
           S%vMulti(1)= K
           !
-          if(iDebug>0) write(fTrc,'(A,I3)') "MULTI=",S%vMulti(1)
+          if(idebug>1) write(fTrc,'(A,I3)') "MULTI=",S%vMulti(1)
           !
         !---------------------------------------------/read MULTIPLICITY
         !
@@ -286,7 +286,7 @@ subroutine MixModel_BuildLnk( &
             !----------------------/list of elements potentially present
             !
           end do DoSite
-          !check that SUM(S%vMulti(1:S%nSite)) <= MaxElPole
+          !check that sum(S%vMulti(1:S%nSite)) <= MaxElPole
         !-----------------------------------------------/read SITE block
         !
         !----------------------------------------------- read POLE block
@@ -295,7 +295,7 @@ subroutine MixModel_BuildLnk( &
           S%nPole=     0
           S%tPoleAtom= 0
           !
-          if(iDebug>0) write(fTrc,'(A)') "<<------------Read_POLE_block"
+          if(idebug>1) write(fTrc,'(A)') "<<------------Read_POLE_block"
           !
           DoPole: do
             !
@@ -314,7 +314,7 @@ subroutine MixModel_BuildLnk( &
             !old!   return !----------------------------------------return
             !old! end if
             !
-            !if(iDebug>0) &
+            !if(idebug>1) &
             !& write(fTrc,'(A,I3,2A)') "Species_Index=",K," <-POLE= ",trim(W)
             !
             if(S%nPole<MaxPole) then
@@ -366,7 +366,7 @@ subroutine MixModel_BuildLnk( &
             !
             S%vNamPole(S%nPole)=trim(W)
             !
-            if(iDebug>0) write(fTrc,'(A5,I3,A1,I3,A1,A)') &
+            if(idebug>1) write(fTrc,'(A5,I3,A1,I3,A1,A)') &
             & "POLE=",S%nPole,T_,K,T_,trim(W)
             !
             !--------------for SITE models, reading pole / site relation
@@ -495,7 +495,7 @@ subroutine MixModel_BuildLnk( &
           end if
           !-------------------------------------------------------/trace
           !
-          if(iDebug>0) write(fTrc,'(A)') "<<-----------/Read_POLE_block"
+          if(idebug>1) write(fTrc,'(A)') "<<-----------/Read_POLE_block"
         !-----------------------------------------------/read POLE block
         !
         case("MARGULES")
@@ -505,7 +505,7 @@ subroutine MixModel_BuildLnk( &
             MsgError=           "SPECIAL MODEL -> NO MARGULES block !!!"
             return !----------------------------------------------return
           end if
-          if(iDebug>0) write(fTrc,'(A)') "<<--------Read_MARGULES_block"
+          if(idebug>1) write(fTrc,'(A)') "<<--------Read_MARGULES_block"
           !
           MargulTheriak= .false.
           if (.not. sEol) then
@@ -728,7 +728,7 @@ subroutine MixModel_BuildLnk( &
             if(iMargIndex==1) then
               offset_= 0
             else
-              offset_= SUM(vNEle(1:iMargIndex-1))
+              offset_= sum(vNEle(1:iMargIndex-1))
             end if
             !
             M%vDegree(1:MaxAtom)= 0
@@ -771,7 +771,7 @@ subroutine MixModel_BuildLnk( &
             S%vMarg(S%nMarg)= M
             !
             !----------------------------------------------------- trace 
-            if(iDebug>0) then
+            if(idebug>1) then
               write(fTrc,'(A,I2,A)',advance="NO") "nMarg=",S%nMarg," vDegree="
               write(fTrc,'(*(I1,1X))') (S%vMarg(S%nMarg)%vDegree(J),J=1,S%NAtom)
             end if
@@ -781,7 +781,7 @@ subroutine MixModel_BuildLnk( &
           
           end if
           !
-          if(iDebug>0) write(fTrc,'(A)') "<<-------/Read_MARGULES_block"
+          if(idebug>1) write(fTrc,'(A)') "<<-------/Read_MARGULES_block"
         !endcase MARGULES
         !-------------------------------------------/read MARGULES block
         end select
@@ -793,7 +793,7 @@ subroutine MixModel_BuildLnk( &
   !
   close(F)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "<----------------/MixModel_BuildLnk"
+  if(idebug>1) write(fTrc,'(A,/)') "<----------------/MixModel_BuildLnk"
   !
 end subroutine MixModel_BuildLnk
 
@@ -815,7 +815,7 @@ subroutine MixModel_Clean(vHasPole,MM)
   integer:: vPermut(MaxPole),vDegree(MaxAtom)
   logical:: Keep
   !---------------------------------------------------------------------
-  if(iDebug>0) write(fTrc,'(A)') "<<---------------------MixModel_Clean"
+  if(idebug>1) write(fTrc,'(A)') "<<---------------------MixModel_Clean"
   !
   MNew= MM
   select case(MM%Model)
@@ -855,7 +855,7 @@ subroutine MixModel_Clean(vHasPole,MM)
         MNew%vMarg(N)= MM%vMarg(i)
         MNew%vMarg(N)%vDegree(:)= vDegree(:)
         !----------------------------------------------------------trace
-        if(iDebug>0) then
+        if(idebug>1) then
           write(fTrc,'(A,I1,A)',advance="NO") 'nMarg=',N," vDegree="
           write(fTrc,'(*(I1,1X))') (MNew%vMarg(N)%vDegree(J),J=1,MNew%nPole)
         end if
@@ -866,7 +866,7 @@ subroutine MixModel_Clean(vHasPole,MM)
   end select
   MM= MNew
   !
-  if(iDebug>0) write(fTrc,'(A)') "<<--------------------/MixModel_Clean"
+  if(idebug>1) write(fTrc,'(A)') "<<--------------------/MixModel_Clean"
   !
   return
 end subroutine MixModel_Clean
@@ -881,7 +881,7 @@ subroutine MixModel_LnkToVec(Lnk,vMixModel)
   integer:: K
   !
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixModel_LnkToVec"
+  if(idebug>1) write(fTrc,'(/,A)') "< MixModel_LnkToVec"
   !
   pCur=>Lnk
   K=0
@@ -889,7 +889,7 @@ subroutine MixModel_LnkToVec(Lnk,vMixModel)
     K=K+1
     vMixModel(K)=pCur%Value
     !
-    if(iDebug>0) write(fTrc,'(A,I3,3A,I3)') &
+    if(idebug>1) write(fTrc,'(A,I3,3A,I3)') &
     & "k=",k, &
     & "  MixModel(k)%Name=",trim(vMixModel(K)%Name), &
     & "  MixModel(k)%nPole=",vMixModel(K)%nPole
@@ -899,7 +899,7 @@ subroutine MixModel_LnkToVec(Lnk,vMixModel)
     deallocate(pPrev)
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "< MixModel_LnkToVec"
+  if(idebug>1) write(fTrc,'(A,/)') "< MixModel_LnkToVec"
   !
 end subroutine MixModel_LnkToVec
 
@@ -918,7 +918,7 @@ subroutine MixModel_Check(vSpc,vMixModel)
   logical:: Err
   character(15):: Str
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixModel_Check"
+  if(idebug>1) write(fTrc,'(/,A)') "< MixModel_Check"
   !
   do I=1,size(vMixModel)
 
@@ -987,7 +987,7 @@ subroutine MixModel_Check(vSpc,vMixModel)
     write(fTrc,'(/,A,I3,/)') "End Mixture ",I
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ MixModel_Check"
+  if(idebug>1) write(fTrc,'(A,/)') "</ MixModel_Check"
   return
 end subroutine MixModel_Check
 

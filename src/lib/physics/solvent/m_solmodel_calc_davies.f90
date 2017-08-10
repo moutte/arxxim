@@ -112,7 +112,7 @@ contains
     !---------------------------------------------------------</Solute--
     
     !-------------------------------------------------------- Solvent --
-    Sum_Solute = SUM(vMolal(:))
+    Sum_Solute = sum(vMolal(:))
     !___________LewisRandall,23-39,p347; EQ3NR-Doc, p.39
     LnActSv= Ln10 *Two/3.0D0 *dhA  *SqrtIost**3 *Sigma(SqrtIoSt) &
     &      - Ln10            *dhA  *IonStr*IonStr &

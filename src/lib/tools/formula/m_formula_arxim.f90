@@ -74,7 +74,7 @@ contains
     OutFormula = ''
     n = size(vName)
     do i =1,n
-      if (ABS(vCoef(i))<epsilon) then 
+      if (abs(vCoef(i))<epsilon) then 
       !// nothing to do
       else
         !// write(*,*) trim(name(i)), ':', vCoef(i)

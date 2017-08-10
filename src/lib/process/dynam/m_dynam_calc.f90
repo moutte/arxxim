@@ -86,7 +86,7 @@ end subroutine Dynam_Calc
 
 subroutine Dynam_Calc_Init
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< CalcDynamic"
+  if(idebug>1) write(fTrc,'(/,A)') "< CalcDynamic"
   !
   SteadyState_Stop= (iDebug>2)
   if(DebugCoores) SteadyState_Stop= .false.
@@ -132,7 +132,7 @@ subroutine Dynam_Calc_Init
   !! !---------------------------------------------------
   !
   !------------------------------------------initialize kinetic phases--
-  X= MAXVAL(vMolF(1:nAq))
+  X= maxval(vMolF(1:nAq))
   call Dynam_OneStep_KinFas_Update( & !
   & log(vMolF(1:nAq)/X),   & !in
   & vMolK,                 & !in
@@ -149,11 +149,9 @@ subroutine Dynam_Calc_Init
   & vSurfK0,     & ! IN
   & vSurfK)        ! OUT
   !
-  !!vVm0(:)= vSurfK(:) *vVmAct(:) *vVmQsK(:)
-  !
   !! nMkA0= count(vLKinActiv)
   !! nEqA0= count(vLEquActiv)
-  !! !~ !
+  !! !! !
   !! if(LogForAqu) then
   !!   call Dynam_OneStep_Alloc(nAq +nMkA0 +nEqA0)
   !! else
@@ -170,7 +168,7 @@ subroutine Dynam_Calc_Init
   & vMolF, & !in
   & vTotF)   !out
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "</CalcDynamic"
+  if(idebug>1) write(fTrc,'(/,A)') "</CalcDynamic"
   !
 end subroutine Dynam_Calc_Init
 
@@ -182,7 +180,6 @@ subroutine Dynam_Calc_Main
   !----------------------------------------------for test basis change--
   use M_System_Vars,only: vCpn
   use M_Basis,only: Basis_Change_Wrk
-  use M_Basis_Vars,only: isW
   !--------------------------------------------------------------------/
   
   if(iDebug>2) call CPU_TIME(CpuBegin)
@@ -233,7 +230,7 @@ subroutine Dynam_Calc_Main
     Time= Time +dTime !------------------------------update time elapsed
     !
     !-------------------------------------------------------basis change
-    if(iDebug>2) call Basis_Change_Wrk(isW,vCpn)
+    if(iDebug>2) call Basis_Change_Wrk(vCpn)
     !------------------------------------------------------/basis change
     !
     if(iDebug>2) &
@@ -247,7 +244,7 @@ subroutine Dynam_Calc_Main
     & vMolK, & !in
     & vTotK)   !out
     !
-    PhiF= One - SUM(vMolK(:)*vMolarVol(:)) /Vbox
+    PhiF= One - sum(vMolK(:)*vMolarVol(:)) /Vbox
     !
     if(Extrapole) &
     & vMolM_Slope(:)= (vMolK(:) -vMolK_0(:)) /dTime
@@ -260,7 +257,7 @@ subroutine Dynam_Calc_Main
     & vTotInj,vTotF_0,vTotF,vTotK_0,vTotK)     !IN
     !
     !----------------------------------------------update kin'phase data
-    X= MAXVAL(vMolF(1:nAq))
+    X= maxval(vMolF(1:nAq))
     !
     call Dynam_OneStep_KinFas_Update( & !
     & log(vMolF(1:nAq)/X),   & !in
@@ -299,8 +296,6 @@ subroutine Dynam_Calc_Main
     !
     !---------------------------------------------/update kin'phase data
     !
-    !! vVm0(:)= vSurfK(:) *vVmAct(:) *vVmQsK(:)
-    !
     if(dTimeTooSmall) exit DoStep !--------------------------exit DoStep
     !
     !! !---------- message output for COORES ----------------------!
@@ -326,7 +321,7 @@ subroutine Dynam_Calc_Main
     call Dynam_OneStep_Write( &
     & iStep,Time,dTime,       &
     & fSavRate,fSavTime,      &
-    & pH_,PhiF,RhoF,VBox,dX,  &
+    & PhiF,RhoF,VBox,dX,      &
     & vTotF,vMolF,vLnAct,vLnGam, &
     & vTotK,vMolK,vMolarVol,vKinQsk,vSurfK,vSurfK0,vVmQsK,vVmAct, &
     & dTSav,TSave)
@@ -365,7 +360,7 @@ subroutine Dynam_Calc_Main
       Time= Tfinal
       exit DoStep
     end if
-    !-------------------------------------------------------------------
+    !-----------------------------------------------------------------//
     !
     if(UpdateMassFluid .and. (PhiF<1.0D-6)) then
       PorosTooSmall=.true.
@@ -396,16 +391,16 @@ subroutine Dynam_Calc_Main
   if(DebugCoores) &
   & print '(1A6, 1I6, 1A, 1F14.6, 1A)', &
   & '[ STEP',iStep,'] - [T = ',time,', ------ end      ]'
-  !--------------------------------------------------------------------/
+  !-------------------------------------------------------------------//
   !
   if(PorosTooSmall) then
     print '(A)',"Porosity Too Low ..."
-    if(iDebug>0) write(fTrc,'(A)') "Porosity Too Low !!!"
+    if(idebug>1) write(fTrc,'(A)') "Porosity Too Low !!!"
   end if
   if(DTimeTooSmall) then
     print '(A,G12.3)',"Time Step= ", dTmin
     print '(A)',"Time Step Too Small !!!"
-    if(iDebug>0) write(fTrc,'(A)') "Time Step Too Small !!!"
+    if(idebug>1) write(fTrc,'(A)') "Time Step Too Small !!!"
   end if
   
   return
@@ -423,14 +418,14 @@ subroutine Dynam_Calc_Close
   call Dynam_Solve_Vars_Clean
   !
   !cpu! if(iDebug>2) print      '(A,G15.3)', "CPU-Time (sec)=",CpuEnd-CpuBegin
-  !cpu! if(iDebug>0) write(fTrc,'(A,G15.3)') "CPU-Time (sec)=",CpuEnd-CpuBegin
+  !cpu! if(idebug>1) write(fTrc,'(A,G15.3)') "CPU-Time (sec)=",CpuEnd-CpuBegin
   !
   if(f1>0) close(f1)
   if(f2>0) close(f2)
   if(f3>0) close(f3)
   if(f4>0) close(f4)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ CalcDynamic"
+  if(idebug>1) write(fTrc,'(A,/)') "</ CalcDynamic"
   
   return
 end subroutine Dynam_Calc_Close
@@ -453,7 +448,7 @@ logical function TP_Changed(TdgK,Pbar)
   use M_Dynam_Vars,only: TdgK0,Pbar0,TolTdgK,TolPbar
   real(dp),intent(in):: TdgK,Pbar
   !
-  TP_Changed= ( ABS(TdgK - TdgK0)>TolTdgK .or. ABS(Pbar - Pbar0)>TolPbar)
+  TP_Changed= ( abs(TdgK - TdgK0)>TolTdgK .or. abs(Pbar - Pbar0)>TolPbar)
   if(TP_Changed) then
     TdgK0= TdgK
     Pbar0= Pbar

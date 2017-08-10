@@ -68,7 +68,6 @@ subroutine Path_ReadMode( &
       case("ADDALL")      ; PathMode= "ADA"
       case("CHANGE")      ; PathMode= "CHG"
       case("GRID")        ; PathMode= "GRD"
-      case("EVAPORATE")   ; PathMode= "EVP"
       case("LOGK")        ; PathMode= "LGK"
       
       case default
@@ -137,7 +136,7 @@ subroutine Path_ReadParam( &
   integer, allocatable:: vNstep(:)
   integer, allocatable:: vStAdd(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Path_ReadParam"
+  if(idebug>1) write(fTrc,'(/,A)') "< Path_ReadParam"
   !
   !if(iDebug==4) print '(A)',"Path_Read"
   !
@@ -183,20 +182,20 @@ subroutine Path_ReadParam( &
     if(W=="PATH") then 
       !
       Ok=.true.
-      !
-      !--------------------allocate variables according to the Path mode
+      !-----------------------------------------------allocate variables
+      !---------------------------------------according to the Path mode
       select case(PathMode) 
       case("ADD","ADA")
         allocate(vStAdd(0:nCp))  ; vStAdd=0
         !
-      case("CHG","EVP")
+      case("CHG")
         allocate(vLPath(1:nCp+2))  ;  vLPath=.false.
         !
         allocate(vPhasBegin(1:nCp))  ;  vPhasBegin=0
         allocate(vPhasFinal(1:nCp))  ;  vPhasFinal=0
         !
       end select
-      !-------------------------------------------------------/ allocate
+      !---------------------------------------------/ allocate variables
       !
       !---------------------------------------- read the path parameters
       DoBlock: do
@@ -242,13 +241,13 @@ subroutine Path_ReadParam( &
             end select
           end do
           
-          if(ABS(rDelta)<Epsilon(rDelta)) then
+          if(abs(rDelta)<Epsilon(rDelta)) then
             Ok=  .false.
             Msg=                       "In PATH LOGK, Delta not defined"
             return !----------------------------------------------return
           end if
           
-          ! if(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
+          ! if(abs(rFinal-rBegin) < 0.1) rFinal= rBegin +One
           
           rDelta= SIGN(rDelta,rFinal-rBegin)
           !-- function SIGN(a,b) returns abs(a)*sign(b) --
@@ -260,7 +259,7 @@ subroutine Path_ReadParam( &
           vTmp(I)= rBegin
           do
             if(I>DimMax) exit
-            if(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) exit
+            if(abs(vTmp(I)-rBegin)>abs(rFinal-rBegin)) exit
             I=I+1
             vTmp(I)= vTmp(I-1) + rDelta
             print '(A,I3,G15.6)',"logK=",I,vTmp(i)
@@ -270,11 +269,11 @@ subroutine Path_ReadParam( &
           DimPath= I
           allocate(vPathLogK(1:I))
           vPathLogK(1:I)= vTmp(1:I)
-          !-----------------------------------------/ build vPathLogK --
+          !--------------------------------------------/ build vPathLogK
           !
-        !----------------------------------------/ case "LGK" (-LOGK) --
+        !-------------------------------------------/ case "LGK" (-LOGK)
         !
-        !------------------------------------------------- case "ADD" --
+        !---------------------------------------------------- case "ADD"
         case("ADD","ADA")
           !
           !------------------------- read stoichio of added material --
@@ -321,7 +320,7 @@ subroutine Path_ReadParam( &
           AddedTot= Zero
           tTmp(1:nCp,1)= vCpn(:)%Mole
           !
-          !---------------------------------------------- read values --
+          !------------------------------------------------- read values
           do
             if(EoL) exit
             !
@@ -362,9 +361,9 @@ subroutine Path_ReadParam( &
                 
             end select
           end do
-          !---------------------------------------------/ read values --
+          !------------------------------------------------/ read values
           !
-          !------------------------------------------ build tPathData --
+          !--------------------------------------------- build tPathData
           PathAdd= (rDelta>Zero) !.false.
           !
           if(iDebug>2) then
@@ -373,8 +372,8 @@ subroutine Path_ReadParam( &
             do I=1,nCp
               if(vStAdd(I)/=0) print '(I3,G9.2)',I,vStAdd(I)  
             end do
-            !~ print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
-            !~ & rAddBegin,rAddFinal,rAddRatio,rAddDelta
+            !! print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
+            !! & rAddBegin,rAddFinal,rAddRatio,rAddDelta
             call Pause_
           end if
           !
@@ -434,10 +433,10 @@ subroutine Path_ReadParam( &
           allocate(vTPpath(DimPath))
           vTPpath(1:DimPath)%TdgC= tTmp(nCp+1,1:DimPath)
           vTPpath(1:DimPath)%Pbar= tTmp(nCp+2,1:DimPath)
-          !-----------------------------------------/ build tPathData --
+          !--------------------------------------------/ build tPathData
           !
         !_ADD
-        !------------------------------------------------/ case "ADD" --
+        !---------------------------------------------------/ case "ADD"
         !!! case("MIX")
         !!!   !
         !!!   call Str_Append(W,3)
@@ -451,8 +450,8 @@ subroutine Path_ReadParam( &
         !!!   end if
         !!! !_MIX
         !
-        !------------------------------------------------ case "CHG" --
-        case("CHG","EVP")
+        !---------------------------------------------------- case "CHG"
+        case("CHG")
           !
           select case(trim(W))
           !
@@ -482,12 +481,12 @@ subroutine Path_ReadParam( &
             iMix= 0
           end if
           !
-          !----------- prim' mobile species is aqueous or pure phase --
+          !--------------- prim' mobile species is aqueous or pure phase
           if(iMix==0) then
             !
             rBegin= Zero; rFinal= Zero
             rRatio= One;  rDelta= Zero
-            !-------------------------------------------- read values --
+            !----------------------------------------------- read values
             do
               !
               if(EoL) exit
@@ -499,13 +498,13 @@ subroutine Path_ReadParam( &
                 BuildTable= .true.
                 select case(W)
                 case("INITIAL")
-                  call LinToWrd(L,W,EoL); call WrdToReal(W,rBegin)
+                  call LinToWrd(L,W,EoL)  ;  call WrdToReal(W,rBegin)
                 case("FINAL")
-                  call LinToWrd(L,W,EoL); call WrdToReal(W,rFinal)
+                  call LinToWrd(L,W,EoL)  ;  call WrdToReal(W,rFinal)
                 case("RATIO")
-                  call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
+                  call LinToWrd(L,W,EoL)  ;  call WrdToReal(W,rRatio)
                 case("DELTA")
-                  call LinToWrd(L,W,EoL); call WrdToReal(W,rDelta)
+                  call LinToWrd(L,W,EoL)  ;  call WrdToReal(W,rDelta)
                 end select
               !
               case default
@@ -528,10 +527,10 @@ subroutine Path_ReadParam( &
               end select
               !
             end do
-            !-------------------------------------------/ read values --
+            !----------------------------------------------/ read values
             PathAdd= (rDelta>Zero)
             !
-            !--------------------------------------------- BuildTable --
+            !------------------------------------------------ BuildTable
             if(BuildTable) then
               if(I<=nCp) then
                 !---------------------------- case of chemical change --
@@ -541,27 +540,27 @@ subroutine Path_ReadParam( &
                   if(rRatio > 3.0D0  ) rRatio= 3.00D0
                   if(rFinal < rBegin ) rRatio= One/rRatio
                 else !MOBILE or BUFFER or DELTA
-                  if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                  if(rDelta==Zero)  rDelta= abs(rFinal-rBegin) /20.0D0
                   !-> default value, in case not in input
-                  if(rFinal>rBegin) rDelta= ABS(rDelta)
-                  if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                  if(rFinal>rBegin) rDelta= abs(rDelta)
+                  if(rFinal<rBegin) rDelta=-abs(rDelta)
                 end if
                 !---/
               else
-                !------------------------------ case of (T,P) changes --
+                !--------------------------------- case of (T,P) changes
                 if(.not. PathAdd) then
                   Ok=  .false.
                   Msg=           "PATH CHANGE: for (T,P) only DELTA ..."
                   return !----------------------------------------------
                 end if
-                if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                if(rDelta==Zero)  rDelta= abs(rFinal-rBegin) /20.0D0
                 !-> default value, in case not in input
-                if(rFinal>rBegin) rDelta= ABS(rDelta)
-                if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                if(rFinal>rBegin) rDelta= abs(rDelta)
+                if(rFinal<rBegin) rDelta=-abs(rDelta)
                 !---/
               end if
               !
-              if(iDebug>0) write(fTrc,'(I3,A20,4G12.3)') &
+              if(idebug>1) write(fTrc,'(I3,A20,4G12.3)') &
               & I," =Begin,Final,Step= ",rBegin,rFinal,rDelta,rRatio
               !
               nStep= 0
@@ -586,7 +585,7 @@ subroutine Path_ReadParam( &
               vNstep(I)= nStep-1
               !
             end if
-            !--------------------------------------------/ BuildTable --
+            !-----------------------------------------------/ BuildTable
             !
             ! print *,"unit change"
             if(I<=nCp) then
@@ -608,9 +607,9 @@ subroutine Path_ReadParam( &
                 end do
               end if
             end if
-            !-----------------------------/add amounts in SYSTEM.ROCK --
+            !--------------------------------/add amounts in SYSTEM.ROCK
             !
-            if(iDebug>0) then
+            if(idebug>1) then
               write(fTrc,'(I3,A1)',advance="no") I,t_
               do J= 1,vNstep(I)
                 write(fTrc,'(G12.3,A1)',advance="no") tTmp(I,J),t_
@@ -621,7 +620,7 @@ subroutine Path_ReadParam( &
           else
           !------ iMix/-0 -> species activity controlled by non-aqueous phase --
             TestMixture= .true.
-            !-------------------------------------------- read values --
+            !----------------------------------------------- read values
             do
               !
               if(EoL) exit
@@ -651,14 +650,14 @@ subroutine Path_ReadParam( &
                 case("INITIAL")
                   vPhasBegin(I)=K
                   
-                  if(iDebug>0) write(fTrc,'(4A)') &
+                  if(idebug>1) write(fTrc,'(4A)') &
                   & "PhasBegin=",vMixFas(K)%Name, &
                   & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
                   
                 case("FINAL")
                   vPhasFinal(I)=K
                   
-                  if(iDebug>0) write(fTrc,'(4A)') &
+                  if(idebug>1) write(fTrc,'(4A)') &
                   & "PhasFinal=",vMixFas(K)%Name, &
                   & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
                   
@@ -666,7 +665,7 @@ subroutine Path_ReadParam( &
                 !
                 !! case("RATIO")
                 !!   Ok=  .false.
-                !!   Msg=                             "only DELTA IN THIS case !!!"
+                !!   Msg=                  "only DELTA IN THIS case !!!"
                 !!   return !----------------------------------------------
                 !!   !call LinToWrd(L,W,EoL); call WrdToReal(W,rRatio)
                 !! !
@@ -707,7 +706,7 @@ subroutine Path_ReadParam( &
         end select
       end do DoBlock
       !---------------------------------------/ read the path parameters
-      !! if(iDebug>0) call Pause_
+      !! if(idebug>1) call Pause_
     end if !Cod=="PATH"
     !
   end do DoFile
@@ -742,8 +741,8 @@ subroutine Path_ReadParam( &
   if(allocated(vStAdd))  deallocate(vStAdd)
   !
   if(iDebug>1) call Pause_
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Path_ReadParam"
-  if(iDebug>0) flush(fTrc)
+  if(idebug>1) write(fTrc,'(A,/)') "</ Path_ReadParam"
+  if(idebug>1) flush(fTrc)
   
   ! do i= 1, size(tPathData,2)
   !   do j=1,nCp
@@ -815,7 +814,7 @@ subroutine Path_ReadParam_new( &
   integer, allocatable:: vNstep(:)
   real(dp),allocatable:: vStAdd(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Path_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Path_Read"
   !
   !if(iDebug==4) print '(A)',"Path_Read"
   !
@@ -885,10 +884,10 @@ subroutine Path_ReadParam_new( &
         call pause_
       end if
 
-      !~ do I=1,size(vCpn)
-        !~ if(vCpn(I)%Statut=="INERT") tTmp(I,:)= vCpn(:)%Mole
-        !~ !if() tTmp(I,:)= vCpn(:)%Mole
-      !~ end do
+      !! do I=1,size(vCpn)
+        !! if(vCpn(I)%Statut=="INERT") tTmp(I,:)= vCpn(:)%Mole
+        !! !if() tTmp(I,:)= vCpn(:)%Mole
+      !! end do
       !
       !---------------------------------------- read the path parameters
       DoBlock: do
@@ -910,7 +909,7 @@ subroutine Path_ReadParam_new( &
           if(iLogK==0) then
             Ok=  .false.
             Msg=      "In PATH LOGK, "//trim(W)//"= unknown species !!!"
-            if(iDebug>0) write(fTrc,'(A)') Msg
+            if(idebug>1) write(fTrc,'(A)') Msg
             return !----------------------------------------------return
           end if
           !------------------------------------------------- read values
@@ -930,20 +929,20 @@ subroutine Path_ReadParam_new( &
               case default
                 Ok=  .false.
                 Msg= "In PATH LOGK, "//trim(W1)//"= invalid keyword !!!"
-                if(iDebug>0) write(fTrc,'(A)') Msg
+                if(idebug>1) write(fTrc,'(A)') Msg
                 return !------------------------------------------return
               !
             end select
             !
           end do
           !
-          if(ABS(rDelta)<Epsilon(rDelta)) then
+          if(abs(rDelta)<Epsilon(rDelta)) then
             Ok=  .false.
             Msg=                       "In PATH LOGK, Delta not defined"
-            if(iDebug>0) write(fTrc,'(A)') Msg
+            if(idebug>1) write(fTrc,'(A)') Msg
             return !----------------------------------------------return
           end if
-          if(ABS(rFinal-rBegin) < 0.1) rFinal= rBegin +One
+          if(abs(rFinal-rBegin) < 0.1) rFinal= rBegin +One
           rDelta= SIGN(rDelta,rFinal-rBegin)
           !-- function SIGN(a,b) returns abs(a)*sign(b) --
           !
@@ -954,7 +953,7 @@ subroutine Path_ReadParam_new( &
           vTmp(I)= rBegin
           do
             if(I>DimMax) exit
-            if(ABS(vTmp(I)-rBegin)>ABS(rFinal-rBegin)) exit
+            if(abs(vTmp(I)-rBegin)>abs(rFinal-rBegin)) exit
             I=I+1
             vTmp(I)= vTmp(I-1) + rDelta
             !!print '(I3,G15.6)',I,vTmp(i)
@@ -981,7 +980,7 @@ subroutine Path_ReadParam_new( &
           !   & TdgKAdd,PbarAdd,Ok)
           !
           !   if(.not. Ok) then
-          !     !~ call Warning_("SYSTEM.MIX NOT FOUND")
+          !     !! call Warning_("SYSTEM.MIX NOT FOUND")
           !     deallocate(vCpnAdd)
           !     Msg= "SYSTEM.MIX NOT FOUND"
           !     return
@@ -999,7 +998,7 @@ subroutine Path_ReadParam_new( &
             if(Z/=0) then
               Ok=  .false.
               Msg=     "In PATH ADD, "//trim(W)//"= should be neutral !!!"
-              if(iDebug>0) write(fTrc,'(A)') Msg
+              if(idebug>1) write(fTrc,'(A)') Msg
               return !--------------------------------------------return
             end if
             !
@@ -1015,12 +1014,12 @@ subroutine Path_ReadParam_new( &
                 fOk= .false.
               end if
             end if
-            !----------------/ compute stoikio coeff of redox component --
+            !-----------------/ compute stoikio coeff of redox component
             !
             if(.not.fOk) then
               Ok=  .false.
               Msg= "In PATH ADD, "//trim(W)//"= problem in stoikiometry ?"
-              if(iDebug>0) write(fTrc,'(A)') Msg
+              if(idebug>1) write(fTrc,'(A)') Msg
               return !--------------------------------------------return
             end if
             !
@@ -1058,7 +1057,7 @@ subroutine Path_ReadParam_new( &
               if(BuildTable) then
                 Ok=  .false.
                 Msg=          trim(W)//"= unknown keyword in PATH ADD"
-                if(iDebug>0) write(fTrc,'(A)') Msg
+                if(idebug>1) write(fTrc,'(A)') Msg
                 return !------------------------------------------return
               else
                 do
@@ -1090,8 +1089,8 @@ subroutine Path_ReadParam_new( &
             do I=1,nCp
               if(vStAdd(I)/=0.D0) print '(I3,G15.6)',I,vStAdd(I)
             end do
-            !~ print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
-            !~ & rAddBegin,rAddFinal,rAddRatio,rAddDelta
+            !! print '(A,3G15.6,I3)',"rAddBegin,rAddFinal,rAddRatio,rAddDelta", &
+            !! & rAddBegin,rAddFinal,rAddRatio,rAddDelta
             call Pause_
           end if
           !-------------------------------------------------------/debug
@@ -1170,8 +1169,8 @@ subroutine Path_ReadParam_new( &
         !!!   end if
         !!! !_MIX
         !
-        !------------------------------------------------- case "CHG" --
-        case("CHG","EVP")
+        !---------------------------------------------------- case "CHG"
+        case("CHG")
           !
           select case(trim(W))
           !
@@ -1186,7 +1185,7 @@ subroutine Path_ReadParam_new( &
             if(I<=0) then
               Ok=  .false.
               Msg= "PATH CHANGE: Component "//trim(W)//" Not in the system .."
-              if(iDebug>0) write(fTrc,'(A)') Msg
+              if(idebug>1) write(fTrc,'(A)') Msg
               return !--------------------------------------------return
             end if
           !
@@ -1231,7 +1230,7 @@ subroutine Path_ReadParam_new( &
                   if(BuildTable) then
                     Ok=  .false.
                     Msg=     trim(W)//"= unknown keyword in PATH CHANGE"
-                    if(iDebug>0) write(fTrc,'(A)') Msg
+                    if(idebug>1) write(fTrc,'(A)') Msg
                     return !--==========================================
                   else
                     nStep= 0
@@ -1261,10 +1260,10 @@ subroutine Path_ReadParam_new( &
                   if(rRatio > 3.0D0  ) rRatio= 3.00D0
                   if(rFinal < rBegin ) rRatio= One/rRatio
                 else !MOBILE or BUFFER or DELTA
-                  if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                  if(rDelta==Zero)  rDelta= abs(rFinal-rBegin) /20.0D0
                   !-> default value, in case not in input
-                  if(rFinal>rBegin) rDelta= ABS(rDelta)
-                  if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                  if(rFinal>rBegin) rDelta= abs(rDelta)
+                  if(rFinal<rBegin) rDelta=-abs(rDelta)
                 end if
                 !------------------------------------------------------/
               else
@@ -1272,16 +1271,16 @@ subroutine Path_ReadParam_new( &
                 if(.not. PathAdd) then
                   Ok=  .false.
                   Msg=           "PATH CHANGE: for (T,P) only DELTA ..."
-                  return !----------------------------------------return
+                  return !--------------------------------------return--
                 end if
-                if(rDelta==Zero)  rDelta= ABS(rFinal-rBegin) /20.0D0
+                if(rDelta==Zero)  rDelta= abs(rFinal-rBegin) /20.0D0
                 !-> default value, in case not in input
-                if(rFinal>rBegin) rDelta= ABS(rDelta)
-                if(rFinal<rBegin) rDelta=-ABS(rDelta)
+                if(rFinal>rBegin) rDelta= abs(rDelta)
+                if(rFinal<rBegin) rDelta=-abs(rDelta)
                 !------------------------------------------------------/
               end if
               !
-              if(iDebug>0) write(fTrc,'(I3,A20,4G12.3)') &
+              if(idebug>1) write(fTrc,'(I3,A20,4G12.3)') &
               & I," =Begin,Final,Step= ",rBegin,rFinal,rDelta,rRatio
               !
               nStep= 0
@@ -1305,7 +1304,7 @@ subroutine Path_ReadParam_new( &
               end do
               vNstep(I)= nStep-1
             end if
-            !--------------------------------------------/ BuildTable --
+            !-----------------------------------------------/ BuildTable
             !
             if(I<=nCp) then
               !if(vCpn(I)%Statut=="INERT") then
@@ -1334,7 +1333,7 @@ subroutine Path_ReadParam_new( &
             ! end if
             !-----------------------------/add amounts in SYSTEM.ROCK --
             !
-            if(iDebug>0) then
+            if(idebug>1) then
               write(fTrc,'(I3,A1)',advance="no") I,t_
               do J= 1,vNstep(I)
                 write(fTrc,'(G12.3,A1)',advance="no") tTmp(I,J),t_
@@ -1375,14 +1374,14 @@ subroutine Path_ReadParam_new( &
                   case("INITIAL")
                     vPhasBegin(I)=K
 
-                    if(iDebug>0) write(fTrc,'(4A)') &
+                    if(idebug>1) write(fTrc,'(4A)') &
                     & "PhasBegin=",vMixFas(K)%Name, &
                     & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
 
                   case("FINAL")
                     vPhasFinal(I)=K
 
-                    if(iDebug>0) write(fTrc,'(4A)') &
+                    if(idebug>1) write(fTrc,'(4A)') &
                     & "PhasFinal=",vMixFas(K)%Name, &
                     & "-> Model=",vMixModel(vMixFas(K)%iModel)%Name
 
@@ -1418,7 +1417,7 @@ subroutine Path_ReadParam_new( &
             !
             if(vPhasBegin(I)*vPhasFinal(I)==0) then
               Ok= .false.
-              Msg=    "Problem in reading PATH conditions on solid solutions ??"
+              Msg= "Problem in reading PATH conditions on mixtures ??"
               return !--------------------------------------------return
             end if
             !
@@ -1430,7 +1429,7 @@ subroutine Path_ReadParam_new( &
         end select
       end do DoBlock
       !---------------------------------------/ read the path parameters
-      !! if(iDebug>0) call Pause_
+      !! if(idebug>1) call Pause_
     end if !Cod=="PATH"
     !
   end do DoFile
@@ -1464,7 +1463,7 @@ subroutine Path_ReadParam_new( &
   if(allocated(vStAdd))  deallocate(vStAdd)
   !
   if(iDebug>1) call Pause_
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Path_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Path_Read"
   
 end subroutine Path_ReadParam_new
 

@@ -132,7 +132,7 @@ subroutine c_ass_s(var,expr)
   ! iFin the string iStr longer than the character truncate the string on the right 
   ! iFin the string iStr shorter the character iStr blank padded on the right 
   integer                         :: lc,ls,i 
-  lc= len(var); ls= MIN(len(expr),lc) 
+  lc= len(var); ls= min(len(expr),lc) 
   do i= 1,ls;    var(i:i)= expr%chars(i); end do 
   do i= ls+1,lc; var(i:i)= blank        ; end do 
 end subroutine c_ass_s 

@@ -17,33 +17,33 @@ subroutine Equil_Jacobian(vX,tJac)
 !--
   use M_Safe_Functions
   !
-  use M_Basis_Vars,only: isW,MWsv
-  use M_Basis_Vars,only: tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas
-  use M_Basis_Vars,only: vOrdPr,vOrdAq,nAx,nAs,nCi
+  use M_Global_Vars,only: SolModel
+  use M_Basis_Vars, only: tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas
+  use M_Basis_Vars, only: vOrdPr,vOrdAq,nAx,nAs,nCi
   !
   use M_Equil_Vars,only: vMolal,vLnAct,vLnGam,vMolSec
-  !~ use M_Equil_Vars,only: vFasYes
+  !! use M_Equil_Vars,only: vFasYes
   use M_Equil_Vars,only: cEquMode
   use M_Equil_Vars,only: vAffScale,vFasAff,dXi
-  !~ use M_Equil_Vars,only: OsmoSv,UseOsmoSv
+  !! use M_Equil_Vars,only: OsmoSv,UseOsmoSv
   use M_Equil_Vars,only: DebNewt,DebJacob
   use M_Equil_Vars,only: LogForAqu,DirectSub
   use M_Equil_Vars,only: tAlfEq,tNuEq,nEquFas
-  !
+  !---------------------------------------------------------------------
   real(dp),dimension(:),                intent(in) :: vX
   real(dp),dimension(size(vX),size(vX)),intent(out):: tJac
-  !
+  !---------------------------------------------------------------------
   real(dp),dimension(1:nCi):: dRatdX
-  integer :: iCi,jCi,iAs,iAx,I
+  integer :: iCi,jCi,iAs,iAx,I,isW
+  real(dp):: MWsv
   real(dp):: X
   real(dp):: AffScale
-  ! real(dp):: SumXi !sum of solute mole nrs, used when working with osmo'coeff
   real(dp),allocatable:: vLnXf(:),vXf(:)
   real(dp),allocatable:: vSumNuAs(:)
   !
   integer:: nF !nr of aqu'species in array vX of residual
   integer:: nM !nr of non-aqu'species in array vX of residual
-  !
+  !---------------------------------------------------------------------
   tJac=  Zero
   !
   !if(DirectSub) call Stop_("No Analytic Jacobian ...")
@@ -52,6 +52,8 @@ subroutine Equil_Jacobian(vX,tJac)
   else                ;   nF= nCi +nAs
   end if
   !
+  isW= SolModel%iSolvent
+  MWSv = SolModel%MolWeitSv
   nM= nEquFas
   !
   allocate(vXf(nF))  ;  vXf= Zero
@@ -87,10 +89,10 @@ subroutine Equil_Jacobian(vX,tJac)
       !--- solvent
       tJac(iCi,1)= tAlfPr(iCi,1)*vXf(1)
       !-------- prim'mobile'aqu'species -> add corresponding moles of Solvent --
-      !~ if(nAx>0) &
-      !~ & tJac(iCi,1)= tJac(iCi,1) &
-      !~ & + vXf(isW) *MWSv &
-      !~ &   *dot_product(tAlfPr(iCi,nCi+1:nCi+nAx),vMolal(vOrdPr(nCi+1:nCi+nAx)))
+      !! if(nAx>0) &
+      !! & tJac(iCi,1)= tJac(iCi,1) &
+      !! & + vXf(isW) *MWSv &
+      !! &   *dot_product(tAlfPr(iCi,nCi+1:nCi+nAx),vMolal(vOrdPr(nCi+1:nCi+nAx)))
       do iAx=1,nAx
         tJac(iCi,1)= tJac(iCi,1) &
         &          + vXf(isW) *MWSv *tAlfPr(iCi,nCi+iAx) *vMolal(vOrdPr(nCi+iAx))
@@ -121,17 +123,17 @@ subroutine Equil_Jacobian(vX,tJac)
     end do
     !---/"internal" prim'species --
     !
-    !~ if(bMolal) then
-      !~ tJac(isW,:)= Zero
-      !~ tJac(isW,1)= vXf(isW)
-    !~ end if
+    !! if(bMolal) then
+      !! tJac(isW,:)= Zero
+      !! tJac(isW,1)= vXf(isW)
+    !! end if
     !
     if(DirectSub) then
       !
     else
       !--- rows nCi+1:nAq- sec'species --
       do iAs=1,nAs
-        tJac(nCi+iAs,1)= One-SUM(tNuAs(iAs,2:nCi)) !for Solvent
+        tJac(nCi+iAs,1)= One-sum(tNuAs(iAs,2:nCi)) !for Solvent
         tJac(nCi+iAs,2:nCi)=     tNuAs(iAs,2:nCi)  !for other aqu.species
       end do
       do iAs=1,nAs
@@ -140,24 +142,24 @@ subroutine Equil_Jacobian(vX,tJac)
       !---/
     end if
     !
-    !~ if(UseOsmoSv) then
-      !~ !
-      !~ SumXi= SUM(vXf(1:nAs))-vXf(isW)
-      !~ !
-      !~ do iAs=1,nAs !add terms for osmotic coeff'
-        !~ tJac(nCi+iAs,1  )= tJac(nCi+iAs,1) &
-        !~ &                + tNuAs(iAs,isW) *OsmoSv *SumXi /vXf(isW) != d/dXw(LnActW)
-        !~ do I=2,nAs !for other aqu.species
-          !~ tJac(nCi+iAs,I)= tJac(nCi+iAs,I) &
-          !~ &              - tNuAs(iAs,isW) *OsmoSv *vXf(I)/vXf(isW) != d/dXi(LnActW)
-        !~ end do
-      !~ end do
-      !~ !
-    !~ end if
+    !! if(UseOsmoSv) then
+      !! !
+      !! SumXi= sum(vXf(1:nAs))-vXf(isW)
+      !! !
+      !! do iAs=1,nAs !add terms for osmotic coeff'
+        !! tJac(nCi+iAs,1  )= tJac(nCi+iAs,1) &
+        !! &                + tNuAs(iAs,isW) *OsmoSv *SumXi /vXf(isW) != d/dXw(LnActW)
+        !! do I=2,nAs !for other aqu.species
+          !! tJac(nCi+iAs,I)= tJac(nCi+iAs,I) &
+          !! &              - tNuAs(iAs,isW) *OsmoSv *vXf(I)/vXf(isW) != d/dXi(LnActW)
+        !! end do
+      !! end do
+      !! !
+    !! end if
 
   else
     !-------------------------------------------------- NOT LogForAqu --
-    !~ if(DirectSub) call Stop_("No Analytic Jacobian ...")
+    !! if(DirectSub) call Stop_("No Analytic Jacobian ...")
     !
     !------------------------------------------ material conservation --
     do iCi=1,nCi
@@ -193,11 +195,11 @@ subroutine Equil_Jacobian(vX,tJac)
       !-------------------------------------- sec'species equilibrium --
       !------------------------ deriv' second'species vs prim'species --
       do iAs=1,nAs
-        !~ tJac(nCi+iAs,1)= vMolal(iAs)*(vX(isW)*MWSv) *(One -vSumNuAs(iAs)) /vX(isW)
+        !! tJac(nCi+iAs,1)= vMolal(iAs)*(vX(isW)*MWSv) *(One -vSumNuAs(iAs)) /vX(isW)
         tJac(nCi+iAs,1)= vMolSec(iAs) *(One -vSumNuAs(iAs)) /vX(isW)
         do iCi=1,nCi
           if(iCi/=isW .and. tNuAs(iAs,iCi)/= 0.0D0) &
-          !~ & tJac(nCi+iAs,iCi)= vMolal(iAs)*(vX(isW)*MWSv) *tNuAs(iAs,iCi) /vX(iCi)
+          !! & tJac(nCi+iAs,iCi)= vMolal(iAs)*(vX(isW)*MWSv) *tNuAs(iAs,iCi) /vX(iCi)
           & tJac(nCi+iAs,iCi)= vMolSec(iAs) *tNuAs(iAs,iCi) /vX(iCi)
         end do
       end do
@@ -221,18 +223,18 @@ subroutine Equil_Jacobian(vX,tJac)
           tJac(iCi,nF+I)= tAlfEq(iCi,I)
         end do
         if(LogForAqu) then
-          tJac(nF+I,isW)=   SUM(tNuEq(I,2:nCi))
+          tJac(nF+I,isW)=   sum(tNuEq(I,2:nCi))
           tJac(nF+I,2:nCi)= - tNuEq(I,2:nCi)
         else
-          tJac(nF+I,isW)=   SUM(tNuEq(I,2:nCi)) / vX(isW)
+          tJac(nF+I,isW)=   sum(tNuEq(I,2:nCi)) / vX(isW)
           tJac(nF+I,2:nCi)= - tNuEq(I,2:nCi) / vX(2:nCi)
         end if
       end do
 
     case("EQ1")
       do I=1,nEquFas
-        AffScale= SUM(ABS(tNuEq(I,:)))
-        dRatdX(isW)= - SUM(tNuEq(I,2:nCi)) &
+        AffScale= sum(abs(tNuEq(I,:)))
+        dRatdX(isW)= - sum(tNuEq(I,2:nCi)) &
         &            *FSafe_Exp(- vFasAff(I)/AffScale) &
         &            /AffScale
         dRatdX(2:nCi)= tNuEq(I,2:nCi) &

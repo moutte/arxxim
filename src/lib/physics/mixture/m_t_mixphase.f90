@@ -85,7 +85,7 @@ integer function MixPhase_Index(V,Str)
   !
   I=0
   do
-    I=I+1 !; if(iDebug>0) write(fTrc,'(A)') vCpn(I)%SpName
+    I=I+1 !; if(idebug>1) write(fTrc,'(A)') vCpn(I)%SpName
     if(trim(Str)==trim(V(I)%Name)) then
       MixPhase_Index= I
       exit
@@ -105,7 +105,7 @@ subroutine MixPhase_Zero(S)
   S%vLPole=  .false.
   S%vXPole=  Zero
   !S%vXAtom=  Zero
-  !~ S%vLnAct=  Zero
+  !! S%vLnAct=  Zero
   S%vLIdeal= Zero
   S%vLGam=   Zero
   !! S%vLMarg=  Zero
@@ -128,7 +128,7 @@ subroutine MixPhase_NormCompo(Mix)
   where(.not. Mix%vLPole) Mix%vXPole=Zero
   !
   vX(1:MaxPole)=Mix%vXPole(1:MaxPole)
-  Y= SUM(vX(1:MaxPole),MASK=Mix%vLPole(1:MaxPole))
+  Y= sum(vX(1:MaxPole),MASK=Mix%vLPole(1:MaxPole))
   !
   if(Y>Eps) Mix%vXPole(1:MaxPole)=vX(1:MaxPole)/Y
   !
@@ -245,7 +245,7 @@ real(dp) function MixPhase_GibbsRT( & !
   type(T_MixModel),intent(in):: MM
   type(T_MixPhase),intent(in):: Fas !phase
   !
-  !~ real(dp),allocatable:: vXAtom(:)
+  !! real(dp),allocatable:: vXAtom(:)
   real(dp):: Gmix,Gmeca
   integer :: I
   !
@@ -264,7 +264,7 @@ real(dp) function MixPhase_GibbsRT( & !
   end do
   !----------------------------------------------/"mechanical" mixing --
   !
-  !~ if(allocated(vXAtom)) deallocate(vXAtom)
+  !! if(allocated(vXAtom)) deallocate(vXAtom)
   !
   MixPhase_GibbsRT= Gmix +Gmeca
   !
@@ -290,7 +290,7 @@ subroutine MixPhase_CalcActivs( & !
   !
   real(dp),allocatable:: vLGam(:),vLIdeal(:),vLnAct(:) !!,vLMarg(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)' ) "< MixPhase_CalcActivs"
+  if(idebug>1) write(fTrc,'(/,A)' ) "< MixPhase_CalcActivs"
   !
   N= size(F%vLnAct)
   allocate(vLGam(N),vLIdeal(N),vLnAct(N)) !!,vLMarg(N)
@@ -312,7 +312,7 @@ subroutine MixPhase_CalcActivs( & !
   !
   deallocate(vLGam,vLIdeal,vLnAct) !!,vLMarg
   !
-  if(iDebug>0) write(fTrc,'(A,/)' ) "</ MixPhase_CalcActivs"
+  if(idebug>1) write(fTrc,'(A,/)' ) "</ MixPhase_CalcActivs"
   !
 end subroutine MixPhase_CalcActivs
 
@@ -507,7 +507,7 @@ end module M_T_MixPhase
 !   !
 !   vLnAct(1:MM%NPole)= vLIdeal(1:MM%NPole) + vLGam(1:MM%NPole)
 !   !
-!   if(iDebug>0) then !------------------------------------------ trace --
+!   if(idebug>1) then !------------------------------------------ trace --
 !     write(fTrc,'(A)') "MixPhase_CalcActivs -> X,ActIdeal,Gamma,Activ"
 !     write(fTrc,'(4A)') "Phase=",F%Name, "MixModel=",MM%Name
 !     do iP=1,MM%NPole

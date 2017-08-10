@@ -28,20 +28,20 @@ subroutine CheckSingular( & !"NR"
   AA(:,:)= A(1:N,1:N)
   !N= size(A,1)
   !
-  W=MAXVAL(ABS(AA),DIM=2) !Loop over rows to get the implicit scaling information
-  if (ANY(W==Zero)) then !there is at least one row with only Zeros ...
+  W=maxval(abs(AA),DIM=2) !Loop over rows to get the implicit scaling information
+  if (any(W==Zero)) then !there is at least one row with only Zeros ...
     Singular= .true.
     return
   end if
   W= One/W !Save the scaling.
   do J=1,N
-    iMax= (J-1) + iMaxLoc_R(W(J:N)*ABS(AA(J:N,J))) !Find the pivot row.
+    iMax= (J-1) + iMaxLoc_R(W(J:N)*abs(AA(J:N,J))) !Find the pivot row.
     if(J /= iMAx) then !need to interchange rows ?
       call Swap_RV(AA(iMax,:),AA(J,:)) !interchange,
       W(iMax)=W(J) !also interchange the scale factor
     end if
     !! if (AA(J,J)==Zero) then
-    if (ABS(AA(J,J))<Tiny) then
+    if (abs(AA(J,J))<Tiny) then
       Singular=.true.
       return
     end if
@@ -74,14 +74,14 @@ subroutine LU_Decomp( & !"NR"
   if (size(A,1)/=N .or. size(A,2)/=N) call Stop_("error on dimensions in LU_Decomp")
   !
   D=One !No row interchanges yet.
-  W=MAXVAL(ABS(A),DIM=2) !Loop over rows to get the implicit scaling information
-  if (ANY(W==Zero)) then !there is at least one row with only Zeros ...
+  W=maxval(abs(A),DIM=2) !Loop over rows to get the implicit scaling information
+  if (any(W==Zero)) then !there is at least one row with only Zeros ...
     Singular=.true.
     return
   end if
   W=One/W !Save the scaling.
   do J=1,N
-    IMAX=(J-1)+iMaxLoc_R(W(J:N)*ABS(A(J:N,J))) !Find the pivot row.
+    IMAX=(J-1)+iMaxLoc_R(W(J:N)*abs(A(J:N,J))) !Find the pivot row.
     if(J /= IMAX) then !______________Do we need to interchange rows ?
       call Swap_RV(A(IMAX,:),A(J,:)) !interchange,
       D=-D !__________________________and change the parity of d.

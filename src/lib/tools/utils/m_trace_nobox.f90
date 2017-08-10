@@ -15,6 +15,7 @@ module M_Trace
   !
   !// parameterS
   character(len=20), parameter :: Default_TraceFileName =  "debug_all.log"
+  character(len=9),  parameter :: Default_ErrorFileName =  "error.log"
 
   !// public data
   character,parameter,public:: T_         = Achar(9)
@@ -25,6 +26,7 @@ module M_Trace
   integer,public:: iDebug= -1
   integer,public:: fTrc= 0
   integer,public:: fHtm= 0
+  integer,public:: fError= 0
   logical,public:: DebugCoores=.false.
 
   logical,public:: LInfo= .false.
@@ -47,7 +49,6 @@ module M_Trace
   !
   !// private data
   character(len=80):: TraceFileName = Default_TraceFileName
-  !integer:: fError= 0
   
 contains
 
@@ -124,7 +125,7 @@ contains
     implicit none
     character(len=*),intent(in)::Str
     !--
-    if (iDebug>0) call Message_("Debug",Str)
+    if (idebug>1) call Message_("Debug",Str)
 
   end subroutine Debug_
 
@@ -162,12 +163,15 @@ contains
     !--
     call Message_("Program Stop",Str)
     
-    !if(fError==0) then
-    !  call GetUnit_Trace(fError)
-    !  open(fError,file="error.log")
-    !end if
-    !write(fError,'(A)') trim(Str)
-    
+    if(iDebug>0) then
+      if(fError==0) then
+        call GetUnit_Trace(fError)
+        open(fError,file="error.log")
+      end if
+      write(fError,'(A)') trim(Str)
+      close(fError)
+    end if
+
     stop "program stop" 
     
   end subroutine Stop_

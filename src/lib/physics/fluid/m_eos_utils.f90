@@ -85,7 +85,7 @@ subroutine CUBIC(B,C,D,X1,X2,X2I,X3)
   else
     Q= (B*B*B*Two/27.D0 -B*C/3.0D0 +D) /Two
     P= (C    *3.0_dp    -B*B         ) /9.0D0
-    FF=ABS(P)
+    FF=abs(P)
     R=SQRT(FF)
     FF=R*Q
     if (FF < Zero) R=-R
@@ -136,7 +136,7 @@ subroutine KUBIK(b,c,d,x1,x2,x2i,x3)
   end if
   q=  (2.0*f_Cube(b)/27.0 - b*c/3.0 + d)/2.0
   p=  (3.0*c - b*b)/9.0
-  ff=  ABS(p)
+  ff=  abs(p)
   r=  SQRT(ff)
   ff=  r*q
   if (ff<Zero) r=  -r

@@ -20,12 +20,12 @@ module M_T_Component
     integer :: iSpc
     real(dp):: Factor
     !
-    character(len=23):: namSol
+    character(len=23):: namMix
     ! namSol= name of phase controlling this component (used for mobile cpn') 
     !   for an aqueous species or a pure species, namSol="Z" 
-    !   for a non aqueous solution, %namSol is the name of the solid or gas solution phase 
+    !   for a non aqueous mixture, %namMix is the name of the solid or gas mixture phase 
     !iMix, iPol = used for multi-solution system (e.g. SS-AS)
-    !-> iFas is calculated from %namSol, c%iFas=MixPhase_Index(IN=vMixFas,IN=c%namSol) 
+    !-> iFas is calculated from %namMix, c%iFas=MixPhase_Index(IN=vMixFas,IN=c%namMix) 
     integer :: iMix !index of "controlling" mixture phase in vMixPhase (iFas=0 for aqu. or pure species)
     integer :: iPol !index of the species in the end-member list of that phase 
     ! 
@@ -34,7 +34,7 @@ module M_T_Component
     ! 
   end type T_Component
   !
-  real(dp):: CpnMolMinim= 1.D-16
+  real(dp):: CpnMolMinim= 1.0D-12 !1.D-16
  
 contains 
 
@@ -49,7 +49,7 @@ subroutine Component_Zero(C)
   C%iEle=     0
   C%iSpc=     0
   C%Factor=   1.0_dp
-  C%namSol=  "Z"
+  C%namMix=  "Z"
   C%iMix=     0
   C%iPol=     0
   C%Mole=     Zero
@@ -93,7 +93,7 @@ subroutine Component_Print(f,vEle,vSpc,C)
   write(f,'(3(A,1X),2(A15,1X),2G12.3)') & 
   &  C%NamCp, vEle(C%iEle)%NamEl,C%Statut, &
   &  vSpc(C%iSpc)%NamSp, &
-  &  C%NamSol, &
+  &  C%namMix, &
   &  C%Mole,C%LnAct
   
   return
@@ -106,12 +106,12 @@ subroutine Component_Stoikio(vEle,ieOx,Cpn,fOk)
 !-- NEW: stoichiometry saved as S%vStoikCp
 !--
   use M_T_Element,only: T_Element,Formula_Read
-  !
+  !---------------------------------------------------------------------
   type(T_Element),  intent(in)::    vEle(:)
   integer,          intent(in)::    ieOx
   type(T_Component),intent(inout):: Cpn
   logical,          intent(out)::   fOk
-  !
+  !---------------------------------------------------------------------
   integer:: vStoik(1:size(vEle))
   integer:: ZSp,nDiv,nEl,ZExc
   !

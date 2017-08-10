@@ -57,7 +57,7 @@ subroutine MixPhase_Minimize
     return
   end if
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhase_Minimize"
+  if(idebug>1) write(fTrc,'(/,A)') "< MixPhase_Minimize"
   !
   if(iDebug>2) then
     call GetUnit(ff)
@@ -123,7 +123,7 @@ subroutine MixPhase_Minimize
     TdgK= TdgK +Tstp
     if(TdgK -T_CK > Tmax) exit DoTP
     
-    !~ pause
+    !! pause
   
   end do DoTP
   !
@@ -138,7 +138,7 @@ subroutine MixPhase_Minimize
   write(6,'(A)') 'resultS IN out_mixminim.log'
   call Pause_
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "</ MixPhase_Minimize"
+  if(idebug>1) write(fTrc,'(/,A)') "</ MixPhase_Minimize"
   !
 end subroutine MixPhase_Minimize
 
@@ -275,7 +275,7 @@ subroutine MixPhase_Test(Cod)
   !
   real(dp),allocatable:: vXAtom(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhase_Test "//trim(Cod)
+  if(idebug>1) write(fTrc,'(/,A)') "< MixPhase_Test "//trim(Cod)
   !
   TdgK= Tref ! default
   Pbar= Pref ! values
@@ -331,7 +331,7 @@ subroutine MixPhase_Test(Cod)
     Pbar= vTPpath(jTP)%Pbar
     TdgK= vTPpath(jTP)%TdgC +T_CK
     !
-    if(iDebug>0) write(*,'(I3,1X,G12.3,1X,G12.3)') jTP,Pbar,TdgK
+    if(idebug>1) write(*,'(I3,1X,G12.3,1X,G12.3)') jTP,Pbar,TdgK
     !
     !----------------- update values of GR for the end-members at T,P --
     do I=1,S%NPole
@@ -412,7 +412,7 @@ subroutine MixPhase_Test(Cod)
   !
   deallocate(vTPpath)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ MixPhase_Test_"//trim(Cod)
+  if(idebug>1) write(fTrc,'(A,/)') "</ MixPhase_Test_"//trim(Cod)
   !
   return
 end subroutine MixPhase_Test
@@ -502,8 +502,8 @@ subroutine WriteResults(S)
   if(S%Model==Mix_Site) close(fAtom)
   !-------------------------------------------------- / write resultS --
   !
-  if(iDebug>0) write(fTrc,'(A)') "results in files "//trim(DirOut)//"_mix_*.restab"
-  if(iDebug>0) print      '(A)', "results in files "//trim(DirOut)//"_mix_*.restab"
+  if(idebug>1) write(fTrc,'(A)') "results in files "//trim(DirOut)//"_mix_*.restab"
+  if(idebug>1) print      '(A)', "results in files "//trim(DirOut)//"_mix_*.restab"
   if(iDebug>2) call Pause_
   !
 end subroutine WriteResults

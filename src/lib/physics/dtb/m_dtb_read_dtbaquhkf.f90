@@ -98,7 +98,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   !---------------------------------------------------------------------
   ! if (N>1) LisCur => LisAquHkf
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< DtbReadAquHKF"
+  if(idebug>1) write(fTrc,"(/,A)") "< DtbReadAquHKF"
   !
   !--------------------------------------------------------------- trace
   FF= 0
@@ -283,9 +283,9 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       !  call Str_Upper(W)  ;  CodFitting= trim(W)
       !end if
 
-      !~ if(I==vifield(6)) call WrdToReal(W,X) ! size
-      !~ if(I==vifield(7)) call WrdToReal(W,X) ! VOLUME
-      !~ if(I==vifield(8)) call WrdToReal(W,X) ! DENSITY
+      !! if(I==vifield(6)) call WrdToReal(W,X) ! size
+      !! if(I==vifield(7)) call WrdToReal(W,X) ! VOLUME
+      !! if(I==vifield(8)) call WrdToReal(W,X) ! DENSITY
 
     end do
     !
@@ -312,7 +312,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !! if (FilCode(1:5)=="OBIGT") then
     !!   CodFormula="SCFORM"
     !!   !
-    !!   call LinToWrd(L,W,EoL); M%Name=trim(W) !if(iDebug>0) write(fTrc,"(A)") M%Name
+    !!   call LinToWrd(L,W,EoL); M%Name=trim(W) !if(idebug>1) write(fTrc,"(A)") M%Name
     !!   call LinToWrd(L,W,EoL) !skip ABBRV
     !!   call LinToWrd(L,W,EoL,"NO") !-> compact formula, character case is conserved :!!
     !!   !
@@ -337,8 +337,8 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !!   call LinToWrd(L,W,EoL) !skip ABREV
     !!   call LinToWrd(L,W,EoL) !skip NAME
     !!   !
-    !!   call LinToWrd(L,W,EoL); M%Name=trim(W) !if(iDebug>0) write(fTrc,"(A)") M%Name
-    !!   call LinToWrd(L,W,EoL); M%Formula=trim(W) !if(iDebug>0) write(fTrc,"(A)") M%Formula
+    !!   call LinToWrd(L,W,EoL); M%Name=trim(W) !if(idebug>1) write(fTrc,"(A)") M%Name
+    !!   call LinToWrd(L,W,EoL); M%Formula=trim(W) !if(idebug>1) write(fTrc,"(A)") M%Formula
     !!   call LinToWrd(L,W,EoL) !DATE
     !!   call LinToWrd(L,W,EoL) !REF
     !!   !
@@ -430,7 +430,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   !
   if(FF>0) close(FF)
   !
-  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbReadAquHKF"
+  if(idebug>1) write(fTrc,"(A,/)") "</ DtbReadAquHKF"
   !
   return
 end subroutine DtbAquHKF_Read

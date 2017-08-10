@@ -25,7 +25,7 @@ logical function Equil_Converge(vF,vTolF)
 !--
   real(dp),intent(in):: vF(:),vTolF(:)
   !
-  Equil_Converge= all(ABS(vF(:)*vTolCoef(:))<vTolF(:))
+  Equil_Converge= all(abs(vF(:)*vTolCoef(:))<vTolF(:))
   !
 end function Equil_Converge
 
@@ -37,14 +37,13 @@ function Equil_Residual(vX)
   use M_Safe_Functions
   use M_IOTools
   !
-  use M_Global_Vars,only: vSpc
-  use M_Basis_Vars,only: &
-  & iOx,isW,MWSv, &
-  & tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas, &
-  & vOrdPr,vOrdAq,vOrdAs, &
-  & nCi,nAx,nAs,nMx
+  use M_Global_Vars,only: vSpc,SolModel
   !
-  !~ use M_Equil_Vars,only: OsmoSv,UseOsmoSv
+  use M_Basis_Vars,only: tAlfPr,tAlfAs,tNuAs,tAlfFs,tNuFas
+  use M_Basis_Vars,only: vOrdPr,vOrdAq,vOrdAs
+  use M_Basis_Vars,only: nCi,nAx,nAs,nMx
+  !
+  !! use M_Equil_Vars,only: OsmoSv,UseOsmoSv
   use M_Equil_Vars,only: vMolal,vMolSec,vFasMole,vLnAct,vLnGam,vTotS
   use M_Equil_Vars,only: vFasAff,vFasRat,vAffScale
   use M_Equil_Vars,only: vDeltaG_Fs,vDGapp_As
@@ -63,12 +62,15 @@ function Equil_Residual(vX)
   integer:: nF !nr of aqu'species in array vX of residual
   integer:: nM !nr of non-aqu'species in array vX of residual
   !
-  integer :: iAs,iAx,iCi,I,J
-  real(dp):: LnActW,X !, xAff !ln(Solmodel_activity)
+  integer :: iAs,iAx,iCi,I,J,isW
+  real(dp):: LnActW,X,MWSv !, xAff !ln(Solmodel_activity)
   real(dp):: AffScale
   !---------------------------------------------------------------------
   if(iDebug>2) nEvalFunc= nEvalFunc +1
 
+  isW= SolModel%iSolvent
+  MWSv = SolModel%MolWeitSv
+  
   vFunc=Zero
 
   if(DirectSub) then  ;   nF= nCi
@@ -92,9 +94,6 @@ function Equil_Residual(vX)
     vXf(1:nF)= vX(1:nF)
     vLnXf(1:nF)= FSafe_vLog(vX(1:nF))
   end if
-  !if(iOx/=0) then
-  !  vTotS(iOx)= SUM(tStoikio(iOx,1:nAq)*vSpc(1:nAq)%Mole)
-  !end if
   !
   ! alkalinity
   ! Alc = HCO3- + 2*CO3-2 + OH- - H+
@@ -122,20 +121,20 @@ function Equil_Residual(vX)
   !
   ! -> for Solvent,
   !   vLnAct(isW) = vLnGam(isW) &
-  !               + vX(isW)/( SUM(mole numbers all species, including Solvent) )
+  !               + vX(isW)/( sum(mole numbers all species, including Solvent) )
   !
-  ! -> using vLnGam(isW) would need SUM(exp(vX(1:nF)))+SUM(mobileSp)
+  ! -> using vLnGam(isW) would need sum(exp(vX(1:nF)))+sum(mobileSp)
   ! -> for this reason, considering vLnAct(isW) does not change much within Newton,
   !    it is taken constant from its last evaluation by Solmodel_CalcGamma in outer loop
   !
   !!??? preferable to work with fixed OsmoSv, instead of fixed vLnAct(isW) ???
-  !!vLnAct(isW)= - OsmoSv * SUM(#mole_solute_species) / #mole_solvent
-  !!vLnAct(isW)= - OsmoSv * ( SUM(vXf(2:nAs)) /vX(isW) + MWSv*SUM(vMolal(vOrdPr(nCi+1:nCi+nAx))) )
+  !!vLnAct(isW)= - OsmoSv * sum(#mole_solute_species) / #mole_solvent
+  !!vLnAct(isW)= - OsmoSv * ( sum(vXf(2:nAs)) /vX(isW) + MWSv*sum(vMolal(vOrdPr(nCi+1:nCi+nAx))) )
   !!                          "internal" solute'sp     + "external" solute'sp
   !
   !! if(UseOsmoSv) then
   !!   LnActW= - OsmoSv &
-  !!   &       * ( SUM(vXf(2:nAs)) /vXf(1) + MWSv*SUM(vMolal(vOrdPr(nCi+1:nCi+nAx))) )
+  !!   &       * ( sum(vXf(2:nAs)) /vXf(1) + MWSv*sum(vMolal(vOrdPr(nCi+1:nCi+nAx))) )
   !! else
   !!   LnActW= vLnAct(isW)
   !! end if
@@ -171,7 +170,7 @@ function Equil_Residual(vX)
       !
       if(DirectSub) then
         ! X is log(mole nr sec'species)
-        !~ vMolal(iAs)= exp(X) /vX(isW) /MWSv  != molality nrs sec'species
+        !! vMolal(iAs)= exp(X) /vX(isW) /MWSv  != molality nrs sec'species
         vMolSec(iAs)= exp(X) != molality nrs sec'species
       else
         !---------------------- Psi(nCi+iAs)-  equilibrium constraint --
@@ -196,12 +195,12 @@ function Equil_Residual(vX)
         if(iCi/=isW .and. tNuAs(iAs,iCi)/= 0.0D0) X= X *vX(iCi)**tNuAs(iAs,iCi)
         ! & X= X *(vX(iCi)/vX(isW)/MWSv)**tNuAs(iAs,iCi)
       end do
-      !~ X= X /(vX(isW)*MWSv)**vSumNuAs(iAs)
-      !~ vMolal(iAs)= X
+      !! X= X /(vX(isW)*MWSv)**vSumNuAs(iAs)
+      !! vMolal(iAs)= X
       vMolSec(iAs)= X *(vX(isW)*MWSv)**(One -vSumNuAs(iAs))
       !
       !------------------------ Psi(nCi+iAs)-  equilibrium constraint --
-      !~ if(.not. DirectSub) vFunc(nCi+iAs)= X *(vX(isW) *MWSv) - vX(nCi+iAs)
+      !! if(.not. DirectSub) vFunc(nCi+iAs)= X *(vX(isW) *MWSv) - vX(nCi+iAs)
       if(.not. DirectSub) vFunc(nCi+iAs)= vMolSec(iAs) - vX(nCi+iAs)
       !
     end do
@@ -215,7 +214,7 @@ function Equil_Residual(vX)
     do iCi=1,nCi
       !
       !----------------------------------contrib' from primary species--
-      X= SUM(tAlfPr(iCi,1:nCi)*vXf(1:nCi))
+      X= sum(tAlfPr(iCi,1:nCi)*vXf(1:nCi))
       !--/
       do iAs=1,nAs
         if(tAlfAs(iCi,iAs)/= 0.0D0) then
@@ -254,7 +253,7 @@ function Equil_Residual(vX)
     do iCi=1,nCi
       !
       !------------------------------------contrib' from primary species
-      X= SUM(tAlfPr(iCi,1:nCi)*vX(1:nCi))
+      X= sum(tAlfPr(iCi,1:nCi)*vX(1:nCi))
       !
       !----------------------------------contrib' from secondary species
       do iAs=1,nAs
@@ -278,7 +277,7 @@ function Equil_Residual(vX)
     if( DirectSub .and. iDebug>2) then
       write(71,'(A)') "==RESIDUAL============"
       do iAs=1,nAs
-        !~ write(71,'(A,G15.6)') "secc",vMolal(iAs)*(vX(isW)*MWSv)
+        !! write(71,'(A,G15.6)') "secc",vMolal(iAs)*(vX(isW)*MWSv)
         write(71,'(A,G15.6)') "secc",vMolSec(iAs)
       end do
       do iCi=1,nCi
@@ -304,11 +303,11 @@ function Equil_Residual(vX)
     !-------------------------------------------reaction progress method
     case("EQ1") !
       do I=1,nEquFas !nFs
-        AffScale= SUM(ABS(tNuEq(I,:)))
+        AffScale= sum(abs(tNuEq(I,:)))
         !--------------------------------------compute phase affinities
         X=   vDeltaG_Eq(I)    & !
         &  - tNuEq(I,1) *vLnAct(isW)  &                    ! solvent
-        &  + SUM(tNuEq(I,2:nCi)) *(vLnXf(isW) +log(MWSv))  ! mole nr to molality
+        &  + sum(tNuEq(I,2:nCi)) *(vLnXf(isW) +log(MWSv))  ! mole nr to molality
         do J=2,nCi
           X= X - ( vLnXf(J) +vLnGam(vOrdAq(J)) )*tNuEq(I,J)
         end do
@@ -350,7 +349,7 @@ function Equil_Residual(vX)
           X=  vDeltaG_Eq(I) &
           -             tNuEq(I,isW)    *vLnAct(isW)            & ! solvent
           - dot_product(tNuEq(I,2:nCi),  vLnXf(2:nCi)        )  & !- vX(nCi+I)
-          +         SUM(tNuEq(I,2:nCi))*(vLnXf(isW) +log(MWSv)) & !mole nr -> molality
+          +         sum(tNuEq(I,2:nCi))*(vLnXf(isW) +log(MWSv)) & !mole nr -> molality
           - dot_product(tNuEq(I,2:nCi),  vLnGam(vOrdAq(2:nCi)))
           !
           do J=1,nAx ! aqu' mobile prim' species
@@ -361,10 +360,10 @@ function Equil_Residual(vX)
           end do
           !
           if(Complementarity) then
-            ! vFunc(nF+I)= MIN(X,vX(nF+I))
-            !~ if(X < vX(nF+I)) then  ;  vFunc(nF+I)= X
-            !~ else                   ;  vFunc(nF+I)= vX(nF+I)
-            !~ end if
+            ! vFunc(nF+I)= min(X,vX(nF+I))
+            !! if(X < vX(nF+I)) then  ;  vFunc(nF+I)= X
+            !! else                   ;  vFunc(nF+I)= vX(nF+I)
+            !! end if
             ! vFunc(nF+I)= Fischer - Burmeister
             vFunc(nF+I)= X + vX(nF+I) - SQRT(X**2 + vX(nF+I)**2)
           else

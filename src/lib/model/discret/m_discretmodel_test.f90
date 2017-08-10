@@ -71,7 +71,7 @@ subroutine DiscretModel_Test(TdgK,Pbar)
   !
   integer:: i
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Test"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretModel_Test"
   !
   call DiscretModel_Test_Init(TdgK,Pbar)
   !
@@ -122,7 +122,7 @@ subroutine DiscretModel_Test(TdgK,Pbar)
   !
   call Stoikio_Test
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_Test"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretModel_Test"
   !
 end subroutine DiscretModel_Test
 

@@ -764,7 +764,7 @@ subroutine Solve( &
 
     ! CALCULATION OF V(K+1)
     V=     VI - F/DF
-    DifF=  ABS(V-VI)
+    DifF=  abs(V-VI)
     
     ! CONTINUATION OR end OF ITERATIONS FOR NEWARP
     if (DifF<0.01D0) exit

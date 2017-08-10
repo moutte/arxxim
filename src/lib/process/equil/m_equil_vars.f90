@@ -2,26 +2,33 @@ module M_Equil_Vars
   use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
   use M_Kinds
   use M_T_MixModel,only: MaxPole
+  !
   implicit none
   !
   public
   !
   real(dp),dimension(:),allocatable:: &
-  & vTotS,    & !1:nCp=  total amounts of COMPONENTS (incl. charge balance) in the SYSTEM at time T
+  & vTotS       !1:nCp=  total amounts of COMPONENTS (incl. charge balance) in the SYSTEM at time T
   ! in SPC, vTotS = vTot_inFluid
   ! in EQU, vTotS = vTot_inFluid + vTotM (amount in equilibrium minerals)
+  real(dp),dimension(:),allocatable:: &
   & vMolF,    & !1:nAq=  nr moles of aqu'species in the system, e.g. for 1 kg H2O
   & vMolal,   & !1:nAq=  molalities
-  & vMolSec,  & !1:nAs= mole numbers second species, for DirectSub
-  & vFasMole, & !1:nFs= mole nrs of phases (added for SpeciaEquil) -> saved to vFas(:)%Mole
+  & vMolSec     !1:nAs= mole numbers second species, for DirectSub
+  real(dp),dimension(:),allocatable:: &
+  & vFasMole    !1:nFs= mole nrs of phases (added for SpeciaEquil)
+  !             !-> saved to vFas(:)%Mole
+  real(dp),dimension(:),allocatable:: &
   & vLnAct,   & !
-  & vLnGam,   & !
+  & vLnGam      !
+  real(dp),dimension(:),allocatable:: &
   & vDeltaG_As, & ! DeltaGibbsFreeEnergy of formation reaction, for Second'Aqu'Species
   & vDGapp_As,  & ! "apparent deltaG": includes delta(log(gammas solute species))
   & vDeltaG_Fs    ! DeltaGibbsFreeEnergy of formation reaction, for phases of fixed composition
   !
-  logical, dimension(:),allocatable:: vYesList != the phase is taken into account
-  !~ & vFasYes     !vFasYes= the phase is "active"
+  logical, dimension(:),allocatable:: vYesList 
+  ! vYesList=T if the phase is taken into account
+  ! vFasYes     !vFasYes= the phase is "active"
   !
   ! variables added for Specia_CalcEquil_N
   ! affinity of minerals or gases, scaling factor, rate (for cEquMode=3)
@@ -29,20 +36,20 @@ module M_Equil_Vars
   !
   !--- added for M_Equil_3 / M_Equil_3_Mix
   real(dp),allocatable:: &
-  ! for equilibrium non'aqu'phases,
+  ! for equilibrium non-aqu' phases,
   & vDeltaG_Eq(:), &  ! DeltaGibbsFreeEnergy of formation reaction
   & tAlfEq(:,:),   &  !
   & tNuEq(:,:)        !
   ! Relation betweeen (vDeltaG_Eq,tAlfEq,tNuEq)
   !               and (vDeltaG_Fs,tAlfFs,tNuFas)
-  !~ do iFs=1,size(vFasYes)
-    !~ if(vFasYes(iFs)) then
-      !~ I=I+1
-      !~ vDeltaG_Eq(I)= vDeltaG_Fs(iFs)
-      !~ tAlfEq(:,I)= tAlfFs(:,iFs)
-      !~ tNuEq(I,:)= tNuFas(iFs,:)
-    !~ end if
-  !~ end do
+  ! do iFs=1,size(vFasYes)
+    ! if(vFasYes(iFs)) then
+      ! I=I+1
+      ! vDeltaG_Eq(I)= vDeltaG_Fs(iFs)
+      ! tAlfEq(:,I)= tAlfFs(:,iFs)
+      ! tNuEq(I,:)= tNuFas(iFs,:)
+    ! end if
+  ! end do
   !
   type:: T_EquPhase
     character(len=23):: NamEq
@@ -52,15 +59,15 @@ module M_Equil_Vars
     integer :: vIPole(1:MaxPole)
     real(dp):: vXPole(1:MaxPole)
     real(dp):: vLnAct(1:MaxPole)
-    !real(dp):: Grt
-    real(dp):: MolFs
+    real(dp):: MolFs  !!JM!!2017-02
   end type T_EquPhase
   !
   type(T_EquPhase),allocatable:: vEquFas(:)
+  ! real(dp),        allocatable:: vEquFas_Mol(:)  !!JM!!2017-02
   integer :: nEquFas
   !---/
   !
-  !~ real(dp):: OsmoSv
+  !! real(dp):: OsmoSv
   real(dp):: dXi
   !
   logical,dimension(:),allocatable:: vTooLow !,vTooHih
@@ -85,11 +92,11 @@ module M_Equil_Vars
   & iCountEq=0
   !
   logical:: & 
-  & DebNewt=   .false., &
-  & DebJacob=  .false., &
-  & bFinDif=   .false., &
-  & DebActiv=  .false., &
-  & DebFormula=.false.
+  & DebNewt=    .false., &
+  & DebJacob=   .false., &
+  & bFinDif=    .false., &
+  & DebActiv=   .false., &
+  & DebFormula= .false.
   !
   ! variables for Equil_EqN
   character(len=3):: cEquMode= "EQ2"
@@ -97,13 +104,13 @@ module M_Equil_Vars
   !   EQ1= step method, titration-like
   !   EQ2= direct method, suitable for non-singular phase assemblage, given a priori
   !
-  !~ logical:: UseOsmoSv= .false. !.true. !
+  !! logical:: UseOsmoSv= .false. !.true. !
   ! the system (residual=zero) is solved at constant activity coeff's of solute
   ! currently, concerning the solvent, the system can be solved
   !   (1) at constant ln(Activ(solvent))  (= was the only option available until 2008)
   !or (2) at constant osmotic coefficient (= new option, under test)
   !
-  !~ logical:: bMolal=  .false. !.true. !
+  !! logical:: bMolal=  .false. !.true. !
   !
   logical:: bDirect= .false. !.true. !
   !
@@ -116,13 +123,15 @@ module M_Equil_Vars
   !--- parameters for Newton convergence --
   integer, parameter :: NewtMaxIts=200 !maximum number of iterations !!!!!!200
   real(dp),parameter :: &
-  !& NewtTolF=   1.0E-03_dp,& !convergence criterion on function values
-  !& NewtTolMin= 1.0E-06_dp,& !criterion for spurious convergence
-  & NewtTolF=   1.0E-09_dp, &  !convergence criterion on function values
-  & NewtTolMin= 1.0E-09_dp, &  !criterion for spurious convergence
-  !!& NewtTolX=   1.0E-12_dp
+  & NewtTolF=   1.0E-09_dp, &
+  !& NewtTolF=   1.0E-03_dp,& 
+  != convergence criterion on function values
+  & NewtTolMin= 1.0E-09_dp, &
+  !& NewtTolMin= 1.0E-06_dp,&
+  != criterion for spurious convergence
   & NewtTolX=   2.0E-16_dp !EPSILON(real(dp))
-  ! convergence criterion on dx -> approx. 2.E-16
+  !& NewtTolX=   1.0E-12_dp
+  != convergence criterion on dx -> approx. 2.E-16
   ! -> NewtTolX is used to check whether Newton loops on a stationary point
   !---/
   !
@@ -147,7 +156,7 @@ subroutine Equil_Vars_Alloc(nCp,nSp,nAq,nAs,nFs)
   allocate(vDeltaG_As(1:nAs))
   allocate(vDGapp_As(1:nAs))
   !
-  !~ allocate(vFasYes(1:nFs))     ; vFasYes=  .false.
+  !! allocate(vFasYes(1:nFs))     ; vFasYes=  .false.
   allocate(vFasMole(1:nFs))    ; vFasMole= Zero
   allocate(vYesList(1:nFs))    ; vYesList= .false.
   !
@@ -174,7 +183,7 @@ subroutine Equil_Vars_Clean
   if(allocated(vDGapp_As))  deallocate(vDGapp_As)
   !
   if(allocated(vYesList) ) deallocate(vYesList) 
-  !~ if(allocated(vFasYes)  ) deallocate(vFasYes)  
+  !! if(allocated(vFasYes)  ) deallocate(vFasYes)  
   if(allocated(vFasAff)  ) deallocate(vFasAff)  
   if(allocated(vFasRat)  ) deallocate(vFasRat)  
   if(allocated(vFasMole) ) deallocate(vFasMole)  

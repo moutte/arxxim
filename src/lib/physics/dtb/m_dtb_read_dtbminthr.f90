@@ -17,7 +17,7 @@ module M_Dtb_Read_DtbMinThr
 
 contains
 
-subroutine DtbMinTHR_Build
+subroutine DtbMinThr_Build
 !--
 !-- -> build vDtbMinThr
 !-- transform LinkedList LisMinThr to mineral table vDtbMinThr
@@ -27,21 +27,23 @@ subroutine DtbMinTHR_Build
   !
   integer:: I
   !
-  if(iDebug==5) print '(A)',"< DtbMinTHR_Build"
+  if(iDebug==5) print '(A)',"< DtbMinThr_Build"
   !
-  if(allocated(vDtbMinThr)) deallocate(vDtbMinThr); allocate(vDtbMinThr(nMinThr))
+  if(allocated(vDtbMinThr)) deallocate(vDtbMinThr)
+  allocate(vDtbMinThr(nMinThr))
   LisCur=>LisMinThr
   I=0
   do while (associateD(LisCur))
     I=I+1
     vDtbMinThr(I)=LisCur%Value
-    if(iDebug==5) print '(2A)', vDtbMinThr(I)%Name,trim(vDtbMinThr(I)%Num) !; pause
+    if(iDebug==5) &
+    & print '(2A)', vDtbMinThr(I)%Name,trim(vDtbMinThr(I)%Num) !; pause
     LisPrev=>LisCur
     LisCur=> LisCur%next
     deallocate(LisPrev)
   end do
   !
-  if(iDebug==5) print '(A)',"</ DtbMinTHR_Build"
+  if(iDebug==5) print '(A)',"</ DtbMinThr_Build"
   if(iDebug==5) call Pause_
   !
   return
@@ -76,7 +78,7 @@ subroutine DtbMinThr_Read(F,vEle,N)
   integer:: fFormula
   logical:: EcformIsOk
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_Read"
+  if(idebug>1) write(fTrc,"(/,A)") "< DtbMinThr_Read"
   !
   CodFormula= "ECFORM" ! is default value
   allocate(vElement(size(vEle)+3))
@@ -232,7 +234,12 @@ subroutine DtbMinThr_Read(F,vEle,N)
             call ReadRVals5(L,M%D2, M%D5, M%TD0,M%TDMAX,M%VADJ)
           
           case("TR1","T1","TR3","T3") !for Berman dtbase"s
-            M%nLanda=M%nLanda+1; I=M%nLanda
+            if(M%nLanda<2) then
+              M%nLanda=M%nLanda+1
+            else
+              call Stop_("DtbMinThr_Read: nLanda>MaxValue")
+            end if
+            I=M%nLanda
             call ReadRVals5(L,M%TQ1B(I),M%TRE(I),M%ASPK(I),M%BSPK(I),M%DHTR(I))
           case("TR2","T2")
             if (M%nLanda>0) then
@@ -283,7 +290,7 @@ subroutine DtbMinThr_Read(F,vEle,N)
   if(fFormula>0) close(fFormula)
   !
   if(iDebug>2) close(FF)
-  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
+  if(idebug>1) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
   
   return
   !
@@ -403,7 +410,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   logical:: EcformIsOk
   !---/
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_Read_line"
+  if(idebug>1) write(fTrc,"(/,A)") "< DtbMinThr_Read_line"
   !
   !--- for formula translation --
   CodFormula= "ECFORM" ! is default value
@@ -672,7 +679,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   if(fFormula>0) close(fFormula)
   !
   if(FF>0) close(FF)
-  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
+  if(idebug>1) write(fTrc,"(A,/)") "</ DtbMinThr_Read"
   !
   return
   !
@@ -818,7 +825,7 @@ subroutine DtbMinThr_ToLine(f)
   integer :: ios,I
   type(T_DtbMinThr) :: M
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< DtbMinThr_ToLine"
+  if(idebug>1) write(fTrc,"(/,A)") "< DtbMinThr_ToLine"
   !
   write(fTrc,'(A)') &
   & "stoikio in "//trim(DirDtbLog)//"min_thr_line.log"
@@ -842,73 +849,73 @@ subroutine DtbMinThr_ToLine(f)
     call AppendToEnd(L,W,EoL)
 
     select case(W)
-      !
-      case("CODE")
+    !
+    case("CODE")
+      call LinToWrd(L,W,EoL)
+      FilCode=trim(W)
+      cycle DoFile
+
+    case("ENDINPUT")
+      exit DoFile
+
+    case("ENDSPECIES")
+      exit DoFile
+
+    case("MINERAL","GAS")
+
+      select case(W)
+        case("MINERAL"); bGas=.false.; bMin=.true.
+        case("GAS");     bGas=.true.;  bMin=.false.
+      end select
+
+      DoReadMin: do
+        !
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
         call LinToWrd(L,W,EoL)
-        FilCode=trim(W)
-        cycle DoFile
-
-      case("ENDINPUT")
-        exit DoFile
-
-      case("ENDSPECIES")
-        exit DoFile
-
-      case("MINERAL","GAS")
-
+        if(W(1:1)=="!") cycle DoReadMin !skip comment lines
+        call AppendToEnd(L,W,EoL)
+        !
         select case(W)
-          case("MINERAL"); bGas=.false.; bMin=.true.
-          case("GAS");     bGas=.true.;  bMin=.false.
+          case("ENDINPUT"); exit DoFile
+          case("ENDSPECIES"); exit DoFile
+          case("END","ENDMINERAL","ENDGAS"); cycle DoFile !exit DoReadMin
         end select
 
-        DoReadMin: do
+        if(W(1:1)/="&") then
+        !if first char is not "&", the line may contain name, formula, etc
+          write(fLin,*)
+          M%Name=trim(W)
+          if(bGas) write(fLin,'(A,A1)',advance="NO") "GAS",T_
+          if(bMin) write(fLin,'(A,A1)',advance="NO") "MIN",T_
+          call LinToWrd(L,W,EoL); M%Formula=trim(W)
+          call LinToWrd(L,W,EoL) !; M%Abbr=trim(W)
+          write(fLin,'(3(A,A1))',advance="NO") &
+          & trim(FilCode),T_,M%Name,T_,M%Formula,T_
           !
-          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
-          call LinToWrd(L,W,EoL)
-          if(W(1:1)=="!") cycle DoReadMin !skip comment lines
-          call AppendToEnd(L,W,EoL)
-          !
-          select case(W)
-            case("ENDINPUT"); exit DoFile
-            case("ENDSPECIES"); exit DoFile
-            case("END","ENDMINERAL","ENDGAS"); cycle DoFile !exit DoReadMin
-          end select
+          cycle DoReadMin
+        end if
 
-          if(W(1:1)/="&") then
-          !if first char is not "&", the line may contain name, formula, etc
-            write(fLin,*)
-            M%Name=trim(W)
-            if(bGas) write(fLin,'(A,A1)',advance="NO") "GAS",T_
-            if(bMin) write(fLin,'(A,A1)',advance="NO") "MIN",T_
-            call LinToWrd(L,W,EoL); M%Formula=trim(W)
-            call LinToWrd(L,W,EoL) !; M%Abbr=trim(W)
-            write(fLin,'(3(A,A1))',advance="NO") &
-            & trim(FilCode),T_,M%Name,T_,M%Formula,T_
-            !
-            cycle DoReadMin
-          end if
+        if(W(1:1)=="&") then
+          ! if first char is "&", 
+          ! then the line is the continuation of preceding, i.e. contains data
+          do I=1,7
+            call LinToWrd(L,W,EoL)
+            if(.not. EoL) then
+              write(fLin,'(A,A1)',advance="NO") trim(W),T_
+            else
+              write(fLin,'(A,A1)',advance="NO") "_",T_
+            end if
+          end do
+        end if !(W(1:1)=="&")
 
-          if(W(1:1)=="&") then
-            ! if first char is "&", 
-            ! then the line is the continuation of preceding, i.e. contains data
-            do I=1,7
-              call LinToWrd(L,W,EoL)
-              if(.not. EoL) then
-                write(fLin,'(A,A1)',advance="NO") trim(W),T_
-              else
-                write(fLin,'(A,A1)',advance="NO") "_",T_
-              end if
-            end do
-          end if !(W(1:1)=="&")
-
-        end do DoReadMin
-      !endcase("MINERAL")
+      end do DoReadMin
+    !endcase("MINERAL")
     end select
   end do DoFile
   !
   write(fLin,*)
   !
-  if(iDebug>0) write(fTrc,"(A,/)") "</ DtbMinThr_ToLine"
+  if(idebug>1) write(fTrc,"(A,/)") "</ DtbMinThr_ToLine"
   !
   return
 end subroutine DtbMinThr_ToLine

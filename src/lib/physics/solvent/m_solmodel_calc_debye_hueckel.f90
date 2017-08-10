@@ -48,7 +48,7 @@ subroutine Solmodel_Calc_Debye_Hueckel( &
   integer :: nSolut,iAq
 
   nSolut= size(vMolal)
-  Sum_Solute= SUM(vMolal(:))
+  Sum_Solute= sum(vMolal(:))
   vZ2(:)= vZSp(:)*vZSp(:)
   !
   !Ion Strength=  sum(m(i)*z2(i)) /2

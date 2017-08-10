@@ -46,7 +46,7 @@ contains
 
 subroutine SolPhase_Init( & !
 & iModel,    & !IN, model index
-& vSolModel, & !IN, base of solution models
+& nSolute,   & !IN, nSolute in vSolmodel(iModel)
 & S,         & !INOUT, solution phase
 & Ok,Msg)      !OUT
 !--
@@ -55,7 +55,7 @@ subroutine SolPhase_Init( & !
   use M_T_SolModel,only: T_SolModel
   !
   integer,         intent(in)   :: iModel !index of solvent model
-  type(T_SolModel),intent(in)   :: vSolModel(:)
+  integer,         intent(in)   :: nSolute
   type(T_SolPhase),intent(inout):: S
   logical,         intent(out)  :: Ok
   character(*),    intent(out)  :: Msg
@@ -79,9 +79,9 @@ subroutine SolPhase_Init( & !
   ! end if
 
   S%iModel= iModel
-  allocate(S%vXSpecies(vSolModel(iModel)%nSpecies))
-  ! allocate(S%Dat%vMolal(vSolModel(iModel)%nSpecies))
-  ! allocate(S%Dat%vLnAct(vSolModel(iModel)%nSpecies))
+  allocate(S%vXSpecies(nSolute))
+  ! allocate(S%Dat%vMolal(vSolModel(iModel)%nSolute))
+  ! allocate(S%Dat%vLnAct(vSolModel(iModel)%nSolute))
   !
   return
 end subroutine SolPhase_Init
@@ -133,7 +133,7 @@ end subroutine SolPhase_Init
 !   allocate(vX(SolModel%nCp))
 !   !
 !   vX(:)= Zero
-!   do I= 1,SolModel%nSpecies
+!   do I= 1,SolModel%nSolute
 !     iSolute= SolModel%vISolute(I)
 !     S= vSpc(iSolute)
 !     do J=1,SolModel%nCp

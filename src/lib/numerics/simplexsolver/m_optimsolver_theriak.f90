@@ -101,7 +101,7 @@ subroutine Optimsolver_Theriak( & !
     
     !--- direction of steepest descent, normalized to |vVSteep|-1
     call ComputeMu(vX,vMu)
-    MuTilde= SUM(vMu(:)) /real(N)
+    MuTilde= sum(vMu(:)) /real(N)
     vVSteep(:)= MuTilde -vMu(:)
     call Normalize(vVSteep)
     !---/
@@ -288,7 +288,7 @@ subroutine Project(Xminim,vX)
     if (vX(i)< Xminim) vX(i) = Xminim
   end do
   !--- project on sum(xi) - 1 
-  SumV= SUM(vX(:))
+  SumV= sum(vX(:))
   vX(:)= vX(:) /SumV
   !
 end subroutine Project
@@ -297,7 +297,7 @@ real(dp) function norm_L1(vX)
   !--- Compute Discrete L1 Norm
   real(dp),intent(in):: vX(:)
   !
-  norm_L1 = SUM(ABS(vX(:)))
+  norm_L1 = sum(abs(vX(:)))
   !
 end function norm_L1
 
@@ -313,7 +313,7 @@ real(dp) function norm_LInf(vX)
   !--- Compute Discrete LInfinity Norm
   real(dp),intent(in) :: vX(:)
   !
-  norm_LInf= MAXVAL(ABS(vX))
+  norm_LInf= maxval(abs(vX))
   !
 end function norm_LInf
 

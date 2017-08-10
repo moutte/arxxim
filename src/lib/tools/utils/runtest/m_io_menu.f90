@@ -32,7 +32,6 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
   logical,         intent(out):: OkCmd
   integer,         intent(out):: DebugLevel
   !---
-  character(len=1) :: T
   integer          :: J
   logical          :: OkFInn
   
@@ -40,16 +39,29 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
 
   if(IARGC()>1) then
     
-    ! 2 arguments on command line -> 2nd arg' is the debug level
-    call GETARG(2,S)
+    ! 2 arguments on command line
+    ! -> 2nd arg' is the debug level if it is 1 char, or the mode
+    call getarg(2,S)
     write(*,*) "READING ARG2 = ", S
     if(len_trim(S)==1) then
+
       J= CarToInt(S(1:1))
       if(J>=0) DebugLevel=J
       OkCmd=.false.
+
+      ! 3 arguments on command line
+      ! -> 2nd arg' is the debug level (must be 1 char),
+      !    3nd arg' is the mode (SPC, EQU, etc)
+      if(IARGC()>2) then
+        call getarg(3,S)
+        write(*,*) "READING ARG3 = ", S
+        OkCmd=.true.
+      end if
+
     else
       OkCmd=.true.
     end if
+
 
   else
     
@@ -82,12 +94,10 @@ subroutine IO_FInn_Selection(S, Ok)
   !===========================================================
   use M_Test_Read
   implicit none
+  !
   character(len=*),intent(out):: S
-  logical,intent(out) :: Ok
+  logical,         intent(out):: Ok
   !----
-  !! integer :: nRun = 0
-  !---
-  !S= ""
   if(ISelection==0) then
     call Test_Read_Init(Ok) ! should be called before !
     if(.not.Ok) return
@@ -95,10 +105,7 @@ subroutine IO_FInn_Selection(S, Ok)
   !
   ISelection = ISelection + 1
   Ok = Test_Read_OptCompute(ISelection, S)
-  
-  !~ print *,"IO_FInn_Selection=",S
-  !~ pause
-  !
+
 end subroutine IO_FInn_Selection
 
 !---
@@ -113,7 +120,7 @@ subroutine IO_Menu_Selection(S)
   !---
   type(T_VarStr)   :: Str
   !---
-  print '(/,A,/)',"INTERACTIVE MENU selectION"
+  print '(/,A,/)',"INTERACTIVE MENU SELECTION"
 
   if(Ok_Speciation) then
   

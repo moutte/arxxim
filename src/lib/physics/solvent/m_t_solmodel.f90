@@ -40,14 +40,15 @@ module M_T_SolModel
     != index of the activity model in vSolModelAct
     !
     integer :: iSolvent
-    != index of the solvent species in current species list
+    !iSolvent= index of the solvent species in current species list
+    integer :: isH_,isOH,isO2
     real(dp):: MolWeitSv
     != molar weight solvent
-    integer:: nSpecies
-    != number of species, including solvent = dim' of vISpecies
-    integer,pointer:: vISpecies(:)
-    != indices of species involved,
-    ! vISpecies(i) is index of species i in current species list
+    integer:: nSolute
+    != number of solute species, excluding solvent = dim' of vISolute
+    integer,pointer:: vISolute(:)
+    != indices of solute species involved,
+    ! vISolute(i) is index of species i in current species list
     ! (= vSpc in M_Global_Vars)    
     logical,pointer:: vIsNonPolar(:)
     ! for EQ3 option: apply activ'coeff' on neutral species
@@ -87,15 +88,15 @@ module M_T_SolModel
   
 contains
 
-subroutine SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
-!-- initialize S%iSolvent, S%nSpecies, S%vISpecies, S%MolWeitSv
+subroutine SolModel_Spc_Init(SolvName,vSpc,    S,Ok,OkMsg)
+!-- initialize S%iSolvent, S%nSolute, S%vISolute, S%MolWeitSv, etc
 !-- according to a species database vSpc,
-!-- and given the name, Str, of the solvent species
+!-- and given the name, SolvName, of the solvent species
 
   use M_Trace
-  use M_T_Species,only: T_Species
+  use M_T_Species,only: T_Species,Species_Index
 
-  character(*),    intent(in)   :: Str !name of solvent species
+  character(*),    intent(in)   :: SolvName !name of solvent species
   type(T_Species), intent(in)   :: vSpc(:)
   type(T_SolModel),intent(out)  :: S
   logical,         intent(out)  :: Ok
@@ -103,7 +104,7 @@ subroutine SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
 
   integer:: N,I
 
-  if(iDebug>0) write(fTrc,'(/,A)') "< SolModel_Spc_Init"
+  if(idebug>1) write(fTrc,'(/,A)') "< SolModel_Spc_Init"
 
   Ok= .true.
   OkMsg= ""
@@ -111,7 +112,7 @@ subroutine SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
 
   N= 0
   do I=1,size(vSpc)
-    if(trim(Str)==trim(vSpc(I)%NamSp)) then
+    if(trim(SolvName)==trim(vSpc(I)%NamSp)) then
       ! solvent
       S%iSolvent=  I
       S%MolWeitSv= vSpc(S%iSolvent)%WeitKg
@@ -133,24 +134,33 @@ subroutine SolModel_Spc_Init(Str,vSpc,S,Ok,OkMsg)
     return !------------------------------------------------------------
   end if
   !
-  S%nSpecies= N
-  allocate(S%vISpecies(N))
+  S%nSolute= N
+  allocate(S%vISolute(N))
   !
   N= 0
   do I=1,size(vSpc)
-    if(vSpc(I)%Typ=="AQU" .and. trim(Str)/=trim(vSpc(I)%NamSp)) then
+    if(vSpc(I)%Typ=="AQU" .and. trim(SolvName)/=trim(vSpc(I)%NamSp)) then
       N= N+1
-      S%vISpecies(N)= I
+      S%vISolute(N)= I
     end if
   end do
   !
+  ! find indexes of solvent, H+, OH-, O2 in vSpc
+  ! -> unchanged in basis switch -> called only once for a given vSpc
+  S%isOH= Species_Index("OH-",  vSpc)
+  S%isH_= Species_Index("H+",   vSpc)
+  S%isO2= Species_Index("O2_AQ",vSpc)
+  !
+  if(S%isH_==0) call Stop_("species H+ not found  !!!") !-----------stop
+  if(S%isOH==0) call Stop_("species OH- not found !!!") !-----------stop
+  !
   ! print *,"<SolModel_Spc_Init"
   ! print *,S%iSolvent,vSpc(S%iSolvent)%Name
-  ! print *,S%vISpecies(1),"...",S%vISpecies(S%nSpecies)
+  ! print *,S%vISolute(1),"...",S%vISolute(S%nSolute)
   ! print *,"</SolModel_Spc_Init"
   ! pause
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ SolModel_Spc_Init"
+  if(idebug>1) write(fTrc,'(A,/)') "</ SolModel_Spc_Init"
   !
 end subroutine SolModel_Spc_Init
 

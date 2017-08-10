@@ -36,13 +36,16 @@ subroutine Global_Build
   logical :: fOk
   real(dp):: TdgK,Pbar
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Global_Build"
+  if(idebug>1) write(fTrc,'(/,A)') "< Global_Build"
   !
+  !-------------------------------------------------------------ELEMENTS
   call Elements_Alloc_forDtb(vEle,N) !---------------------> builds vEle
   !
   call Element_Read_Redox(vEle)
   !call Element_Read_Entropy(vEle)
+  !------------------------------------------------------------/ELEMENTS
   !
+  !--------------------------------------------------------------SPECIES
   call Dtb_Read_Species(vEle) !--------> read databases -> build vDtbXxx
   !
   call SpeciesDtb_Alloc(vSpcDtb,N) !---------> from vDtb*, build vSpcDtb
@@ -75,6 +78,7 @@ subroutine Global_Build
   ! call Species_Write_AquSize(vSpc)
   !
   call vSpecies_Rename(vSpc)
+  !-------------------------------------------------------------/SPECIES
   !
   call MixModels_Alloc(vSpc,  vMixModel) !-------build MixModel database
   !
@@ -93,7 +97,8 @@ subroutine Global_Build
   !
   if(.not.allocated(vSolModel)) allocate(vSolModel(0)) !!JM!!EN_COURS
   !
-  if(allocated(MySpace%vEle)) call MySpace%Free_ !!JM!!
+  if(allocated(MySpace%vEle)) call MySpace%Free_ !!JM!!EN_COURS
+  !
   call MySpace%New_( &
   & size(vEle),      & !
   & size(vSpcDtb),   & !
@@ -104,7 +109,7 @@ subroutine Global_Build
   !
   call Species_Write_AquSize(vSpc)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Global_Build"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Global_Build"
   !
 end subroutine Global_Build
 
@@ -127,10 +132,11 @@ subroutine Global_Build_New !-------------------------------------UNUSED
   use M_Element_Read,only: Element_Read_Redox,Element_Read_Entropy
   use M_SpeciesDtb_Read,only: Species_Read_AquSize,Species_Write_AquSize
   use M_Global_Tools,only: Global_TP_Update,Global_Species_Select
+  use M_SolModel_Alloc
   use M_Global_Alloc
   !
-  use M_SolModel_Read
-  use M_SolPhase_Read
+  use M_SolModel_Read,only: SolModel_Read
+  use M_SolPhase_Read,only: SolPhase_Read
   use M_T_SolModel,   only: SolModel_Spc_Init
   use M_T_SolPhase,   only: SolPhase_Init
   !
@@ -155,7 +161,7 @@ subroutine Global_Build_New !-------------------------------------UNUSED
   type(T_Species),allocatable:: vSpcTmp(:)
   ! type(T_SolModel):: SolModel
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Global_Build"
+  if(idebug>1) write(fTrc,'(/,A)') "< Global_Build"
   !
   call Elements_Alloc_forDtb(vEle,N) !---------------------> builds vEle
   !
@@ -239,10 +245,11 @@ subroutine Global_Build_New !-------------------------------------UNUSED
     !!--- initialize indexes of the sol'model
     ! call SolModel_Spc_Init("H2O",vSpc,SolModel,Ok,Msg)
 
-    ! call SolModel_Alloc ! allocate vSolModel
+    if(allocated(vSolModel)) deallocate(vSolModel)
+    call SolModel_Alloc(1,vSolModel)
     ! vSolModel(1)= SolModel
 
-    call SolModel_Read(vSpc,Ok,Msg)
+    call SolModel_Read(vSpc,    vSolModel,Ok,Msg)
     if(.not. Ok) &
     & call Stop_("SolModel_Read==> "//trim(Msg))
 
@@ -253,7 +260,7 @@ subroutine Global_Build_New !-------------------------------------UNUSED
 
     ! call SolPhase_Init( & !
     ! & 1,          & !IN, model index
-    ! & vSolModel,  & !IN, base of solution models
+    ! & vSolModel(1)%nSolute,  & !IN, base of solution models
     ! & vSolFas(1), & !INOUT, solution phase
     ! & Ok,Msg)       !OUT
  
@@ -278,7 +285,7 @@ subroutine Global_Build_New !-------------------------------------UNUSED
   !
   call Species_Write_AquSize(vSpc)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Global_Build"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Global_Build"
   !
 end subroutine Global_Build_New
 
@@ -311,7 +318,7 @@ subroutine Condition_Read(iTP)
   logical:: EoL,Ok
   integer:: f,ios,N
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Condition_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Condition_Read"
   !
   iTP= 0
   !
@@ -375,16 +382,16 @@ subroutine Condition_Read(iTP)
   close(f)
 
   if(.not.Ok) then
-    if(iDebug>0) write(fTrc,'(A)') "block CONDITIONS not found ???!!!"
+    if(idebug>1) write(fTrc,'(A)') "block CONDITIONS not found ???!!!"
     if(iDebug>2) print '(A)',"block CONDITIONS not found ???!!!"
   end if
 
-  if(iDebug>0) then
+  if(idebug>1) then
     if(fHtm>0) call Files_Index_Close(fHtm)
     call Files_Index_Open(fHtm)
   end if
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Condition_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Condition_Read"
 
 end subroutine Condition_Read
 

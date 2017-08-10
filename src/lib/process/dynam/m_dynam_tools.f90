@@ -70,8 +70,8 @@ subroutine Dynam_Init(TdgK,Pbar,T,B)
 !-- initializations of variables used in "dynamic" calculations
 !--
   use M_IOTools
-  use M_Global_Vars,only: vSpc,vFas,vKinFas,vMixFas,vMixModel,vEle
-  use M_Global_Vars,only: SolModel
+  use M_Global_Vars,only: vSpc,SolModel,vMixModel,vEle
+  use M_Global_Vars,only: vFas,vKinFas,vMixFas,vSpcDat
   use M_Basis_Vars, only: vOrdAq
 
   use M_Dynam_Vars,only: vCpnBox,vCpnInj
@@ -96,7 +96,7 @@ subroutine Dynam_Init(TdgK,Pbar,T,B)
   !MFluid=    dot_product(vSpc(1:nAq)%WeitKg,vMolF(1:nAq))
   !MFluidBox= MFluidBox= RhoF*VBox*PhiF
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_Init"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_Init"
   !
   nCp=size(vCpnBox)
   nMk=size(vKinFas)            ! ; if(nMk==0) call Stop_("NO Kinetic Species ???")
@@ -108,7 +108,7 @@ subroutine Dynam_Init(TdgK,Pbar,T,B)
   !--------------------------------------------------update fluid data--
   !B%PhiFInj= B%PhiF !initial vol. fraction of fluid
   B%RhoF= 1.0D3 !! Solvent%Rho(iTP)*1.0D3 !fluid density
-  if(iDebug>0) write(fTrc,'(/,A,G15.3,/)') "RhoF",B%RhoF
+  if(idebug>1) write(fTrc,'(/,A,G15.3,/)') "RhoF",B%RhoF
   !
   !---------------------------------------------------update time data--
   T%Time= Zero
@@ -116,7 +116,7 @@ subroutine Dynam_Init(TdgK,Pbar,T,B)
   if(iDebug>2) call Dynam_Init_StoikioEle
   !
   call Dynam_Init_FluidBox_Compo( &   !
-  & vCpnBox,B%RhoF,B%VBox,B%PhiF, &   !IN
+  & vCpnBox,vSpcDat,B%RhoF,B%VBox,B%PhiF, &   !IN
   & vTotF,vMolF,vLnAct,vLnGam,vLnBuf) !OUT
   !
   call Dynam_Init_FluidInj_Compo( & !
@@ -148,7 +148,7 @@ subroutine Dynam_Init(TdgK,Pbar,T,B)
   vWeitCp(:)= vEle(vCpnBox(:)%iEle)%WeitKg
   !-> Components' weitkg, i.e. Elements' weitkg in the Components' order ...
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_Init"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_Init"
   
   return
 end subroutine Dynam_Init
@@ -166,10 +166,10 @@ subroutine Dynam_Init_StoikioEle
     J= vOrdAq(I)
     tStoikioAqu(I,:)= tFormula(:,J)
     !vSpc(J)%vStoikio(1:N)/real(vSpc(J)%vStoikio(0))
-    !~ do K=1,N
-      !~ write(6,'(F7.2,1X)',advance="no") tStoikioAqu(I,K)
-    !~ end do
-    !~ write(6,*)
+    !! do K=1,N
+    !!   write(6,'(F7.2,1X)',advance="no") tStoikioAqu(I,K)
+    !! end do
+    !! write(6,*)
   end do
   nMk= size(vKinFas)
   allocate(tStoikioKin(nMk,N))
@@ -187,12 +187,12 @@ subroutine Dynam_Init_StoikioEle
   return
 end subroutine Dynam_Init_StoikioEle
 
-!------------------------------------------------allocations for fluid--
+!--------------------------------------------------allocations for fluid
 subroutine Dynam_Alloc_FluidBox(nCp)
 !=
 != allocate vTotF,vMolF,vLnAct,vLnGam,vLnBuf
 !=
-  use M_Global_Vars,only: vSpc,vEle
+  use M_Global_Vars,only: vSpc,vEle,vSpcDat
   !! use M_Basis_Vars, only: nMx,nAx
   use M_Dynam_Vars, only: vTotF,vMolF,vLnAct,vLnGam,vLnBuf
   !
@@ -223,9 +223,9 @@ subroutine Dynam_Alloc_FluidInj(nCp)
   allocate(vQTotInj(1:nCp))      ; vQTotInj= Zero
   !
 end subroutine Dynam_Alloc_FluidInj
-!-----------------------------------------------/allocations for fluid--
+!-------------------------------------------------/allocations for fluid
 
-!------------------------------------------------ initialize vTotInj  --
+!-----------------------------------------------------initialize vTotInj
 !-- initialize mole nrs injected fluid
 !-- units: mole nrs in a volume VBox for a fluid density RhoF
 subroutine Dynam_Init_FluidInj_Compo( &
@@ -257,14 +257,16 @@ end subroutine Dynam_Init_FluidInj_Compo
 
 !----------------------------------------------initialize fluid in box--
 subroutine Dynam_Init_FluidBox_Compo( &       !
-& vCpn,RhoF,VBox,PhiF, &                      !
+& vCpn,vSpcDat,RhoF,VBox,PhiF, &                      !
 & vTotF,vMolF,vLnAct,vLnGam,vLnBuf)
   !
   use M_T_Component,only: T_Component
+  use M_T_Species,  only: T_SpcData
   use M_Global_Vars,only: vSpc,vEle
   use M_Basis_Vars, only: nAx,nMx,vOrdAq,nCi
   !
   type(T_Component),intent(in) :: vCpn(:)
+  type(T_SpcData),  intent(in) :: vSpcDat(:)
   real(dp),         intent(in) :: RhoF,VBox,PhiF
   real(dp),         intent(out):: vTotF(:),vMolF(:)
   real(dp),         intent(out):: vLnAct(:),vLnGam(:),vLnBuf(:)
@@ -273,10 +275,10 @@ subroutine Dynam_Init_FluidBox_Compo( &       !
   
   nAq= size(vOrdAq)
   !
-  !-----------------------------------retrieve results from speciation--
-  vMolF(:)= vSpc(vOrdAq(:))%Dat%Mole
-  vLnAct(1:nAq)=vSpc(vOrdAq(:))%Dat%LAct
-  vLnGam(1:nAq)=vSpc(vOrdAq(:))%Dat%LGam
+  !-------------------------------------retrieve results from speciation
+  vMolF(:)=      vSpcDat(vOrdAq(:))%Mole
+  vLnAct(1:nAq)= vSpcDat(vOrdAq(:))%LAct
+  vLnGam(1:nAq)= vSpcDat(vOrdAq(:))%LGam
   !
   ! given mole numbers of aqu.species for 1kg H2O
   ! (=results of initial speciation)
@@ -299,7 +301,7 @@ subroutine Dynam_Init_FluidBox_Compo( &       !
   !! print *,"nAq, size(vLnBuf)",nAq, size(vLnBuf)  ; pause
   if(nAx+nMx>0) then
     do i=1,nAx+nMx
-      vLnBuf(I)= vSpc(vCpn(nCi+I)%iSpc)%Dat%LAct
+      vLnBuf(I)= vSpcDat(vCpn(nCi+I)%iSpc)%LAct
     end do
   end if
   !
@@ -307,7 +309,7 @@ subroutine Dynam_Init_FluidBox_Compo( &       !
     print '(A)',"Dynam_Init_FluidBox_Compo"
     do I=1,size(vCpn)
       if(vCpn(I)%Statut=="BUFFER") &
-      & print '(A,A3,G15.6)', "BUFFER= ",vCpn(I)%NamCp,vSpc(vCpn(I)%iSpc)%Dat%LAct
+      & print '(A,A3,G15.6)', "BUFFER= ",vCpn(I)%NamCp,vSpcDat(vCpn(I)%iSpc)%LAct
       if(vCpn(I)%Statut=="INERT") &
       & print '(A,A3,G15.6)', "INERT=  ",vCpn(I)%NamCp,vCpn(I)%Mole
     end do
@@ -316,7 +318,7 @@ subroutine Dynam_Init_FluidBox_Compo( &       !
   return
 end subroutine Dynam_Init_FluidBox_Compo
 
-!------------------------------allocations for kinetic & equil' phases--
+!--------------------------------allocations for kinetic & equil' phases
 subroutine Dynam_Alloc_KinFas(N)
 !--
 !-- allocate tables related with kinetic minerals
@@ -342,7 +344,6 @@ subroutine Dynam_Alloc_KinFas(N)
   !
   allocate(vVmQsK(1:N))        ; vVmQsK=  Zero !Precip /Dissol. Rate, VmF=VmAct*VmQsK
   allocate(vVmAct(1:N))        ; vVmAct=  Zero !Precip /Dissol. Rate, VmF=VmAct*VmQsK
-  !!allocate(vVm0  (1:N))        ; vVm0=    Zero !Precip /Dissol. Rate, VmF=VmAct*VmQsK
   !
   allocate(vLKinActiv(1:N))    ; vLKinActiv=.false.
   allocate(vLEquActiv(1:N))    ; vLEquActiv=.false.
@@ -368,13 +369,13 @@ subroutine Dynam_Init_KinFas_Texture(nMk,VBox,PhiF)
   real(dp):: VolMinim,SurfMinim
   integer :: I
   !
-  !------------------------------------------------------INIT.MINERALS--
+  !--------------------------------------------------------INIT.MINERALS
   !
   vMolarVol(1:nMk)= vFas(vKinFas(1:nMk)%iFas)%VolM3 !-> molar volumes of phases
   !
   vKinFas(:)%Dat%PhiM= (One - PhiF) *vKinFas(:)%Dat%PhiM !-> vol.fraction of box
   !
-  !--------------------------------------------------- init vKinMinim --
+  !-------------------------------------------------------init vKinMinim
   !
   !! !test calculation radius of "cluster" of 6 molecules -> results around 4.D-9 m
   !! vKinMinim(1:nMk)= 36.D-23 != approx. 6 molecules
@@ -406,7 +407,7 @@ subroutine Dynam_Init_KinFas_Texture(nMk,VBox,PhiF)
     call Pause_ !; stop
   end if
   !
-  if(iDebug>0) write(fTrc,'(A)') "Initial Surfaces of Minerals"
+  if(idebug>1) write(fTrc,'(A)') "Initial Surfaces of Minerals"
   !
   do i=1,nMk
     !
@@ -416,7 +417,7 @@ subroutine Dynam_Init_KinFas_Texture(nMk,VBox,PhiF)
     & vKinFas(i)%Dat%PhiM,       & !in,  volume_phase / volume_box
     & vKinFas(i)%Dat%Surf)         !out, surface_phase / volume_box
     !
-    !! vKinFas(i)%Dat%Surf= MAX(vKinFas(i)%Dat%Surf, SurfMinim)
+    !! vKinFas(i)%Dat%Surf= max(vKinFas(i)%Dat%Surf, SurfMinim)
     !
   end do
   !
@@ -431,7 +432,7 @@ subroutine Dynam_Init_KinFas_Texture(nMk,VBox,PhiF)
   PhiF0=      PhiF      ! update PhiF0
   vMolK0(:)=  vMolK(:)  ! update vMolK0
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     write(fTrc,'(A,G15.6)') "VBox     ", VBox
     write(fTrc,'(/,A,/)') "vSurfK0=Initial Surfaces of Minerals"
     do I=1,nMk
@@ -442,7 +443,7 @@ subroutine Dynam_Init_KinFas_Texture(nMk,VBox,PhiF)
       & "/vMolK0=",vMolK0(I)
     end do
   end if
-  !-----------------------------------------------------/INIT.MINERALS--
+  !-------------------------------------------------------/INIT.MINERALS
   !
   return
 end subroutine Dynam_Init_KinFas_Texture
@@ -475,9 +476,9 @@ subroutine Dynam_KinFas_Stoik_Alfa(nMk,nCp)
   type(T_MixPhase):: SF
   integer:: I,J,K,iCp
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_KinFas_Stoik_Alfa"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_KinFas_Stoik_Alfa"
   !
-  !------------------------------------------- update stoichio tables --
+  !-----------------------------------------------update stoichio tables
   do I=1,nMk
   
     J=vKinFas(I)%iFas
@@ -516,9 +517,9 @@ subroutine Dynam_KinFas_Stoik_Alfa(nMk,nCp)
     !! end select
     
   end do
-  !------------------------------------------/ update stoichio tables --
+  !----------------------------------------------/update stoichio tables
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_KinFas_Stoik_Alfa"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_KinFas_Stoik_Alfa"
   !
 end subroutine Dynam_KinFas_Stoik_Alfa
 
@@ -539,9 +540,9 @@ subroutine Dynam_KinFas_Stoik_NuKin(nMk)
   type(T_MixPhase):: SF
   integer:: I,J,K,iCp
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_KinFas_Stoik_Nu"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_KinFas_Stoik_Nu"
   !
-  !------------------------------------------- update stoichio tables --
+  !-----------------------------------------------update stoichio tables
   do I=1,nMk
   
     J=vKinFas(I)%iFas
@@ -578,9 +579,9 @@ subroutine Dynam_KinFas_Stoik_NuKin(nMk)
     !! end select
     
   end do
-  !------------------------------------------/ update stoichio tables --
+  !----------------------------------------------/update stoichio tables
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_KinFas_Stoik_Nu"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_KinFas_Stoik_Nu"
   !
 end subroutine Dynam_KinFas_Stoik_NuKin
 
@@ -598,7 +599,7 @@ subroutine Dynam_KinFas_DG_UpDate(vDG_Sp,tNu_Kin,vDG_Kin)
   nCp= size(vOrdPr)
   nMk= size(vKinFas)
   !
-  !------------------------------------------- update thermo' param's --
+  !-----------------------------------------------update thermo' param's
   do I=1,nMk
     J=vKinFas(I)%iFas
     !
@@ -611,7 +612,7 @@ subroutine Dynam_KinFas_DG_UpDate(vDG_Sp,tNu_Kin,vDG_Kin)
     end if
     !
   end do
-  !------------------------------------------/ update thermo' param's --
+  !----------------------------------------------/update thermo' param's
 
   return
 end subroutine Dynam_KinFas_DG_UpDate
@@ -631,7 +632,7 @@ subroutine Dynam_KinModel_Init(TimeFactor,TdgK)
   !
   call KinModel_T_Update(TimeFactor,TdgK,vKinMod)
   !
-  if(iDebug>0) call KinModel_Show(fTrc,vSpc,vKinMod,vPrm=vPrmFw)
+  if(idebug>1) call KinModel_Show(fTrc,vSpc,vKinMod,vPrm=vPrmFw)
 
   return
 end subroutine Dynam_KinModel_Init
@@ -653,7 +654,8 @@ end subroutine Dynam_TP_Alloc
 
 subroutine Dynam_Global_TP_Update(TdgK,Pbar)
 !--
-!-- calc' global thermo parameters of species, sol'models and sol'phases for (TdgK,Pbar)
+!-- calc' global thermo parameters of species, 
+!-- sol'models and sol'phases for (TdgK,Pbar)
 !-- and calc' local deltaG's (vDG_Sp,vDG_As)
 !--
 
@@ -697,7 +699,7 @@ subroutine Dynam_Init_KinFas_SatState
   use M_Numeric_Const,only: Ln10
   use M_KinRate,    only: KinRate_SatState,KinRate_CalcQsK
   !
-  use M_Global_Vars,only: vSpc,vKinFas,vFas
+  use M_Global_Vars,only: vSpc,vKinFas,vFas,vSpcDat
   use M_Basis_Vars, only: vOrdPr,nCi
   !
   use M_Dynam_Vars, only: vDG_Kin,tNu_Kin,vKinMinim,Qsk_Iota
@@ -709,7 +711,7 @@ subroutine Dynam_Init_KinFas_SatState
   character:: cStatus
   real(dp),dimension(1:size(vOrdPr)):: dQsKdLnXi
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_Init_KinFas_SatState"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_Init_KinFas_SatState"
   !
   QskIota= Qsk_Iota
   !
@@ -717,14 +719,14 @@ subroutine Dynam_Init_KinFas_SatState
   nCx= nCp-nCi
   nAq= count(vSpc%Typ=="AQU")
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     !
     write(fTrc,'(A)') "Log10(QsK) of Mineral species"
     write(fTrc,'(/,A,/)') "iCp, Log(Act), LogK0, Prim.Species"
     do i=1,nCp
       write(fTrc,'(I2,A1,2(G15.3,A1),A)') &
       & I,                              T_, &
-      & vSpc(vOrdPr(i))%Dat%LAct/Ln10,  T_, &
+      & vSpcDat(vOrdPr(i))%LAct/Ln10,   T_, &
       & vSpc(vOrdPr(i))%G0rt/Ln10,      T_, &
       & trim(vSpc(vOrdPr(i))%NamSp)
     end do
@@ -737,10 +739,10 @@ subroutine Dynam_Init_KinFas_SatState
     !
   end if
   !
-  !! call OutStrVec(51,vSpc(:)%Dat%LAct)
+  !! call OutStrVec(51,vSpcDat(:)%LAct)
   !
   do I=1,size(vKinFas)
-    !------------------------ calc' QsK, saturation state of minerals --
+    !----------------------------calc' QsK, saturation state of minerals
     call KinRate_CalcQsK( &
     & nCi,nCx,      &
     & vDG_Kin(I),   &
@@ -752,7 +754,7 @@ subroutine Dynam_Init_KinFas_SatState
     & QsK,          & !OUT, mineral saturation
     & dQsKdLnXi)      !OUT
     !
-    !--------- from QsK deduce cSatur, for branching to dissol/precip --
+    !------------ from QsK deduce cSatur, for branching to dissol/precip
     call KinRate_SatState( &
     & vKinFas(I),     & !IN:  mineral: for cSatur, QsKseuil
     & vMolK(I),       & !IN:  Nr Moles of mineral, used for checking nMol<=MolMinim
@@ -761,13 +763,13 @@ subroutine Dynam_Init_KinFas_SatState
     & QskIota,        & !IN
     & cStatus)          !OUT
     !
-    !----------------------------------------- save in vKinFas(:)%Dat --
+    !---------------------------------------------save in vKinFas(:)%Dat
     vKinFas(i)%Dat%QsK=  QsK
     vKinFas(I)%Dat%cSat= cStatus
     !
   end do
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     write(fTrc,'(/,A,/)') "Minerals Saturation State, logQsK"
     do i=1,size(vKinFas)
       write(fTrc,'(I2,A1,G15.3,A1,2A)') &
@@ -777,7 +779,7 @@ subroutine Dynam_Init_KinFas_SatState
     end do
   end if
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_Init_KinFas_SatState"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_Init_KinFas_SatState"
   !
 end subroutine Dynam_Init_KinFas_SatState
 
@@ -802,7 +804,9 @@ subroutine KinModel_Prm_Update(vPrmBk,vKinModel,vKinMod) !
 end subroutine KinModel_Prm_Update
 
 subroutine KinModel_T_Update(TimeFactor,TdgK,vKinMod)
-!------------ update temperature dependent param's of kinetic models  --
+!--
+!--update temperature dependent param's of kinetic models
+!--
   use M_T_Kinmodel,only: T_Kinmodel,KinModel_CalcCoeffs
   !
   real(dp),        intent(in)   :: TimeFactor,TdgK
@@ -966,9 +970,8 @@ subroutine Dynam_Zero_Box(B)
   B%PhiF=  0.5D0  ! porosity
   B%RhoF=  1.D3   ! fluid density, kg/m^3
   B%FOut=  Zero   !
-  B%nCell= 1      !
   B%VFixed=.true. ! Vfixed is .false. for free volume
-  
+  !
   return
 end subroutine Dynam_Zero_Box
 
@@ -1008,19 +1011,20 @@ subroutine Dynam_Zero_Numeric
   NewtIterMin= 10 !25 !8   !30  !
   !--/
   !
-  NewtTolF=       1.0E-09_dp  ! convergence criterion on function values
-  !NewtTolF=      1.0E-07_dp  ! convergence criterion on function values
-  !NewtTolF_Equil= NewtTolF
+  NewtTolF=      1.0E-07_dp  
+  !NewtTolF=     1.0E-09_dp  
+  != convergence criterion on function values
   NewtTolF_Equil= 1.0E-06_dp  !
+  !NewtTolF_Equil= NewtTolF
   !
-  NewtTolMin=     1.0E-06_dp  !criterion for spurious convergence
-  !
-  NewtTolX= EPSILON(real(dp)) !convergence criterion on dx -> approx. 2.E-16
-  !NewtTolX=   1.0E-09_dp  !convergence criterion on dx
+  NewtTolMin=     1.0E-06_dp 
+  != criterion for spurious convergence
+  NewtTolX= epsilon(real(dp))
+  != convergence criterion on dx -> approx. 2.E-16
   !
   ! usage in Newton:
-  !   NewtTolF: if( MAXVAL(ABS(fVec(:)))<NewtTolF ) Newton_Ok
-  !   NewtTolX: if( MAXVAL( ABS(vX(:)-vXOld(:))/MAX(ABS(vX(:)),One)<NewtTolX ) Converge on X
+  !   NewtTolF: if( maxval(abs(fVec(:)))<NewtTolF ) Newton_Ok
+  !   NewtTolX: if( maxval( abs(vX(:)-vXOld(:))/MAX(abs(vX(:)),One)<NewtTolX ) Converge on X
   !
   !--------------------------------------------------/NUMERIC parameters
   
@@ -1028,7 +1032,7 @@ subroutine Dynam_Zero_Numeric
 end subroutine Dynam_Zero_Numeric
 
 subroutine Dynam_InitCalc_Restart
-  use M_Global_Vars,only: nAq,vSpc,vFas,vKinFas
+  use M_Global_Vars,only: nAq,vSpc,vFas,vKinFas,vSpcDat
   use M_Basis_Vars, only: vOrdAq
   use M_Dynam_Vars, only: vMolK,vMolF
   use M_Dynam_Vars, only: vMolarVol,vKinQsk,VBox,PhiF
@@ -1048,14 +1052,14 @@ subroutine Dynam_InitCalc_Restart
   !---------------------------------------mole nr's of kin'phases in box
   vMolK(1:nMk)=     vKinFas(1:nMk)%Dat%PhiM /vMolarVol(1:nMk) *VBox
   !---------------------------------------------sat'states of kin'phases
-  vKinQsk(1:nMk)=  vKinFas(1:nMk)%Dat%QsK
+  vKinQsk(1:nMk)=   vKinFas(1:nMk)%Dat%QsK
   !
-  PhiF= One - SUM(vKinFas(1:nMk)%Dat%PhiM)
+  PhiF= One - sum(vKinFas(1:nMk)%Dat%PhiM)
   !             !-> vol'fraction of fluid
-  vMolF(1:nAq)= vSpc(vOrdAq(1:nAq))%Dat%Mole
+  vMolF(1:nAq)= vSpcDat(vOrdAq(1:nAq))%Mole
   !             !-> mole nr's of aqu'species in box
   !
-  if (iDebug>0) &
+  if (idebug>1) &
   & print '(A,3F12.5, 2G12.3)', &
   & 'Restart avec [Time, Tfinal, Dtime, Dtmin, Dtmax =]', &
   & Time, Tfinal, Dtime, Dtmin, Dtmax
@@ -1064,11 +1068,12 @@ subroutine Dynam_InitCalc_Restart
 end subroutine Dynam_InitCalc_Restart
 
 subroutine Dynam_Restart
-  use M_Global_Vars,only: nAq,vSpc,vFas,vKinFas
+  use M_Global_Vars,only: nAq,vSpc,vFas,vKinFas,vSpcDat
   use M_Basis_Vars, only: vOrdAq
   !
-  use M_Dynam_Vars, only: vMolarVol,vMolK,vSurfK,vKinQsk,vStatusK
-  use M_Dynam_Vars, only: VBox,PhiF,vMolF
+  use M_Dynam_Vars, only: vMolarVol,vMolK,vMolF
+  use M_Dynam_Vars, only: vSurfK,vKinQsk,vStatusK
+  use M_Dynam_Vars, only: VBox,PhiF
   use M_Dynam_Vars, only: Time, Tfinal, Dtime, Dtmin, Dtmax
   !
   integer:: nMk
@@ -1085,12 +1090,12 @@ subroutine Dynam_Restart
   !                 !-> sat'states of kin'phases
   vStatusK(1:nMk)=  vKinFas(1:nMk)%Dat%cSat
   !
-  PhiF= One - SUM(vKinFas(1:nMk)%Dat%PhiM)
+  PhiF= One - sum(vKinFas(1:nMk)%Dat%PhiM)
   !                 !-> vol'fraction of fluid
-  vMolF(1:nAq)= vSpc(vOrdAq(1:nAq))%Dat%Mole
+  vMolF(1:nAq)= vSpcDat(vOrdAq(1:nAq))%Mole
   !                 !-> mole nr's of aqu'species in box
 
-  if (iDebug>0) &
+  if (idebug>1) &
   & print '(A,3F12.5, 2G12.3)', &
   & 'Restart avec [Time, Tfinal, Dtime, Dtmin, Dtmax =]', &
   & Time, Tfinal, Dtime, Dtmin, Dtmax
@@ -1100,7 +1105,7 @@ end subroutine Dynam_Restart
 
 subroutine Dynam_Save
 
-  use M_Global_Vars,only: vSpc,vFas,vKinFas
+  use M_Global_Vars,only: vSpc,vFas,vKinFas,vSpcDat
   !
   use M_Basis_Vars, only: vOrdAq
   use M_Dynam_Vars, only: vCpnBox
@@ -1119,24 +1124,23 @@ subroutine Dynam_Save
   nMk= size(vKinFas)
   !
   vCpnBox(:)%Mole=  vTotF(:)
-  vCpnBox(:)%LnAct= vSpc(vCpnBox(:)%iSpc)%Dat%LAct
+  vCpnBox(:)%LnAct= vSpcDat(vCpnBox(:)%iSpc)%LAct
   !
-  vSpc(vOrdAq(1:nAq))%Dat%Mole= vMolF(1:nAq)
-  vSpc(vOrdAq(1:nAq))%Dat%LAct= vLnAct(1:nAq)
-  vSpc(vOrdAq(1:nAq))%Dat%LGam= vLnGam(1:nAq)
+  vSpcDat(vOrdAq(1:nAq))%Mole= vMolF(1:nAq)
+  vSpcDat(vOrdAq(1:nAq))%LAct= vLnAct(1:nAq)
+  vSpcDat(vOrdAq(1:nAq))%LGam= vLnGam(1:nAq)
   !
   vKinFas(1:nMk)%Dat%PhiM=   vMolK(1:nMk) *vMolarVol(1:nMk) / VBox
   vKinFas(1:nMk)%Dat%Surf=   vSurfK(1:nMk) /Vbox
   vKinFas(1:nMk)%Dat%QsK=    vKinQsk(1:nMk)
   vKinFas(1:nMk)%Dat%cSat=   vStatusK(1:nMk)
   !
-  vFas(vKinFas(1:nMk)%iFas)%MolFs= vMolK(1:nMk)
+  ! vFas(vKinFas(1:nMk)%iFas)%MolFs= vMolK(1:nMk)
   
-  PhiF= One - SUM(vKinFas(1:nMk)%Dat%PhiM)
-  
-  !! call Cell_State_New(Cell, nAq,nMk)
+  PhiF= One - sum(vKinFas(1:nMk)%Dat%PhiM)
+  !
   call Cell%New_(nCp,nAq,nMk)
-  !! call Cell_State_Write( &  !
+  !
   call Cell%Set_( &  !
   & vMolK,    & !-> mole nr's of kin'phases in cell
   & vSurfK,   & !-> surfaces of kin'phases in cell
@@ -1296,13 +1300,11 @@ subroutine Dynam_Clean
   !
   if(allocated(vKinMod))    deallocate(vKinMod)
   !
-  !if(allocated(vTooLow))    deallocate(vTooLow)
   if(allocated(vQTotInj))    deallocate(vQTotInj)
   !
   if(allocated(vKinQsK))     deallocate(vKinQsK)
   if(allocated(vVmAct))      deallocate(vVmAct)
   if(allocated(vVmQsK))      deallocate(vVmQsK)
-  !!if(allocated(vVm0)  )     deallocate(vVm0)
   !
   if(allocated(vDG_Sp))     deallocate(vDG_Sp)
   if(allocated(vDG_As))     deallocate(vDG_As)

@@ -30,8 +30,8 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
 !!& TolMin, & !in=    whether spurious convergence to a minimum of fmin has occurred
 & bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
-& Error_F,  & !out=   MAXVAL(ABS(vFunc(:)))
-& Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,  & !out=   maxval(abs(vFunc(:)))
+& Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Gradient, & !out=
 & Nits,     & !out=   number of iterations
 & Check,    & !out=   if Check, should check convergence
@@ -103,7 +103,7 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
   F= 0.5_dp*dot_product(vFunc,vFunc)
   !
   iErr=-1
-  !Error_F= MAXVAL(ABS(vFunc(:))) !-> error on function
+  !Error_F= maxval(abs(vFunc(:))) !-> error on function
   !if (Error_F < 0.01_dp*TolF) then !Test for initial guess being a root
   !  nIts=1
   !  iErr=1 !-----------Use more stringent test than simply NewtTolF ???
@@ -157,7 +157,7 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
     rSlope= dot_product(vGrad,vDX)
     !
     if (rSlope>=Zero) then
-      if(iDebug>0) then
+      if(idebug>1) then
         write(fTrc,'(/,A,/)') "ROUNdoFF PROBLEM -> vGrad, vDX ="
         call OutStrVec(fTrc,vGrad(1:size(vX)),OPt_C="G")
         call OutStrVec(fTrc,vDX(1:size(vX)),  OPt_C="G")
@@ -169,7 +169,7 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
     !----------------------------------------linesearch and backtracking
     !
     CHECK= .false.
-    AlaMin= TolX /MAXVAL(ABS(vDX(:))/MAX(ABS(vXOld(:)),One))
+    AlaMin= TolX /maxval(abs(vDX(:))/MAX(abs(vXOld(:)),One))
     Alam=   One !always try full Newton step first
     !
     DoLineSearch: do !Start of iteration loop
@@ -228,7 +228,7 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
       end if
       !
       Alam2= Alam
-      Alam=  MAX(tmpLam,0.1_dp*Alam)
+      Alam=  max(tmpLam,0.1_dp*Alam)
       !
       F2=F
       !
@@ -236,15 +236,15 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
     !
     !---------------------------------------/linesearch and backtracking
     !
-    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on function value
+    Error_F=  maxval( abs(vFunc(:)) ) !-> error on function value
     !
     !-- Press-> max variation on vX
-    !Delta_X= MAXVAL( ABS(vX(:)-vXOld(:))/MAX(ABS(vX(:)),One) )
+    !Delta_X= maxval( abs(vX(:)-vXOld(:))/MAX(abs(vX(:)),One) )
     !
     !-- Archim-> max relative variation on vX
-    Delta_X=  MAXVAL( ABS( (vX(:)-vXOld(:)) /vX(:)) )
+    Delta_X=  maxval( abs( (vX(:)-vXOld(:)) /vX(:)) )
     !
-    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
+    Gradient= maxval( abs(vGrad(:)) *MAX(abs(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
     !
     if(ShoResult) print '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
     !
@@ -284,8 +284,8 @@ subroutine Newton_Press( & !from "NR"
 & TolX,     & !in=    convergence criterion on dx
 & bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
-& Error_F,  & !out=   MAXVAL(ABS(vFunc(:)))
-& Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,  & !out=   maxval(abs(vFunc(:)))
+& Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,     & !out=   number of iterations
 & iErr)      !out=   error code
 !
@@ -395,10 +395,10 @@ subroutine Newton_Press( & !from "NR"
     call LU_BakSub(tJacob,vIndex,vDX)
     !------------------------/solve linear equations by LU decomposition
     !
-    !~ if(fNewtJ>0) then
-      !~ call Jacobian_Sho(fNewtJ,tJacob)
-      !~ fNewtJ= 0  ;  close(fNewtJ)
-    !~ end if
+    !! if(fNewtJ>0) then
+      !! call Jacobian_Sho(fNewtJ,tJacob)
+      !! fNewtJ= 0  ;  close(fNewtJ)
+    !! end if
     !
     Norm_vDX= vAbs(vDX(:))
     !-- Scale if attempted step is too big --
@@ -415,7 +415,7 @@ subroutine Newton_Press( & !from "NR"
     if(ForcePositive) then
       !--- under relaxation technique from Bethke
       !--- if (Xi/2 + dXi)-0
-      X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) " Press-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
@@ -432,7 +432,7 @@ subroutine Newton_Press( & !from "NR"
     !----------------------------------------linesearch and backtracking
     !
     CHECK= .false.
-    AlaMin= TolX /MAXVAL(ABS(vDX(:))/MAX(ABS(vX0(:)),One))
+    AlaMin= TolX /maxval(abs(vDX(:))/MAX(abs(vX0(:)),One))
     Alam=   One !always try full Newton step first
     !
     DoLineSearch: do !Start of iteration loop
@@ -470,8 +470,8 @@ subroutine Newton_Press( & !from "NR"
             tmpLam= -rSlope/(2.0_dp*B)
             !
           else
-            B= MIN(B, 1.0D100)
-            B= MAX(B,-1.0D100)
+            B= min(B, 1.0D100)
+            B= max(B,-1.0D100)
             DISC= B*B -3.0_dp*A*rSlope
             if     (DISC<Zero) then  ; tmpLam= 0.5_dp*Alam
             elseif (B<=Zero)   then  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
@@ -479,14 +479,14 @@ subroutine Newton_Press( & !from "NR"
             end if
           end if
           !
-          tmpLam= MIN(tmpLam,0.5_dp*Alam)
+          tmpLam= min(tmpLam,0.5_dp*Alam)
           !
         end if
         !
       end if
       !
       Alam2= Alam
-      Alam=  MAX(tmpLam,0.1_dp*Alam)
+      Alam=  max(tmpLam,0.1_dp*Alam)
       !
       F2=F
       !
@@ -494,15 +494,15 @@ subroutine Newton_Press( & !from "NR"
     !
     !---------------------------------------/linesearch and backtracking
     !
-    Error_F=  MAXVAL( ABS(vFunc(:)) ) !-> error on function value
+    Error_F=  maxval( abs(vFunc(:)) ) !-> error on function value
     !
     !-- Press-> max relative variation on vX
-    Delta_X= MAXVAL( ABS(vX(:)-vX0(:))/MAX(ABS(vX(:)),One) )
+    Delta_X= maxval( abs(vX(:)-vX0(:))/MAX(abs(vX(:)),One) )
     !
     !-- Archim-> max relative variation on vX
-    ! Delta_X=  MAXVAL( ABS( (vX(:)-vX0(:)) /vX(:)) )
+    ! Delta_X=  maxval( abs( (vX(:)-vX0(:)) /vX(:)) )
     !
-    Gradient= MAXVAL( ABS(vGrad(:)) *MAX(ABS(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
+    Gradient= maxval( abs(vGrad(:)) *MAX(abs(vX(:)),One) /MAX(F,0.5_dp*size(vX)) )
     !
     if(ShoResult) print '(I3,3(G15.6,A))',iTs,Error_F,"=F ",Gradient,"=G ",Delta_X,"=X"
     !
@@ -549,8 +549,8 @@ subroutine Newton_Walker( & !
 & TolX,     & !in=    convergence criterion on dx
 & bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
-& Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,  & !out=   maxval(abs(fVec(:)))
+& Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,     & !out=   number of iterations
 & iErr)       !out=   error code
 !--
@@ -628,7 +628,7 @@ subroutine Newton_Walker( & !
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(SUM(vFunc0(:)*vFunc0(:)))
+    Norm_vF0= SQRT(sum(vFunc0(:)*vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -638,10 +638,10 @@ subroutine Newton_Walker( & !
       call Jacobian(vX0,tJac)
     end if
     !
-    !~ if(fNewtJ>0) then
-      !~ call Jacobian_Sho(fNewtJ,tJac)
-      !~ fNewtJ= 0  ;  close(fNewtJ)
-    !~ end if
+    !! if(fNewtJ>0) then
+      !! call Jacobian_Sho(fNewtJ,tJac)
+      !! fNewtJ= 0  ;  close(fNewtJ)
+    !! end if
     !
     !----------------------solve linear equations using LU decomposition
     call LU_Decomp(tJac, vIndex, D, bSingul)
@@ -653,7 +653,7 @@ subroutine Newton_Walker( & !
     !---------------------/solve linear equations using LU decomposition
     !
     if(ForcePositive) then
-      X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) "Walker-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
@@ -667,7 +667,7 @@ subroutine Newton_Walker( & !
     vX(:)= vX0(:) + vDX(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
+    Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
     !
     lambda= 1.0d0
     iArm=   0
@@ -687,8 +687,8 @@ subroutine Newton_Walker( & !
       !
       if (delta > Zero) then
         Sigma=  lambda/delta
-        Sigma=  MIN(Sigma,SigmaMax)
-        Sigma=  MAX(Sigma,SigmaMin)
+        Sigma=  min(Sigma,SigmaMax)
+        Sigma=  max(Sigma,SigmaMin)
       else
         Sigma=  SigmaMax
       end if
@@ -697,13 +697,13 @@ subroutine Newton_Walker( & !
       lambda=  Sigma*lambda
       vX(:)=   vX0(:) + vDX(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
+      Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
       !
     end do
     !--------------------------/Test the step and backtrack as necessary
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vDX(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vDX(:)))
     !
     !-- convergence --
     !if (Error_F < TolF) then
@@ -733,8 +733,8 @@ subroutine Newton_Kelley( & !
 & TolX,      & !in=    convergence criterion on dx
 & bFinDif,   & !in=    use numeric Jacobian
 & MaxIts,    & !in=    maximum number of iterations
-& Error_F,   & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X,   & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,   & !out=   maxval(abs(fVec(:)))
+& Delta_X,   & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,      & !out=   number of iterations
 & iErr)        !out=   error code
 !--
@@ -832,13 +832,13 @@ subroutine Newton_Kelley( & !
     call LU_BakSub(tJac,vIndex,vDX)
     !-------------------------------------------------------------/solve
     !
-    !~ if(fNewtJ>0) then
-      !~ call Jacobian_Sho(fNewtJ,tJac)
-      !~ fNewtJ= 0  ;  close(fNewtJ)
-    !~ end if
+    !! if(fNewtJ>0) then
+      !! call Jacobian_Sho(fNewtJ,tJac)
+      !! fNewtJ= 0  ;  close(fNewtJ)
+    !! end if
     !
     if(ForcePositive) then
-      X= MAXVAL(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) "Kelley-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
@@ -894,8 +894,8 @@ subroutine Newton_Kelley( & !
     end do
     !--------------------------/test the step and backtrack as necessary
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vStep(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vStep(:)))
     !
     Norm_Ratio= Norm_vF /Norm_vF0
     !! write(71,'(A,G16.6)') "Kelley, Norm_Ratio ", Norm_Ratio
@@ -945,8 +945,8 @@ subroutine parab3p(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
   else
     c1= lambdam *lambdam *(ffc-ff0) - lambdac *lambdac *(ffm-ff0)
     lambdap= c1 *0.5d0 /c2
-    lambdap= MAX(lambdap, sigma0*lambdac)
-    lambdap= MIN(lambdap, sigma1*lambdac)
+    lambdap= max(lambdap, sigma0*lambdac)
+    lambdap= min(lambdap, sigma1*lambdac)
   end if
   !
   return
@@ -961,8 +961,8 @@ subroutine Newton_Walker_old( & !
 & TolX,     & !in=    convergence criterion on dx
 & bFinDif,  & !in=    use numeric Jacobian
 & MaxIts,   & !in=    maximum number of iterations
-& Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,  & !out=   maxval(abs(fVec(:)))
+& Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,     & !out=   number of iterations
 & iErr)       !out=   error code
 !--
@@ -1032,7 +1032,7 @@ subroutine Newton_Walker_old( & !
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(SUM(vFunc0(:)*vFunc0(:)))
+    Norm_vF0= SQRT(sum(vFunc0(:)*vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -1054,7 +1054,7 @@ subroutine Newton_Walker_old( & !
     vX(:)= vX0(:) + vDX(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
+    Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
     !
     lambda= 1.0d0
     iArm=   0
@@ -1074,8 +1074,8 @@ subroutine Newton_Walker_old( & !
       !
       if (delta > Zero) then
         Sigma=  lambda/delta
-        Sigma=  MIN(Sigma,SigmaMax)
-        Sigma=  MAX(Sigma,SigmaMin)
+        Sigma=  min(Sigma,SigmaMax)
+        Sigma=  max(Sigma,SigmaMin)
       else
         Sigma=  SigmaMax
       end if
@@ -1084,13 +1084,13 @@ subroutine Newton_Walker_old( & !
       lambda=  Sigma*lambda
       vX(:)=   vX0(:) + vDX(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(SUM(vFunc(:)*vFunc(:)))
+      Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
       !
     end do
     !--------------------------/Test the step and backtrack as necessary
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vDX(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vDX(:)))
     !
     !if (Error_F < TolF) then
     if(Converge(vFunc,vTolF)) then
@@ -1118,8 +1118,8 @@ subroutine Newton_Kelley_old( & !
 & TolX,      & !in=    convergence criterion on dx
 & bFinDif,   & !in=    use numeric Jacobian
 & MaxIts,    & !in=    maximum number of iterations
-& Error_F,   & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X,   & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,   & !out=   maxval(abs(fVec(:)))
+& Delta_X,   & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,      & !out=   number of iterations
 & iErr)        !out=   error code
 !--
@@ -1266,8 +1266,8 @@ subroutine Newton_Kelley_old( & !
     end do
     !------------------------------/ test the step and backtrack as necessary --
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vStep(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vStep(:)))
     !
     Norm_Ratio= Norm_vF /Norm_vF0
     !! write(71,'(G16.6)') Norm_Ratio
@@ -1317,8 +1317,8 @@ subroutine parab3p_old(sigma0,sigma1, lambdac,lambdam, ff0,ffc,ffm, lambdap)
   else
     c1= lambdam *lambdam *(ffc-ff0) - lambdac *lambdac *(ffm-ff0)
     lambdap= c1 *0.5d0 /c2
-    lambdap= MAX(lambdap, sigma0*lambdac)
-    lambdap= MIN(lambdap, sigma1*lambdac)
+    lambdap= max(lambdap, sigma0*lambdac)
+    lambdap= min(lambdap, sigma1*lambdac)
   end if
   !
   return
@@ -1334,8 +1334,8 @@ subroutine NewtonChess( &
 & TolX,    & !in=    convergence criterion on dx
 !!& TolMin,  & !in=    whether spurious convergence to a minimum of fmin has occurred
 & MaxIts,  & !in=    maximum number of iterations
-& Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F, & !out=   maxval(abs(fVec(:)))
+& Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 !& Gradient, & !out=
 & Nits,    & !out=   number of iterations
 !& Check,   & !out=   if Check, should check convergence
@@ -1410,17 +1410,17 @@ subroutine NewtonChess( &
     !
     R= One
     !Chess/Concepts, p71, Newton with "polishing factor"
-    Alfa= MAXVAL(ABS(vDX(:)/vX(:)))  !alfa_i= |dX_i|/X_i
+    Alfa= maxval(abs(vDX(:)/vX(:)))  !alfa_i= |dX_i|/X_i
     if(Alfa > A) then !-> far from root
-      I= iMaxLoc_R(ABS(vDX(:)/vX(:)))
+      I= iMaxLoc_R(abs(vDX(:)/vX(:)))
       if(vDX(I)>Zero) R=   (Alfa*B - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
       if(vDX(I)<Zero) R= C*(Alfa   - A*A)/(B + Alfa -2.0D0*A)*vX(I)/vDX(I)
     end if
     !
     vX= vX + R *vDX
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vDX(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vDX(:)))
     !
     if (Error_F<TolF) then
       iErr= 0; exit
@@ -1443,8 +1443,8 @@ subroutine Newton( &
 & TolF,     & !in=    convergence criterion on function values
 & TolX,     & !in=    convergence criterion on dx
 & MaxIts,   & !in=    maximum number of iterations
-& Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F,  & !out=   maxval(abs(fVec(:)))
+& Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Nits,     & !out=   number of iterations
 & iErr)       !out=   error code
 !-----------------------------------------------------------------------
@@ -1511,8 +1511,8 @@ subroutine Newton( &
     !
     vX= vX + vDX *Alfa
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Delta_X= MAXVAL(ABS(vDX(:)))
+    Error_F= maxval(abs(vFunc(:)))
+    Delta_X= maxval(abs(vDX(:)))
     !
     if (Error_F < TolF) then
       iErr= 0; exit
@@ -1570,7 +1570,7 @@ subroutine Newton_Sho(vX,vFunc,Its) !,nAq)
   !
   fNewt_I= fNewt_I +1
   if(fNewtF>0) call OutStrVec(fNewtF,vX(:)/Ln10,   Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
-  if(fNewtR>0) call OutStrVec(fNewtR,ABS(vFunc(:)),Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
+  if(fNewtR>0) call OutStrVec(fNewtR,abs(vFunc(:)),Opt_I=fNewt_I,Opt_J=Its,Opt_C="G")
   !
 end subroutine Newton_Sho
 

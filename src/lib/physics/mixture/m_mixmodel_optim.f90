@@ -10,8 +10,8 @@ module M_Mixmodel_Optim
 
   private
 
-  !~ public:: Mixmodel_Optim_GetGibbs
-  !~ public:: Mixmodel_Optim_GetPotentials
+  !! public:: Mixmodel_Optim_GetGibbs
+  !! public:: Mixmodel_Optim_GetPotentials
   public:: Mixmodel_Optim_GetMu
   public:: Mixmodel_Optim_SetParams
   !
@@ -37,38 +37,38 @@ subroutine Mixmodel_Optim_SetParams(T,P,MM) !,vG0rt)
   !
 end subroutine Mixmodel_Optim_SetParams
 
-!~ function Mixmodel_Optim_GetGibbs(vX) result(G)
-  !~ real(dp),intent(in):: vX(:)
-  !~ real(dp):: G
-  !~ !
-  !~ logical,allocatable:: vLPole(:)
-  !~ !
-  !~ real(dp):: Gmix,Gmeca
-  !~ integer :: I
-  !~ !
-  !~ allocate(vLPole(size(vX)))
-  !~ vLPole(:)= (vX(:)>Zero)
-  !~ !
-  !~ Gmix= MixModel_GibbsMixRT( & !
-  !~ & TdgK,Pbar, & !IN
-  !~ & MixModel,  & !IN, mixing model
-  !~ & vLPole,    & !IN
-  !~ & vX)          !IN
-  !~ !
-  !~ !---------------------------------------------- "mechanical" mixing --
-  !~ Gmeca= Zero
-  !~ do I=1,MixModel%NPole
-    !~ if(vLPole(I)) &
-    !~ & Gmeca= Gmeca &
-    !~ &      + vX(I) *vSpc(MixModel%vIPole(I))%G0rt
-  !~ end do
-  !~ !----------------------------------------------/"mechanical" mixing --
-  !~ !
-  !~ G= Gmix +Gmeca
-  !~ !
-  !~ deallocate(vLPole)
-  !~ !
-!~ end function Mixmodel_Optim_GetGibbs
+!! function Mixmodel_Optim_GetGibbs(vX) result(G)
+  !! real(dp),intent(in):: vX(:)
+  !! real(dp):: G
+  !! !
+  !! logical,allocatable:: vLPole(:)
+  !! !
+  !! real(dp):: Gmix,Gmeca
+  !! integer :: I
+  !! !
+  !! allocate(vLPole(size(vX)))
+  !! vLPole(:)= (vX(:)>Zero)
+  !! !
+  !! Gmix= MixModel_GibbsMixRT( & !
+  !! & TdgK,Pbar, & !IN
+  !! & MixModel,  & !IN, mixing model
+  !! & vLPole,    & !IN
+  !! & vX)          !IN
+  !! !
+  !! !---------------------------------------------- "mechanical" mixing --
+  !! Gmeca= Zero
+  !! do I=1,MixModel%NPole
+    !! if(vLPole(I)) &
+    !! & Gmeca= Gmeca &
+    !! &      + vX(I) *vSpc(MixModel%vIPole(I))%G0rt
+  !! end do
+  !! !----------------------------------------------/"mechanical" mixing --
+  !! !
+  !! G= Gmix +Gmeca
+  !! !
+  !! deallocate(vLPole)
+  !! !
+!! end function Mixmodel_Optim_GetGibbs
 
 subroutine Mixmodel_Optim_GetMu(vX,vMu)
   !real(dp),intent(in):: G
@@ -105,16 +105,16 @@ subroutine Mixmodel_Optim_GetMu(vX,vMu)
   !  vMu(I)= G0RT(I) +MixFas_Optim%vLnAct(I)
   !end do
   !
-  !~ real(dp):: xx
-  !~ real(dp),allocatable:: grad(:)
-  !~ !
-  !~ allocate(grad(size(vX)))
-  !~ !
-  !~ call gibbs_gradient(vX,grad)
-  !~ xx= sum(vX(:)*grad(:))
-  !~ vMu(:)= G - xx + grad(:)
-  !~ !
-  !~ deallocate(grad)
+  !! real(dp):: xx
+  !! real(dp),allocatable:: grad(:)
+  !! !
+  !! allocate(grad(size(vX)))
+  !! !
+  !! call gibbs_gradient(vX,grad)
+  !! xx= sum(vX(:)*grad(:))
+  !! vMu(:)= G - xx + grad(:)
+  !! !
+  !! deallocate(grad)
   !
 end subroutine Mixmodel_Optim_GetMu
 
@@ -157,16 +157,16 @@ subroutine Mixmodel_Optim_GetPotentials(G,vX,vMu)
   !  vMu(I)= G0RT(I) +MixFas_Optim%vLnAct(I)
   !end do
   !
-  !~ real(dp):: xx
-  !~ real(dp),allocatable:: grad(:)
-  !~ !
-  !~ allocate(grad(size(vX)))
-  !~ !
-  !~ call gibbs_gradient(vX,grad)
-  !~ xx= sum(vX(:)*grad(:))
-  !~ vMu(:)= G - xx + grad(:)
-  !~ !
-  !~ deallocate(grad)
+  !! real(dp):: xx
+  !! real(dp),allocatable:: grad(:)
+  !! !
+  !! allocate(grad(size(vX)))
+  !! !
+  !! call gibbs_gradient(vX,grad)
+  !! xx= sum(vX(:)*grad(:))
+  !! vMu(:)= G - xx + grad(:)
+  !! !
+  !! deallocate(grad)
   !
 end subroutine Mixmodel_Optim_GetPotentials
 

@@ -49,7 +49,7 @@ subroutine Solmodel_Solvent_Read( &
 
   !--
 
-  if(iDebug>0) write(fTrc,'(/,A)') "< Solmodel_Solvent_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Solmodel_Solvent_Read"
 
   Ok=.false.
   !
@@ -111,14 +111,14 @@ subroutine Solmodel_Solvent_Read( &
               exit
             end if
           end do
-          !~ if(index(Solmodel_ModelList,trim(W)//"_")==0) &
-          !~ & call Stop_(trim(W)//" = UNKNOWN ACTIVITY MODEL !!!")
+          !! if(index(Solmodel_ModelList,trim(W)//"_")==0) &
+          !! & call Stop_(trim(W)//" = UNKNOWN ACTIVITY MODEL !!!")
 
           if(SolModel%iActModel==0) &
           & call Stop_(trim(W)//" = UNKNOWN ACTIVITY MODEL !!!")
 
-          !~ SolModel%ActModel=trim(W)
-          !~ if(SolModel%ActModel=="PITZER") NamFPtz= trim(NamFInn)
+          !! SolModel%ActModel=trim(W)
+          !! if(SolModel%ActModel=="PITZER") NamFPtz= trim(NamFInn)
           if(SolModel%iActModel==8) NamFPtz= trim(NamFInn)
 
         case("RHO")
@@ -141,7 +141,7 @@ subroutine Solmodel_Solvent_Read( &
             vSolvDat(1:nTP)%DHB=  vX(1:nTP)  ;   DHB_Ok= .true.
           end if
 
-        case("BdoT")
+        case("BDOT")
           if(nTP>0) then
             vSolvDat(1:nTP)%BDot= vX(1:nTP)  ;   BDot_Ok=.true.
           end if
@@ -172,14 +172,14 @@ subroutine Solmodel_Solvent_Read( &
   !end if
 
   ! A.M Error Detected Here
-  !!if(iDebug>0) write(fTrc,'(A,E15.8)') "DHA",vSolvDat(1)%DHA
-  !!if(iDebug>0) write(fTrc,'(A,E15.8)') "DHB",vSolvDat(1)%DHB
+  !!if(idebug>1) write(fTrc,'(A,E15.8)') "DHA",vSolvDat(1)%DHA
+  !!if(idebug>1) write(fTrc,'(A,E15.8)') "DHB",vSolvDat(1)%DHB
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Solmodel_Solvent_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Solmodel_Solvent_Read"
 
 end subroutine Solmodel_Solvent_Read
 
-subroutine SolModel_Read(vSpc,Ok,MsgError)
+subroutine SolModel_Read(vSpc,    vSolModel,Ok,MsgError)
 !--
 !-- initialize vSolModel --
 !--
@@ -191,11 +191,12 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
   use M_T_SolModel,only: T_SolModel,T_SolModelDat
   use M_T_SolModel,only: vSolModelAct
   !
-  use M_Global_Vars,only: vSolModel
+  ! use M_Global_Vars,only: vSolModel
   !---------------------------------------------------------------------
-  type(T_Species), intent(in) :: vSpc(:)
-  logical,         intent(out):: Ok
-  character(len=*),intent(out):: MsgError
+  type(T_Species),             intent(in) :: vSpc(:)
+  type(T_SolModel),allocatable,intent(out):: vSolModel(:)
+  logical,                     intent(out):: Ok
+  character(len=*),            intent(out):: MsgError
   !---------------------------------------------------------------------
   type(T_SolModel):: S
   type(T_SolModel):: vSolTmp(10)
@@ -208,7 +209,7 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
   !logical:: Rho_Ok,Eps_Ok,DHA_Ok,DHB_Ok,BDot_Ok
   integer:: I,K,N,nS,M
   !---------------------------------------------------------------------
-  if(iDebug>0) write(fTrc,'(A,/)') "< SolModel_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "< SolModel_Read"
 
   call GetUnit(F)
   open(F,file=trim(NamFInn))
@@ -230,20 +231,20 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
     !-----------------------------------------build a new solution model
     if(W=="ELECTROLYTE.MODEL") then
 
-      !~ ELECTROLYTE.MODEL MYAQUEOUS-MODEL
-        !~ MODEL IDEAL
-        !~ SOLVENT H2O
-        !~ POLE
-          !~ H2O
-          !~ OH-
-          !~ H+
-          !~ CA+2
-          !~ NA+
-          !~ NACL(AQ)
-        !~ end
-      !~ end
+      !! ELECTROLYTE.MODEL MYAQUEOUS-MODEL
+        !! MODEL IDEAL
+        !! SOLVENT H2O
+        !! POLE
+          !! H2O
+          !! OH-
+          !! H+
+          !! CA+2
+          !! NA+
+          !! NACL(AQ)
+        !! end
+      !! end
 
-      !~ call MixModel_Zero(S)
+      !! call MixModel_Zero(S)
       !
       call LinToWrd(L,W,sEol) 
       S%Name=trim(W)
@@ -266,15 +267,15 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
         case("END","ENDELECTROLYTE.MODEL")
         !---------------------------------- end of one ELECTROLYTE block
         !-------------------------- save the T_SolModel value in vSolTmp
-          if(S%nSpecies>0 .and. S%iSolvent>0) then
+          if(S%nSolute>0 .and. S%iSolvent>0) then
             N=N+1
             vSolTmp(N)%Name=      S%Name
             vSolTmp(N)%iActModel= S%iActModel
             vSolTmp(N)%iSolvent=  S%iSolvent
-            vSolTmp(N)%nSpecies=  S%nSpecies
-            allocate(vSolTmp(N)%vISpecies(S%nSpecies))
-            do I=1,S%nSpecies
-              vSolTmp(N)%vISpecies(I)= vIsolTmp(I)
+            vSolTmp(N)%nSolute=  S%nSolute
+            allocate(vSolTmp(N)%vISolute(S%nSolute))
+            do I=1,S%nSolute
+              vSolTmp(N)%vISolute(I)= vIsolTmp(I)
             end do
           end if
           !
@@ -293,8 +294,8 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
               exit
             end if
           end do
-          !~ if(index(Solmodel_ModelList,trim(W)//"_")==0) &
-          !~ & call Stop_(trim(W)//" = UNKNOWN ACTIVITY MODEL !!!")
+          !! if(index(Solmodel_ModelList,trim(W)//"_")==0) &
+          !! & call Stop_(trim(W)//" = UNKNOWN ACTIVITY MODEL !!!")
 
           if(M==0) then
             Ok= .false.
@@ -305,7 +306,7 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
           !S%ActModel=trim(W)
           S%iActModel=M
           !
-          if(iDebug>0) write(fTrc,'(2A)') "MODEL=",trim(W)
+          if(idebug>1) write(fTrc,'(2A)') "MODEL=",trim(W)
           !
           cycle DoSol
           !not really necessary,
@@ -323,7 +324,7 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
           end if
           S%iSolvent= K
           !
-          if(iDebug>0) write(fTrc,'(2A)') "SOLVENT=",vSpc(S%iSolvent)%NamSp
+          if(idebug>1) write(fTrc,'(2A)') "SOLVENT=",vSpc(S%iSolvent)%NamSp
           !
         !-------------------------------------------/read SOLVENT name--
         !
@@ -332,7 +333,7 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
           !
           nS= 0
           !
-          if(iDebug>0) write(fTrc,'(A)') "<< Read_POLE_block"
+          if(idebug>1) write(fTrc,'(A)') "<< Read_POLE_block"
           !
           DoPole: do
             !
@@ -362,7 +363,7 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
             !
           end do DoPole
 
-          S%nSpecies= nS
+          S%nSolute= nS
 
         end select
         !
@@ -382,24 +383,24 @@ subroutine SolModel_Read(vSpc,Ok,MsgError)
       vSolModel(I)%Name=      vSolTmp(I)%Name
       vSolModel(I)%iActModel= vSolTmp(I)%iActModel
       vSolModel(I)%iSolvent=  vSolTmp(I)%iSolvent
-      vSolModel(I)%nSpecies=  vSolTmp(I)%nSpecies
-      nS= vSolModel(I)%nSpecies
-      allocate(vSolModel(I)%vISpecies(nS))
-      vSolModel(I)%vISpecies(1:nS)= vSolTmp(I)%vISpecies(1:nS)
+      vSolModel(I)%nSolute=  vSolTmp(I)%nSolute
+      nS= vSolModel(I)%nSolute
+      allocate(vSolModel(I)%vISolute(nS))
+      vSolModel(I)%vISolute(1:nS)= vSolTmp(I)%vISolute(1:nS)
     end do
 
     if(iDebug>2) then
       print *,"ELECTROLYTE MODELS"
       do I=1,N
         S= vSolModel(I)
-        print *,S%Name,vSolModelAct(S%iActModel),S%nSpecies
-        print *,S%vISpecies(1:nS)
+        print *,S%Name,vSolModelAct(S%iActModel),S%nSolute
+        print *,S%vISolute(1:nS)
       end do
     end if
 
   end if
 
-  if(iDebug>0) write(fTrc,'(A,/)') "</ SolModel_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ SolModel_Read"
 
 end subroutine SolModel_Read
 

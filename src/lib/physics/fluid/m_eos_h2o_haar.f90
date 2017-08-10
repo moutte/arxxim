@@ -199,11 +199,11 @@ subroutine Eos_H2O_Haar(TdgK,Pbar,G_H2Ort,V_H2O_m3)
     else
       if (DPR < 0.01D0) DPR=0.01D0
       S=(P-PR)/DPR
-      if (ABS(S) > 0.1D0) S=0.1D0*S/ABS(S)
+      if (abs(S) > 0.1D0) S=0.1D0*S/abs(S)
       RHN=RH+S
     end if
-    DP_=ABS(One-PR/P)
-    DR_=ABS(One-RHN/RH)
+    DP_=abs(One-PR/P)
+    DR_=abs(One-RHN/RH)
     if (DP_ < 1.D-5.and.DR_ < 1.D-5) exit
   end do
   !

@@ -19,38 +19,41 @@ module M_Basis_Vars
   !-- tStoikio(:,I)- formula of species I, real values,
   !-- tStoikio(:,I)- vStoikio(1:nEl)/real(div)
   !
-  !-- Pr-Primary, As-AqueousSecondary, Ms-MineralNotPrimary
-  !-- tAlfXX- Stoikio of All Species in Terms of Components, in Columns
   real(dp),dimension(:,:),allocatable,public:: & !
   & tAlfSp, & !
   & tAlfPr,tAlfAs,tAlfMs, & !stoichiometric matrices for corresponding species
   & tAlfFs
+  !-- Pr-Primary, As-AqueousSecondary, Ms-MineralNotPrimary
+  !-- tAlfXX- Stoikio of All Species in Terms of Components, in Columns
   !
-  !-- tNuSp- stoichio of all species in terms of prim'species
-  !-- tNuAs,tNuMs - stoikio of Sec'Species (Aqu.& Min.) in Terms of Prim'Species,
-  !-- obtained by extraction from tNuSp
   real(dp),dimension(:,:),allocatable,public:: & 
   & tNuFas, &
   & tNuSp,  &
   & tNuAs,tNuMs
+  !-- tNuSp- stoichio of all species in terms of prim'species
+  !-- tNuAs,tNuMs - stoikio of Sec'Species (Aqu.& Min.) in Terms of Prim'Species,
+  !-- obtained by extraction from tNuSp
   !--------------------------------------------/ stoichiometry tables --
   !
-  character,dimension(:),allocatable,public:: vSpcCod
+  ! character,dimension(:),allocatable,public:: vSpcCod
   !
-  !-- arrays of booleans, tells the species' 'status'
-  !-- flags whether component/ species is
-  !-- PrimaryInert,AqueousMobile, MineralMobile, etc.
-  !-- values will be updated at each basis permutation
   logical, dimension(:),allocatable,public:: & 
   & vLCi,vLAx,vLMx,vLAs,vLMs
+  !-- arrays of booleans, tells the species' 'status'
+  !-- flags whether component/ species is:
+  !-- vLCi: Primary Inert,
+  !-- vLAx: Aqueous Mobile,
+  !-- vLMx: Mineral Mobile,
+  !-- vLAs: Aqueous inert secondary,
+  !-- vLMs: Mineral non mobile
+  !--
+  !-- values will be updated at each basis permutation
   !
+  integer,dimension(:),allocatable,public:: & !
+  & vPrmFw,   & ! permutation "forward", from vSpc to vMol,vLnAct,...
+  & vPrmBk      ! permutation "backward"
   !-- permutation arrays for basis changes
   !-- vPrmFw: permutation array from vSpc order to current species order
-  integer,dimension(:),allocatable,public:: & !
-  !  & iEleCpn,  & !
-  !  & iCpnEle,  & !
-  & vPrmFw,   & ! permutation "forward", from vSpc to vMol,vLnAct,...
-  & vPrmBk      ! permutation "bakward"
   !
   integer,dimension(:),allocatable,public:: & !ordering arrays
   & vOrdPr, & ! order of prim'species in vSpc
@@ -65,8 +68,6 @@ module M_Basis_Vars
   !  -> vSpc(vOrdAq(1:nAq)) gives the Aqu'Species aqu,
   !     <Prim'Inert><Second'Inert><Prim'Mobile>
   !
-  logical, public:: bOH2= .false. !.true. 
-  !bOH2=use OH2 in mole balance on element O
   real(dp),public:: initMolNu= 1.D-3 !initial mole nrs of species in fluid
   !                                   (-> initial  guess for Newton)
   integer,public:: & !
@@ -99,19 +100,12 @@ module M_Basis_Vars
   !nCi+1:nCi+nAx = eXt'Prim'Aqu'Sp 
   !nCi+nAx+1:nCp = eXt'Prim'Min'Sp
   !
-  integer,public:: & !for aqueous solutions, indexes of components
-  & iO_= 0,  &   !index of component assoc'd with element O  
-  & iH_= 0,  &   !index of component assoc'd with element H
-  & iOx= 0,  &   !index of component assoc'd with OXydation "element"
-  & iBal=0       !index of balance component
+  integer,public:: iBal=0 !index of balance component
   !
-  integer,public:: & !for aqueous solutions, indexes of species
-  & isW= 0,  &   !index of solvent species, e.g. H2O
-  & isH_=0,  &   !index of H+ species, for pH calculation
-  & isOH=0,  &   !index of OH- species, for basis change
-  & isO2=0       !index of O2,aq species, used for pE conversion
-  !
-  real(dp),public::MWSv !molar weit of solvent
+  ! integer,public:: & !for aqueous solutions, indexes of species
+  ! & isH_=0,  &   !index of H+ species, for pH calculation
+  ! & isOH=0,  &   !index of OH- species, for basis change
+  ! & isO2=0       !index of O2,aq species, used for pE conversion
   !
 contains
 
@@ -126,7 +120,7 @@ subroutine Basis_SpcTypes_Alloc(nSp)
   !
   if(nSp==0) call Stop_("NO SPECIES ???")
   !
-  if(allocated(vSpcCod)) deallocate(vSpcCod); allocate(vSpcCod(1:nSp)); vSpcCod="Z"
+  ! if(allocated(vSpcCod)) deallocate(vSpcCod); allocate(vSpcCod(1:nSp)); vSpcCod="Z"
   !
   if(allocated(vLCi)) deallocate(vLCi); allocate(vLCi(1:nSp)); vLCi=.false.
   if(allocated(vLAx)) deallocate(vLAx); allocate(vLAx(1:nSp)); vLAx=.false.
@@ -194,7 +188,7 @@ subroutine Basis_CleanAll
   !
   if(allocated(tStoikio)) deallocate(tStoikio)
   !
-  if(allocated(vSpcCod)) deallocate(vSpcCod)
+  ! if(allocated(vSpcCod)) deallocate(vSpcCod)
   !
   if(allocated(vLCi))   deallocate(vLCi)
   if(allocated(vLAx))   deallocate(vLAx)
@@ -205,8 +199,8 @@ subroutine Basis_CleanAll
   if(allocated(vPrmFw)) deallocate(vPrmFw)
   if(allocated(vPrmBk)) deallocate(vPrmBk)
   !
-  !~ if(allocated(iEleCpn)) deallocate(iEleCpn)
-  !~ if(allocated(iCpnEle)) deallocate(iCpnEle)
+  !! if(allocated(iEleCpn)) deallocate(iEleCpn)
+  !! if(allocated(iCpnEle)) deallocate(iCpnEle)
   !
   if(allocated(vOrdPr)) deallocate(vOrdPr) !
   if(allocated(vOrdAq)) deallocate(vOrdAq) !

@@ -122,9 +122,9 @@ subroutine Dynam_Files_Init
     !
     write(fDynEle,'(4(A,A1))',advance="no") &
     & "STEP",T_,"TIME/"//TUnit,T_,"DeltaDarcy",T_
-    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"totF", T_; end do
-    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"molal",T_; end do
-    !~ do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"inMin",T_; end do
+    !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"totF", T_; end do
+    !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"molal",T_; end do
+    !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"inMin",T_; end do
     write(fDynEle,'(100(A,A1))',advance="no") &
     & (trim(vCpn(I)%NamCp)//"totF", T_,I=1,size(vCpn))
     write(fDynEle,'(100(A,A1))',advance="no") &
@@ -289,7 +289,7 @@ subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
   use M_IOTools,only: GetUnit
   use M_Files,  only: DirOut,DirLog,Files_Index_Write
   use M_Global_Vars,only: vEle
-  !~ use M_Basis_Vars, only: iCpnEle
+  !! use M_Basis_Vars, only: iCpnEle
   use M_Dynam_Vars,only: vCpnBox
   use M_Dynam_Vars, only: TUnit
   !

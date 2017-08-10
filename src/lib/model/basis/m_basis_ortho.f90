@@ -8,13 +8,13 @@ module M_Basis_Ortho
   public:: Basis_Ortho_Compute
   public:: Basis_Ortho_Compute_Debug
 
-  !~ public:: OrthoBasis
-  !~ public:: Basis_Ortho_Alloc
-  !~ public:: Basis_Ortho_Clear
+  !! public:: OrthoBasis
+  !! public:: Basis_Ortho_Alloc
+  !! public:: Basis_Ortho_Clear
   !
-  !~ real(dp),dimension(:,:),allocatable:: tOrthoAlfSp
+  !! real(dp),dimension(:,:),allocatable:: tOrthoAlfSp
 
-  !~ public :: tOrthoAlfSp
+  !! public :: tOrthoAlfSp
 
 contains
 
@@ -23,8 +23,8 @@ contains
     real(dp),intent(in) :: tAlfSp(:,:)
     real(dp),intent(out):: tXOrthoBasis(:,:)
     !
-    real(dp), allocatable :: tVBasis(:, :)
-    real(dp), allocatable :: tEBasis(:, :) !, tXOrthoBasis(:,:)
+    real(dp), allocatable :: tVBasis(:,:)
+    real(dp), allocatable :: tEBasis(:,:) !, tXOrthoBasis(:,:)
     real(dp), allocatable :: tOrthoBasis(:,:), tNormBasis(:)
     integer :: nE, nV, nCi, nCp
     integer :: iE, iV, iCp
@@ -32,7 +32,7 @@ contains
     ! real(dp) :: coef
     !---
 
-    if (iDebug>0) write(fTrc,'(/,A)') "< Basis_Ortho_Compute"
+    if (idebug>1) write(fTrc,'(/,A)') "< Basis_Ortho_Compute"
 
     !// Allocate Working Arrays
 
@@ -88,9 +88,8 @@ contains
     deallocate ( tEBasis )
     deallocate ( tOrthoBasis )
     deallocate ( tNormBasis )
-    !deallocate ( tXOrthoBasis )
 
-    if (iDebug>0) write(fTrc,'(A,/)') "</ Basis_Ortho_Compute"
+    if (idebug>1) write(fTrc,'(A,/)') "</ Basis_Ortho_Compute"
 
   end subroutine Basis_Ortho_Compute
 
@@ -125,11 +124,10 @@ contains
   subroutine Basis_Ortho_Compute_Debug(vIndexBuffer,tAlfSp,tXOrthoBasis)
     use M_IoTools,    only: GetUnit
     use M_Files,      only: DirOut
-    use M_System_Vars,only: vCpn
     !
-    integer, intent(in) :: vIndexBuffer(:)
-    real(dp),intent(in) :: tAlfSp(:,:)
-    real(dp),intent(out):: tXOrthoBasis(:,:)
+    integer,          intent(in) :: vIndexBuffer(:)
+    real(dp),         intent(in) :: tAlfSp(:,:)
+    real(dp),         intent(out):: tXOrthoBasis(:,:)
     !
     real(dp), allocatable :: tVBasis(:, :)
     real(dp), allocatable :: tEBasis(:, :)
@@ -144,35 +142,34 @@ contains
     call GetUnit(F)
     open(F,file=trim(DirOut)//"_orthobasis.log")
 
-    if (iDebug>0) write(F,*) "Basis_Ortho_Compute"
+    if (idebug>1) write(F,*) "Basis_Ortho_Compute"
     !
     !// Allocate Working Arrays
-
-    nCp= size(vCpn)
-    nCi= count(vCpn(:)%Statut=="INERT")
-
+    nCp= size(vIndexBuffer)
     nE = nCp
     nV = count(vIndexBuffer(:)>0)
 
-    allocate( tVBasis(nV, nE) )          ! MOBILE or BUFFER COMPONENTS
-    allocate( tEBasis(nE, nE) )          ! PRIMARY COMPONENTS
-    allocate( tOrthoBasis(nE, nE) )
-    allocate( tNormBasis(nE) )
-    !allocate( tXOrthoBasis(nE, nE) )
+    if( nV==0) return !-------------------------------------------return
 
-    do iV = 1, nV
-      J = nCi + iV
-      tVBasis(iV,:)= tAlfSp(:,vCpn(J)%iSpc)
+    nCi= nE - nV
+
+    allocate(tVBasis(nV,nE))          ! MOBILE or BUFFER COMPONENTS
+    allocate(tEBasis(nE,nE))          ! PRIMARY COMPONENTS
+    allocate(tOrthoBasis(nE,nE))
+    allocate(tNormBasis(nE))
+
+    !!do iV = 1, nV
+    !!  J = nCi + iV
+    !!  tVBasis(iV,:)= tAlfSp(:,vCpn(J)%iSpc)
+    !!end do
+
+    iV= 0
+    do iE=1,nE
+      if(vIndexBuffer(iE)>0) then
+        iV= iV +1
+        tVBasis(iV,:)= tAlfSp(:,vIndexBuffer(iE))
+      end if
     end do
-
-    !~ iV= 0
-    !~ do iE=1,nE
-    !~ if(vIndexBuffer(iE)>0) then
-    !~ iV= iV +1
-    !~ tVBasis(iV,:)= tAlfSp(:,vIndexBuffer(iE))
-    !~ end if
-    !~ end do
-
     do iE = 1, nE
       tEBasis(iE,:)  = 0.D0
       tEBasis(iE,iE) = 1.D0
@@ -180,7 +177,7 @@ contains
 
     !// Compute Basis
 
-    if (iDebug>0) then
+    if (idebug>1) then
       write(F,'(A)') "================================================"
       write(F,'(A)') 'Compute Orthogonal Basis'
       write(F,'(A)') "================================================"
@@ -193,20 +190,20 @@ contains
 
     !// Show Ortho Basis Results
 
-    if (iDebug>0) then
-      write(F,'(A)') "=========================================================="
+    if (idebug>1) then
+      write(F,'(A)') "================================================"
       write(F,'(A)') 'Orthogonal Formulas System = tOrthoBasis'
-      write(F,'(A)') "=========================================================="
+      write(F,'(A)') "================================================"
     end if
 
-    if (iDebug>0) then
+    if (idebug>1) then
       do iV = 1, nE
         if (iV<=nV) write(F,'(A,I3,A)',advance="no") 'Buffer Basis       ', iV, ' = '
         if (iV>nV)  write(F,'(A,I3,A)',advance="no") 'Orthogonal Formula ', iV-nV, ' = '
         do iE = 1, nE
           coef = tOrthoBasis(iV, iE)
-          !~ if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
-            !~ & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
+          !! if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
+            !! & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
           if ( abs(coef) > 0.00001) write(F,'(I3,A,F8.3,A)',advance="no") &
             & iE,'(',coef, ') '
         end do
@@ -218,49 +215,49 @@ contains
 
     !// Reorder Equations For Arxim Dynamic Problem
 
-    if (iDebug>0) then
-      write(F,'(A)') "=========================================================="
+    if (idebug>1) then
+      write(F,'(A)') "================================================"
       write(F,'(A)') 'Mole Balance Equations Re-Ordered for Arxim = tXOrthoBasis'
-      write(F,'(A)') "=========================================================="
+      write(F,'(A)') "================================================"
     end if
-
-    do iCp = 1, nCi
-      iV = nV + iCp
-      tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
+    
+    do iCp= 1, nCi
+      iV= nV + iCp
+      tXOrthoBasis(iCp,1:nE) = tOrthoBasis(iV,1:nE)
     end do
-    do iCp = nCi+1, nCp
-      iV = iCp - nCi
-      tXOrthoBasis ( iCp, 1:nE ) = tOrthoBasis(iV,1:nE)
+    do iCp= nCi+1, nCp
+      iV= iCp - nCi
+      tXOrthoBasis(iCp,1:nE) = tOrthoBasis(iV,1:nE)
     end do
 
-    if (iDebug>0) then
-      do iV = 1, nE
-        !~ if (iV<=nCi)  write(F,'(A,I3,A,A,A)',advance="no") 'Balance Equation Ci', iV ,      '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
-        !~ if (iV>nCi)   write(F,'(A,I3,A,A,A)',advance="no") 'Balance Buffer   Bx', iV - nCi, '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
+    if (idebug>1) then
+      do iV= 1, nE
+        !! if (iV<=nCi)  write(F,'(A,I3,A,A,A)',advance="no") 'Balance Equation Ci', iV ,      '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
+        !! if (iV>nCi)   write(F,'(A,I3,A,A,A)',advance="no") 'Balance Buffer   Bx', iV - nCi, '  [', vEle(iCpnEle(iV)) % NamEl, '] = '
         if (iV<=nCi) write(F,'(A,I3,A)',advance="no") &
         & 'Balance Equation Ci', iV ,      ' = '
         if (iV>nCi)  write(F,'(A,I3,A)',advance="no") &
         & 'Balance Buffer   Bx', iV - nCi, ' = '
-
-        do iE = 1, nE
+        !
+        do iE= 1, nE
           coef = tXOrthoBasis(iV, iE)
-          !~ if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
-            !~ & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
+          !! if ( abs(coef) > 0.00001) write(F,'(A4,A,F8.3,A)',advance="no") &
+          !! & trim( vEle(iCpnEle(iE))%NamEl),'(',coef, ') '
           if ( abs(coef) > 0.00001) write(F,'(I3,A,F8.3,A)',advance="no") &
-            & iE,'(',coef, ') '
+          & iE,'(',coef, ') '
         end do
-
+        !
         write(F,*) ' '
-        if ( iV == nCi ) write(F,*) "----------"
+        if (iV==nCi) write(F,*) "----------"
       end do
     end if
 
     !// Compute Formula Matrices
 
-    if (iDebug>0) then
-      write(F,'(A)') "====================================================="
+    if (idebug>1) then
+      write(F,'(A)') "================================================"
       write(F,'(A)') 'Compute MODIFIED Formula Matrices'
-      write(F,'(A)') "====================================================="
+      write(F,'(A)') "================================================"
       write(F,*) 'tOrthoAlfSp  = matmul( tXOrthoBasis , tAlfSp  )'
     end if
 
@@ -268,14 +265,14 @@ contains
 
     !// Deallocate Working Arrays
 
-    deallocate ( tVBasis )
-    deallocate ( tEBasis )
-    deallocate ( tOrthoBasis )
-    deallocate ( tNormBasis )
+    deallocate (tVBasis)
+    deallocate (tEBasis)
+    deallocate (tOrthoBasis)
+    deallocate (tNormBasis)
     !deallocate ( tXOrthoBasis )
 
-    if (iDebug>0) then
-      write(F,'(A)') "====================================================="
+    if (idebug>1) then
+      write(F,'(A)') "================================================"
       write(F,'(A)') "Basis_Ortho_Basis Compute Done !"
     end if
 
@@ -386,28 +383,28 @@ contains
 
   end subroutine OrthoBasis
 
-  !~ subroutine Basis_Ortho_Alloc(tAlfSp)
-  !~ real(dp),intent(in):: tAlfSp(:,:)
-  !~ !---
-  !~ !if (iDebug>0) write(21,*) "Basis_Ortho_Alloc"
+  !! subroutine Basis_Ortho_Alloc(tAlfSp)
+  !! real(dp),intent(in):: tAlfSp(:,:)
+  !! !---
+  !! !if (idebug>1) write(21,*) "Basis_Ortho_Alloc"
 
-  !~ allocate(tOrthoAlfSp(size(tAlfSp,1), size(tAlfSp,2)))
+  !! allocate(tOrthoAlfSp(size(tAlfSp,1), size(tAlfSp,2)))
 
-  !~ if (iDebug>0) then
-  !~ write(21,'(A)') "=========================================================="
-  !~ write(21,*) "Shape of tOrthoAlfSp  = ",  SHAPE(tOrthoAlfSp)
-  !~ write(21,'(A)') "=========================================================="
-  !~ end if
+  !! if (idebug>1) then
+  !! write(21,'(A)') "=========================================================="
+  !! write(21,*) "Shape of tOrthoAlfSp  = ",  SHAPE(tOrthoAlfSp)
+  !! write(21,'(A)') "=========================================================="
+  !! end if
 
-  !~ end subroutine Basis_Ortho_Alloc
+  !! end subroutine Basis_Ortho_Alloc
 
-  !~ !---
+  !! !---
 
-  !~ subroutine Basis_Ortho_Clear
+  !! subroutine Basis_Ortho_Clear
 
-  !~ deallocate(tOrthoAlfSp)
+  !! deallocate(tOrthoAlfSp)
 
-  !~ end subroutine Basis_Ortho_Clear
+  !! end subroutine Basis_Ortho_Clear
 
   !---
 

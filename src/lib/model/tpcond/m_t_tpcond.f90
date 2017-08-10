@@ -37,8 +37,8 @@ integer function TPcond_IndexTP(TdgK,Pbar,vTPCond)
   integer :: I,J
   J=0
   do I=1,size(vTPCond)
-    if(   ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta &
-    .and. ABS(Pbar      -vTPCond(I)%Pbar)<Delta ) J=I
+    if(   abs(TdgK -T_CK-vTPCond(I)%TdgC)<Delta &
+    .and. abs(Pbar      -vTPCond(I)%Pbar)<Delta ) J=I
   end do
   TPcond_IndexTP= J
 end function TPcond_IndexTP
@@ -50,7 +50,7 @@ integer function TPcond_IndexT(TdgK,vTPCond)
   integer :: I,J
   J=0
   do I=1,size(vTPCond)
-    if(ABS(TdgK -T_CK-vTPCond(I)%TdgC)<Delta) J=I
+    if(abs(TdgK -T_CK-vTPCond(I)%TdgC)<Delta) J=I
   end do
   TPcond_IndexT= J
 end function TPcond_IndexT

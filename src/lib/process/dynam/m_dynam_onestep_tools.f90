@@ -22,22 +22,25 @@ module M_Dynam_OneStep_Tools
 contains
 
 subroutine Dynam_OneStep_SecondSpecies(N,vX,vXsec)
-  use M_Basis_Vars,only: nAs,nAx,nMx,tNuAs,nCi,MWSv
-  use M_Dynam_Vars,only: vDG_As,vDLGam_As,vLnGam,vLnAct,LogForAqu,vLnBuf
+  use M_Global_Vars,only: SolModel
+  use M_Basis_Vars, only: nAs,nAx,nMx,tNuAs,nCi
+  use M_Dynam_Vars, only: vDG_As,vDLGam_As,vLnGam,vLnAct,LogForAqu,vLnBuf
   !
   integer, intent(in) :: N
   real(dp),intent(in) :: vX(:)
   real(dp),intent(out):: vXsec(:)
   !
   integer :: iAs,iCi,J
-  real(dp):: X
+  real(dp):: X,MWSv
+  !
+  MWSv= SolModel%MolWeitSv
   !
   if(LogForAqu) then
     !
     do iAs=1,nAs
       !
       X=   vLnAct(1) *tNuAs(iAs,1) &
-      &  + (One - SUM(tNuAs(iAs,2:nCi)))*(vX(1) +log(MWSv)) &
+      &  + (One - sum(tNuAs(iAs,2:nCi)))*(vX(1) +log(MWSv)) &
       &  - vDG_As(iAs) -vDLGam_As(iAs)
       do iCi=1,N
         if(iCi/=1) X= X + vX(iCi) *tNuAs(iAs,iCi)
@@ -66,7 +69,7 @@ subroutine Dynam_OneStep_SecondSpecies(N,vX,vXsec)
         if(iCi/=1 .and. tNuAs(iAs,iCi) /= Zero) &
         & X= X *(vX(iCi))**tNuAs(iAs,iCi)
       end do
-      vXsec(iAs)= X *(vX(1)*MWSv)**(One-SUM(tNuAs(iAs,2:nCi)))
+      vXsec(iAs)= X *(vX(1)*MWSv)**(One-sum(tNuAs(iAs,2:nCi)))
       != (mole nr species iAs)
       !
     end do
@@ -101,25 +104,25 @@ end subroutine Dynam_OneStep_SecondSpecies
 subroutine Dynam_OneStep_Write( &
 & iStep,Time,dTime,       &
 & fSavRate,fSavTime,      &
-& pH_,PhiF,RhoF,VBox,dX,  &
+& PhiF,RhoF,VBox,dX,      &
 & vTotF,vMolF,vLnAct,vLnGam, &
 & vTotK,vMolK,vKinMVol,vKinQsk,vSurfK,vSurfK0,vVmQsK,vVmAct, &
 & dTSav,TSave)
   !------
   use M_Numeric_Const,only: Ln10
   use M_IoTools,      only: OutStrVec
+  use M_T_Species,    only: Species_Index
   use M_Safe_Functions
   !
   use M_Dynam_Files,only: fDynEle,fDynMol,fDynAct,fDynGam,fDynMnK
   !
-  use M_Global_Vars,only: vKinFas
-  use M_Basis_Vars, only: isW,MWsv
+  use M_Global_Vars,only: vKinFas,SolModel,vSpc
   use M_Dynam_Vars, only: vWeitCp,TimeScale
   !------
   integer,              intent(in):: iStep
   real(dp),             intent(in):: Time,dTime
   integer,              intent(in):: fSavRate,fSavTime
-  real(dp),             intent(in):: pH_,PhiF,RhoF,VBox,dX
+  real(dp),             intent(in):: PhiF,RhoF,VBox,dX
   real(dp),dimension(:),intent(in):: vTotF,vMolF,vLnAct,vLnGam
   real(dp),dimension(:),intent(in):: vTotK,vMolK,vKinMVol,vKinQsk
   real(dp),dimension(:),intent(in):: vSurfK,vSurfK0,vVmQsK,vVmAct
@@ -127,11 +130,14 @@ subroutine Dynam_OneStep_Write( &
   !
   real(dp),             intent(inout):: TSave
   !
-  integer :: nAq,I
-  real(dp):: R,UDelta,VolF
+  integer :: isW,nAq,I,isH_
+  real(dp):: R,UDelta,VolF,MWsv,pH_
   real(dp):: vX(size(vLnGam))
   !------
-  nAq= size(vMolF)
+  isW=  SolModel%iSolvent
+  MWSv= SolModel%MolWeitSv
+  isH_= SolModel%isH_
+  nAq=  size(vMolF)
   !
   VolF= dot_product(vWeitCp(:),vTotF(:))  /RhoF  !volume of fluid in box
   UDelta= (VolF -PhiF) /dTime /(VBox/dX)
@@ -164,6 +170,7 @@ subroutine Dynam_OneStep_Write( &
   & call OutStrVec(fDynGam, vX(1:nAq),Opt_C="F", Opt_I=iStep, Opt_R=Time/TimeScale)
   !
   !------------------ write fluid and min'species fractions, QsK, etc --
+  pH_= -vLnAct(isH_)/Ln10
   if(fDynMnK>0) &
   & call ShoMin(fDynMnK,iStep,VBox,Time/TimeScale,pH_,PhiF,vMolK,vKinMVol,vKinQsk)
   !
@@ -298,29 +305,29 @@ subroutine Dynam_OneStep_Variations( &
   real(dp),allocatable:: vDeltaF(:),vDeltaK(:)
   !
   !do i=1,size(vMolF)
-  !  print '(3(G15.6,1X))',vMolF_0(i),vMolF(i),ABS(vMolF(i) -vMolF_0(i))
+  !  print '(3(G15.6,1X))',vMolF_0(i),vMolF(i),abs(vMolF(i) -vMolF_0(i))
   !end do
   !pause
   !
   !do i=1,size(vMolK)
-  !  print '(3(G15.6,1X))',vMolK_0(i),vMolK(i),ABS(vMolK(i) -vMolK_0(i))
+  !  print '(3(G15.6,1X))',vMolK_0(i),vMolK(i),abs(vMolK(i) -vMolK_0(i))
   !end do
   !pause
   !
-  !print *,"MAXVAL",  MAXVAL(ABS(vMolF(:) -vMolF_0(:)))     ;   pause
+  !print *,"MAXVAL",  maxval(abs(vMolF(:) -vMolF_0(:)))     ;   pause
   !
   allocate(vDeltaF(size(vMolF)))
   if(size(vKinFas)>0) allocate(vDeltaK(size(vMolK)))
   !
-  vDeltaF(:)= ABS(vMolF(:) -vMolF_0(:))
-  if(size(vKinFas)>0) vDeltaK(:)= ABS(vMolK(:) -vMolK_0(:))
+  vDeltaF(:)= abs(vMolF(:) -vMolF_0(:))
+  if(size(vKinFas)>0) vDeltaK(:)= abs(vMolK(:) -vMolK_0(:))
   !
   iMaxAqu= iMaxLoc_R(vDeltaF(:))
   !-> which aqu.species varies most
   if(size(vKinFas)>0) iMaxMin= iMaxLoc_R(vDeltaK(:))
   !-> which min.species varies most
-  MaxAqu= MAXVAL(vDeltaF(:))
-  if(size(vKinFas)>0) MaxMin=  MAXVAL(vDeltaK(:))
+  MaxAqu= maxval(vDeltaF(:))
+  if(size(vKinFas)>0) MaxMin=  maxval(vDeltaK(:))
   !
   MaxAqu= MaxAqu /vMolF(iMaxAqu)
   if(size(vKinFas)>0) MaxMin= MaxMin /vMolK(iMaxMin)
@@ -336,7 +343,7 @@ subroutine Dynam_OneStep_Variations( &
       & Time,T_,  dTime,T_, &
       & MaxAqu,T_,MaxMin,T_,&
       & MaxAqu /vMolF(iMaxAqu),T_,MaxMin /vMolK(iMaxMin),T_
-      !& MAXVAL(vDeltaMolF),T_,MAXVAL(vDeltaMolM),T_
+      !& maxval(vDeltaMolF),T_,maxval(vDeltaMolM),T_
       
     else
       
@@ -346,7 +353,7 @@ subroutine Dynam_OneStep_Variations( &
       & Time,T_,  dTime,T_, &
       & MaxAqu,T_, &
       & MaxAqu /vMolF(iMaxAqu),T_
-      !& MAXVAL(vDeltaMolF),T_,MAXVAL(vDeltaMolM),T_
+      !& maxval(vDeltaMolF),T_,maxval(vDeltaMolM),T_
     
     end if
   
@@ -449,8 +456,8 @@ subroutine Dynam_OneStep_KinFas_Update( & !
   use M_KinRate
   use M_T_KinFas
   !
-  use M_Global_Vars,only: vFas,vKinFas,nAq
-  use M_Basis_Vars, only: nCi,nMx,nAx,isW,MWSv
+  use M_Global_Vars,only: SolModel,vFas,vKinFas,nAq
+  use M_Basis_Vars, only: nCi,nMx,nAx
   !
   use M_Dynam_Vars, only: &
   & sModelSurf,Implicit_Surface, &
@@ -475,9 +482,12 @@ subroutine Dynam_OneStep_KinFas_Update( & !
   !
   real(dp):: dQsKdLnXi(1:nCi)
   real(dp):: Dum(1:nAq)
-  real(dp):: QsK, QskIota
-  integer :: iMk,iActiv
+  real(dp):: QsK, QskIota, MWSv
+  integer :: iMk,iActiv,isW
   !------
+  isW=  SolModel%iSolvent
+  MWSv= SolModel%MolWeitSv
+  !
   QskIota=    QsK_Iota
   iActiv=     0
   !
@@ -508,10 +518,10 @@ subroutine Dynam_OneStep_KinFas_Update( & !
     & dQsKdLnXi)        !OUT
     !
     !!------------------------------------- cut extreme values of QsK ---
-    !if(iDebug>0 .and. (QsK>Qsk_Max .or. QsK<-Qsk_Min)) &
+    !if(idebug>1 .and. (QsK>Qsk_Max .or. QsK<-Qsk_Min)) &
     !& write(fTrc,'(A,G15.6,A)') vKinFas(iMk)%Name, QsK, "-> off Limits -> cut-off"
-    !QsK= MIN(QsK,QsK_Max)
-    !QsK= MAX(QsK,QsK_Min)
+    !QsK= min(QsK,QsK_Max)
+    !QsK= max(QsK,QsK_Min)
     !
     vKinQsK(iMk)= QsK
     !
@@ -669,53 +679,52 @@ end subroutine Dynam_OneStep_KinFasSurf_Update
 subroutine Dynam_OneStep_GammaUpd( &
 & TdgK,Pbar, &
 & vMolF,vLnAct,vLnGam, &
-& Z_Plus,Z_Minus, &
-& pH_)
+& Z_Plus,Z_Minus)
 
   use M_Numeric_Const,only: Ln10
-  use M_Dtb_Const,   only: T_CK 
-  use M_Global_Vars, only: vSpc,SolModel
+  use M_Dtb_Const,    only: T_CK 
+  use M_Global_Vars,  only: vSpc,SolModel
   use M_SolModel_Calc,only: Solmodel_CalcGamma
-  use M_Basis_Vars,  only: isH_,isW,vLAx,vOrdAq
+  use M_Basis_Vars,   only: vLAx,vOrdAq
   !------
   real(dp),intent(in)   :: TdgK,Pbar
   real(dp),intent(inout):: vMolF(:),vLnAct(:),vLnGam(:)
   real(dp),intent(out)  :: Z_Plus,Z_Minus
-  real(dp),intent(out)  :: pH_
   !
   real(dp),dimension(size(vMolF)):: vMole,vLAct,vLGam
   logical, dimension(size(vMolF)):: vTooLow
   real(dp):: OsmoSv
   integer :: N
+  integer :: isW
   !------
-  
-  !--- permute aqu'species data to vSpc order
+  isW= SolModel%iSolvent
+  !-------------------------------permute aqu'species data to vSpc order
   vMole(vOrdAq(:))= vMolF(:)
   vLAct(vOrdAq(:))= vLnAct(:)
   vLGam(vOrdAq(:))= vLnGam(:)
-  !---/
+  !--------------------------------------------------------------------/
   !
   call Solmodel_CalcGamma( &
   & TdgK,Pbar,   &
   & SolModel,    & !IN
-  & isW,vSpc,    & !IN
+  & vSpc,        & !IN
   & vLAx,        & !IN
   & vMole,       & !IN
   & vLAct,vLGam, & !INOUT
   & vTooLow,OsmoSv)
   !
   N= size(vMole)
-  Z_Plus= SUM(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z >0)) /vMole(isW)
-  Z_Minus=SUM(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z <0)) /vMole(isW)
+  Z_Plus= sum(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z >0)) /vMole(isW)
+  Z_Minus=sum(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z <0)) /vMole(isW)
   !write(16,'(2G15.6)') Z_Plus,Z_Minus
   !
-  pH_=-vLAct(isH_)/Ln10
+  ! pH_=-vLAct(isH_)/Ln10
   !
-  !--- back-permute aqu'species data
+  !----------------------------------------back-permute aqu'species data
   vMolF(:)=  vMole(vOrdAq(:))
   vLnAct(:)= vLAct(vOrdAq(:))
   vLnGam(:)= vLGam(vOrdAq(:))
-  !---/
+  !--------------------------------------------------------------------/
   !
 end subroutine Dynam_OneStep_GammaUpd
 
@@ -812,7 +821,6 @@ subroutine ShoMinRate( & !
 & f,iStep_,VBox,TimeScaled,pH_,PhiF, & !
 & vMolK,vKinMVol,vKinQsk,vSurfK,vSurfK0,vVmQsK,vVmAct, & !
 & vKinFas)
-
   use M_Numeric_Const,only: Ln10 !, TinyDP
   use M_T_KinFas,only: T_KinFas
   !------

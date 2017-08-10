@@ -21,7 +21,6 @@ subroutine Dynam_OneStep_Solve( & !
 & NewtTolF,NewtTolF_Equil,NewtTolX,NewtTolMin, & !IN
 & Time_Decrease,NewtMaxIts,     & !IN
 & Time,dTmin,dTime_in,          & !IN
-!! & vMolF,vMolK,                  & !INOUT
 & dTime_out,Newt_iDo,Newt_iErr, & !OUT
 & DTimeTooSmall,VarMax)           !OUT
   !
@@ -45,7 +44,7 @@ subroutine Dynam_OneStep_Solve( & !
   & VBox,PhiF, &
   & vMolF,vMolK,&
   & vKinMinim, &
-  & vLnAct,vLnGam,pH_,vDLGam_As, &
+  & vLnAct,vLnGam,vDLGam_As, &
   & dTime, &
   & Extrapole
   !
@@ -169,9 +168,9 @@ subroutine Dynam_OneStep_Solve( & !
           MolK= vMolK1(iMk) +vMolM_Slope(iMk) *dTime
           !--
           if(MolK<Zero) then
-            dTime_Min= MIN( &
+            dTime_Min= min( &
             &  dTime_Min, &
-            &  ABS((vMolK1(iMk) -vKinMinim(iMk))/ vMolM_Slope(iMk)))
+            &  abs((vMolK1(iMk) -vKinMinim(iMk))/ vMolM_Slope(iMk)))
             MolK= vKinMinim(iMk)
           end if
         else
@@ -205,10 +204,10 @@ subroutine Dynam_OneStep_Solve( & !
             MolK= vMolK1(iMk) +vMolM_Slope(iMk) *dTime
             !
             if(MolK<Zero) then
-              !dTime_Min= MIN(dTime_Min,ABS(vMolK1(iMk) / vMolM_Slope(iMk)))
-              dTime_Min= MIN( &
+              !dTime_Min= min(dTime_Min,abs(vMolK1(iMk) / vMolM_Slope(iMk)))
+              dTime_Min= min( &
               &  dTime_Min, &
-              &  ABS((vMolK1(iMk) -vKinMinim(iMk))/ vMolM_Slope(iMk)))
+              &  abs((vMolK1(iMk) -vKinMinim(iMk))/ vMolM_Slope(iMk)))
               MolK= vKinMinim(iMk)
             end if
           else
@@ -225,7 +224,7 @@ subroutine Dynam_OneStep_Solve( & !
       end if
     end do
     !
-    dTime= MAX(dTime_Min,dTmin*Two)
+    dTime= max(dTime_Min,dTmin*Two)
     !----------------------/extrapolate mineral mole nr, or adjust dTime
     !
     if(.not. Implicit_Surface) & !
@@ -240,7 +239,7 @@ subroutine Dynam_OneStep_Solve( & !
     !----------------------------------------------------/minerals et al
     !
     !if(iDebug>2) then
-    !  write(72,'(A,2G15.6)') "vX,Min/Max",MAXVAL(vX(:)),MINVAL(vX(:))
+    !  write(72,'(A,2G15.6)') "vX,Min/Max",maxval(vX(:)),MINVAL(vX(:))
     !end if
     !-------------------------------------------------------/assemble vX
     !
@@ -272,8 +271,8 @@ subroutine Dynam_OneStep_Solve( & !
       & NewtErrF,NewtErrX,NewtErrG,Newt_iDo,Newt_Check,Newt_iErr) !OUT
       !-----------------------------------------------------/call SOLVER
       !
-      vDelta=   ABS( vX0(1:nF+nMkA) - vX(1:nF+nMkA) )
-      VarMax=   MAXVAL(vDelta)
+      vDelta=   abs( vX0(1:nF+nMkA) - vX(1:nF+nMkA) )
+      VarMax=   maxval(vDelta)
       iMaxDelta=iMaxLoc_R(vDelta) !index of species with largest variation
       !
       if(nMkA+nEqA>0) then
@@ -289,7 +288,7 @@ subroutine Dynam_OneStep_Solve( & !
           !
           !! if(iDebug>2) write(51,'(G15.6)') vX(nF+1)
           !
-          if( ANY(vX(nF+1:nF+nEqA+nMkA) < -vMinim(1:nEqA+nMkA)) ) then
+          if( any(vX(nF+1:nF+nEqA+nMkA) < -vMinim(1:nEqA+nMkA)) ) then
             Newt_iErr=-6
             if(iDebug>2) print *, "negative phase" !! ; pause
             !find the most negative phase
@@ -297,7 +296,7 @@ subroutine Dynam_OneStep_Solve( & !
             !! -> adjust dTime
           end if
           !
-          where( ABS(vX(nF+1:nF+nEqA+nMkA)) < vMinim(1:nEqA+nMkA) ) &
+          where( abs(vX(nF+1:nF+nEqA+nMkA)) < vMinim(1:nEqA+nMkA) ) &
           & vX(nF+1:nF+nEqA+nMkA)= vMinim(1:nEqA+nMkA)
           !
         end if
@@ -359,7 +358,7 @@ subroutine Dynam_OneStep_Solve( & !
       !!   vMolF1(1:nAq)= exp(vX(1:nAq))
       !! else
       !!   vMolF1(1:nAq-nAs)= vX(1:nAq-nAs)
-      !!   call Compute_SecondSpecies(vMolF1)
+      !!   call Compute_SecondSpecies(SolModel,vMolF1)
       !! end if
       !
       I=0
@@ -398,10 +397,10 @@ subroutine Dynam_OneStep_Solve( & !
   call Dynam_OneStep_GammaUpd( &
   & TdgK,Pbar, &
   & vMolF1,vLnAct,vLnGam, &
-  & Z_Plus,Z_Minus,pH_)
+  & Z_Plus,Z_Minus)
   !
   !! if(Gamma_NoLoop) exit
-  if( MAXVAL(ABS(vLnGamOld - vLnGam)) < DynTolGam ) exit DoGamma
+  if( maxval(abs(vLnGamOld - vLnGam)) < DynTolGam ) exit DoGamma
   !
   end do DoGamma
   !--------------------------------------------/loop on activity coeff's
@@ -433,8 +432,8 @@ subroutine Dynam_Solve( & !
 & TolF,    & !in=    convergence criterion on function values (scalar)
 & TolX,    & !in=    convergence criterion on dx
 & MaxIts,  & !in=    maximum number of iterations
-& Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F, & !out=   maxval(abs(fVec(:)))
+& Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Gradient,& !out=
 & Nits,    & !out=   number of iterations
 & Check,   & !out=   if Check, should check convergence
@@ -484,8 +483,8 @@ subroutine Dynam_Solve( & !
     & bFinDif,  & !in=    use numeric Jacobian
     & MaxIts,   & !in=    maximum number of iterations
 
-    & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,  & !out=   maxval(abs(fVec(:)))
+    & Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Nits,     & !out=   number of iterations
     & iErr)       !out=   error code
 
@@ -503,8 +502,8 @@ subroutine Dynam_Solve( & !
     & bFinDif,  & !in=    use numeric Jacobian
     & MaxIts,   & !in=    maximum number of iterations
 
-    & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,  & !out=   maxval(abs(fVec(:)))
+    & Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Nits,     & !out=   number of iterations
     & iErr      & !out=   error code
     & )
@@ -523,8 +522,8 @@ subroutine Dynam_Solve( & !
     & bFinDif,  & !in=    use numeric Jacobian
     & MaxIts,   & !in=    maximum number of iterations
 
-    & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,  & !out=   maxval(abs(fVec(:)))
+    & Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Nits,     & !out=   number of iterations
     & iErr)       !out=   error code
 
@@ -543,8 +542,8 @@ subroutine Dynam_Solve( & !
     & bFinDif, & !in=    use numeric Jacobian
     & MaxIts,  & !in=    maximum number of iterations
 
-    & Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F, & !out=   maxval(abs(fVec(:)))
+    & Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Gradient,& !out=
     & Nits,    & !out=   number of iterations
     & Check,   & !out=   if Check, should check convergence
@@ -559,8 +558,8 @@ subroutine Dynam_Solve( & !
     ! !!& TolMin,  & !in=    whether spurious convergence to a minimum of fmin has occurred
     ! !& bFinDif, & !in=
     ! & MaxIts,  & !in=    maximum number of iterations
-    ! & Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-    ! & Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    ! & Error_F, & !out=   maxval(abs(fVec(:)))
+    ! & Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     ! !& Gradient, & !out=
     ! & Nits,    & !out=   number of iterations
     ! !& Check,   & !out=   if Check, should check convergence
@@ -577,8 +576,8 @@ subroutine Dynam_Solve( & !
     & TolX,     & !in=    convergence criterion on dx
     & MaxIts,   & !in=    maximum number of iterations
 
-    & Error_F,  & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X,  & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F,  & !out=   maxval(abs(fVec(:)))
+    & Delta_X,  & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Nits,     & !out=   number of iterations
     & iErr)       !out=   error code
 
@@ -595,8 +594,8 @@ subroutine Dynam_Solve( & !
     & bFinDif, & !in=    use numeric Jacobian
     & MaxIts,  & !in=    maximum number of iterations
 
-    & Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-    & Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+    & Error_F, & !out=   maxval(abs(fVec(:)))
+    & Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
     & Gradient, & !out=
     & Nits,    & !out=   number of iterations
     & Check,   & !out=   if Check, should check convergence

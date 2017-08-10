@@ -65,7 +65,7 @@ subroutine Dtb_Estim_Phyllit(vEle)
   !
   real(dp):: G0,H0
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dtb_Calc_Phyllit"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dtb_Calc_Phyllit"
   call GetUnit(F)
   open(F,file=trim(DirOut)//"phyllite.res")
   !
@@ -168,7 +168,7 @@ subroutine Dtb_Estim_Phyllit(vEle)
   deallocate(vStoik)
   !  
   close(F)
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dtb_Calc_Phyllit"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dtb_Calc_Phyllit"
 end subroutine Dtb_Estim_Phyllit
 
 subroutine Dtb_Estim_Init(vSpc)

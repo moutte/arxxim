@@ -220,7 +220,7 @@ subroutine Dtb_Tabulate_ForSystem( &
   call OutStrVec(F,vSolvDat(1:N)%Eps, Opt_S="Eps")
   call OutStrVec(F,vSolvDat(1:N)%dhA, Opt_S="DHA")
   call OutStrVec(F,vSolvDat(1:N)%dhB, Opt_S="DHB")
-  call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BdoT")
+  call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
   write(F,'(A,/)') "END SOLVENT"
   !----------------------------------------------------/
   !
@@ -239,14 +239,14 @@ subroutine Dtb_Tabulate_ForSystem( &
     end if
     !
     !MODif!2016/02!
-    !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1)',advance="no") &
-    write(F, '(4(A,A1))',advance="no") &
+    !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1,$)') &
+    write(F, '(4(A,A1),$)') &
     & trim(S%Typ),    T_, &
     & trim(Cc),       T_, &
     & trim(S%NamSp),  T_, &
     & trim(S%Formula),T_
     
-    !write(F,'(4(A,A1))',advance="no") &
+    !write(F,'(4(A,A1),$)') &
     !& trim(S%Typ),    T_, &
     !& trim(Cc),       T_, &
     !& trim(S%NamSp),   T_, &
@@ -255,10 +255,10 @@ subroutine Dtb_Tabulate_ForSystem( &
     if(S%Typ=="AQU") then
       !for aqu'species, write size parameter
       !print *,"S%NamSp=",trim(S%NamSp)
-      write(F, '(F15.1,A1)',advance="no") S%AquSize, T_
+      write(F, '(F15.1,A1,$)') S%AquSize, T_
     else
       !for non aqueous species, write density
-      write(F, '(G15.8,A1)',advance="no") S%WeitKg / S%V0, T_
+      write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
     end if
     
     !MODif!2016/02!
@@ -279,8 +279,8 @@ subroutine Dtb_Tabulate_ForSystem( &
     end if
     !
     !MODif!2016/02!
-    !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1)',advance="no") &
-    write(F, '(4(A,A1))',advance="no") &
+    !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1,$)') &
+    write(F, '(4(A,A1),$)') &
     & trim(S%Typ),     T_, &
     & trim(Cc),        T_, &
     & trim(S%NamSp),   T_, &
@@ -288,13 +288,13 @@ subroutine Dtb_Tabulate_ForSystem( &
     !
     if(S%Typ=="AQU") then
       !-- for aqu'species, write size parameter
-      write(F, '(F15.1,A1)',advance="no") S%AquSize, T_
+      write(F, '(F15.1,A1,$)') S%AquSize, T_
     else
       !-- for non aqueous species, write density
       if(S%V0<1.D-9) then
-        write(F,'(A,A1)',advance="no") "_?_",T_
+        write(F,'(A,A1,$)') "_?_",T_
       else
-        write(F, '(G15.8,A1)',advance="no") S%WeitKg / S%V0, T_
+        write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
       end if
     end if
     !
@@ -303,7 +303,7 @@ subroutine Dtb_Tabulate_ForSystem( &
       ! & - dot_product(tNuAs(I,1:nCp),vSpc(vOrdPr(1:nCp))%G0rt)
       X=  tGrt(I,J) &
       & - dot_product(tNuSp(I,1:nCp),tGrt(vOrdPr(1:nCp),J))
-      write(F,'(G15.8,A1)',advance="no") -X /Ln10, T_
+      write(F,'(G15.8,A1,$)') -X /Ln10, T_
     end do
     !
     write(F,*)
@@ -316,7 +316,7 @@ subroutine Dtb_Tabulate_ForSystem( &
   !
   close(F)
   !
-  if(iDebug>0) print '(A)',"Table of LogK in "//trim(DirOut)//"_logk.dtb"
+  if(idebug>2) print '(A)',"Table of LogK in "//trim(DirOut)//"_logk.dtb"
   !------------------------------/ logK from current prim'species set --
   !
   !---------------------------------------------------------------------
@@ -345,7 +345,7 @@ subroutine Dtb_Tabulate_ForSystem( &
   call OutStrVec(F,vSolvDat(1:N)%Eps, Opt_S="Eps")
   call OutStrVec(F,vSolvDat(1:N)%dhA, Opt_S="DHA")
   call OutStrVec(F,vSolvDat(1:N)%dhB, Opt_S="DHB")
-  call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BdoT")
+  call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
   write(F,'(A,/)') "END SOLVENT"
   !-------------------------------------------------------/SOLVENT block
   !
@@ -363,26 +363,26 @@ subroutine Dtb_Tabulate_ForSystem( &
       Cc= "_"
     end if
     !
-    write(F, '(4(A,A1))',advance="no") &
-    & trim(S%Typ),     T_, &
-    & trim(Cc),        T_, &
-    & trim(S%NamSp),   T_, &
-    & trim(S%Formula), T_
-    !write(F,'(4(A,A1))',advance="no") &
-    !& trim(S%Typ),    T_, &
-    !& trim(Cc),       T_, &
+    write(F, '(4(A,A1),$)') &
+    & trim(S%Typ),      T_, &
+    & trim(Cc),         T_, &
+    & trim(S%NamSp),    T_, &
+    & trim(S%Formula),  T_
+    !write(F,'(4(A,A1),$)') &
+    !& trim(S%Typ),     T_, &
+    !& trim(Cc),        T_, &
     !& trim(S%NamSp),   T_, &
-    !& trim(S%Formula),T_
+    !& trim(S%Formula), T_
     if(S%Typ=="AQU") then
       !for aqu'species, write size parameter
-      write(F, '(F15.1,A1)',advance="no") S%AquSize, T_
+      write(F, '(F15.1,A1,$)') S%AquSize, T_
     else
-      !for non aqueous species, write density
-      write(F, '(G15.8,A1)',advance="no") S%WeitKg / S%V0, T_
+      !for non aqueous species, write density, kg/m3
+      write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
     end if
     do J=1,N
       X=  tGrt(I,J)
-      write(F,'(G15.8,A1)',advance="no") -X /Ln10, T_
+      write(F,'(G15.8,A1,$)') -X /Ln10, T_
     end do
     !
     write(F,*)
@@ -401,7 +401,7 @@ subroutine Dtb_Tabulate_ForSystem( &
       Cc= "_"
     end if
     !
-    write(F, '(4(A,A1))',advance="no") &
+    write(F, '(4(A,A1),$)') &
     & trim(S%Typ),    T_, &
     & trim(Cc),       T_, &
     & trim(S%NamSp),  T_, &
@@ -409,19 +409,19 @@ subroutine Dtb_Tabulate_ForSystem( &
     !
     if(S%Typ=="AQU") then
       !-- for aqu'species, write size parameter
-      write(F, '(F15.1,A1)',advance="no") S%AquSize, T_
+      write(F, '(F15.1,A1,$)') S%AquSize, T_
     else
       !-- for non aqueous species, write density
       if(S%V0<1.D-9) then
-        write(F,'(A,A1)',advance="no") "_?_",T_
+        write(F,'(A,A1,$)') "_?_",T_
       else
-        write(F, '(G15.8,A1)',advance="no") S%WeitKg / S%V0, T_
+        write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
       end if
     end if
     !
     do J=1,N
       X=  tGrt(I,J)
-      write(F,'(G15.8,A1)',advance="no") -X /Ln10, T_
+      write(F,'(G15.8,A1,$)') -X /Ln10, T_
     end do
     !
     write(F,*)
@@ -433,7 +433,7 @@ subroutine Dtb_Tabulate_ForSystem( &
   !-------------------------------------------------------/SPECIES block
   close(F)
   !
-  if(iDebug>0) print '(A)',"Table of LogK in "//trim(DirOut)//"_logk_elem.dtb"
+  if(idebug>2) print '(A)',"Table of LogK in "//trim(DirOut)//"_logk_elem.dtb"
   !--------------------------------------------------/logK from database
   !
   deallocate(tGrt)
@@ -444,17 +444,16 @@ end subroutine Dtb_Tabulate_ForSystem
 subroutine Dtb_Tabulate_EntropyZero(vS0Ele)
   use M_T_Species,  only: Species_EntropyZero
   use M_Global_Vars,only: vEle,vSpc
-
-  real(dp):: vS0Ele(:)
-  integer :: I,N
-
-  N= size(vEle)
-
+  !
+  real(dp),intent(out):: vS0Ele(:)
+  !
+  integer :: I
+  !
   do I=1,size(vSpc)
     vS0Ele(I)= Species_EntropyZero(vEle,vSpc(I))
     if(iDebug>2) write(71,'(A,A1,G15.6)') vSpc(I)%NamSp,T_,vS0Ele(I)
   end do
-  
+  !
   return
 end subroutine Dtb_Tabulate_EntropyZero
 
@@ -495,7 +494,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     call Dtb_Tabulate_EntropyZero(vS0Ele)
   end if
   !
-  !----------------------------------------------------- write header --
+  !---------------------------------------------------------write header
   select case(trim(sCode))
   !
   case("LOGK","LOGK_EQ36")
@@ -514,7 +513,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     call OutStrVec(F,vSolModlDat(:)%Eps, Opt_S="Eps")
     call OutStrVec(F,vSolModlDat(:)%dhA, Opt_S="DHA")
     call OutStrVec(F,vSolModlDat(:)%dhB, Opt_S="DHB")
-    call OutStrVec(F,vSolModlDat(:)%Bdot,Opt_S="BdoT")
+    call OutStrVec(F,vSolModlDat(:)%Bdot,Opt_S="BDOT")
     !
     write(F,'(A,/)') "END SOLVENT"
     !
@@ -530,21 +529,21 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     end select
 
     !-- write array of Temperatures --
-    write(F,'(4(A,A1))',advance="no") &
+    write(F,'(4(A,A1),$)') &
     & ".Type",T_,".Trace",T_,".Species",T_,".ECFORM",T_
     ! call OutStrVec(F,vTPCond(:)%TdgC,Opt_S="TdgC")
     call OutStrVec(F,vTPCond(:)%TdgC)
     
     !-- write array of Pressures --
-    write(F,'(4(A,A1))',advance="no") &
+    write(F,'(4(A,A1),$)') &
     & ".Type",T_,".Trace",T_,".Species",T_,".ECFORM",T_
     ! call OutStrVec(F,vTPCond(:)%Pbar,Opt_S="Pbar")
     call OutStrVec(F,vTPCond(:)%Pbar)
   !
   end select
-  !----------------------------------------------------/ write header --
+  !--------------------------------------------------------/write header
   !
-  !---------------------------------------------------- write results --
+  !--------------------------------------------------------write results
   do iSp=1,M
     !
     S=vSpc(iSp)
@@ -553,7 +552,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     else               ;  Cc= "_"
     end if
     !
-    write(F,'(4(A,A1))',advance="no") &
+    write(F,'(4(A,A1),$)') &
     & trim(S%Typ),     T_, &
     & trim(Cc),        T_, &
     & trim(S%NamSp),   T_, &
@@ -564,14 +563,14 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     case("LOGK")
       if(S%Typ=="AQU") then
         !-- for aqu'species, write size parameter --
-        write(F, '(F15.1,A1)',advance="no") S%AquSize, T_
+        write(F, '(F15.1,A1,$)') S%AquSize, T_
       else
         !-- for non aqueous species, write density --
-        write(F, '(G15.8,A1)',advance="no") S%WeitKg /S%V0, T_
+        write(F, '(G15.8,A1,$)') S%WeitKg /S%V0, T_
       end if
       !-- write array of log10(-G/RT), i.e. "logK" --
       do jTP=1,N
-        write(F,'(G15.8,A1)',advance="no") -tGrt(iSp,jTP) /Ln10, T_
+        write(F,'(G15.8,A1,$)') -tGrt(iSp,jTP) /Ln10, T_
       end do
     !
     case("GIBBS")
@@ -579,7 +578,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
       do jTP= 1,N
         X= tGrt(iSp,jTP) *(vTPCond(jTP)%TdgC +T_CK) *R_jK
         ! X= X - Tref *vS0Ele(iSp) !-> to Berman-Brown
-        write(F,'(G15.8,A1)',advance="no") X, T_
+        write(F,'(G15.8,A1,$)') X, T_
       end do
     !
     case("GIBBS2")
@@ -587,14 +586,14 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
       do jTP= 1,N
         X= tGrt(iSp,jTP) *(vTPCond(jTP)%TdgC +T_CK) *R_jK
         X= X - Tref *vS0Ele(iSp) !-> to Berman-Brown
-        write(F,'(G15.8,A1)',advance="no") X, T_
+        write(F,'(G15.8,A1,$)') X, T_
       end do
     !
     case("VOLUME")
       !--- write molar volume --
       do jTP= 1,N
         X= tGrt(iSp,jTP)*1.0D6
-        write(F,'(G15.8,A1)',advance="no") X, T_
+        write(F,'(G15.8,A1,$)') X, T_
       end do
     !
     end select
@@ -602,7 +601,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     write(F,*)
     !
   end do
-  !---------------------------------------------------/ write results --
+  !-------------------------------------------------------/write results
   !
   if (trim(sCode)=="LOGK") write(F,'(A,/)') "END SPECIES"
   !
@@ -610,7 +609,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
   !
   close(F)
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     print '(A)',"Table of "//trim(sCode)//" in "//trim(DirOut)//"_"//trim(sCode)//".dtb"
     if(iDebug>2) call Pause_
   end if
@@ -650,7 +649,7 @@ subroutine Dtb_Test_EQ36
   vTPcond(8)%TdgC= 300.D0  ;  vTPcond(8)%Pbar= 85.84D0
   !
   do i=1,8
-    !~ call SolventDat_Default(vSolvDat(i))
+    !! call SolventDat_Default(vSolvDat(i))
     !! provisional !! should call calculation of vSolvDat !!
     call SolModel_TP_Update(vTPcond(i)%TdgC +T_CK,vTPcond(i)%Pbar,Slv)
     vSolvDat(i)= Slv%Dat
@@ -744,7 +743,7 @@ subroutine Dtb_Test_Fluid
   ! return
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  if(iDebug>0) &
+  if(idebug>1) &
   & print *,"Compute the thermodynamic properties of H2O"
 
   TdgK= Tref
@@ -780,7 +779,7 @@ subroutine Dtb_Test_Fluid
     & "H2O","HAAR.GHIORSO",TdgK,Pbar, &
     & Grt,H,S,V_m3,LnFug,Ok)
     if(Ok) then
-      write(f1,'(A,A1,3(G15.6,A1))',advance="no") &
+      write(f1,'(A,A1,3(G15.6,A1),$)') &
       & "HAARGHIO",t_,TdgC,t_,log10(Pbar),t_,Pbar,t_
       write(f1,'(6(G15.6,A1))') &
       & -Grt/ln10,t_,  Grt*R_JK*TdgK, t_,  &
@@ -792,7 +791,7 @@ subroutine Dtb_Test_Fluid
     & "H2O","HAAR",TdgK,Pbar, &
     & Grt,H,S,V_m3,LnFug,Ok)
     if(Ok) then
-      write(f2,'(A,A1,3(G15.6,A1))',advance="no") &
+      write(f2,'(A,A1,3(G15.6,A1),$)') &
       & "HAAR",t_,TdgC,t_,log10(Pbar),t_,Pbar,t_
       write(f2,'(3(G15.6,A1))') &
       &  -Grt/ln10,t_,  Grt*R_JK*TdgK,t_, 0.01852D0/V_m3,t_
@@ -802,7 +801,7 @@ subroutine Dtb_Test_Fluid
     & "H2O","SUPCRT",TdgK,Pbar, &
     & Grt,H,S,V_m3,LnFug,Ok)
     if(Ok) then
-      write(f3,'(A,A1,3(G15.6,A1))',advance="no") &
+      write(f3,'(A,A1,3(G15.6,A1),$)') &
       & "SUPCRT",t_,TdgC,t_,log10(Pbar),t_,Pbar,t_
       write(f3,'(6(G15.6,A1))') &
       & -Grt/ln10,t_,  Grt*R_JK*TdgK,  t_,  &
@@ -816,7 +815,7 @@ subroutine Dtb_Test_Fluid
   close(f2)
   close(f3)
 
-  if(iDebug>0) then
+  if(idebug>1) then
     print *,">> results in files dtbfluid_xxx.restab"
     if(iDebug>2) call Pause_
   end if
@@ -978,20 +977,20 @@ subroutine Dtb_Test_AquHkf
   !
   call GetUnit(f1)
   open(f1,file=trim(DirOut)//"_tpgrid_logk.restab")
-  write(f1,'(3(A,A1))',advance="no") "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
+  write(f1,'(3(A,A1),$)') "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
   !
   call GetUnit(f2)
   open(f2,file=trim(DirOut)//"_tpgrid_dens.restab")
-  write(f2,'(3(A,A1))',advance="no") "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
+  write(f2,'(3(A,A1),$)') "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
   !
   do I=1,size(vSpc) !N
-    !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
-    write(f1,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
+    !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
+    write(f1,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
   end do
   write(f1,*)
   do I=1,size(vSpc) !N
-    !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
-    write(f2,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
+    !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
+    write(f2,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
   end do
   write(f2,*)
   !
@@ -1002,8 +1001,8 @@ subroutine Dtb_Test_AquHkf
     Pbar= vTPpath(N)%Pbar
     !
     !! print '(A,F7.2,1X,F7.2)',"Dtb_Test_AquHkf ",TdgC,Pbar
-    write(f1,'(3(G15.6,A1))',advance="no") TdgC,t_,LOG10(Pbar),t_,Pbar,t_
-    write(f2,'(3(G15.6,A1))',advance="no") TdgC,t_,LOG10(Pbar),t_,Pbar,t_
+    write(f1,'(3(G15.6,A1),$)') TdgC,t_,LOG10(Pbar),t_,Pbar,t_
+    write(f2,'(3(G15.6,A1),$)') TdgC,t_,LOG10(Pbar),t_,Pbar,t_
     !
     call DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O)
     !-> solvent properties, for aqu'species
@@ -1012,13 +1011,13 @@ subroutine Dtb_Test_AquHkf
       !
       call Species_TP_Update_fromDtb(TdgK,Pbar,PropsH2O,vSpcDtb,vSpc(J))
       !
-      write(f1,'(G15.6,A1)',advance="no") -vSpc(J)%G0rt/Ln10,t_
+      write(f1,'(G15.6,A1,$)') -vSpc(J)%G0rt/Ln10,t_
       !
       if(vSpc(J)%Typ=="AQU") then
-        write(f2,'(G15.6,A1)',advance="no")  vSpc(J)%V0,t_
+        write(f2,'(G15.6,A1,$)')  vSpc(J)%V0,t_
       else
         X= vSpc(J)%WeitKg
-        write(f2,'(G15.6,A1)',advance="no")  X/vSpc(J)%V0,t_
+        write(f2,'(G15.6,A1,$)')  X/vSpc(J)%V0,t_
       end if
       !
     end do
@@ -1092,12 +1091,12 @@ end module M_Dtb_Test
 !   !
 !   call GetUnit(f1) ; open(f1,file=trim(DirOut)//"_tpgrid_logk.restab")
 !   call GetUnit(f2) ; open(f2,file=trim(DirOut)//"_tpgrid_dens.restab")
-!   write(f1,'(3(A,A1))',advance="no") "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
-!   write(f2,'(3(A,A1))',advance="no") "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
+!   write(f1,'(3(A,A1),$)') "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
+!   write(f2,'(3(A,A1),$)') "TdgC",t_,"log(Pbar)",t_,"Pbar",t_
 !   do I=1,size(vSpc) !N
-!     !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
-!     write(f1,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
-!     write(f2,'(A,A1)',advance="no") trim(vSpc(I)%NamSp),t_
+!     !!if(vSpc(I)%Typ=="AQU") write(f1,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
+!     write(f1,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
+!     write(f2,'(A,A1,$)') trim(vSpc(I)%NamSp),t_
 !   end do
 !   write(f1,*)
 !   write(f2,*)
@@ -1108,28 +1107,28 @@ end module M_Dtb_Test
 !     Do_P: do while(Pbar<=P_Max)
 !       TdgK= TdgC +T_CK
 !       !print '(F7.2,1X,F7.2)',TdgC,Pbar
-!       !write(f1,'(2(G15.6,A1))',advance="no") TdgC,t_,Pbar,t_
+!       !write(f1,'(2(G15.6,A1),$)') TdgC,t_,Pbar,t_
 !       !
 !       Psat= Zero
 !       if (TdgK<=647.25D0) call Eos_H2O_Psat(TdgK,Psat)
 !       if(TdgK>647.25D0 .or. Pbar>Psat) then
-!         write(f1,'(3(G15.6,A1))',advance="no") TdgC,t_,log10(Pbar),t_,Pbar,t_
-!         write(f2,'(3(G15.6,A1))',advance="no") TdgC,t_,log10(Pbar),t_,Pbar,t_
+!         write(f1,'(3(G15.6,A1),$)') TdgC,t_,log10(Pbar),t_,Pbar,t_
+!         write(f2,'(3(G15.6,A1),$)') TdgC,t_,log10(Pbar),t_,Pbar,t_
 !         !
 !         call DtbH2OHkf_Calc(TdgK,Pbar,PropsH2O) !-> solvent properties, for aqu'species
 !         !
 !         do J=1,size(vSpc)
 !           call DtbSpc_TP_Update(TdgK,Pbar,PropsH2O,vSpc(J))
-!           write(f1,'(G15.6,A1)',advance="no") -vSpc(J)%G0rt/Ln10,t_
+!           write(f1,'(G15.6,A1,$)') -vSpc(J)%G0rt/Ln10,t_
 !           if(vSpc(J)%Typ=="GAS") then
 !             X= exp(vSpc(J)%LnPhi -log(Pbar))
-!             write(f1,'(G15.6,A1)',advance="no") X,t_
+!             write(f1,'(G15.6,A1,$)') X,t_
 !           end if
 !           if(vSpc(J)%Typ=="AQU") then
-!             write(f2,'(G15.6,A1)',advance="no")  vSpc(J)%V0,t_
+!             write(f2,'(G15.6,A1,$)')  vSpc(J)%V0,t_
 !           else
 !             X= vSpc(J)%WeitKg
-!             write(f2,'(G15.6,A1)',advance="no")  X/vSpc(J)%V0,t_
+!             write(f2,'(G15.6,A1,$)')  X/vSpc(J)%V0,t_
 !           end if
 !         end do
 !         write(f1,*)

@@ -52,8 +52,8 @@ subroutine Global_Show
     if(fs%iSol >0) then
       K= vSolModel(vSolFas(fs%iSol)%iModel)%iSolvent
       write(F,'(A,1X)',advance="NO") trim(vSpc(K)%NamSp)
-      do J=1,vSolModel(vSolFas(fs%iSol)%iModel)%nSpecies
-        K= vSolModel(vSolFas(fs%iSol)%iModel)%vISpecies(J)
+      do J=1,vSolModel(vSolFas(fs%iSol)%iModel)%nSolute
+        K= vSolModel(vSolFas(fs%iSol)%iModel)%vISolute(J)
         write(F,'(A,1X)',advance="NO") trim(vSpc(K)%NamSp)
       end do
       write(F,*)
@@ -71,12 +71,11 @@ subroutine Global_TP_Update( &
 & vSpc,vMixModel,vMixFas,vFas) !inout
 !--
 !-- update (T,P) dependent properties of species, sol'models, phases,
-!=  to be called everytime T,P changes
+!-- to be called everytime T,P changes
 !--
   use M_T_Species,  only: T_Species,T_SpeciesDtb
   use M_T_MixModel, only: T_MixModel
   use M_T_MixPhase, only: T_MixPhase,MixPhase_CalcActivs
-  !use M_T_MixModel, only: MixModel_Param_Update
   use M_T_Phase,    only: T_Phase,Phase_Calc
   use M_T_DiscretModel,only: T_DiscretModel,T_DiscretParam
   !
@@ -235,7 +234,7 @@ end subroutine Global_Clean
 
 subroutine Global_Species_Select
 !--
-!--read SPECIES.include and SPECIES.EXCLUDE blocks,
+!--read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks,
 !--from the vSpc built from database,
 !--retrieve species consistent with vEle & redox & vExclude
 !--
@@ -248,17 +247,17 @@ subroutine Global_Species_Select
   !
   type(T_Species),allocatable:: vSpcNew(:)
   !
-  !------------------ read SPECIES.include and SPECIES.EXCLUDE blocks --
+  !------------------ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
   allocate(vExclude(1:size(vSpc)))  ;  vExclude(:)= .false.
   allocate(vInclude(1:size(vSpc)))  ;  vInclude(:)= .true.
   call Species_Read_Excluded(vSpc,vExclude,vInclude)
-  !-----------------/ read SPECIES.include and SPECIES.EXCLUDE blocks --
+  !-----------------/ read SPECIES.INCLUDE and SPECIES.EXCLUDE blocks --
   !
   !------------------------------------------------ species selection --
   !-- from the vSpc built from database,
   !-- retrieve species consistent
   !-- with vEle & redox & vExclude
-  if(iDebug>0) write(fTrc,'(A)') &
+  if(idebug>1) write(fTrc,'(A)') &
   & "< Restrict database to species consistent with element list and redox state"
   !
   allocate(vSpcNew(size(vSpc)))
@@ -285,7 +284,7 @@ end subroutine Global_Species_Select
 subroutine Species_Read_Excluded(vSpc,vExclude,vInclude)
 !--
 !-- process the SPECIES.EXCLUDE block
-!-- and the SPECIES.include block
+!-- and the SPECIES.INCLUDE block
 !--
   use M_Files,    only: NamFInn
   use M_IOTools !, only:dimV,LinToWrd,GetUnit
@@ -298,7 +297,7 @@ subroutine Species_Read_Excluded(vSpc,vExclude,vInclude)
   logical:: EoL
   integer:: F,ios,I     
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Species_Read_Excluded"
+  if(idebug>1) write(fTrc,'(/,A)') "< Species_Read_Excluded"
   !
   vExclude= .false.
   vInclude= .true.
@@ -316,82 +315,82 @@ subroutine Species_Read_Excluded(vSpc,vExclude,vInclude)
     call AppendToEnd(L,W,EoL)
     select case(W)
     
-      case("ENDINPUT"); exit DoFile
+    case("ENDINPUT"); exit DoFile
+    
+    case("SPECIES.EXCLUDE")
+      !
+      vExclude(:)= .false.
+      !
+      DoLine1: do
       
-      case("SPECIES.EXCLUDE")
-        !
-        vExclude(:)= .false.
-        !
-        DoLine1: do
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoLine1 !skip comment lines
+        call AppendToEnd(L,W,EoL)
         
-          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
-          call LinToWrd(L,W,EoL)
-          if(W(1:1)=='!') cycle DoLine1 !skip comment lines
-          call AppendToEnd(L,W,EoL)
-          
-          select case(W)
-            case("ENDINPUT"); exit DoFile
-            case("END","ENDSPECIES.EXCLUDE"); exit DoLine1
-            !-> reading data from several block..end blocks 
-            !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
-            !!-> reading only the first available block
-          end select
-          !
-          call Species_Rename(W)
-          I= Species_Index(trim(W),vSpc)
-          !
-          !---------------------------------------------------- trace --
-          if(I<1) then
-            write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
-          else
-            write(fTrc,'(3A)') "Species ",trim(W)," = is excluded"
-            vExclude(I)=.true.
-          end if
-          !---------------------------------------------------/ trace --
-          !
-        end do DoLine1
-      !endcase("SPECIES.EXCLUDE")
+        select case(W)
+          case("ENDINPUT"); exit DoFile
+          case("END","ENDSPECIES.EXCLUDE"); exit DoLine1
+          !-> reading data from several block..end blocks 
+          !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
+          !!-> reading only the first available block
+        end select
+        !
+        call Species_Rename(W)
+        I= Species_Index(trim(W),vSpc)
+        !
+        !---------------------------------------------------- trace --
+        if(I<1) then
+          write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
+        else
+          write(fTrc,'(3A)') "Species ",trim(W)," = is excluded"
+          vExclude(I)=.true.
+        end if
+        !---------------------------------------------------/ trace --
+        !
+      end do DoLine1
+    !endcase("SPECIES.EXCLUDE")
+    
+    case("SPECIES.INCLUDE")
+      !
+      vInclude(:)= .false.
+      !
+      DoLine2: do
       
-      case("SPECIES.include")
-        !
-        vInclude(:)= .false.
-        !
-        DoLine2: do
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        if(W(1:1)=='!') cycle DoLine2 !skip comment lines
+        call AppendToEnd(L,W,EoL)
         
-          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
-          call LinToWrd(L,W,EoL)
-          if(W(1:1)=='!') cycle DoLine2 !skip comment lines
-          call AppendToEnd(L,W,EoL)
-          
-          select case(W)
-            case("ENDINPUT"); exit DoFile
-            case("END","ENDSPECIES.include"); exit DoLine2
-            !-> reading data from several block..end blocks 
-            !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
-            !!-> reading only the first available block
-          end select
-          
-          call Species_Rename(W)
-          I= Species_Index(trim(W),vSpc)
-          !
-          !---------------------------------------------------- trace --
-          if(I<1) then
-            write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
-          else
-            write(fTrc,'(3A)') "Species ",trim(W)," = is included"
-            vInclude(I)=.true.
-          end if
-          !---------------------------------------------------/ trace --
-          !
-        end do DoLine2
-      !endcase("SPECIES.include")
+        select case(W)
+        case("ENDINPUT")                  ;  exit DoFile
+        case("END","ENDSPECIES.INCLUDE")  ;  exit DoLine2
+        !-> reading data from several block..end blocks 
+        !case("END","ENDSPECIES.EXCLUDE"); exit DoFile
+        !!-> reading only the first available block
+        end select
+        
+        call Species_Rename(W)
+        I= Species_Index(trim(W),vSpc)
+        !
+        !---------------------------------------------------- trace --
+        if(I<1) then
+          write(fTrc,'(3A)') "Species ",trim(W)," = is not in current vSpc"
+        else
+          write(fTrc,'(3A)') "Species ",trim(W)," = is included"
+          vInclude(I)=.true.
+        end if
+        !---------------------------------------------------/ trace --
+        !
+      end do DoLine2
+    !endcase("SPECIES.INCLUDE")
       
     end select
   end do DoFile
   !
   close(F)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Species_Read_Excluded"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Species_Read_Excluded"
 end subroutine Species_Read_Excluded
 
 end module M_Global_Tools

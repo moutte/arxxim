@@ -13,123 +13,29 @@ module M_SolModel_Tools
   public:: Solmodel_CalcMolal
   public:: Solmodel_CalcMolal2
   public:: SolModel_TP_Update
-  public:: Solmodel_Init_TotO_TotH
   
 contains
 
-!subroutine Solmodel_Zero
-!  !default SolModel parameters, in case not found in input
-!  isW= 1; iH_= 0; iOx= 0
-!  isH_=0; isOH=0; isO2=0
-!end subroutine Solmodel_Zero
-
-subroutine Solmodel_Init_TotO_TotH( & !
-& AdjustMode, &                       !
-& iBal,ic_W,ic_H,vEle, &              !IN
-& vCpn)                               !INOUT
-!--
-!-- adjust total molar amounts of O and H according 
-!-- to molar amounts of other elements
-!-- -> values of vTotF
-!--
-  use M_T_Element,  only: T_Element
-  use M_T_Component,only: T_Component
-  !
-  integer,          intent(in)   :: AdjustMode
-  integer,          intent(in)   :: iBal
-  integer,          intent(in)   :: ic_W,ic_H
-  type(T_Element),  intent(in)   :: vEle(:)
-  type(T_Component),intent(inout):: vCpn(:)
-  !
-  !
-  real(dp):: Zbalance,TotO_
-  integer :: I,iBal_
-
-  if(iDebug>0) write(fTrc,'(/,A)') "< Solmodel_Init_TotO_TotH"
-
-  TotO_= vCpn(ic_W)%Mole
-
-  if(iBal==0) then ;  iBal_= ic_H
-  else             ;  iBal_= iBal
-  end if
-
-  if(iBal_ /= ic_H .and. vCpn(ic_H)%Statut=="INERT") then
-    vCpn(ic_W)%Mole= TotO_
-    vCpn(ic_H)%Mole= TotO_*Two
-    !return
-  end if
-  
-  Zbalance= Zero
-  do I=1,size(vCpn)
-    if(vCpn(I)%Statut=="INERT" .and. I/=ic_W .and. I/=ic_H) then
-      Zbalance= Zbalance + vEle(vCpn(I)%iEle)%Z *vCpn(I)%Mole
-    end if
-  end do
-
-  !! select case(AdjustMode)
-  !!   !
-  !!   case(1)
-  !!     !--- if excess cation, Na>Cl, adjust with OH
-  !!     if(Zbalance > Zero) then
-  !!       vCpn(ic_W)%Mole= TotO_     +Zbalance
-  !!       vCpn(ic_H)%Mole= TotO_*Two +Zbalance
-  !!     !--- if excess anion, Cl>Na, adjust with H
-  !!     else
-  !!       vCpn(ic_W)%Mole= TotO_
-  !!       vCpn(ic_H)%Mole= TotO_*Two -Zbalance
-  !!     end if
-  !!   !
-  !!   case(2)
-  !!     !--- Oxygen number unchanged, equilibrate using hydrogen only
-  !!     vCpn(ic_W)%Mole= TotO_
-  !!     vCpn(ic_H)%Mole= TotO_*Two -Zbalance
-  !!   !
-  !! end select
-
-  select case(AdjustMode)  
-  case(1)
-    !----------------------------if excess cation, Na>Cl, adjust with OH
-    if(Zbalance > Zero) then
-      vCpn(ic_W)%Mole= TotO_     +Zbalance
-      vCpn(iBal_)%Mole= TotO_*Two +Zbalance
-    !------------------------------if excess anion, Cl>Na, adjust with H
-    else
-      vCpn(ic_W)%Mole=  TotO_
-      vCpn(iBal_)%Mole= (TotO_*Two -Zbalance) /real(vEle(iBal_)%Z)
-    end if
-  case(2)
-    !-----------Oxygen number unchanged, equilibrate using hydrogen only
-    vCpn(ic_W)%Mole= TotO_
-    vCpn(iBal_)%Mole= TotO_*Two -Zbalance
-  end select
-  !
-  if(iDebug>2) then !----------------------------------------------trace
-    write(fTrc,'(A,G15.6)')  "Zbalance       =", Zbalance
-    write(fTrc,'(A,G15.6)')  "vCpn(ic_W)%Mole=", vCpn(ic_W)%Mole
-    write(fTrc,'(A,G15.6)')  "vCpn(ic_H)%Mole=", vCpn(ic_H)%Mole
-  end if
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Solmodel_Init_TotO_TotH" !------/
-  !  
-end subroutine Solmodel_Init_TotO_TotH
-  !
-subroutine Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
+subroutine Solmodel_pHpE(SM,vSpc,vSpcDat,pH_,pE_)
   use M_Numeric_Const,only: LN10
-  use M_T_Species,    only: T_Species
+  use M_T_Species,    only: T_Species, T_SpcData
+  use M_T_SolModel,   only: T_SolModel
   !
-  integer,        intent(in) :: isW,iOx,isH_,isO2
-  type(T_Species),intent(in) :: vSpc(:)
-  real(dp),       intent(out):: pH_, pE_
+  type(T_SolModel),intent(in) :: SM !SolModel
+  type(T_Species), intent(in) :: vSpc(:)
+  type(T_SpcData), intent(in) :: vSpcDat(:)
+  real(dp),        intent(out):: pH_, pE_
   
   !pH_= - (log(vMolF(isH_)) + vLnGam(isH_) - log(vMolF(isW)*MolWeitSv))/LN10
-  pH_= -vSpc(isH_)%Dat%LAct/LN10
+  pH_= -vSpcDat(SM%isH_)%LAct/LN10
   pE_=  Zero
   
-  if(iOx/=0 .and. isO2/=0) &
-    pE_= & 
-    & (  vSpc(isO2)%G0rt + vSpc(isO2)%Dat%LAct          &
-    &  -(vSpc(isW )%G0rt + vSpc(isW )%Dat%LAct) *Two  ) &
-    & /LN10 /4.0D0 &
-    & - pH_
+  if(SM%isO2/=0) &
+  & pE_= & 
+  & (  vSpc(SM%isO2)%G0rt + vSpcDat(SM%isO2)%LAct &
+  &  -(vSpc(SM%iSolvent)%G0rt + vSpcDat(SM%iSolvent)%LAct) *Two  ) &
+  & /LN10 /4.0D0 &
+  & - pH_
   
   !2.H2O=  O2 + 4.H+ + 4.e-
   !2.G(H2O)+lnA_H2O=  G(O2)+lnA_O2  +4.lnA_H+ +4.lnA_e-
@@ -142,7 +48,8 @@ subroutine Solmodel_pHpE(isW,iOx,isH_,isO2,vSpc,pH_,pE_)
 end subroutine Solmodel_pHpE
 
 subroutine Solmodel_CalcMolal( &
-& vSpc,isW, &
+& SolModel, &
+& vSpc,vSpcDat, &
 & vMolal,IonStrTrue)
 !-- from S%Mole, S%Z,
 !-- calc. Molalities vMolal, and "true" ionic strength
@@ -150,24 +57,29 @@ subroutine Solmodel_CalcMolal( &
 !-- we assume that SolModel has index 1 in vSpc 
 !-- and solute species are indexed 2:nAq !!!
 !--
-  use M_T_Species,only: T_Species
-  !
-  type(T_Species),intent(in) :: vSpc(:)
-  integer,        intent(in) :: isW
-  real(dp),       intent(out):: vMolal(:)
-  real(dp),       intent(out):: IonStrTrue !,IonStrStoik
-  !
+  use M_T_SolModel,only: T_SolModel
+  use M_T_Species, only: T_Species,T_SpcData
+  !---------------------------------------------------------------------
+  type(T_SolModel),intent(in) :: SolModel
+  type(T_Species), intent(in) :: vSpc(:)
+  type(T_SpcData), intent(in) :: vSpcDat(:)
+  real(dp),        intent(out):: vMolal(:)
+  real(dp),        intent(out):: IonStrTrue !,IonStrStoik
+  !---------------------------------------------------------------------
   real(dp):: MolWeitSv
+  integer :: isW
   integer :: I,J
   !
-  MolWeitSv=  vSpc(isW)%WeitKg
+  isW= SolModel%iSolvent
+  MolWeitSv=  SolModel%MolWeitSv
+  !
   IonStrTrue= Zero
   J= 0
   do I=1,size(vSpc)
     if(vSpc(I)%Typ=="AQU") then
       J= J+1
-      vMolal(J)= vSpc(I)%Dat%Mole /vSpc(isW)%Dat%Mole /MolWeitSv
-      IonStrTrue= IonStrTrue + vSpc(I)%Z*vSpc(I)%Z*vMolal(I)
+      vMolal(J)= vSpcDat(I)%Mole /vSpcDat(isW)%Mole /MolWeitSv
+      IonStrTrue= IonStrTrue + vSpc(I)%Z*vSpc(I)%Z*vMolal(J)
     end if
   end do
   IonStrTrue= IonStrTrue /Two
@@ -175,30 +87,34 @@ subroutine Solmodel_CalcMolal( &
 end subroutine Solmodel_CalcMolal
 
 subroutine Solmodel_CalcMolal2( &
-& vSpc,nAq, &
+& SolModel, &
+& vSpc,vSpcDat,nAq, &
 & vMolal,IonStrTrue) !,IonStrStoik
 !-- from S%Mole, S%Z, 
 !-- calc. Molalities vMolal, and ionic strengths ("true")
 !-- we assume that SolModel has index 1 in vSpc 
 !-- and solute species are indexed 2:nAq !!!
-  use M_T_Species,only: T_Species,Species_Index
+  use M_T_SolModel,only: T_SolModel
+  use M_T_Species, only: T_Species,Species_Index,T_SpcData
   !
-  type(T_Species),intent(in) :: vSpc(:)
-  integer,        intent(in) :: nAq
-  real(dp),       intent(out):: vMolal(:)
-  real(dp),       intent(out):: IonStrTrue !,IonStrStoik
+  type(T_SolModel),intent(in) :: SolModel
+  type(T_Species), intent(in) :: vSpc(:)
+  type(T_SpcData), intent(in) :: vSpcDat(:)
+  integer,         intent(in) :: nAq
+  real(dp),        intent(out):: vMolal(:)
+  real(dp),        intent(out):: IonStrTrue !,IonStrStoik
   !
   integer, dimension(1:nAq):: vZ2
   real(dp):: MolWeitSv
   integer :: isW
   !
-  isW=  Species_Index("H2O",vSpc)
-  MolWeitSv=vSpc(isW)%WeitKg
-  
-  vMolal(1:nAq)= vSpc(1:nAq)%Dat%Mole /vSpc(isW)%Dat%Mole /MolWeitSv
-  
+  isW= SolModel%iSolvent
+  MolWeitSv=  SolModel%MolWeitSv
+  !
+  vMolal(1:nAq)= vSpcDat(1:nAq)%Mole /vSpcDat(isW)%Mole /MolWeitSv
+  !
   vZ2(1:nAq)=    vSpc(1:nAq)%Z *vSpc(1:nAq)%Z
-  
+  !
   IonStrTrue=    dot_product(vZ2(2:nAq),vMolal(2:nAq))/Two
   
 end subroutine Solmodel_CalcMolal2

@@ -66,8 +66,8 @@ subroutine Dynam_Jacobian(vX,tJac)
 !--
 !-- tJac(1:n,1:n)- Jacobian of Dynam_Residual(1:n)
 !--
-  use M_Global_Vars,only: vKinFas
-  use M_Basis_Vars, only: nCi,nAs,MWsv
+  use M_Global_Vars,only: vKinFas,SolModel
+  use M_Basis_Vars, only: nCi,nAs
   use M_Basis_Vars, only: tAlfAs,tNuAs,tAlfPr
   !
   use M_Dynam_Solve_Vars
@@ -90,12 +90,14 @@ subroutine Dynam_Jacobian(vX,tJac)
   !
   real(dp):: dum(size(vX))
   real(dp):: Coeff_PhiF,TotFF
+  real(dp):: MWsv
   integer :: iPr,jPr,iAs,jAs,iMk,jMk,iMkA,jMkA,I,J
   integer :: nF,nMk,nMkA,nEqA,N
   !
   !nAi= nCi +nAs
   !nF= nAi
   !
+  MWSv= SolModel%MolWeitSv
   nMk=  size(vKinFas)
   nMkA= count(vLKinActiv)
   nEqA= count(vLEquActiv)
@@ -113,7 +115,7 @@ subroutine Dynam_Jacobian(vX,tJac)
   allocate(vSumNuAs(nAs))
   !
   do iAs=1,nAs
-    vSumNuAs(iAs)= SUM(tNuAs(iAs,2:nCi))
+    vSumNuAs(iAs)= sum(tNuAs(iAs,2:nCi))
   end do
   !
   if(nMkA>0) then
@@ -121,7 +123,7 @@ subroutine Dynam_Jacobian(vX,tJac)
     do iMk=1,nMk
       if(vLKinActiv(iMk)) then
         !iMkA= iMkA + 1
-        !-------------------------------------- derivative of VM-Surf*VmA*VmQ --
+        !--------------------------------- derivative of VM-Surf*VmA*VmQ
         dVMdLnXf(iMk,1:nCi)= &
         & vSurfK(iMk) *   vVmAct(iMk)*dVmQdLnXf(iMk,1:nCi) ! &
         ! &    + vVmQsK(iMk)*dVmAdLnXf(iMk,1:nF) )
@@ -131,7 +133,7 @@ subroutine Dynam_Jacobian(vX,tJac)
         !
         dVMdXm(iMk,1:nMk)= &
         & vVmQsK(iMk)*vVmAct(iMk) * dSRdXm(iMk,1:nMk)
-        !-------------------------------------/ derivative of VM-Surf*VmA*VmQ --
+        !--------------------------------/ derivative of VM-Surf*VmA*VmQ
       else !not(vLKinActiv(iMk))
         dVMdLnXf(iMk,1:nCi)= Zero
         dVMdLnXm(iMk,1:nMk)= Zero
@@ -140,17 +142,17 @@ subroutine Dynam_Jacobian(vX,tJac)
     end do
   end if
   !
-  !-----------------------------------------------------------------------------
+  !---------------------------------------------------------------------
   call BuildVecs( & !
   & LogForAqu,LogForMin,nF,nEqA,nMkA,vX, & !
   & vXf,vLnXf,vXeq,vXmk)
   !
   ! call BuildVecs(LogForMin,nF,nEqA,nMkA,vX,vXf,vXeq,vXmk)
-  !-----------------------------------------------------------------------------
+  !---------------------------------------------------------------------
   !
   tJac=Zero
   !
-  !-----------------------------------------------------------------------------
+  !---------------------------------------------------------------------
   !derive Dynam_Residual(iPr)= & !variable terms only
   !& (One + UDarcy*dTime/dX/ PhiF) * &
   !& ( dot_product(tAlfPr(iPr,1:nCp),vY(1:nCp))   & !# moles in fluid, from prim'species
@@ -161,12 +163,12 @@ subroutine Dynam_Jacobian(vX,tJac)
   !
   !! PhiF= One - dot_product(vY(nF+1:nF+nMk),vMolarVol(1:nMk)) /VBox  !porosity at time t
   !
-  !----------------------------------------------------------------- Jacobian --
+  !------------------------------------------------------------ Jacobian
   !
-  !------------------------------------------------- rows 1:nCi: Prim'Species --
+  !-------------------------------------------- rows 1:nCi: Prim'Species
   do iPr=1,nCi
     !
-    !----------------------------------------------- 1:nCi-- Aqu'Prim'Species --
+    !------------------------------------------ 1:nCi-- Aqu'Prim'Species
     do jPr=1,nCi
       !
       !! NOTE: Fout=  UDarcy *Vbox /dX /PhiF 
@@ -191,7 +193,7 @@ subroutine Dynam_Jacobian(vX,tJac)
       end if
       !
     end do
-    !----------------------------------------------/ 1:nCi-- Aqu'Prim'Species --
+    !-----------------------------------------/ 1:nCi-- Aqu'Prim'Species
     !
     if(DirectSub) then
       do jAs=1,nAs
@@ -207,7 +209,7 @@ subroutine Dynam_Jacobian(vX,tJac)
         end do
       end do
     else
-    !--------------------------------------------- 1:nCi-- Aqu'Second'species --
+    !---------------------------------------- 1:nCi-- Aqu'Second'species
       do jAs=1,nAs
         ! same as prim'sp,
         ! but we write again because tAlfa is split into tAlfPr U tAlfAs
@@ -231,7 +233,7 @@ subroutine Dynam_Jacobian(vX,tJac)
         !</removed>
       end do
     end if
-    !----------------------------------------------------/ Aqu'Second'species --
+    !-----------------------------------------------/ Aqu'Second'species
     !
     if(nMkA +nEqA >0) then
       if(DirectSub) then
@@ -243,7 +245,7 @@ subroutine Dynam_Jacobian(vX,tJac)
       end if
     end if
     !
-    !-------------------------------------------------- 1:nCi-- equil' phases --
+    !--------------------------------------------- 1:nCi-- equil' phases
     if(nEqA>0) then
       !
       N= nF
@@ -264,9 +266,9 @@ subroutine Dynam_Jacobian(vX,tJac)
         end if
       end do
     end if
-    !---------------------------------------------------------/ equil' phases --
+    !----------------------------------------------------/ equil' phases
     !
-    !------------------------------------------------ 1:nCi -- kinetic phases --
+    !------------------------------------------- 1:nCi -- kinetic phases
     if(nMkA>0) then
       !
       N= nF+nEqA
@@ -308,21 +310,21 @@ subroutine Dynam_Jacobian(vX,tJac)
         !
       end do
     end if
-    !--------------------------------------------------------/ kinetic phases --
+    !---------------------------------------------------/ kinetic phases
   end do
-  !-----------------------------------------------/ rows 1:nCi (Prim'Species) --
+  !------------------------------------------/ rows 1:nCi (Prim'Species)
   !
-  !----------------------------------- rows nCi+1:nCi+nAs: Aqu'Second'Species --
+  !------------------------------ rows nCi+1:nCi+nAs: Aqu'Second'Species
   !
   !derive Psi(nCp+iAs)=
   ! dot_product(tNuAs(iAs,1:nCp),vX(1:nCp)) - vX(nCp+iAs) &
-  !- (SUM(tNuAs(iAs,1:nCp)) - One) *(vX(isW) + log(MWSv)) + Constant Terms
+  !- (sum(tNuAs(iAs,1:nCp)) - One) *(vX(isW) + log(MWSv)) + Constant Terms
   !
   if(.not. DirectSub) then
     !
     if(LogForAqu) then
-      !------------------------------------------------------------ LogForAqu --
-      !-------------------------------- deriv' second'species vs prim'species --
+      !------------------------------------------------------- LogForAqu
+      !--------------------------- deriv' second'species vs prim'species
       do iAs=1,nAs
         tJac(nCi+iAs,1)=     One - vSumNuAs(iAs) !Solvent
         do iPr=2,nCi
@@ -330,17 +332,17 @@ subroutine Dynam_Jacobian(vX,tJac)
         end do
       end do
       !---/
-      !------------------------------ deriv' second'species vs second'species --
+      !------------------------- deriv' second'species vs second'species
       do iAs=1,nAs
         tJac(nCi+iAs,nCi+iAs)= - One !-> matrix block = -(Identity)
       end do
       !---/
-      !------------------------------------------------------------/LogForAqu --
+      !-------------------------------------------------------/LogForAqu
       !
     else
       !
-      !-------------------------------------------------------- NOT LogForAqu --
-      !-------------------------------- deriv' second'species vs prim'species --
+      !--------------------------------------------------- NOT LogForAqu
+      !--------------------------- deriv' second'species vs prim'species
       do iAs=1,nAs
         tJac(nCi+iAs,1)= vMolSec(iAs) *(One -vSumNuAs(iAs)) /vX(1)
         do iPr=2,nCi
@@ -354,11 +356,11 @@ subroutine Dynam_Jacobian(vX,tJac)
         tJac(nCi+iAs,nCi+iAs)= - One !-> matrix block = -(Identity)
       end do
       !---/
-      !--------------------------------------------------------/NOT LogForAqu --
+      !---------------------------------------------------/NOT LogForAqu
     end if
   end if
   !
-  !------------------------------------------ rows nF+1:nF+nEqA: equil'phases --
+  !------------------------------------- rows nF+1:nF+nEqA: equil'phases
   if(nEqA>0) then
     !
     N= nF
@@ -367,15 +369,15 @@ subroutine Dynam_Jacobian(vX,tJac)
     do iMk=1,nMk
       if(vLEquActiv(iMk)) then
         J= J +1
-        tJac(N +J,1)= - SUM(tNu_Kin(iMk,2:nCi))
+        tJac(N +J,1)= - sum(tNu_Kin(iMk,2:nCi))
         tJac(N +J,2:nCi)=   tNu_Kin(iMk,2:nCi)
       end if
     end do
   end if
-  !-----------------------------------------/ rows nF+1:nF+nEqA: equil'phases --
+  !-------------------------  ---------/ rows nF+1:nF+nEqA: equil'phases
   !
-  !----------------------------------- rows nF+nEqA+1:nF+nEqA+nMk: kin'phases --
-  !------ Dynam_Residual(nF+i)- X(nF+i)) -Xi(nF+i) - dTime*vSurfK(i)*vVmF_(i) --
+  !------------------------------ rows nF+nEqA+1:nF+nEqA+nMk: kin'phases
+  !- Dynam_Residual(nF+i)- X(nF+i)) -Xi(nF+i) - dTime*vSurfK(i)*vVmF_(i)
   !
   if(nMkA>0) then
     !
@@ -398,9 +400,9 @@ subroutine Dynam_Jacobian(vX,tJac)
             !
             if(jMkA==iMkA) then
               if(LogForMin) then
-                tJac(N+iMkA,N+jMkA)= vXmk(iMkA) - dTime * dVMdLnXm(iMk,jMk)
+                tJac(N+iMkA,N+jMkA)= vXmk(iMkA) - dTime*dVMdLnXm(iMk,jMk)
               else
-                tJac(N+iMkA,N+jMkA)= One - dTime * dVMdXm(iMk,jMk)
+                tJac(N+iMkA,N+jMkA)= One - dTime*dVMdXm(iMk,jMk)
               end if
             else
               if(LogForMin) then
@@ -416,7 +418,7 @@ subroutine Dynam_Jacobian(vX,tJac)
       !
     end do
   end if !if(nMkA>0)
-  !----------------------------------/ rows nF+nEqA+1:nF+nEqA+nMk: kin'phases --
+  !-----------------------------/ rows nF+nEqA+1:nF+nEqA+nMk: kin'phases
   !
   deallocate(vXf)
   deallocate(vLnXf)
@@ -424,7 +426,7 @@ subroutine Dynam_Jacobian(vX,tJac)
   deallocate(vXeq)
   deallocate(vSumNuAs)
   !
-  !-----------------------------------------------------------/ DynamJacobian --
+  !------------------------------------------------------/ DynamJacobian
   !
   !DebNewt= (iDebug>2)
   if(DebNewt .and. DebJacob) then !
@@ -433,9 +435,9 @@ subroutine Dynam_Jacobian(vX,tJac)
     write(31,'(A)') "Dynamic Jacobian"
     !
     !--- print max value of each column
-    dum=MAXVAL(ABS(tJac),DIM=2)
+    dum=maxval(abs(tJac),DIM=2)
     do I=1,nF+nEqA+nMkA; write(31,'(E8.1,A1)',advance="no") dum(I), T_; end do
-    write(31,'(A)') "MAXVAL(COL)"
+    write(31,'(A)') "maxval(COL)"
     !---/
     !
     do I=1,nF+nEqA+nMkA

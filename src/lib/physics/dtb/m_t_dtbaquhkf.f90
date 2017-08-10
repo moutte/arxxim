@@ -38,18 +38,18 @@ module M_T_DtbAquHkf
 
 contains 
  
-!~ subroutine DtbAquHkf_Init(M)
-  !~ type(T_DtbAquHkf),intent(out)::M
-  !~ M%Div=1
-  !~ M%G0R=Zero; M%H0R= Zero; M%S0_=  Zero; M%V0R=Zero
-  !~ M%C1= Zero; M%C2=  Zero
-  !~ M%Chg=0;    M%Wref=Zero
-  !~ M%A1= Zero; M%A2=  Zero; M%A3=   Zero; M%A4= Zero
-  !~ M%S0Ele= Zero
-  !~ !M%CpS=Zero; M%Gs=  Zero; M%Hs=   Zero; M%Ss= Zero; M%Vs= Zero
-  !~ !M%CpR=Zero; M%GR=  Zero; M%HR=   Zero; M%SR= Zero; M%VR= Zero
-  !~ !M%VR1=Zero; M%VR2=Zero
-!~ end subroutine DtbAquHkf_Init
+!! subroutine DtbAquHkf_Init(M)
+  !! type(T_DtbAquHkf),intent(out)::M
+  !! M%Div=1
+  !! M%G0R=Zero; M%H0R= Zero; M%S0_=  Zero; M%V0R=Zero
+  !! M%C1= Zero; M%C2=  Zero
+  !! M%Chg=0;    M%Wref=Zero
+  !! M%A1= Zero; M%A2=  Zero; M%A3=   Zero; M%A4= Zero
+  !! M%S0Ele= Zero
+  !! !M%CpS=Zero; M%Gs=  Zero; M%Hs=   Zero; M%Ss= Zero; M%Vs= Zero
+  !! !M%CpR=Zero; M%GR=  Zero; M%HR=   Zero; M%SR= Zero; M%VR= Zero
+  !! !M%VR1=Zero; M%VR2=Zero
+!! end subroutine DtbAquHkf_Init
 
 !Hkf data vs Thr Data
 !hkf	Gf	Hf	Sref	a1	a2	a3	a4	c1	c2	omega	charge
@@ -146,11 +146,11 @@ subroutine DtbAquHkf_Calc( &
     RejRef= Zj2 / (M%WRef/eta + Zj/(3.082d0 + gShockRef))
     ! actually, gShockRef is set to Zero ...
     ReHRef= 3.082D0
-    Rej=    RejRef + ABS(Zj) *pW%GShok
+    Rej=    RejRef + abs(Zj) *pW%GShok
     ReH=    ReHRef + pW%GShok
     
     W=             eta*Zj2/Rej         - eta*Zj/ReH
-    X1=        ABS(Zj)*Zj2/Rej/Rej     - Zj/ReH/ReH
+    X1=        abs(Zj)*Zj2/Rej/Rej     - Zj/ReH/ReH
     X2=            Zj2*Zj2/Rej/Rej/Rej - Zj/ReH/ReH/ReH
     
     dWdP=  -eta *X1 *pW%dGshdP
@@ -263,12 +263,12 @@ subroutine DtbAquHkf_Calc( &
   !
   if(M%name=='H+') S%AquSize= 9.0D0
   !
-  !~ !! in the case of CaCl2-dominant medium:
-  !~ if(Zj>0) & ! cation -> use Rej(Cl-)
-  !~ & S%AquSize= 2.D0*(RejRef + Rej_Anion *abs(Zj))/(One + abs(Zj))
-  !~ !
-  !~ if(Zj<0) & ! anion -> use Rej(Ca+2)
-  !~ & S%AquSize= 2.D0*(2*RejRef + Rej_Ca *abs(Zj))/(2 + abs(Zj))
+  !! !! in the case of CaCl2-dominant medium:
+  !! if(Zj>0) & ! cation -> use Rej(Cl-)
+  !! & S%AquSize= 2.D0*(RejRef + Rej_Anion *abs(Zj))/(One + abs(Zj))
+  !! !
+  !! if(Zj<0) & ! anion -> use Rej(Ca+2)
+  !! & S%AquSize= 2.D0*(2*RejRef + Rej_Ca *abs(Zj))/(2 + abs(Zj))
   !
   return
 end subroutine DtbAquHkf_Calc
@@ -335,10 +335,10 @@ subroutine DtbAquHkf_CalcThr( &
   X2=     Zero   !default values, valid for neutral species
   if (Zj/=Zero) then
     RejRef= Zj*Zj /(WjRef/Eta + Zj/3.082D0)   ! JOH92/56
-    Rej=    RejRef  +ABS(Zj)*GShok            ! JOH92/48
+    Rej=    RejRef  +abs(Zj)*GShok            ! JOH92/48
     ReH=    3.082D0 +GShok
     Wj=     Eta *Zj *(Zj/Rej - One/ReH)       ! Omega_j, JOH92/55
-    X1=    -Eta *( ABS(Zj**3)/Rej/Rej - Zj/ReH/ReH ) !dWdP=X1*dgdP; dWdT=X1*dgdT
+    X1=    -Eta *( abs(Zj**3)/Rej/Rej - Zj/ReH/ReH ) !dWdP=X1*dgdP; dWdT=X1*dgdT
     X2=     Eta *2.0D0*Zj *( (Zj/Rej)**3 - One/(ReH**3) ) !d2WdT2= dGShdT**2*X2+d2GShdT2*X1
   end if
   !
@@ -404,7 +404,7 @@ subroutine DtbAquHkf_CalcThr( &
     S%AquSize= Rej !Ref !*1.D-10
   end if
   !
-  if (iDebug>0) then
+  if (idebug>1) then
     write(fTrc,'(A,A1,2(F7.1,A1))',advance="no") M%Name,T_,T-T_CK,T_,P,T_
     write(fTrc,'(5(F15.4,A1))') S%V0,T_, S%S0,T_, S%Cp0,T_, S%H0,T_, -S%G0rt/Ln10,T_ 
   end if

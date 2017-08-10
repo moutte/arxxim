@@ -90,7 +90,7 @@ subroutine Simplex_Theriak
   real(dp):: x
   !---------------------------------------------------------------------
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Simplex_Theriak"
+  if(idebug>1) write(fTrc,'(/,A)') "< Simplex_Theriak"
   !
   F1= 0
   F2= 0
@@ -194,12 +194,12 @@ subroutine Simplex_Theriak
   deallocate(vSavPhase)
   deallocate(vModelConvex)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Simplex_Theriak"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Simplex_Theriak"
 
   return
 end subroutine Simplex_Theriak
 
-subroutine Simplex_Theriak_Path
+subroutine Simplex_Theriak_Path(bPur)
 !--
 !-- equilibrium calculations on assemblage of pure phases and mixtures,
 !-- with THERIAK method (Capitani-Brown,1987)
@@ -228,7 +228,8 @@ subroutine Simplex_Theriak_Path
   use M_Global_Vars, only: vSpcDtb,vSpc,vMixModel
   use M_Global_Vars, only: vDiscretModel,vDiscretParam,vMixFas
   !---------------------------------------------------------------------
-  !
+  logical,intent(in):: bPur  
+  !---------------------------------------------------------------------
   type(T_SavPhase):: SavPhaseZero
   integer :: iPath,I,J
   integer :: fThr
@@ -239,17 +240,22 @@ subroutine Simplex_Theriak_Path
   logical :: Ok
   character(len=3) :: PathMod3
   character(len=80):: Msg
+  real(dp):: CpuBegin,CpuEnd
   !
   logical, allocatable:: vSimplex_Ok(:)
   !
   logical, parameter:: CheckThermo= .true.
   !---------------------------------------------------------------------
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Simplex_Theriak_Path"
+  if(idebug>1) write(fTrc,'(/,A)') "< Simplex_Theriak_Path"
   !
   nC= size(vCpnGEM)
   nFpur= size(vFas) ! + size(vMixModel)
-  nMix= size(vMixModel)
+  if(bPur) then
+    nMix=0
+  else
+    nMix= size(vMixModel)
+  end if
   !
   F1= 0
   F2= 0
@@ -284,6 +290,7 @@ subroutine Simplex_Theriak_Path
     print *,trim(Msg)
     return
   end if
+  !
   !--------------------------------/read path parameters from PATH block
   
   !----------------------------------------------------------allocations
@@ -338,7 +345,9 @@ subroutine Simplex_Theriak_Path
   !  print *, vFas(i)%VolM3*1.D6," = ",trim(vFas(i)%NamFs)
   !end do
   !pause
-
+  !
+  if(iDebug==2) call CPU_TIME(CpuBegin)
+  !
   doPath: do iPath=1,dimPath
     !
     TdgK0= TdgK
@@ -421,8 +430,13 @@ subroutine Simplex_Theriak_Path
     !
   end do doPath
   !
+  if(iDebug==2) then
+    call CPU_TIME(CpuEnd)
+    print *,"CPU_TIME=",CpuEnd-CpuBegin
+  end if
   !--------------------------------------------------write result tables
   call GEM_Write_Phases( &
+  & bPur,          &
   & DimPath,       &
   & vFasIsPresent, &
   & vSimplex_Ok,   &
@@ -430,13 +444,15 @@ subroutine Simplex_Theriak_Path
   & tVolume,       &
   & tResultMix)
   !
-  if(size(vMixModel)>0) call GEM_Write_Mixtures( &
-  & DimPath,       &
-  & vFasIsPresent, &
-  & vSimplex_Ok,   &
-  & MixMinim_TolX, &
-  & tResult, &
-  & tResultMix)
+  if(.not. bPur) then
+    if(size(vMixModel)>0) call GEM_Write_Mixtures( &
+    & DimPath,       &
+    & vFasIsPresent, &
+    & vSimplex_Ok,   &
+    & MixMinim_TolX, &
+    & tResult, &
+    & tResultMix)
+  end if
   !-------------------------------------------------/write result tables
   !
   deallocate(vSimplex_Ok)
@@ -457,7 +473,7 @@ subroutine Simplex_Theriak_Path
   if(ff>0) close(ff)
   if(CheckThermo) close(fThr)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Simplex_Theriak_Path"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Simplex_Theriak_Path"
   !
 contains
 
@@ -482,7 +498,7 @@ subroutine Check_vXMean(i)
     vX(:)= vX(1:nP) &
     &    + vSavPhase(i)%vMole(ff) *vSavPhase(i)%tXPole(ff,1:nP)
   end do
-  vX(:)= vX(:) /SUM(vX(:))
+  vX(:)= vX(:) /sum(vX(:))
   !
   G= MixPhase_Grt( &
   & TdgK,Pbar,    &
@@ -493,7 +509,7 @@ subroutine Check_vXMean(i)
   !
   deallocate(vX)
 
-  !~ print *,"G(vXMean)..",vMixModel(J)%Name, G  ;  pause
+  !! print *,"G(vXMean)..",vMixModel(J)%Name, G  ;  pause
 
   return
 end subroutine Check_vXMean
@@ -546,8 +562,9 @@ subroutine Simplex_GEM(iError)
   SavPhaseZero%vVol0(:)=    Zero
   !
   nC=    size(vCpnGEM)
-  nFpur= size(vFas) !-- at this point, only pure phases are in vFas ==
+  nFpur= size(vFas) !--------at this point, only pure phases are in vFas
   nMix=  size(vMixModel)
+  nMix=  0
   !
   nFmix= nMix
   !
@@ -761,19 +778,22 @@ contains
       & write(6,'(4X,G15.6,2X,A)') tSimplex(K,0), trim(vFas0(I)%NamFs)
     end do
     
-    write(6,'(A)') "MIX="
-    do K=1,nC
-      I= IPOSV(K)
-      if(vFas0(I)%iModel/=0) then
-        write(6,'(4X,2I3,2X,G15.6,A)',advance="NO") &
-        & I,K,tSimplex(K,0)," X="
-        J= vFas0(I)%iModel
-        do P=1,vMixModel(J)%NPole
-          write(6,'(F7.3,1X)',advance="NO") vFas0(I)%vXPole(P)
-        end do
-        write(6,'(2X,A)') trim(vFas0(I)%NamFs)
-      end if
-    end do
+    if(nMix>0) then
+      write(6,'(A)') "MIX="
+      do K=1,nC
+        I= IPOSV(K)
+        if(vFas0(I)%iModel/=0) then
+          write(6,'(4X,2I3,2X,G15.6,A)',advance="NO") &
+          & I,K,tSimplex(K,0)," X="
+          J= vFas0(I)%iModel
+          do P=1,vMixModel(J)%NPole
+            write(6,'(F7.3,1X)',advance="NO") vFas0(I)%vXPole(P)
+          end do
+          write(6,'(2X,A)') trim(vFas0(I)%NamFs)
+        end if
+      end do
+    end if
+
     write(6,*)
     
     return
@@ -785,6 +805,14 @@ contains
 
     vFasMolPur(:)= Zero
     !
+    if(nMix==0) then
+      do K=1,nC
+        I= IPOSV(K)
+        vFasMolPur(I)= tSimplex(K,0)
+      end do
+      return
+    end if
+    !
     vSavPhase(:)= SavPhaseZero
     do I=1,size(vSavPhase)
       vSavPhase(I)%iModel= I
@@ -795,7 +823,7 @@ contains
       I= IPOSV(K)
       J= vFas0(I)%iModel
       !
-      if(vFas0(I)%iModel==0) then
+      if(J==0) then
         !
         vFasMolPur(I)= tSimplex(K,0)
         !
@@ -971,7 +999,7 @@ subroutine GEM_AddMixtures( &
       !
       do iCp=1,nC ! stoichiometry of mixture vs components
         vFas(iMF)%vStoik(iCp)= &
-        & SUM( vFas(MM%vIPole(1:N))%vStoik(iCp) &
+        & sum( vFas(MM%vIPole(1:N))%vStoik(iCp) &
         &    * vMixFas(iMix)%vXPole(1:N) )
       end do
       !
@@ -1040,7 +1068,7 @@ subroutine Gibbs_Change( &
     vY(1:nC)= vFas0(I)%vStoik(1:nC)
     !-----------------------Solve(A,Row,B,X) Yout= inv(tTransform) * Yin
     call LU_BakSub(tTransform,vIndx,vY)
-    vGrt(I)= vFas0(I)%Grt - SUM(vY(:)*vGrt0(:))
+    vGrt(I)= vFas0(I)%Grt - sum(vY(:)*vGrt0(:))
   end do
   vFas0(1:nF)%Grt= vGrt(1:nF)
   !
@@ -1087,7 +1115,7 @@ subroutine Mixture_Minimize( &
 !--
   use M_Numeric_Const, only: Ln10
   use M_Safe_Functions,only: FSafe_Exp
-  !~ use M_GEM_Vars,   only: TdgK,Pbar
+  !! use M_GEM_Vars,   only: TdgK,Pbar
   !
   use M_Optimsolver_Theriak
   use M_MixModel_Optim
@@ -1137,7 +1165,7 @@ subroutine Mixture_Minimize( &
       end do
       vXmin(1:N)=  vXmin(1:N) /S
       vMuMin(1:N)= vFasPur(MM%vIPole(1:N))%Grt + Multi*log(vXmin(1:N))
-      Gmin= SUM(vXmin(1:N) * vMuMin(1:N))
+      Gmin= sum(vXmin(1:N) * vMuMin(1:N))
       !------------------------------------------------/analytic minimum
     else
       !---------------------------------------------numerical minimum(s)

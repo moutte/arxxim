@@ -44,7 +44,7 @@ subroutine Dtb_Read_Species(vEle)
   logical           :: EoL
   integer:: F,ios,N
   !
-  if(iDebug>0) write(fTrc,"(/,A)") "< Dtb_Read_Species"
+  if(idebug>1) write(fTrc,"(/,A)") "< Dtb_Read_Species"
   !
   call Dtb_Vars_Zero
   !
@@ -76,45 +76,45 @@ subroutine Dtb_Read_Species(vEle)
     call AppendToEnd(L,W,EoL)
     
     select case(W)
+    
+    case("SPECIES")
       
-      case("SPECIES")
-        
-        if(EoL) then
-          !LogK TP.table is considered the default database format
-          DtbFormat= "LOGKTBL"
-        else
-          !
-          call LinToWrd(L,W,EoL)
-          !
-          select case(trim(W))
-          case("LOGK","LOGK.TABLE")  ;  W= "LOGKTBL"
-          case("LOGK.ANALYTIC")      ;  W= "LOGKANL"
-          end select
-          !
-          DtbFormat= trim(W)
-          !
-        end if
-        
-        select case(DtbFormat) !each of them will end on "ENDSPECIES"
+      if(EoL) then
+        !LogK TP.table is considered the default database format
+        DtbFormat= "LOGKTBL"
+      else
         !
-        case("MIN.THR") ; call DtbMinThr_Read(f,vEle,nMinThr)      !-> LisMinThr
-        case("GAS.THR") ; call DtbMinThr_Read(f,vEle,nMinThr)      !-> LisMinThr
-        case("HSV.THR") ; call DtbMinThr_Read_Line(f,vEle,nMinThr) !-> LisMinThr
-        !---------------------------------------------------------------
-        case("AQU.HKF") ; call DtbAquHKF_Read(f,vEle,nAquHkf)      !-> LisAquHkf
-        !---------------------------------------------------------------
-        case("MIN.HKF") ; call DtbMinHKF_Read_Old(f,vEle,nMinHkf) !-> LisMinHkf
-        case("GAS.HKF") ; call DtbMinHKF_Read_Old(f,vEle,nMinHkf) !-> LisMinHkf
-        case("HSV.HKF") ; call DtbMinHKF_Read(f,vEle,nMinHkf)     !-> LisMinHkf
-        !---------------------------------------------------------------
-        case("LOGKTBL") ; call DtbLogKTbl_Read(f,vEle,nLogKTbl) !-> LisLogKTbl
-        case("LOGKANL") ; call DtbLogKAnl_Read(f,vEle,nLogKAnl) !-> LisLogKTbl
-        !---------------------------------------------------------------
-        case default
-          call Stop_(trim(DtbFormat)//" <-unknown format !!??")
+        call LinToWrd(L,W,EoL)
         !
+        select case(trim(W))
+        case("LOGK","LOGK.TABLE")  ;  W= "LOGKTBL"
+        case("LOGK.ANALYTIC")      ;  W= "LOGKANL"
         end select
-        
+        !
+        DtbFormat= trim(W)
+        !
+      end if
+      
+      select case(DtbFormat) !each of them will end on "ENDSPECIES"
+      !
+      case("MIN.THR") ; call DtbMinThr_Read(f,vEle,nMinThr)      !-> LisMinThr
+      case("GAS.THR") ; call DtbMinThr_Read(f,vEle,nMinThr)      !-> LisMinThr
+      case("HSV.THR") ; call DtbMinThr_Read_Line(f,vEle,nMinThr) !-> LisMinThr
+      !---------------------------------------------------------------
+      case("AQU.HKF") ; call DtbAquHKF_Read(f,vEle,nAquHkf)      !-> LisAquHkf
+      !---------------------------------------------------------------
+      case("MIN.HKF") ; call DtbMinHKF_Read_Old(f,vEle,nMinHkf) !-> LisMinHkf
+      case("GAS.HKF") ; call DtbMinHKF_Read_Old(f,vEle,nMinHkf) !-> LisMinHkf
+      case("HSV.HKF") ; call DtbMinHKF_Read(f,vEle,nMinHkf)     !-> LisMinHkf
+      !---------------------------------------------------------------
+      case("LOGKTBL") ; call DtbLogKTbl_Read(f,vEle,nLogKTbl) !-> LisLogKTbl
+      case("LOGKANL") ; call DtbLogKAnl_Read(f,vEle,nLogKAnl) !-> LisLogKTbl
+      !---------------------------------------------------------------
+      case default
+        call Stop_(trim(DtbFormat)//" <-unknown format !!??")
+      !
+      end select
+      
     end select
   
   end do DoFile
@@ -130,7 +130,7 @@ subroutine Dtb_Read_Species(vEle)
   if(nLogKTbl>0) call DtbLogKTbl_Build !-> vDtbLogKTbl
   if(nLogKAnl>0) call DtbLogKAnl_Build !-> vDtbLogKAnl
   !
-  !if(iDebug>0) then
+  !if(idebug>1) then
   !  if(nAquHkf>0) call DtbAquHKF_ShoStoik(vEle)
   !  if(nMinHkf>0) call DtbMinHKF_ShoStoik(vEle)
   !  if(nMinThr>0) call DtbMinTHR_ShoStoik(vEle)
@@ -138,7 +138,7 @@ subroutine Dtb_Read_Species(vEle)
   !
   if(iDebug>2) call Dtb_Read_Check
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dtb_Read_Species"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dtb_Read_Species"
   
   return
 end subroutine Dtb_Read_Species

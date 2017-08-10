@@ -32,15 +32,15 @@ contains
     vLnGam(:)= Zero
 
     !//================ Solvent
-    !solvent activity= mole fraction = Nw/(Nw+SumNs) = 1 /(1+SUM(Ns/Nw) = 1/(1+ MW.SUM(m_i)
+    !solvent activity= mole fraction = Nw/(Nw+SumNs) = 1 /(1+sum(Ns/Nw) = 1/(1+ MW.sum(m_i)
     !! LnActSv= -log( One + MolWeitSv *sum(vMolal(:)) )
     !use approximation for dilute solutions: Solvent>>Solute
     LnActSv= Zero
     !
     OsmoSv=  One
     !that's an approximation, valid for a DILUTE ideal solution
-    !lnActW= ln(1/(1+ MW*SUM(m_i)) ~= - MW*SUM(m_i)
-    !-> OsmoSv = -lnActW /MW /SUM(m_i) ~= +1
+    !lnActW= ln(1/(1+ MW*sum(m_i)) ~= - MW*sum(m_i)
+    !-> OsmoSv = -lnActW /MW /sum(m_i) ~= +1
 
   end subroutine Solmodel_Calc_Dilute
   

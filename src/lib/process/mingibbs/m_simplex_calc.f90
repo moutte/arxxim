@@ -197,7 +197,7 @@ subroutine simplx0(a,m1,m2,m3,icase,izrov,iposv)
         do ip=m1+m2+1,m
           if (iposv(ip) == ip+n) then
             if (nl1 > 0) then
-              kp=l1(imaxloc_R(ABS(a(ip+1,l1(1:nl1)+1))))
+              kp=l1(imaxloc_R(abs(a(ip+1,l1(1:nl1)+1))))
               bmax=a(ip+1,kp+1)
             else
               bmax=0.0
@@ -296,7 +296,7 @@ subroutine simplx0(a,m1,m2,m3,icase,izrov,iposv)
     real(DP) :: piv
     integer, dimension(k1) :: icol
     integer, dimension(i1) :: irow
-    integer, dimension(MAX(i1,k1)+1) :: itmp
+    integer, dimension(max(i1,k1)+1) :: itmp
     
     ip1=ip+1
     kp1=kp+1
@@ -375,7 +375,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
         do ip=m1+m2+1,m
           if (iposv(ip) == ip+n) then
             if (nl1 > 0) then
-              kp=l1(imaxloc_R(ABS(a(ip,l1(1:nl1)))))
+              kp=l1(imaxloc_R(abs(a(ip,l1(1:nl1)))))
               bmax=a(ip,kp)
             else
               bmax=0.0
@@ -476,7 +476,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
     real(DP) :: piv
     integer, dimension(k1) :: icol
     integer, dimension(i1) :: irow
-    integer, dimension(MAX(i1,k1)+1) :: itmp
+    integer, dimension(max(i1,k1)+1) :: itmp
     !
     ip1=ip+1
     kp1=kp+1

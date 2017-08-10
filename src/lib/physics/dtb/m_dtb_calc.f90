@@ -219,17 +219,17 @@ subroutine SpeciesMin_TP_Update_fromDtb(TdgK,Pbar,vSpcDtb, S)
   j= vSpcDtb(i)%Indx
   !
   select case(vSpcDtb(i)%DtbModel)
-    case("H2O_HGK")
-      call EosFluid_Calc( &
-      & "H2O","HAAR.GHIORSO",TdgK,Pbar, &
-      & S%G0rt,S%H0,S%S0,S%V0,LnFug,Ok)    
-      ! case("H2O_HGK"); call CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
-    case("MIN_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
-    case("MIN_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
-    case("GAS_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
-    case("GAS_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
-    case("LOGKTBL")  ;  call DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar,S)
-    case("LOGKANL")  ;  call DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar,S)
+  case("H2O_HGK")
+    call EosFluid_Calc( &
+    & "H2O","HAAR.GHIORSO",TdgK,Pbar, &
+    & S%G0rt,S%H0,S%S0,S%V0,LnFug,Ok)    
+    ! case("H2O_HGK"); call CalcGH2O_Supcrt(TdgK,Pbar,S%G0rt,S%H0,S%S0,S%V0)
+  case("MIN_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
+  case("MIN_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
+  case("GAS_HKF")  ;  call DtbMinHkf_Calc(vDtbMinHkf(j),TdgK,Pbar,S)
+  case("GAS_THR")  ;  call DtbMinThr_Calc(vDtbMinThr(j),TdgK,Pbar,S)
+  case("LOGKTBL")  ;  call DtbLogKtbl_Calc(vDtbLogKtbl(j),TdgK,Pbar,S)
+  case("LOGKANL")  ;  call DtbLogKanl_Calc(vDtbLogKanl(j),TdgK,Pbar,S)
   end select
   !
   return

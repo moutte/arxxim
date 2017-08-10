@@ -14,6 +14,7 @@ module M_GEM_Write
 contains
 
 subroutine GEM_Write_Phases( &
+& OnlyPur, &
 & DimPath, &
 & vFasIsPresent, &
 & vSimplex_Ok, &
@@ -32,6 +33,7 @@ subroutine GEM_Write_Phases( &
   use M_Global_Vars,only: vSpc,vFas,vMixModel
   use M_GEM_Vars,   only: vCpnGEM
   !---------------------------------------------------------------------
+  logical,       intent(in):: OnlyPur
   integer,       intent(in):: DimPath
   logical,       intent(in):: vFasIsPresent(:)
   logical,       intent(in):: vSimplex_Ok(DimPath)
@@ -52,7 +54,12 @@ subroutine GEM_Write_Phases( &
   nC= size(vCpnGEM)
   nF= size(vFasIsPresent)
   nFpur= size(vFas)
-  nFmix= size(vMixModel)
+  if(OnlyPur) then
+    nFmix= 0
+    nF= nFpur
+  else
+    nFmix= size(vMixModel)
+  end if
   !
   call GetUnit(fMol)
   open(fMol,file=trim(DirOut)//"_phase_mole.restab")
@@ -82,7 +89,7 @@ subroutine GEM_Write_Phases( &
       call Write_Left(fVol)
       call Write_Left(fGrm)
       !
-      !! Tot=SUM(tResult(1:nC,iPath))
+      !! Tot=sum(tResult(1:nC,iPath))
       !! do iFs=1,nC
       !!   write(fMol,'(G15.6,A1)',advance="no") tResult(iFs,iPath)/Tot,T_
       !! end do
@@ -298,9 +305,9 @@ subroutine GEM_Write_Mixtures( &
           do P=1,Fas0%nFas
             do Q=1,Fas1%nFas
               !
-              vX(1:nP)= ABS( Fas0%tXPole(P,1:nP) - Fas0%tXPole(Q,1:nP) )
+              vX(1:nP)= abs( Fas0%tXPole(P,1:nP) - Fas0%tXPole(Q,1:nP) )
               !
-              if(MAXVAL(vX(1:nP)) < TolX *1.0D2) then
+              if(maxval(vX(1:nP)) < TolX *1.0D2) then
                 !
                 Tot= Fas0%vMole(P) +Fas1%vMole(Q)
                 vX(1:nP)= Fas0%vMole(P) *Fas0%tXPole(P,1:nP) &

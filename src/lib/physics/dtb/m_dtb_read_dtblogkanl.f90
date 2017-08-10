@@ -113,8 +113,8 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   ! character(len=12):: vStrUnit(1:nField)
   !---/ for header processing --
   !
-  !~ character(len=512):: FieldList_Default= &
-  !~ & "TYPE SOURCE NAME SCFORM size parameterS"
+  !! character(len=512):: FieldList_Default= &
+  !! & "TYPE SOURCE NAME SCFORM size parameterS"
   !
   integer,dimension(:),allocatable::vStoik !for Formula_Read
   !
@@ -129,7 +129,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   !
   character(len=15):: CodFitting ! type of the fitting function, default: PHREEQ
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbLogKAnl_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbLogKAnl_Read"
   !
   !--------------------------------------------------------------- trace
   if(iDebug>2) then
@@ -325,7 +325,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
     !
     !---------------------------- check whether Name not already read --
     if(LnkSpc_Found(LisLogKAnl,M%Name)) then
-      if(iDebug>0) write(fTrc,'(A)') &
+      if(idebug>1) write(fTrc,'(A)') &
       & trim(M%Name)//"= name already used -> SKIPPED"
       !print *, trim(M%Name)//" <-this name already used by another species ???"
       !call pause_
@@ -367,11 +367,11 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
     !
     !----------------------------------------------read function coeff's
     select case(trim(CodFitting))
-      case("FIXED","none")      ;  M%iFitting= 0
-      case("PHREEQC")           ;  M%iFitting= 1
-      case("CHRISTOV")          ;  M%iFitting= 2
-      case default
-        call Stop_(trim(W)//" invalid Fitting mode")
+    case("FIXED","NONE")      ;  M%iFitting= 0
+    case("PHREEQC")           ;  M%iFitting= 1
+    case("CHRISTOV")          ;  M%iFitting= 2
+    case default
+      call Stop_(trim(W)//" invalid Fitting mode")
     end select
 
     select case(M%iFitting)
@@ -417,7 +417,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   !
   if(iDebug>2) close(ff)!------------------------------------------trace
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbLogKAnl_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbLogKAnl_Read"
   !
   if(N==0) call Stop_("NO SPECIES FOUND ....")
   !

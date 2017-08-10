@@ -38,47 +38,52 @@ subroutine Element_Read_Entropy(vEle)
   logical:: EoL
   integer:: F,ios,i
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "< Elements_Read_Entropy"
+  if(idebug>1) write(fTrc,'(/,A,/)') "< Elements_Read_Entropy"
   !
   call GetUnit(F)
   open(F,file=trim(NamFInn))
   !
   DoFile: do 
+    !
     read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
     call LinToWrd(L,W,EoL)
     if(W(1:1)=='!') cycle DoFile !skip comment lines
     call AppendToend(L,W,EoL)
+    !
     select case(W)
-      case("ELEMENTS.ENTROPY") !!!!!!canevas for reading one "block"
-        DoBlock: do
-          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    case("ELEMENTS.ENTROPY") !!!!!!canevas for reading one "block"
+      DoBlock: do
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0)                                         exit DoFile
+        call LinToWrd(L,W,EoL)
+        call AppendToend(L,W,EoL)
+        if(W(1:1)=='!')                                    cycle DoBlock
+        select case(W)
+        case("END","ENDELEMENTS.ENTROPY") ;                exit DoFile
+        end select
+        call Str_Append(W,3)
+        i= Element_Index(W(1:3),vEle)
+        if(i>0) then
           call LinToWrd(L,W,EoL)
-          call AppendToend(L,W,EoL)
-          if(W(1:1)=='!') cycle DoBlock !skip comment lines
-          select case(W)
-            case("END","ENDELEMENTS.ENTROPY"); exit DoFile
-          end select
-          call Str_Append(W,3)
-          i= Element_Index(W(1:3),vEle)
-          if(i>0) then
-            call LinToWrd(L,W,EoL); call WrdToReal(W,vEle(i)%S0)
-          else
-            call Warning_("Element "//trim(W)//" not in base")
-          end if
-        end do DoBlock
+          call WrdToReal(W,vEle(i)%S0)
+        else
+          call Warning_("Element "//trim(W)//" not in base")
+        end if
+      end do DoBlock
     end select
-  end do DoFile
-  close(F)
-  !
-  if(iDebug>0) then
+    !
+  end do DoFile!  close(F)
+  !----------------------------------------------------------------debug
+  if(idebug>1) then
     write(fTrc,'(A,/)') "entropy of element at standard conditions:"
     do i=1,size(vEle)
       write(fTrc,"(A3,A1,G12.3)") &
       & vEle(I)%NamEl, T_, vEle(I)%S0
     end do
   end if
+  !---------------------------------------------------------------/debug
+  if(idebug>1) write(fTrc,'(/,A,/)') "</ Elements_Read_Entropy"
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "</ Elements_Read_Entropy"
 end subroutine Element_Read_Entropy
   
 subroutine Element_Read_Redox(vEle)
@@ -86,7 +91,7 @@ subroutine Element_Read_Redox(vEle)
 !-- read redox state of (some) elements
 !--
 !-- format of block:
-!--   ELEMENTS.REdoX
+!--   ELEMENTS.REDOX
 !--     FE 2
 !--     ../..
 !--   end
@@ -101,7 +106,7 @@ subroutine Element_Read_Redox(vEle)
   logical:: EoL
   integer:: F,ios,i
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "< Elements_Read_Redox"
+  if(idebug>1) write(fTrc,'(/,A,/)') "< Elements_Read_Redox"
   !
   call GetUnit(F)
   open(F,file=trim(NamFInn))
@@ -112,32 +117,32 @@ subroutine Element_Read_Redox(vEle)
     if(W(1:1)=='!') cycle DoFile !skip comment lines
     call AppendToend(L,W,EoL)
     select case(W)
-      case("ELEMENTS.REDOX") !!!!!!canevas for reading one "block"
-        DoBlock: do
-          !
-          read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    case("ELEMENTS.REDOX") !!!!!!canevas for reading one "block"
+      DoBlock: do
+        !
+        read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+        call LinToWrd(L,W,EoL)
+        call AppendToend(L,W,EoL)
+        if(W(1:1)=='!') cycle DoBlock !skip comment lines
+        select case(W)
+        case("END","ENDELEMENTS.REDOX"); exit DoFile
+        end select
+        !
+        call Str_Append(W,3)
+        i= Element_Index(W(1:3),vEle)
+        if(i>0) then
           call LinToWrd(L,W,EoL)
-          call AppendToend(L,W,EoL)
-          if(W(1:1)=='!') cycle DoBlock !skip comment lines
-          select case(W)
-            case("END","ENDELEMENTS.REDOX"); exit DoFile
-          end select
-          !
-          call Str_Append(W,3)
-          i= Element_Index(W(1:3),vEle)
-          if(i>0) then
-            call LinToWrd(L,W,EoL)
-            call WrdToInt(W,vEle(i)%Z)
-          else
-            call Warning_("Element "//trim(W)//" not in base")
-          end if
-          !
-        end do DoBlock
+          call WrdToInt(W,vEle(i)%Z)
+        else
+          call Warning_("Element "//trim(W)//" not in base")
+        end if
+        !
+      end do DoBlock
     end select
   end do DoFile
   close(F)
   !
-  if(iDebug>0) then
+  if(idebug>1) then
     write(fTrc,'(A,/)') "oxydation states, default values:"
     do i=1,size(vEle)
       write(fTrc,"(A3,A1,I3)") &
@@ -145,7 +150,7 @@ subroutine Element_Read_Redox(vEle)
     end do
   end if
   !
-  if(iDebug>0) write(fTrc,'(/,A,/)') "</ Elements_Read_Redox"
+  if(idebug>1) write(fTrc,'(/,A,/)') "</ Elements_Read_Redox"
 end subroutine Element_Read_Redox
   
 subroutine LnkEle_Build(B,E,L,P)
@@ -204,7 +209,7 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
   integer           :: f,ios
   type(T_LnkEle),pointer::pCur
   !
-  if(iDebug>0) write(fTrc,'(A)') "< Elements_BuildLnk"
+  if(idebug>1) write(fTrc,'(A)') "< Elements_BuildLnk"
   !
   ! nEle-> total nr in database, not the nCp of the run
   !
@@ -261,7 +266,7 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
           !
           call Str_Append(W,3)
           Ele%NamEl=trim(W)
-          if(iDebug>0) write(fTrc,"(A3)") Ele%NamEl
+          if(idebug>1) write(fTrc,"(A3)") Ele%NamEl
           !
           sListElem=trim(sListElem)//trim(W)
           if(iDebug==5) print '(A)',trim(sListElem)
@@ -271,7 +276,6 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
           call LinToWrd(L,W,EoL); call WrdToInt (W,Ele%Z)
           if(Ele%Z==0) then  ; Ele%Redox="VAR"
           else               ; Ele%Redox="FIX"
-          !
           end if
           call LinToWrd(L,W,EoL)
           !
@@ -287,7 +291,7 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
         !
       end do LoopReadElem
       
-      if(iDebug>0) write(fTrc,"(A,I3)") "nEle=",nEle
+      if(idebug>1) write(fTrc,"(A,I3)") "nEle=",nEle
       
     !endcase("ELEMENT")
     end select
@@ -297,7 +301,7 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
   !
   if(nEle==0) call Stop_("Found NO Elements ... (missing path ??)")
   !
-  if(iDebug>0) write(fTrc,'(A)') "</ Elements_BuildLnk"
+  if(idebug>1) write(fTrc,'(A)') "</ Elements_BuildLnk"
 end subroutine Elements_BuildLnk
 
 end module M_Element_Read

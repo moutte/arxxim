@@ -3,6 +3,7 @@ module M_Dynam_Vars
   use M_T_Component,only: T_Component
   use M_T_KinModel, only: T_KinModel
   use M_T_Phase,    only: T_Phase
+  use M_T_Species,  only: T_SpcData
   
   implicit none
   
@@ -33,6 +34,8 @@ module M_Dynam_Vars
   & vMolSec, &  !1:nAs, nr moles of aqu'second'species
   & vMolF       !1:nAq, nr moles of aqu'species in the box
   !
+  ! type(T_SpcData),dimension(:),allocatable:: vSpcDat
+  !
   real(dp),dimension(:),allocatable:: & !
   ! used in DynamCalc, Residual
   & vLnAct, & !Ln(Activity) aqu'species in box
@@ -62,7 +65,6 @@ module M_Dynam_Vars
   real(dp),dimension(:),allocatable:: & !
   & vVmAct,    &   !1:nMk, kinetic constant * (activators/inhibitors)
   & vVmQsK         !1:nMk, affinity factor (e.g. QsK-1)
-  !!& vVm0         !1:nMk, value of vVm at begin time step (end former time step)
   !                !-> vVm(iMk)= vSurfK(iMk) *vVmAct(iMk) *vVmQsK(iMk)
   real(dp),dimension(:),allocatable:: & !
   & vSurfK0,   &   !1:nMk, surface of phase at ref'time
@@ -94,7 +96,7 @@ module M_Dynam_Vars
   real(dp):: PhiInert !volume fraction occupied by inactive minerals
   !
   !------------------default texture parameters for secondary minerals--
-  real(dp):: RadiusMinim= 1.0D-9  !radius (meter), 1.0D-9= 1 nm
+  real(dp):: RadiusMinim= 1.0D-9   !radius (meter), 1.0D-9= 1 nm
   real(dp):: DensitMinim= 1.0D+18  !number of grains / m^3 fluid volume
   !---------------------------------------------------------------------
   ! vKinMinim(:)= lower limit for mole number in the box
@@ -104,7 +106,7 @@ module M_Dynam_Vars
   !!!! we use RadiusMinim & DensitMinim to compute VolMinim : 
   !!!! -> cf Dynam_Init_KinFas_Texture
   !
-  !=< used in TP_Changed, to check whether TP-dependent param's must be updated
+  !used in TP_Changed, to check whether TP-dependent param's must be updated
   real(dp):: TdgK0,Pbar0
   real(dp):: TolTdgK= One
   real(dp):: TolPbar= One
@@ -129,7 +131,6 @@ module M_Dynam_Vars
     & PhiF,      & ! fluid fraction, i.e. porosity
     & RhoF,      & ! fluid density
     & UDarcy       ! Darcy velocity of fluid
-    integer:: nCell
     logical:: VFixed
   end type T_DynBox
   !

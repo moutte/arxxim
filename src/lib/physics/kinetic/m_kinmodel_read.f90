@@ -18,9 +18,10 @@ module M_KinModel_Read
     type(T_KinModel)   :: Value
     type(T_LnkKinModel),pointer:: Next
   end type T_LnkKinModel
-  type(T_LnkKinModel),pointer:: Lnk
   !
-  !type(T_KinModel),dimension(:),allocatable:: vKinModel
+  ! type(T_LnkKinModel),pointer:: Lnk
+  !
+  ! type(T_KinModel),dimension(:),allocatable:: vKinModel
   !
 contains
 
@@ -40,7 +41,7 @@ subroutine KinModel_Init(vSpc)
     allocate(vKinModel(1:N))
     call KinModel_Alloc(Lnk,vKinModel)
   else
-    if(iDebug>0) write(fTrc,'(A)') "NO Kinetic Data Found !!!!!!!!!!!!!!"
+    if(idebug>1) write(fTrc,'(A)') "NO Kinetic Data Found !!!!!!!!!!!!!!"
     if(iDebug>2) print *,"NO Kinetic Database Found !!!"
   end if
   !
@@ -84,7 +85,7 @@ subroutine KinModel_FileToLnk( &
 !-- -> build LnkKin
 !--
   use M_IOTools !, only:dimV,LinToWrd,ReadRValsV
-  use M_Files,   only: NamFKin,DirLog
+  use M_Files,   only: NamFKin !,DirLog
   use M_Global_Vars,  only: nAq !,vSpc,nSp
   use M_T_Species, only: T_Species,Species_Index,Species_Rename
   use M_T_Kinmodel,only: MaxKinTerm,T_KinModel
@@ -102,7 +103,7 @@ subroutine KinModel_FileToLnk( &
   integer :: f,ios
   real(dp):: X1,X2,X3
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< KinModel_FileToLnk"
+  if(idebug>1) write(fTrc,'(/,A)') "< KinModel_FileToLnk"
   !
   call GetUnit(f)
   open(f,file=trim(NamFKin))
@@ -153,7 +154,7 @@ subroutine KinModel_FileToLnk( &
           if(NewM) then
             call BuildLnk(N==1,MK,Lnk,p)
             NewM=.false.
-            !!if(iDebug>0) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
+            !!if(idebug>1) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
           end if
           !
           !!MK%Special=0
@@ -205,7 +206,7 @@ subroutine KinModel_FileToLnk( &
               call Species_Rename(W)
               iAq= Species_Index(trim(W),vSpc)
               if (iAq==0) then
-                if(iDebug>0) &
+                if(idebug>1) &
                 & write(fTrc,'(2A)') &
                 & "in KinModel "//trim(MK%Name),", unknown species : "//trim(W)
               end if
@@ -215,7 +216,7 @@ subroutine KinModel_FileToLnk( &
               call LinToWrd(L,W,Eol); call WrdToReal(W,X3) !-> read kinetic parameters
               !
               if(iAq>0 .and. iAq<=nAq) then
-                !! if(iDebug>0) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",trim(W)
+                !! if(idebug>1) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",trim(W)
                 if(LPrecip .and. MK%NTermP<MaxKinTerm) then
                 !activation energies in kiloJoule in input file !!!!!!!!!!!!!
                   MK%NTermP= MK%NTermP+1
@@ -265,7 +266,7 @@ subroutine KinModel_FileToLnk( &
             N=N+1
             call BuildLnk(N==1,MK,Lnk,p)
             NewM=.false.
-            !!if(iDebug>0) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
+            !!if(idebug>1) write(fTrc,'(A24,I3,A24)') "Min=',M%Name,I," =Spc ",Species_Index(M%Name)
           end if
           !
           MK%Name=trim(W)
@@ -314,7 +315,7 @@ subroutine KinModel_FileToLnk( &
               iAq=Species_Index(trim(W),vSpc)
               !
               if (iAq==0) then
-                if(iDebug>0) &
+                if(idebug>1) &
                 & write(fTrc,'(3A)') &
                 & "in KinModel "//trim(MK%Name), &
                 & ", unknown species : "//trim(W), &
@@ -325,7 +326,7 @@ subroutine KinModel_FileToLnk( &
               call LinToWrd(L,W,Eol)  ;  call WrdToReal(W,X3)
               !
               if(iAq>0 .and. iAq<=nAq) then
-                if(iDebug>0) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",vSpc(iAq)%NamSp
+                if(idebug>1) write(fTrc,'(A,I3,2A)') "iAq=",iAq," <- ",vSpc(iAq)%NamSp
                 !
                 if(LPrecip .and. MK%NTermP<MaxKinTerm) then
                   !
@@ -347,7 +348,7 @@ subroutine KinModel_FileToLnk( &
                       call LinToWrd(L,W,Eol); call WrdToReal(W,X1)
                       MK%NJ_P(MK%NTermP)=X1
                     else
-                      if(iDebug>0) &
+                      if(idebug>1) &
                       & write(fTrc,'(3A)') &
                       & "in KinModel "//trim(MK%Name), &
                       & ", unknown species : "//trim(W), &
@@ -400,9 +401,9 @@ subroutine KinModel_FileToLnk( &
   !
   close(f)
   !
-  if(iDebug>0) write(fTrc,'(A,I3)') "N=", N
+  if(idebug>1) write(fTrc,'(A,I3)') "N=", N
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ KinModel_FileToLnk"
+  if(idebug>1) write(fTrc,'(A,/)') "</ KinModel_FileToLnk"
 end subroutine KinModel_FileToLnk
 
 subroutine KinModel_Alloc(Lnk,vKinModel)
@@ -413,16 +414,16 @@ subroutine KinModel_Alloc(Lnk,vKinModel)
   type(T_LnkKinModel),pointer::pCur, pPrev
   integer::I
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< KinModel_Alloc"
+  if(idebug>1) write(fTrc,'(/,A)') "< KinModel_Alloc"
   I=0
   pCur=>Lnk
   do while (associateD(pCur))
     I= I+1
     vKinModel(I)=pCur%Value 
-    if(iDebug>0) write(fTrc,'(I4,A1,A12)') I," ",vKinModel(I)%Name
+    if(idebug>1) write(fTrc,'(I4,A1,A12)') I," ",vKinModel(I)%Name
     pPrev=>pCur; pCur=> pCur%next; deallocate(pPrev)
   end do
-  if(iDebug>0) write(fTrc,'(A,/)') "</ KinModel_Alloc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ KinModel_Alloc"
 end subroutine KinModel_Alloc
 
 end module M_KinModel_Read

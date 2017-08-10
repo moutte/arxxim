@@ -378,9 +378,9 @@ end module M_T_DtbH2OHkf
 !  else !__________________________________________!CHARGED AQUEOUS SPECIES OTHER THAN H+
 !    sqZ= Chg_*Chg_
 !    reref= sqZ / (wref_/eta + Chg_/(3.082d0 + gref))
-!    re= reref + ABS(Chg_) * g
+!    re= reref + abs(Chg_) * g
 !    w= eta*(sqZ/re   - Chg_/(3.082d0 + g))
-!    Z3= ABS(Chg_)*sqZ/re**2 - Chg_/(3.082d0 + g)**2
+!    Z3= abs(Chg_)*sqZ/re**2 - Chg_/(3.082d0 + g)**2
 !    Z4= sqZ*sqZ/re**3 - Chg_/(3.082d0 + g)**3
 !    dwdP= -eta * Z3 * dgdP
 !    dwdT= -eta * Z3 * dgdT

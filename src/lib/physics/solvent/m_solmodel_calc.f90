@@ -19,20 +19,18 @@ contains
 subroutine Solmodel_CalcGamma( &
 & TdgK,Pbar,        & !IN
 & SolModel,         & !IN
-& isW,vSpcAq,vLAx,  & !IN
+& vSpcAq,vLAx,      & !IN
 & vMolF,            & !IN
 & vLnAct,vLnGam,    & !INOUT
 & vTooLow_,OsmoSv) !OUT
-
+  !
   use M_Solmodel_Calc_System
-  
   use M_T_Species,only: T_Species
   use M_T_SolModel,only: T_SolModel
   !--
   type(T_Species),intent(in):: vSpcAq(:)
   type(T_SolModel),intent(in):: SolModel
   real(dp),intent(in)   :: TdgK,Pbar
-  integer, intent(in)   :: isW
   logical, intent(in)   :: vLAx(:)  
   real(dp),intent(inout):: vMolF(:) 
   real(dp),intent(inout):: vLnAct(:) 
@@ -47,7 +45,7 @@ subroutine Solmodel_CalcGamma( &
     call Solmodel_Calc_System(&
     & TdgK,Pbar,        & !IN
     & SolModel,         & !IN
-    & isW,vSpcAq,vLAx,  & !IN
+    & vSpcAq,vLAx,      & !IN
     & vMolF,            & !IN
     & vLnAct,vLnGam,    & !INOUT
     & vTooLow_,OsmoSv) !OUT
@@ -55,7 +53,7 @@ subroutine Solmodel_CalcGamma( &
     call Solmodel_CalcGamma_Old(&
     & TdgK,Pbar,        & !IN
     & SolModel,         & !IN
-    & isW,vSpcAq,vLAx,  & !IN
+    & vSpcAq,vLAx,      & !IN
     & vMolF,            & !IN
     & vLnAct,vLnGam,    & !INOUT
     & vTooLow_,OsmoSv) !OUT
@@ -71,7 +69,7 @@ subroutine Solmodel_CalcGamma_Old( &
 !--
 & TdgK,Pbar,        & !IN
 & SolModel,         & !IN
-& isW,vSpcAq,vLAx,  & !IN
+& vSpcAq,vLAx,      & !IN
 & vMolF,            & !IN
 & vLnAct,vLnGam,    & !INOUT
 & vTooLow_,OsmoSv) !OUT
@@ -90,14 +88,13 @@ subroutine Solmodel_CalcGamma_Old( &
   use M_Solmodel_Calc_Pitzer
   use M_Solmodel_Calc_Debye_Hueckel
   use M_Solmodel_Calc_Davies
-  !~ use M_Solmodel_Calc_SIT
+  !! use M_Solmodel_Calc_SIT
   use M_Solmodel_Calc_Dilute
   
   type(T_Species), intent(in):: vSpcAq(:)
   type(T_SolModel),intent(in):: SolModel
   
   real(dp),intent(in)   :: TdgK,Pbar
-  integer, intent(in)   :: isW
   logical, intent(in)   :: vLAx(:)   !mobile aqu'species
   
   real(dp),intent(inout):: vMolF(:)  !mole numbers
@@ -118,8 +115,10 @@ subroutine Solmodel_CalcGamma_Old( &
   real(dp):: LnActSv
   real(dp):: MolWeitSv,Rho,Eps,dhA,dhB,bDot !,Pbar
   integer :: nAq,iAq,N,J !,nAi
+  integer :: isW
   integer :: iModel
   
+  isW= SolModel%iSolvent
   MolWeitSv= vSpcAq(isW)%WeitKg
   
   nAq= size(vMolF)
@@ -179,7 +178,7 @@ subroutine Solmodel_CalcGamma_Old( &
   ! "HKF81  ", "SIT    ",   & ! 10,11
   ! "name12 "               & ! 12
   
-  !~ sModel= trim(SolModel%ActModel)
+  !! sModel= trim(SolModel%ActModel)
   iModel=SolModel%iActModel 
   
   select case(iModel)
@@ -207,11 +206,11 @@ subroutine Solmodel_CalcGamma_Old( &
     & dhA, iModel, MolWeitSv, &
     & vLnGamSolut, LnActSv, OsmoSv)
   
-  !~ case("SIT")
-    !~ call Solmodel_Calc_SIT( &
-    !~ & vZSp, vMolal, &
-    !~ & dhA, sModel, MolWeitSv, &
-    !~ & vLnGamSolut, LnActSv, OsmoSv)
+  !! case("SIT")
+    !! call Solmodel_Calc_SIT( &
+    !! & vZSp, vMolal, &
+    !! & dhA, sModel, MolWeitSv, &
+    !! & vLnGamSolut, LnActSv, OsmoSv)
     
   end select
   
@@ -252,7 +251,7 @@ subroutine Solmodel_CalcGamma_Old( &
   vLnAct(isW)= LnActSv
   !if(sModel /= "IDEAL") then
   if(iModel /= 1) then
-    vLnGam(isW)= LnActSv + log( One + MolWeitSv *SUM(vMolal(:)) )
+    vLnGam(isW)= LnActSv + log( One + MolWeitSv *sum(vMolal(:)) )
   else
     vLnGam(isW)= Zero
   end if

@@ -29,7 +29,7 @@ subroutine Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
   character(len=255):: Msg
   real(dp):: A
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_Read"
   !
   Ok=.true.
   !
@@ -89,7 +89,7 @@ subroutine Dynam_Read(DynTime,DynBox,DynBoxUser,Ok)
   !! if(.not.ReadOk)  call Stop_("NO Kinetic Minerals Found")
   !---------------------------------------------------------------------
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_Read"
   !
   return
 end subroutine Dynam_Read
@@ -122,7 +122,7 @@ subroutine Dynam_ReadTime(T,Ok)
   logical           :: EoL
   integer           :: F,ios
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadTime"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_ReadTime"
   !
   call GetUnit(F)
   call OpenFile(F,file=trim(NamFInn))
@@ -205,7 +205,7 @@ subroutine Dynam_ReadTime(T,Ok)
   !
   T%TimeFactor= Dynam_TimeFactor(T%TUnit)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadTime"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_ReadTime"
   !
   return
 end subroutine Dynam_ReadTime
@@ -287,8 +287,8 @@ subroutine Dynam_ReadRock_(Ok)
   !
   !-----------------------------------------------------/read ROCK block
   !
-  !------------------------------- normalize PhiM to SUM(VolFract)-1 ---
-  x= SUM(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
+  !------------------------------- normalize PhiM to sum(VolFract)-1 ---
+  x= sum(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
   if(x>Zero) then
     do I=1,size(vKinFas)
       if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL
@@ -298,7 +298,7 @@ subroutine Dynam_ReadRock_(Ok)
       end if
     end do
   else
-    call Stop_("SUM(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
+    call Stop_("sum(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
   end if
   !---------------------------------------------------------------------
   !
@@ -379,8 +379,8 @@ subroutine Dynam_ReadRock(Ok)
   !
   !-----------------------------------------------------/read ROCK block
   !
-  !------------------------------- normalize PhiM to SUM(VolFract)-1 ---
-  x= SUM(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
+  !------------------------------- normalize PhiM to sum(VolFract)-1 ---
+  x= sum(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
   if(x>Zero) then
     do I=1,size(vKinFas)
       if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL
@@ -390,7 +390,7 @@ subroutine Dynam_ReadRock(Ok)
       end if
     end do
   else
-    call Stop_("SUM(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
+    call Stop_("sum(vKinFas(1:nMk)%PhiM <0 ???") !------------------stop
   end if
   !---------------------------------------------------------------------
   !
@@ -414,7 +414,7 @@ subroutine Dynam_ReadBox(Box,Ok,Msg)
   logical           :: EoL
   integer           :: F,ios
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadBox"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_ReadBox"
   !
   call GetUnit(F)
   call OpenFile(F,file=trim(NamFInn))
@@ -468,7 +468,6 @@ subroutine Dynam_ReadBox(Box,Ok,Msg)
         case("VOLBOX");   call WrdToReal(W2,Box%VBox)   !volume of box........!
         case("UDARCY");   call WrdToReal(W2,Box%UDarcy) !flux rate,length/time!
         case("POROSITY"); call WrdToReal(W2,Box%PhiF)   !initial porosity.....!
-        case("CELLS");    call WrdToInt (W2,Box%nCell)  !nr of boxes..........!
         !---------------------------------------------------------------------!
         !
         case default
@@ -484,7 +483,7 @@ subroutine Dynam_ReadBox(Box,Ok,Msg)
   !
   if(.not. Ok) Msg= "Block DYNAMIC.BOX not found, using default values !!!"
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadBox"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_ReadBox"
   !
 end subroutine Dynam_ReadBox
 
@@ -505,7 +504,7 @@ subroutine Dynam_ReadColumn(Column,Ok,Msg)
   logical           :: EoL
   integer           :: F,ios
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadColumn"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_ReadColumn"
   !
   call GetUnit(F)
   call OpenFile(F,file=trim(NamFInn))
@@ -570,7 +569,7 @@ subroutine Dynam_ReadColumn(Column,Ok,Msg)
   
   if(.not. Ok) Msg= "Block DYNAMIC.COLUMN not found !!!"
   
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadColumn"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_ReadColumn"
   
   return
 end subroutine Dynam_ReadColumn
@@ -599,7 +598,7 @@ subroutine Dynam_ReadNumeric(Ok)
   call OpenFile (F,file=trim(NamFInn))
   Ok=.false.
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Dynam_ReadNumeric"
+  if(idebug>1) write(fTrc,'(/,A)') "< Dynam_ReadNumeric"
     
   Do01: do
     !
@@ -736,14 +735,14 @@ subroutine Dynam_ReadNumeric(Ok)
   if(.not. &
   &       (NewtMaxIts>NewtIterMax &
   & .and. NewtIterMax>NewtIterMin)) then
-    if(iDebug>0) write(fTrc,'(A)') &
+    if(idebug>1) write(fTrc,'(A)') &
     & "Must Have MAXITER>ITERMAX .and. ITERMAX>ITERMIN"
     call Stop_("Must Have MAXITER>ITERMAX .and. ITERMAX>ITERMIN")
   end if
   !
   if(iCtrlTime<1 .or. iCtrlTime>2) iCtrlTime=1
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Dynam_ReadNumeric"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Dynam_ReadNumeric"
   !
   return
 end subroutine Dynam_ReadNumeric

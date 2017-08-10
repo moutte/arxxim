@@ -122,7 +122,7 @@ subroutine Simplex_Theriak_Grid
   logical, allocatable:: vSimplex_Ok(:)
   !---------------------------------------------------------------------
   
-  if(iDebug>0) write(fTrc,'(/,A)') "< Simplex_Theriak_Grid"
+  if(idebug>1) write(fTrc,'(/,A)') "< Simplex_Theriak_Grid"
   !
   nNodX= 20
   nNodY= 20
@@ -283,7 +283,7 @@ subroutine Simplex_Theriak_Grid
   if(F2>0) close(F2)
   if(ff>0) close(ff)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ Simplex_Theriak_Path"
+  if(idebug>1) write(fTrc,'(A,/)') "</ Simplex_Theriak_Path"
   !
 contains
 
@@ -308,7 +308,7 @@ subroutine Check_vXMean(i)
     vX(:)= vX(1:nP) &
     &    + vSavPhase(i)%vMole(ff) *vSavPhase(i)%tXPole(ff,1:nP)
   end do
-  vX(:)= vX(:) /SUM(vX(:))
+  vX(:)= vX(:) /sum(vX(:))
   !
   G= MixPhase_Grt( &
   & TdgK,Pbar,    &
@@ -319,7 +319,7 @@ subroutine Check_vXMean(i)
   !
   deallocate(vX)
 
-  !~ print *,"G(vXMean)..",vMixModel(J)%Name, G  ;  pause
+  !! print *,"G(vXMean)..",vMixModel(J)%Name, G  ;  pause
 
   return
 end subroutine Check_vXMean
@@ -786,7 +786,7 @@ subroutine GEM_AddMixtures( &
       !
       do iCp=1,nC ! stoichiometry of mixture vs components
         vFas(iMF)%vStoik(iCp)= &
-        & SUM( vFas(MM%vIPole(1:N))%vStoik(iCp) &
+        & sum( vFas(MM%vIPole(1:N))%vStoik(iCp) &
         &    * vMixFas(iMix)%vXPole(1:N) )
       end do
       !
@@ -856,7 +856,7 @@ subroutine Gibbs_Change( &
     vY(1:nC)= vFas0(I)%vStoik(1:nC)
     !-----------------------Solve(A,Row,B,X) Yout= inv(tTransform) * Yin
     call LU_BakSub(tTransform,vIndx,vY)
-    vGrt(I)= vFas0(I)%Grt - SUM(vY(:)*vGrt0(:))
+    vGrt(I)= vFas0(I)%Grt - sum(vY(:)*vGrt0(:))
   end do
   vFas0(1:nF)%Grt= vGrt(1:nF)
   !
@@ -903,7 +903,7 @@ subroutine Mixture_Minimize( &
 !--
   use M_Numeric_Const, only: Ln10
   use M_Safe_Functions,only: FSafe_Exp
-  !~ use M_GEM_Vars,   only: TdgK,Pbar
+  !! use M_GEM_Vars,   only: TdgK,Pbar
   !
   use M_Optimsolver_Theriak
   use M_MixModel_Optim
@@ -953,7 +953,7 @@ subroutine Mixture_Minimize( &
       end do
       vXmin(1:N)=  vXmin(1:N) /S
       vMuMin(1:N)= vFasPur(MM%vIPole(1:N))%Grt + Multi*log(vXmin(1:N))
-      Gmin= SUM(vXmin(1:N) * vMuMin(1:N))
+      Gmin= sum(vXmin(1:N) * vMuMin(1:N))
       !------------------------------------------------/analytic minimum
     else
       !---------------------------------------------numerical minimum(s)
@@ -969,11 +969,11 @@ subroutine Mixture_Minimize( &
       !
       do J=1,N
         !
-        !~ !--- start from compos'n close to end-member J
-        !~ vX(J)= One - 1.0D-3
-        !~ do K=1,N
-          !~ if(K/=J) vX(K)= 1.0D-3/real(N-1)
-        !~ end do
+        !! !--- start from compos'n close to end-member J
+        !! vX(J)= One - 1.0D-3
+        !! do K=1,N
+          !! if(K/=J) vX(K)= 1.0D-3/real(N-1)
+        !! end do
         !
         vX(1:N)= vMixFas_Xpole_Init(I)%tXPole(J,1:N)
         !
@@ -1151,10 +1151,10 @@ subroutine WritePhases( &
         write(F2,'(G15.6,A1)',advance="no") tResult(2+iFs,iPath),T_
       end do
       !
-      !~ Tot=SUM(tResult(1:nC,iPath))
-      !~ do iFs=1,nC
-        !~ write(F,'(G15.6,A1)',advance="no") tResult(iFs,iPath)/Tot,T_
-      !~ end do
+      !! Tot=sum(tResult(1:nC,iPath))
+      !! do iFs=1,nC
+        !! write(F,'(G15.6,A1)',advance="no") tResult(iFs,iPath)/Tot,T_
+      !! end do
       
       !-----------------------------------------------------mole numbers
       do iFs=1,nF != (nC+3:nC+nF+2)
@@ -1336,9 +1336,9 @@ subroutine WriteMixtures( &
           do P=1,Fas0%nFas
             do Q=1,Fas1%nFas
 
-              vX(1:nP)= ABS( Fas0%tXPole(P,1:nP) - Fas0%tXPole(Q,1:nP) )
+              vX(1:nP)= abs( Fas0%tXPole(P,1:nP) - Fas0%tXPole(Q,1:nP) )
 
-              if(MAXVAL(vX(1:nP)) < MixMinim_TolX *1.0D2) then
+              if(maxval(vX(1:nP)) < MixMinim_TolX *1.0D2) then
               
                 Tot= Fas0%vMole(P) +Fas1%vMole(Q)
                 vX(1:nP)= Fas0%vMole(P) *Fas0%tXPole(P,1:nP) &

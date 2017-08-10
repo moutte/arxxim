@@ -278,8 +278,8 @@ subroutine CalcGH2O_Haar_Ghiorso_Detail( &
   if (x2i/=Zero) then
     vol=  x1
   else
-    if (p<ps) then ;  vol=  MAX(x1, MAX(x2, x3))
-    else           ;  vol=  MIN(x1, MIN(x2, x3))
+    if (p<ps) then ;  vol=  max(x1, max(x2, x3))
+    else           ;  vol=  min(x1, min(x2, x3))
     end if
   end if
   !
@@ -361,12 +361,12 @@ subroutine CalcGH2O_Haar_Ghiorso_Detail( &
       else
       if (dpr<0.01) dpr=  0.01
       x_=  (p - pr)/dpr
-      if (ABS(x_)>0.1) x_=  0.1*x_/ABS(x_)
+      if (abs(x_)>0.1) x_=  0.1*x_/abs(x_)
       rhn=  rh + x_
     end if
     
-    dp_=  ABS(One - pr/p)
-    dr_=  ABS(One - rhn/rh)
+    dp_=  abs(One - pr/p)
+    dr_=  abs(One - rhn/rh)
     icount=icount+1
     
   end do

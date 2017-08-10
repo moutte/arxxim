@@ -44,7 +44,7 @@ subroutine Eos_H2O_psat(Tk,PSatBar)
   else
   
     V=  Tk/647.25D0
-    W=  ABS(One-V)
+    W=  abs(One-V)
     WSQ=SQRT(W)
     FF= Zero
     do I=1,8
@@ -254,11 +254,11 @@ subroutine Eos_H2O_rho( &
       else
         if(DPR<0.01D0) DPR=0.01D0
         S=(P-PR)/DPR
-        if(ABS(S)>0.1D0) S=0.1D0*S/ABS(S)
+        if(abs(S)>0.1D0) S=0.1D0*S/abs(S)
         RHN=RH+S
       end if
-      DP_=ABS(One-PR/P)
-      DR_=ABS(One-RHN/RH)
+      DP_=abs(One-PR/P)
+      DR_=abs(One-RHN/RH)
       if (DP_<1D-5 .and. DR_<1D-12) exit do20 !goto 30
     
     end do do20 !20 continue

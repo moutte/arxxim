@@ -11,7 +11,8 @@ module M_T_Phase
   public:: Phase_Calc
   !
   type:: T_Phase
-  ! describes a phase, including pure phases and mixture or solution phases
+  ! describes a phase,
+  ! including pure phases, mixture and solution phases
     character(len=23):: NamFs
     !! character(len=4) :: Typ !"PURE","AQUEOUS","MIXTURE"
     !! ! "PURE" includes also "DISCRET" 
@@ -151,21 +152,21 @@ integer function Phase_Index(Str,V)
 !--
   type(T_Phase),intent(in)::V(:)
   character(*), intent(in)::Str
-  !
+  !---------------------------------------------------------------------
   integer     ::I
   
   Phase_Index=0  !if Str not found -> I=0
   if(size(V)==0) return
-  
+  !
   I=0
   do
     I=I+1
     if(trim(Str)==trim(V(I)%NamFs)) then
-      Phase_Index=I ; exit
+      Phase_Index=I  ;  exit
     end if
-    if(I==size(V)) exit
+    if(I==size(V))      exit
   end do
-  
+  !
   return
 end function Phase_Index
 

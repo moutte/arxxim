@@ -29,6 +29,11 @@ module M_System_Vars
   !
   type(T_System):: SysDefault,SysTotal,SysInject,SysBox
   !
+  integer,public:: & !for aqueous solutions, indexes of components
+  & iO_= 0,  &   !index of component assoc'd with element O  
+  & iH_= 0,  &   !index of component assoc'd with element H
+  & iOx= 0       !index of component assoc'd with OXydation "element"
+  !
   !-- vars for GEM computations
   !-- ? should be in a specific M_GEM_Vars module ?
   !! type(T_Component),allocatable,public:: vCpnGEM(:)

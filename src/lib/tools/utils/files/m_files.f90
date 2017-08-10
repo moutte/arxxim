@@ -3,6 +3,7 @@ module M_Files
   use M_Files_Vars
   use M_Files_Index
   use M_FileUtils
+  !
   implicit none
   !
   private
@@ -46,7 +47,6 @@ contains
     ! Print the Input FileName 
     !===================================================================
     use M_Trace,  only: fHtm
-    implicit none
     !--
     write(*,'(A)') "Arxim Script File : "// trim(NamFIn0)
     call Files_Index_InputFile(fHtm, NamFIn0)
@@ -60,7 +60,7 @@ contains
     ! Read the Input FileName ( Default = "arxim.inn" )
     !===================================================================
     use M_Trace, only: Stop_
-    implicit none
+    !--
     logical, intent(out) :: Ok
     !--
     Ok = .false.
@@ -80,8 +80,6 @@ contains
     ! Build the input data file from main file + include
     ! Init Files Variables
     !===================================================================
-    implicit none
-    !---
     ! Merge include files
     call Files_BuildInput_IncludeFiles
 
@@ -98,10 +96,9 @@ contains
     ! -> Default Extension = .inn
     ! Output in NamFIn0 
     !===================================================================
-    implicit none
     logical,intent(out):: Ok
     character(len=*), intent(in):: sFileName
-    !--
+    !-------------------------------------------------------------------
     Ok=.false.
     NamFIn0="NOFILE"
     
@@ -126,10 +123,9 @@ contains
     !===================================================================
     use M_FArgC, only: F_GETARG, F_IARGC
     use M_VarStr,only: T_VarStr,VarStr_Get,VarStr_Char
-    implicit none
-    !--
+    !-------------------------------------------------------------------
     logical,intent(out):: Ok
-    !--
+    !-------------------------------------------------------------------
     character(len=255):: Str
     !--
     Ok=.false.
@@ -165,7 +161,6 @@ contains
     ! Output in NamFIn0 
     !===================================================================
     use M_VarStr,only: T_VarStr,VarStr_Get,VarStr_Char
-    implicit none
     !--
     logical,intent(out):: Ok
     !--
@@ -224,7 +219,7 @@ contains
     call GetUnit(fAll); open(fAll,file=trim(NamFInn))
     call GetUnit(fInn); open(fInn,file=trim(NamFIn0))
 
-    !--========= read ROOT FILE  ================================
+    !-----------------------------------------------------READ ROOT FILE
     Do1: do
       !
       read(fInn,'(A)',iostat=ios) LL
@@ -238,7 +233,8 @@ contains
         do
           read(fInn,'(A)',iostat=ios) L
           if(ios/=0) then
-            print '(A)', "!!!WARNING!!! COMMENT block UNTERMINATED !!!WARNING!!!"
+            print '(A)', &
+            & "!!!WARNING!!! COMMENT block UNTERMINATED !!!WARNING!!!"
             exit Do1
           end if
           call LinToWrd(L,W,EoL)
@@ -271,7 +267,7 @@ contains
           write(fAll,'(A,A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
           write(fAll,'(A,A)') "! INCLUDE ", trim(sIncludeFile1)
           
-          !--========= read FILE include LEVEL 1 =======================
+          !------------------------------------READ FILE include LEVEL 1
           Do2: do
             !
             read(fAdd,'(A)',iostat=ios) LL
@@ -312,9 +308,9 @@ contains
                 open(fAdd2,file=trim(sIncludeFile2))
                 call Files_Index_Include(fHtm,sIncludeFile2)
                 write(fAll,'(A)') "!!!!!!!!!!!!Insert File_begin!!!!!!!!!!!!"
-                write(fAll,'(A,A)') "! INCLUDE ", trim(sIncludeFile2)
+                write(fAll,'(A)') "! INCLUDE "//trim(sIncludeFile2)
                 
-                !--========= read FILE LEVEL 2 =========================
+                !--------------------------------------READ FILE LEVEL 2
                 do3: do 
                   read(fAdd2,'(A)',iostat=ios) LL
                   if(ios/=0) exit do3
@@ -328,7 +324,7 @@ contains
                       read(fInn,'(A)',iostat=ios) L
                       if(ios/=0) then
                         print '(A)', &
-                        & "!!!WARNING!!! COMMENT block UNTERMINATED !!!WARNING!!!"
+                        & "!!!WARNING!!! COMMENT BLOCK UNTERMINATED !!!WARNING!!!"
                         exit Do3
                       end if
                       call LinToWrd(L,W2,EoL)
@@ -340,13 +336,15 @@ contains
                   if(trim(W2)=="ENDINPUT") exit do3
                   !
                   if(trim(W2)=="INCLUDE") then
-                    print '(A)', "!!!WARNING!!! TOO Many Nested includes !!!WARNING!!!"
+                    print '(A)', &
+                    & "!!!WARNING!!! TOO MANY NESTED INCLUDES !!!WARNING!!!"
                     call LinToWrd(L,W2,EoL,"NO") 
                     call Stop_ ("INCLUDE LEVEL 3 :"//trim(W2)//" NOT IMPLEMENTED")
                   end if
                   !
                   write(fAll,'(A)') trim(LL)
                 end do do3
+                !------------------------------------//READ FILE LEVEL 2
                 
                 ! Close Include File Level 2
                 write(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
@@ -365,15 +363,18 @@ contains
           ! Close Include File Level 1
           write(fAll,'(A)') "!!!!!!!!!!!!Insert File _end!!!!!!!!!!!!!"
           close(fAdd)
+          !----------------------------------//READ FILE include LEVEL 1
         else
-          call Stop_("FILE "//trim(sIncludeFile1)//" NOT FOUND -> Can Not include !!!")
+          call Stop_("FILE "//trim(sIncludeFile1)// &
+          & " NOT FOUND -> Can Not include !!!")
         end if
       end select
     end do Do1
     ! Close Root File
     close(fInn)
+    !---------------------------------------------------//READ ROOT FILE
     ! Close Result Merged File
-    !! write(fAll,'(A)') "ENDINPUT" !!! if(Mod="APPend") 
+    !! write(fAll,'(A)') "ENDINPUT" !!! if(Mod="APPEND") 
     close(fAll)
 
   end subroutine Files_BuildInput_IncludeFiles
@@ -384,7 +385,6 @@ contains
     !==========================================================
     ! Init the Directories and Input Files Names
     !==========================================================
-    implicit none
     character(*),intent(in):: sFilNam
     !---
     cTitle=""

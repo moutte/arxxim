@@ -116,7 +116,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   !
   ! if (N>1) LisCur => LisMinHkf
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbMinHKF_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbMinHKF_Read"
   !
   !----------------------------------------------------------------trace
   FF= 0
@@ -150,8 +150,8 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   fFormula= 0
   !---/
   !
-  !~ if(iDebug>3) write(fTrc,'(6(A,A1))') &
-  !~ & "M%Name",T_, "M%G0R",T_, "M%S0Ele",T_, "M%H0R",T_, "H_Calc",T_, "M%H0R-H_Calc",T_
+  !! if(iDebug>3) write(fTrc,'(6(A,A1))') &
+  !! & "M%Name",T_, "M%G0R",T_, "M%S0Ele",T_, "M%H0R",T_, "H_Calc",T_, "M%H0R-H_Calc",T_
   !
   allocate(vStoik(1:size(vEle)))
   ieO_= Element_Index("O__",vEle)
@@ -165,15 +165,15 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
-  !~ if (FilCode(1:5)=="OBIGT") then
-    !~ L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
-  !~ else ! case of SLOP98.DAT
-    !~ L= "SOURCE NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
-  !~ end if
-  !~ !
-  !~ !if(iDebug==4) print *,"< Default values"
-  !~ call FieldList_Read(L,vStrField,vifield)
-  !~ !if(iDebug==4) print *,"</ Default values"
+  !! if (FilCode(1:5)=="OBIGT") then
+    !! L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
+  !! else ! case of SLOP98.DAT
+    !! L= "SOURCE NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
+  !! end if
+  !! !
+  !! !if(iDebug==4) print *,"< Default values"
+  !! call FieldList_Read(L,vStrField,vifield)
+  !! !if(iDebug==4) print *,"</ Default values"
   !---/ scan default field list
   !
   if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
@@ -401,8 +401,8 @@ subroutine DtbMinHKF_Read(F,vEle,N)
     !-----------------------------------------/"fill" the linked list --
     !
     H_Calc= M%G0R + Tref *M%S0_ - Tref*M%S0Ele
-    !~ if(iDebug>3) write(fTrc, '(A,A1,5(G15.6,A1))') &
-    !~ & M%Name,T_, M%G0R,T_, M%S0Ele,T_, M%H0R,T_, H_Calc,T_, M%H0R-H_Calc,T_ ! M%H0R-H_Calc
+    !! if(iDebug>3) write(fTrc, '(A,A1,5(G15.6,A1))') &
+    !! & M%Name,T_, M%G0R,T_, M%S0Ele,T_, M%H0R,T_, H_Calc,T_, M%H0R-H_Calc,T_ ! M%H0R-H_Calc
     !
     if(FF>0) then
       write(FF,"(A15,A1)",advance="NO") M%Name,T_
@@ -431,7 +431,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   !
   if(FF>0) close(FF)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbMinHKF_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbMinHKF_Read"
   !
   return
 end subroutine DtbMinHKF_Read
@@ -502,7 +502,7 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
   !
   ! if (N>1) LisCur => LisMinHkf
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DtbMinHKF_Read"
+  if(idebug>1) write(fTrc,'(/,A)') "< DtbMinHKF_Read"
   !
   !----------------------------------------------------------------trace
   FF= 0
@@ -533,8 +533,8 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
   fFormula= 0
   !---/
   !
-  !~ if(iDebug>3) write(fTrc,'(6(A,A1))') &
-  !~ & "M%Name",T_, "M%G0R",T_, "M%S0Ele",T_, "M%H0R",T_, "H_Calc",T_, "M%H0R-H_Calc",T_
+  !! if(iDebug>3) write(fTrc,'(6(A,A1))') &
+  !! & "M%Name",T_, "M%G0R",T_, "M%S0Ele",T_, "M%H0R",T_, "H_Calc",T_, "M%H0R-H_Calc",T_
   !
   allocate(vStoik(1:size(vEle)))
   ieO_= Element_Index("O__",vEle)
@@ -550,172 +550,172 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
     call AppEndToEnd(L,W,EoL)
     !
     select case(W)
+    !
+    case("END","ENDSPECIES","ENDINPUT")
+      exit DoFile
       !
-      case("END","ENDSPECIES","ENDINPUT")
-        exit DoFile
+    case("CODE")
+      call LinToWrd(L,W,EoL)
+      FilCode=trim(W)
+      cycle DoFile
+      !
+    case("FORMULA")
+      call LinToWrd(L,W,EoL)
+      CodFormula= trim(W)
+      if(iDebug>2 .and. CodFormula=="SCFORM") then
+        call GetUnit(fFormula)
+        open(fFormula,file="debug_formula.log")
+        write(fFormula,'(A,/)') "resuts of formula conversion"
+      end if
+      cycle DoFile
+      !
+    case("MINERAL","GAS")
+      !
+      select case(W)
+      case("MINERAL"); bGas=.false.; bMin=.true.
+      case("GAS");     bGas=.true.;  bMin=.false.
+      end select
+      !
+      DoReadMin: do
         !
-      case("CODE")
+        read(F,'(A)',iostat=ios) L
+        if(ios/=0) exit DoFile
         call LinToWrd(L,W,EoL)
-        FilCode=trim(W)
-        cycle DoFile
-        !
-      case("FORMULA")
-        call LinToWrd(L,W,EoL)
-        CodFormula= trim(W)
-        if(iDebug>2 .and. CodFormula=="SCFORM") then
-          call GetUnit(fFormula)
-          open(fFormula,file="debug_formula.log")
-          write(fFormula,'(A,/)') "resuts of formula conversion"
-        end if
-        cycle DoFile
-        !
-      case("MINERAL","GAS")
+        if(W(1:1)=="!") cycle DoReadMin
+        call AppendToEnd(L,W,EoL)
         !
         select case(W)
-          case("MINERAL"); bGas=.false.; bMin=.true.
-          case("GAS");     bGas=.true.;  bMin=.false.
+        case("ENDINPUT","ENDSPECIES")
+          exit DoFile
+        case("END","ENDMINERAL","ENDGAS")
+          cycle DoFile !exit DoReadMin
         end select
         !
-        DoReadMin: do
+        M%Num=trim(W)
+        if(bGas) M%Typ="GAS"
+        if(bMin) M%Typ="MIN"
+        !
+        if (FilCode(1:5)=="OBIGT") then
           !
-          read(F,'(A)',iostat=ios) L
-          if(ios/=0) exit DoFile
-          call LinToWrd(L,W,EoL)
-          if(W(1:1)=="!") cycle DoReadMin
-          call AppendToEnd(L,W,EoL)
+          !L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
+          CodFormula="SCFORM"
           !
-          select case(W)
-            case("ENDINPUT","ENDSPECIES")
-              exit DoFile
-            case("END","ENDMINERAL","ENDGAS")
-              cycle DoFile !exit DoReadMin
-          end select
+          call LinToWrd(L,W,EoL); M%Name=trim(W) !if(idebug>1) write(fTrc,"(A)") M%Name
+          call LinToWrd(L,W,EoL) !skip ABBRV
+          call LinToWrd(L,W,EoL,"NO") !-> compact formula, character case is conserved :!!
           !
-          M%Num=trim(W)
-          if(bGas) M%Typ="GAS"
-          if(bMin) M%Typ="MIN"
-          !
-          if (FilCode(1:5)=="OBIGT") then
-            !
-            !L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
-            CodFormula="SCFORM"
-            !
-            call LinToWrd(L,W,EoL); M%Name=trim(W) !if(iDebug>0) write(fTrc,"(A)") M%Name
-            call LinToWrd(L,W,EoL) !skip ABBRV
-            call LinToWrd(L,W,EoL,"NO") !-> compact formula, character case is conserved :!!
-            !
-            if(CodFormula=="SCFORM") then
-              call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-              if(.not.EcformIsOk) then
-                if(iDebug>3) call Warning_("!!! Cannot translate "//trim(W))
-                cycle DoReadMin
-              end if
+          if(CodFormula=="SCFORM") then
+            call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
+            if(.not.EcformIsOk) then
+              if(iDebug>3) call Warning_("!!! Cannot translate "//trim(W))
+              cycle DoReadMin
             end if
-            call Str_Upper(W)
-            !
-            M%Formula=trim(W)
-            !
-            call LinToWrd(L,W,EoL) !skip STATE
-            call LinToWrd(L,W,EoL) !skip SOURCE1
-            call LinToWrd(L,W,EoL) !skip SOURCE2
-            call LinToWrd(L,W,EoL) !DATE
-            !
-            call ReadRValsV(L,K,vX)
-            !
-          else ! default FilCode is SLOP98
-            !
-            !L= "SOURCE SKIP NAME SKIP ECFORM SKIP SKIP parameterS"
-            !
-            call LinToWrd(L,W,EoL) !skip abredged name ; M%Abbr=trim(W)
-            call LinToWrd(L,W,EoL) ; M%Name=trim(W)
-            call LinToWrd(L,W,EoL) !skip scform
-            call LinToWrd(L,W,EoL) ; M%Formula=trim(W)
-            call LinToWrd(L,W,EoL) !skip REF
-            call LinToWrd(L,W,EoL) !skip DATE
-            !
-            call ReadRValsV(L,K,vX)
-            !
           end if
+          call Str_Upper(W)
           !
-          !-------------------------------------------------read formula
-          call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
-          if(.not. fOk) cycle DoReadMin !--------------------------cycle
-          !------------------------------------------------/read formula
-          call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+          M%Formula=trim(W)
           !
-          if (FilCode(1:5)=="OBIGT") then
-            ! in OBIGT database, Cp is tabulated fot min'species
-            ! but not used as input parameters -> vX(4) ignored
-            M%G0R= vX(1) *CalToJoule
-            M%H0R= vX(2) *CalToJoule
-            M%S0_= vX(3) *CalToJoule
-            M%V0R= vX(5)
-            M%MK1(1)= vX(6) *CalToJoule
-            M%MK1(2)= vX(7) *CalToJoule *1.0D-3
-            M%MK1(3)= vX(8) *CalToJoule *1.0D5
-            M%NTran= 0
-          else ! default FilCode is SLOP98
-            M%G0R=    vX(1) *CalToJoule
-            M%H0R=    vX(2) *CalToJoule
-            M%S0_=    vX(3) *CalToJoule
-            M%V0R=    vX(4)
-            M%MK1(1)= vX(5) *CalToJoule
-            M%MK1(2)= vX(6) *CalToJoule *1.0D-3
-            M%MK1(3)= vX(7) *CalToJoule *1.0D5
-            M%NTran= 0
-          end if
+          call LinToWrd(L,W,EoL) !skip STATE
+          call LinToWrd(L,W,EoL) !skip SOURCE1
+          call LinToWrd(L,W,EoL) !skip SOURCE2
+          call LinToWrd(L,W,EoL) !DATE
+          !
+          call ReadRValsV(L,K,vX)
+          !
+        else ! default FilCode is SLOP98
+          !
+          !L= "SOURCE SKIP NAME SKIP ECFORM SKIP SKIP parameterS"
+          !
+          call LinToWrd(L,W,EoL) !skip abredged name ; M%Abbr=trim(W)
+          call LinToWrd(L,W,EoL) ; M%Name=trim(W)
+          call LinToWrd(L,W,EoL) !skip scform
+          call LinToWrd(L,W,EoL) ; M%Formula=trim(W)
+          call LinToWrd(L,W,EoL) !skip REF
+          call LinToWrd(L,W,EoL) !skip DATE
+          !
+          call ReadRValsV(L,K,vX)
+          !
+        end if
+        !
+        !-------------------------------------------------read formula
+        call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+        if(.not. fOk) cycle DoReadMin !--------------------------cycle
+        !------------------------------------------------/read formula
+        call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
+        !
+        if (FilCode(1:5)=="OBIGT") then
+          ! in OBIGT database, Cp is tabulated fot min'species
+          ! but not used as input parameters -> vX(4) ignored
+          M%G0R= vX(1) *CalToJoule
+          M%H0R= vX(2) *CalToJoule
+          M%S0_= vX(3) *CalToJoule
+          M%V0R= vX(5)
+          M%MK1(1)= vX(6) *CalToJoule
+          M%MK1(2)= vX(7) *CalToJoule *1.0D-3
+          M%MK1(3)= vX(8) *CalToJoule *1.0D5
+          M%NTran= 0
+        else ! default FilCode is SLOP98
+          M%G0R=    vX(1) *CalToJoule
+          M%H0R=    vX(2) *CalToJoule
+          M%S0_=    vX(3) *CalToJoule
+          M%V0R=    vX(4)
+          M%MK1(1)= vX(5) *CalToJoule
+          M%MK1(2)= vX(6) *CalToJoule *1.0D-3
+          M%MK1(3)= vX(7) *CalToJoule *1.0D5
+          M%NTran= 0
+        end if
 
-          !if(fOk) then
-          N=N+1
+        !if(fOk) then
+        N=N+1
+        !
+        call IntToStr4(N,ICode)
+        M%Num= trim(FilCode)//"_"//trim(ICode)
+        !
+        M%S0Ele=  dot_product(vStoik(:),vEle(:)%S0) /real(Div) ! is in Joule !!
+        M%WeitKg= dot_product(vStoik(:),vEle(:)%WeitKg) /real(Div)
+        M%Div=    Div
+        !
+        if(.not. DtbConv_Benson) M%G0R= M%G0R - Tref *M%S0Ele !!!Berman Convention!!!
+        !
+        !--- "fill" the linked list
+        if(N==1) then
+          allocate(LisMinHkf)
+          nullify(LisMinHkf%next)
+          LisMinHkf%Value= M
+          LisCur=> LisMinHkf
+        else
+          allocate(LisCur%next)
+          nullify(LisCur%next%next)
+          LisCur%next%Value=M
+          LisCur=>LisCur%next
+        end if
+        !---/
+        !
+        H_Calc= M%G0R + Tref *M%S0_ - Tref*M%S0Ele
+        !! if(iDebug>3) write(fTrc, '(A,A1,5(G15.6,A1))') &
+        !! & M%Name,T_, M%G0R,T_, M%S0Ele,T_, M%H0R,T_, H_Calc,T_, M%H0R-H_Calc,T_ ! M%H0R-H_Calc
+        !
+        if(FF>0) then
+          write(FF,"(A15,A1)",advance="NO") M%Name,T_
+          do iEl=1,size(vEle)
+            write(FF,"(I3,A1)",advance="NO") vStoik(iEl),T_
+          end do
+          write(FF,'(4(G15.6,A1))',advance="NO") &
+          & M%G0R,T_,H_Calc,T_,M%H0R,T_,M%S0_,T_
           !
-          call IntToStr4(N,ICode)
-          M%Num= trim(FilCode)//"_"//trim(ICode)
-          !
-          M%S0Ele=  dot_product(vStoik(:),vEle(:)%S0) /real(Div) ! is in Joule !!
-          M%WeitKg= dot_product(vStoik(:),vEle(:)%WeitKg) /real(Div)
-          M%Div=    Div
-          !
-          if(.not. DtbConv_Benson) M%G0R= M%G0R - Tref *M%S0Ele !!!Berman Convention!!!
-          !
-          !--- "fill" the linked list
-          if(N==1) then
-            allocate(LisMinHkf)
-            nullify(LisMinHkf%next)
-            LisMinHkf%Value= M
-            LisCur=> LisMinHkf
-          else
-            allocate(LisCur%next)
-            nullify(LisCur%next%next)
-            LisCur%next%Value=M
-            LisCur=>LisCur%next
-          end if
-          !---/
-          !
-          H_Calc= M%G0R + Tref *M%S0_ - Tref*M%S0Ele
-          !~ if(iDebug>3) write(fTrc, '(A,A1,5(G15.6,A1))') &
-          !~ & M%Name,T_, M%G0R,T_, M%S0Ele,T_, M%H0R,T_, H_Calc,T_, M%H0R-H_Calc,T_ ! M%H0R-H_Calc
-          !
-          if(FF>0) then
-            write(FF,"(A15,A1)",advance="NO") M%Name,T_
-            do iEl=1,size(vEle)
-              write(FF,"(I3,A1)",advance="NO") vStoik(iEl),T_
-            end do
-            write(FF,'(4(G15.6,A1))',advance="NO") &
-            & M%G0R,T_,H_Calc,T_,M%H0R,T_,M%S0_,T_
-            !
-            ! build new formula, with fixed element order
-            call Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
-            !!sFormul=""
-            !!do iEl=1,size(vEle)
-            !!  if(vStoik(iEl)>0) sFormul=trim(sFormul)//trim(vEle(iEl)%NamEl)//""
-            !!end do
-            write(FF,"(I3,A1,A39,A1,A15,A1,A)") &
-            & M%Div,T_,M%Formula,T_,M%Name,T_,trim(sFormul)
-          end if
-          !  !
-          !end if
-        end do DoReadMin
-      !endcase("MINERAL")
+          ! build new formula, with fixed element order
+          call Formula_Build(vEle,vStoik,Zsp,M%Div,sFormul)
+          !!sFormul=""
+          !!do iEl=1,size(vEle)
+          !!  if(vStoik(iEl)>0) sFormul=trim(sFormul)//trim(vEle(iEl)%NamEl)//""
+          !!end do
+          write(FF,"(I3,A1,A39,A1,A15,A1,A)") &
+          & M%Div,T_,M%Formula,T_,M%Name,T_,trim(sFormul)
+        end if
+        !  !
+        !end if
+      end do DoReadMin
+    !endcase("MINERAL")
     end select !case(W0)
   end do DoFile
   !
@@ -726,7 +726,7 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
   !
   if(FF>0) close(FF)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DtbMinHKF_Read"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DtbMinHKF_Read"
   !
   return
 end subroutine DtbMinHKF_Read_Old

@@ -96,8 +96,9 @@ subroutine KinRate_CalcQsK( &
 & QsK,       & !OUT
 & dQsKdLnXi)   !OUT
 
-  use M_Numeric_Const,     only: MinExpDP,MaxExpDP
-  use M_Basis_Vars,only: isW,MWSv
+  use M_Numeric_Const,only: MinExpDP,MaxExpDP
+  !use M_Basis_Vars,   only: isW,MWSv
+  use M_Global_Vars,  only: SolModel
   !
   integer, intent(in):: nCi          !nr inert comp'nt
   integer, intent(in):: nCx          !nr mobile comp'nt
@@ -111,20 +112,30 @@ subroutine KinRate_CalcQsK( &
   real(dp),intent(out):: QsK
   real(dp),intent(out):: dQsKdLnXi(:) !1:nCi
   !
-  real(dp)::X
+  real(dp):: X
+  real(dp):: MWSv
+  integer :: isW
   !
-  !lnAct= lnMolal + lnGamma=  lnMol + lnGam - lnMolH2O - lnMWH2O
-  !QsK=exp(dot_product(tNuMk(iMk,1:nCp),vLnAct(1:nCp)) - vDG_Mk(iMk))
-  !or,directly from G0,
-  !QsK=exp(dot_product(tNuMk(iMk,1:nCp),vLnAct(1:nCp) +vSpc(1:nCp)%G0) - vKinFas(iMk)%G0)
+  isW=  SolModel%iSolvent
+  MWSv= SolModel%MolWeitSv
   !
-  !caveat:
-  !Solvent should follow mole fraction scale, not molality ...
+  ! lnAct= lnMolal + lnGamma=  lnMol + lnGam - lnMolH2O - lnMWH2O
+  ! QsK=exp(dot_product(tNuMk(iMk,1:nCp),vLnAct(1:nCp)) - vDG_Mk(iMk))
+  !
+  ! or,directly from G0,
+  !
+  ! QsK=exp( dot_product( 
+  !     tNuMk(iMk,1:nCp), 
+  !     vLnAct(1:nCp) +vSpc(1:nCp)%G0) - vKinFas(iMk)%G0 )
+  !
+  ! caveat:
+  ! Solvent should follow mole fraction scale, not molality ...
   !-> here, we assume explicited Solvent activity:
+  !
   X=            vNu(isW)  *LnActW &
   + dot_product(vNu(2:nCi),vLnX(2:nCi)) & !log(mole numbers)
   + dot_product(vNu(2:nCi),vLnGam(2:nCi)) & !log(gammas)
-  -         SUM(vNu(2:nCi))*(vLnX(isW)+log(MWSv)) & !log(mass Solvent)
+  -         sum(vNu(2:nCi))*(vLnX(isW)+log(MWSv)) & !log(mass Solvent)
   - DG0rt !equiv -logK
   !
   if(nCx>0) & != mobile species
@@ -139,18 +150,18 @@ subroutine KinRate_CalcQsK( &
   end if
   !
   !<new 200911>
-  if(LimitQsK) QsK= MIN(QsK,QsK_Max)
+  if(LimitQsK) QsK= min(QsK,QsK_Max)
   !</new>
   !
   dQsKdLnXi(:)=     Zero
-  dQsKdLnXi(isW)= - SUM(vNu(2:nCi))*QsK
+  dQsKdLnXi(isW)= - sum(vNu(2:nCi))*QsK
   dQsKdLnXi(2:nCi)=     vNu(2:nCi) *QsK
   !
   return
 end subroutine KinRate_CalcQsK
 
 !-----------------------------------------------------------------------
-!= from QsK deduce cSatur, for branching to dissol/precip
+!-- from QsK deduce cSatur, for branching to dissol/precip
 !-----------------------------------------------------------------------
 subroutine KinRate_SatState( &
 & M,         & !IN
@@ -160,20 +171,20 @@ subroutine KinRate_SatState( &
 & Iota,      & !IN !mod 10/06/2008 17:02 added
 & cSatur)      !OUT
   use M_T_KinFas,only: T_KinFas
-  !
+  !---------------------------------------------------------------------
   type(T_KinFas), intent(in) :: M      !IN
   real(dp),       intent(in) :: nMol   !IN, Nr Moles of mineral M
   real(dp),       intent(in) :: nMolMinim !IN
   real(dp),       intent(in) :: QsK    !IN
   real(dp),       intent(in) :: Iota   !IN
   character,      intent(out):: cSatur !OUT
-  !
+  !---------------------------------------------------------------------
   cSatur=M%Dat%cSat != current value, cSatur will be the new value
   !
   cSatur="I" ! INERT, normal assumption by default
   if(QsK < One - Iota) then
-    if(nMol<=nMolMinim) then  ;  cSatur="M" ! "MINIMAL"
-    else                      ;   cSatur="D"  ! "DISSOLU"
+    if(nMol<=nMolMinim) then  ;  cSatur="M"   ! "MINIMAL"
+    else                      ;  cSatur="D"   ! "DISSOLU"
     end if
   elseif(QsK >= M%QsKSeuil + Iota) then
     cSatur="P" ! PRECIPI
@@ -204,7 +215,7 @@ end subroutine KinRate_SatState
   !!!  end if
   !another possible sequence:
   !
-  !!  !! if(ABS(Qsk - One) < Iota) then
+  !!  !! if(abs(Qsk - One) < Iota) then
   !!  !!   cSatur="INERT"
   !!  !! else!
   !!  !!   select case(cSatur)
@@ -320,22 +331,22 @@ end subroutine KinRate_CalcQsKFactor
 
 subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
 !-----------------------------------------------------------------------
-!= test the "validity" of KinRate_CalcActivFactor
-!= of module M_T_KinFas for rate calculations
-!= (= the factor depending on species'activities)
+!-- test the "validity" of KinRate_CalcActivFactor
+!-- of module M_T_KinFas for rate calculations
+!-- (= the factor depending on species'activities)
 !-----------------------------------------------------------------------
   use M_IoTools,  only: GetUnit
   use M_Files,    only: DirOut,cTitle,Files_Index_Write !,bOpenMnk
   !
-  use M_Numeric_Const,     only: Ln10,TinyDP
-  use M_Dtb_Const, only: T_CK
+  use M_Numeric_Const,only: Ln10,TinyDP
+  use M_Dtb_Const,    only: T_CK
   !
-  use M_T_Species,  only: Species_Index
-  use M_Basis_Vars, only: nMx, isH_
+  ! use M_T_Species,  only: Species_Index
+  use M_Basis_Vars, only: nMx
   use M_T_Kinmodel, only: T_KinModel,KinModel_CalcCoeffs,KinModel_PrmIndex
   !
   use M_System_Vars,only: TdgK
-  use M_Global_Vars,only: nAq,vSpc,vKinModel
+  use M_Global_Vars,only: nAq,vSpcDat,vKinModel,SolModel !,vSpc
   
   ! use M_KinRate,    only: KinRate_CalcActivFactor
   
@@ -344,7 +355,7 @@ subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
   !
   type(T_KinModel),allocatable::vKinMod(:)
   type(T_KinModel)::M
-  integer :: I,iKm,nKm
+  integer :: I,iKm,nKm,isH_
   real(dp):: VmAct,X
   ! real(dp):: dum(1:nAq)
   real(dp):: vLnAct(1:nAq) !for dissolution rates
@@ -361,8 +372,8 @@ subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
     call KinModel_CalcCoeffs(vKinModel(iKm),One,TdgK)
   end do
   !
-  vLnAct(1:nAq)=vSpc(1:nAq)%Dat%LAct
-  do I=1,nAq; vPrm(i)=i; end do
+  vLnAct(1:nAq)=vSpcDat(1:nAq)%LAct
+  do I=1,nAq ; vPrm(i)=i ; end do
   !
   allocate(vKinMod(1:size(vKinModel))); vKinMod=vKinModel
   !
@@ -370,7 +381,8 @@ subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
     call KinModel_PrmIndex(vPrm,vKinModel(iKm),vKinMod(iKm))
   end do
   !
-  pH=-vLnAct(isH_)/Ln10
+  isH_= SolModel%isH_
+  pH=  -vLnAct(isH_)/Ln10
   !
   if(fMnk==0) then
   
@@ -404,7 +416,7 @@ subroutine KinRate_ActivTest(fMnK,iCount) !,LnActH_,LnActOH,LnActCO2)
       & vLnAct,   & !LnActH_,LnActOH,LnActCO2, & !"activators"
       & VmAct)      !OUT
       !! & dum) !dVmAdLnX_M) !OUT
-      !X=ABS(VmAct)
+      !X=abs(VmAct)
       X=VmAct
       if(X>TinyDP) then; X=log(X)/Ln10
       else             ; X=Zero

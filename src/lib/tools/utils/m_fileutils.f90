@@ -1,9 +1,9 @@
 module M_FileUtils
-  !========================================================
+  !--------------------------------------------------------
   ! M_Files_Utils
   !--------------------------------------------------------
   ! Library of utils for file edition  
-  !========================================================
+  !--------------------------------------------------------
   implicit none
   private
 
@@ -19,11 +19,11 @@ contains
   !--
 
    function File_Exist_System(Str) 
-    !--=====================================
+    !---------------------------------------
     ! reports whether a file exists 
     ! and modify the name ( / <-> \ ) 
     ! to adapt to systems if necessary
-    !--=====================================
+    !---------------------------------------
     logical :: File_Exist_System
     character(len=*),intent(inout)::Str
     !---
@@ -32,21 +32,21 @@ contains
     !! character(len=8)   ::FS
     logical :: OK !!, OkUnixFS
     !---
-    StrOut = File_Path(trim(Str))
-    Ok = File_Exist(StrOut)
+    StrOut= File_Path(trim(Str))
+    Ok= File_Exist(StrOut)
     
     !-- 
-    File_Exist_System = Ok
-    Str = StrOut
+    File_Exist_System= Ok
+    Str= StrOut
   
   end function File_Exist_System
 
   !---
   
   function File_Exist(Str) 
-    !--=====================================
+    !---------------------------------------
     ! reports whether a file exists
-    !--=====================================
+    !---------------------------------------
     implicit none
     logical :: File_Exist
     character(len=*),intent(in)::Str
@@ -58,9 +58,9 @@ contains
   !--
 
   subroutine File_Write_Date_Time(F)
-    !--======================================
+    !---------------------------------------
     ! write the date and time to a file unit
-    !--======================================
+    !---------------------------------------
     implicit none
     integer,intent(in):: F
     character(len=10):: Date_,Time_
@@ -103,20 +103,17 @@ contains
     integer :: i
     !---
     do i=1, len(Str)
-       if (Str(i:i) == a) Str(i:i) = b
+      if (Str(i:i) == a) Str(i:i)= b
     end do
-
+    !
   end subroutine Char_Replace
-
-  
   !---
-
   function File_Path(StrIn) 
-    !=========================================================
+    !--------------------------------------------------------
     ! Return a FullFileName for the Current FileSystem
-    ! Default Mode = UnixFS    ( Slash )
-    ! Other Mode   = WindowsFS ( Backslash )
-    !=========================================================
+    ! Default Mode= UnixFS    ( Slash )
+    ! Other Mode  = WindowsFS ( Backslash )
+    !--------------------------------------------------------
     implicit none
     character(len=*),intent(in) :: StrIn
     character(len=len(StrIn))   :: File_Path
@@ -124,7 +121,7 @@ contains
     character(len=len(StrIn))   :: StrOut    
     logical :: OkUnixFS
     !---
-    OkUnixFS = Is_UnixFS()
+    OkUnixFS= Is_UnixFS()
     StrOut=StrIn
     if ( OkUnixFS ) then
        call Unix_Filename(StrOut)
@@ -132,23 +129,22 @@ contains
        call Windows_Filename(StrOut)
     end if
 
-    File_Path = StrOut
+    File_Path= StrOut
 
     !// debug
-    !!if (iDebug>0) write(*,*) "UnixFileSystem =", OkUnixFS, ", Input = ", StrIn, " Result = ", StrOut
+    !! if (idebug>1) &
+    !! & write(*,*) "UnixFileSystem =", OkUnixFS, ", Input= ", StrIn, " Result= ", StrOut
     
   end function File_Path
-
-   !---
-
+  !---
   function Is_UnixFS() result(Ok)
-    !======================================================
+    !-------------------------------------
     ! Check if the File System is a UnixFS 
-    ! Test if SLASH_ = "/" can be used in a FullFileName
-    !======================================================
+    ! Test if SLASH_= "/" can be used in a FullFileName
+    !-------------------------------------
     use M_IOTools, only : GetUnit
     implicit none
-    character,parameter::SLASH_     = Achar(47)
+    character,parameter::SLASH_= Achar(47)
     !---
     logical :: Ok
     !---
@@ -157,14 +153,14 @@ contains
     character(len=9) :: FullFileName
     !---
     call GetUnit(f)
-    FileName = 'zzz_tmp'
-    open(unit = f, file = FileName)   
+    FileName= 'zzz_tmp'
+    open(unit= f, file= FileName)   
     close(f)
     
     FullFileName='.'//SLASH_//FileName
     inquire(file=FullFileName,EXIST=Ok)
     
-    open(unit = f, file = FileName, status='unknown') 
+    open(unit= f, file= FileName, status='unknown') 
     close(f, status='DELETE')
     
   end function Is_UnixFS
@@ -172,13 +168,13 @@ contains
   !--
 
   function Is_WindowsFS() result(Ok)
-    !======================================================
+    !-------------------------------------
     ! Check if the File System is a WindowsFS 
-    ! Test if BACKSLASH_ = "\" can be used in a FullFileName
-    !======================================================
+    ! Test if BACKSLASH_= "\" can be used in a FullFileName
+    !-------------------------------------
     use M_IOTools, only : GetUnit
     implicit none
-    character,parameter::BACKSLASH_ = Achar(92)
+    character,parameter::BACKSLASH_= Achar(92)
     !---
     logical :: Ok
     !---
@@ -187,14 +183,14 @@ contains
     character(len=9) :: FullFileName
     !---
     call GetUnit(f)
-    FileName = 'zzz_tmp'
-    open(unit = f, file = FileName) 
+    FileName= 'zzz_tmp'
+    open(unit= f, file= FileName) 
     close(F)
         
     FullFileName='.'//BACKSLASH_//FileName
     inquire(file=FullFileName,EXIST=Ok)
     
-    open(unit = f, file = FileName) !, status='SCRATCH') 
+    open(unit= f, file= FileName) !, status='SCRATCH') 
     close(f)
     
   end function Is_WindowsFS

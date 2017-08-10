@@ -5,7 +5,9 @@ subroutine Driver_Arxim
   ! Interactive Program Arxim
   ! Get Input Filename and Compute Mode From [ User Command Line ]
   !---------------------------------------------------------------------
-  use M_Trace,       only: iDebug, Stop_, Trace_Close, Trace_Init,Pause_,LWarning
+  use M_Trace,       only: iDebug, Stop_, Pause_, LWarning, fError
+  use M_Trace,       only: Trace_Close, Trace_Init
+  use M_IoTools,     only: GetUnit
   use M_Files,       only: Files_PathRead, Files_BuildInput 
   use M_Global_Tools,only: Global_Zero, Global_Clean
   use M_System_Vars, only: System_Clean, vCpn
@@ -28,7 +30,7 @@ subroutine Driver_Arxim
     call Global_Zero
     !
     call IO_Menu(S,OkCmd,iDebug)
-    LWarning= (iDebug>0)
+    LWarning= (idebug>1)
     !
     !------------------------------------------------------
     !// SPECIAL MODES : Q, REF, NEW
@@ -60,7 +62,18 @@ subroutine Driver_Arxim
   end do DoMain
   !
   call Trace_Close
+  !
   write(*,'(A)') "PERFECT"
+  !------------------------------------------------------------error.log
+  if(iDebug>0) then
+    if(fError==0) then
+      call GetUnit(fError)
+      open(fError,file="error.log")
+    end if
+    write(fError,'(A)') "PERFECT"
+    close(fError)
+  end if
+  !-----------------------------------------------------------/error.log
 
 end subroutine Driver_Arxim
 
@@ -96,7 +109,7 @@ subroutine Driver_Arxim_Options(sFilename, sMode)
   !
   OkCmd=.true. ! Direct Command 
   call IO_Options_Read(iDebug)
-  LWarning= (iDebug>0)
+  LWarning= (idebug>1)
   !
   write(*,'(A,A)') "TEST COMPUTE ", sMode
   !
@@ -107,8 +120,11 @@ subroutine Driver_Arxim_Options(sFilename, sMode)
   !
   call Trace_Close
   !
-  if (OkSMode)      write(*,'(A)') "PERFECT"
-  if (.not.OkSMode) write(*,'(A)') "ERRORS"
+  if (OkSMode) then
+    write(*,'(A)') "PERFECT"
+  else
+    write(*,'(A)') "ERRORS"
+  end if
 
 end subroutine Driver_Arxim_Options
 
@@ -213,6 +229,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
 
   case("DYN")
     call Global_Build
+    call System_Build
     !
     call Dynam_Initialize
     !-> initial speciation for box fluid and inject fluid
@@ -224,6 +241,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
     
   case("COLUMN")
     call Global_Build
+    call System_Build
     !
     call Dynam_Initialize
     !-> initial speciation for box fluid and inject fluid
@@ -329,7 +347,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   case("GEMPATH")
     call Global_Build
     call Simplex_Build
-    call Simplex_Theriak_Path
+    call Simplex_Theriak_Path(.false.)
     call GEM_Vars_Clean
     
   case("SPLTP")
@@ -340,7 +358,9 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   case("SPLPATH")
     call Global_Build
     call Simplex_Build
-    call Simplex_Path("PATH")
+    ! call Simplex_Path("PATH")
+    call Simplex_Theriak_Path(.true.)
+    call GEM_Vars_Clean
 
   case("DTBEQ36")
     call Global_Build

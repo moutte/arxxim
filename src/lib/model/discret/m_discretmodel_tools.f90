@@ -57,7 +57,7 @@ subroutine DiscretModel_Init( &
   character(len=71):: Formul
   integer,allocatable:: vStoik1(:),vStoik2(:),vStoik3(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_Init"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretModel_Init"
   !
   Ternary= (MixModel%NPole==3)
   !! MixModel= vMixModel(DiscretModel%iMix)
@@ -69,8 +69,8 @@ subroutine DiscretModel_Init( &
   P%vXPole=    Zero
   !
   ! compute stoikio vectors of end members
-  if(iDebug>0) write(fTrc,'(A)') trim(vSpc(MixModel%vIPole(1))%Formula)
-  if(iDebug>0) write(fTrc,'(A)') trim(vSpc(MixModel%vIPole(2))%Formula)
+  if(idebug>1) write(fTrc,'(A)') trim(vSpc(MixModel%vIPole(1))%Formula)
+  if(idebug>1) write(fTrc,'(A)') trim(vSpc(MixModel%vIPole(2))%Formula)
   !
   if(MixModel%NPole==1) return
   !
@@ -144,7 +144,7 @@ subroutine DiscretModel_Init( &
       !
       vSpcOut(N)= S
       !
-      if(iDebug>0) write(fTrc,'(2(A,A1))') &
+      if(idebug>1) write(fTrc,'(2(A,A1))') &
       & trim(DiscretName),T_,trim(Formul),T_
       !
       !----------------------------------------------------------------!
@@ -157,7 +157,7 @@ subroutine DiscretModel_Init( &
   !
   deallocate(vStoik1,vStoik2,vStoik3)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_Init"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretModel_Init"
   !
   return
 end subroutine DiscretModel_Init
@@ -220,7 +220,7 @@ subroutine DiscretSpecies_Stoikio_Calc( &
   !
   integer,allocatable:: vStoik1(:),vStoik2(:),vStoik3(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretSpecies_Stoikio_Calc"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretSpecies_Stoikio_Calc"
   !
   nEl= size(vEle)
   !
@@ -249,7 +249,7 @@ subroutine DiscretSpecies_Stoikio_Calc( &
       if(Ternary) &
       & vStoik3(0:nEl)= vSpc(MxModl%vIPole(3))%vStoikio(0:nEl)
       !
-      if(iDebug>0) &
+      if(idebug>1) &
       write(fTrc,'(4(2A,/))') &
       & "disc.model=", DsModl%Name, &
       & "mixt.model=", MxModl%Name, &
@@ -274,7 +274,7 @@ subroutine DiscretSpecies_Stoikio_Calc( &
     !
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretSpecies_Stoikio_Calc"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretSpecies_Stoikio_Calc"
   !
   return
 end subroutine DiscretSpecies_Stoikio_Calc
@@ -302,7 +302,7 @@ subroutine DiscretParam_Init( &
   type(T_DiscretParam),allocatable:: vParam(:)
   integer:: I, iM, iMix, dimDis, N
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretParam_Init"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretParam_Init"
   !
   N= 0
   do iM=1,size(vDiscretModel)
@@ -328,7 +328,7 @@ subroutine DiscretParam_Init( &
       vDiscretParam(N)= vParam(i)  !-> for I,J,K
       vDiscretParam(N)%iModel= iM  !must come after
       !
-      if(iDebug>0) then
+      if(idebug>1) then
         write(fTrc,'(2A)') vSpcOut(N)%NamSp, vSpcOut(N)%Typ
       end if
       !
@@ -339,7 +339,7 @@ subroutine DiscretParam_Init( &
     !
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretParam_Init"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretParam_Init"
   !
 end subroutine DiscretParam_Init
 
@@ -379,7 +379,7 @@ subroutine DiscretSpecies_TP_Update( &
   !
   !character(len=30):: cFormat
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< DiscretSpecies_TP_Update"
+  if(idebug>1) write(fTrc,'(/,A)') "< DiscretSpecies_TP_Update"
   !
   iMix0= 0
   !
@@ -486,7 +486,7 @@ subroutine DiscretSpecies_TP_Update( &
     !
   end do
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretSpecies_TP_Update"
+  if(idebug>1) write(fTrc,'(A,/)') "</ DiscretSpecies_TP_Update"
   !
 end subroutine DiscretSpecies_TP_Update
 
@@ -569,7 +569,7 @@ end module M_DiscretModel_Tools
 !!     if(vStoik(iEl)>0) then
 !!       write(Str,'(I3)') vStoik(iEl)
 !!       S= trim(S)//vEle(iEl)%NamEl(1:2)//"("//trim(adjustl(Str))//")"
-!!       !!if(iDebug>0) write(fTrc,'(A)') trim(S)
+!!       !!if(idebug>1) write(fTrc,'(A)') trim(S)
 !!     end if
 !!     !
 !!   end do
@@ -599,7 +599,7 @@ end module M_DiscretModel_Tools
 !!   integer::nEl,iTP,iEl
 !!   character(len=15)::SolName
 !!   !
-!!   if(iDebug>0) write(fTrc,'(A)') "FelsparDiscretize"
+!!   if(idebug>1) write(fTrc,'(A)') "FelsparDiscretize"
 !!   !
 !!   N=0
 !!   do I=0,Discret
@@ -621,7 +621,7 @@ end module M_DiscretModel_Tools
 !!   do iTP=1,size(vTPpath)
 !!     Pbar= vTPpath(iTP)%Pbar
 !!     TdgK= vTPpath(iTP)%TdgC+T_CK
-!!     if(iDebug>0) write(fTrc,'(I3,2(1X,G12.3))') iTP,Pbar,TdgK
+!!     if(idebug>1) write(fTrc,'(I3,2(1X,G12.3))') iTP,Pbar,TdgK
 !!     !
 !!     !update Margules parameters for the current T,P
 !!     MixModel_Param_Update(TdgK,Pbar,S)
@@ -646,11 +646,11 @@ end module M_DiscretModel_Tools
 !!         !! vGibFas(nFasPur+N,iTP)=GTot*real(Discret)
 !!         !
 !!         if(iTP==1) then !do only for first TP value
-!!           if(iDebug>0) write(fTrc,'(A,A1,I3,A1,4(G15.6,A1))') &
+!!           if(idebug>1) write(fTrc,'(A,A1,I3,A1,4(G15.6,A1))') &
 !!           & Solname,T_,N,T_,P%vXPole(1),T_,P%vXPole(2),T_,P%vXPole(3),T_,GTot,T_
 !!           !
 !!           call FelsparName(I,J,K,SolName)
-!!           !! v%namSol(nFasPur+N)=trim(SolName)
+!!           !! v%namMix(nFasPur+N)=trim(SolName)
 !!           !
 !!           !calculate stoikio of "pseudophases" in terms of elements
 !!           do iEl=1,nEl
@@ -667,7 +667,7 @@ end module M_DiscretModel_Tools
 !!   end do
 !!   write(fTrc,'(/,A,I3,/)') "N_tot=",N
 !!   !
-!!   if(iDebug>0) write(fTrc,'(A)') "FelsparDiscretize"
+!!   if(idebug>1) write(fTrc,'(A)') "FelsparDiscretize"
 !!   !! nFasSol=N
 !! end subroutine FelsparDiscretize
 
@@ -702,7 +702,7 @@ end module M_DiscretModel_Tools
 !!   real(dp):: G_IdMix,GMix,G_XsMix,GMecaRT !,GTotRT !,V0,WeitKg
 !!   integer :: N,I,J,K
 !!   !
-!!   if(iDebug>0) write(fTrc,'(/,A)') "< DiscretModel_TP_Update"
+!!   if(idebug>1) write(fTrc,'(/,A)') "< DiscretModel_TP_Update"
 !!   !
 !!   MxModl=   vMixModel(DiscretModel%iMix)
 !!   nDiscret= DiscretModel%DimTot
@@ -712,8 +712,8 @@ end module M_DiscretModel_Tools
 !!   MxPhas%vXPole=    Zero
 !!   !
 !!   !--- compute stoikio vectors of end members
-!!   if(iDebug>0) write(fTrc,'(A)') vSpc(MxModl%vIPole(1))%Formula !debug_
-!!   if(iDebug>0) write(fTrc,'(A)') vSpc(MxModl%vIPole(2))%Formula
+!!   if(idebug>1) write(fTrc,'(A)') vSpc(MxModl%vIPole(1))%Formula !debug_
+!!   if(idebug>1) write(fTrc,'(A)') vSpc(MxModl%vIPole(2))%Formula
 !!   !
 !!   !--- update Margules parameters for the current T,MxPhas
 !!   call MixModel_Param_Update(TdgK,Pbar,MxModl)
@@ -759,6 +759,6 @@ end module M_DiscretModel_Tools
 !!     !end do
 !!   end do
 !!   !
-!!   if(iDebug>0) write(fTrc,'(A,/)') "</ DiscretModel_TP_Update"
+!!   if(idebug>1) write(fTrc,'(A,/)') "</ DiscretModel_TP_Update"
 !!   !
 !! end subroutine DiscretModel_TP_Update

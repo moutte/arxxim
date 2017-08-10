@@ -29,7 +29,7 @@ contains
     !---
     if (I>OptComputeSize) then
       Ok = .false.
-      Value = "none"
+      Value = "NONE"
     else
       Ok = .true.
       Value = OptCompute(I)
@@ -71,7 +71,7 @@ contains
     Ok = .false.
     nCompute =0
 
-    if(iDebug>0) write(fTrc,'(/,A,/)') "< Test_ReadInput"
+    if(idebug>1) write(fTrc,'(/,A,/)') "< Test_ReadInput"
 
     !// Estimate the maximal number of values to store
     call GetUnit(f)
@@ -88,8 +88,8 @@ contains
     end do
     close(f)
     
-    !~ print *,'nCompute=',nCompute
-    !~ print *,'..DEBBUGG'  ;  pause
+    !! print *,'nCompute=',nCompute
+    !! print *,'..DEBBUGG'  ;  pause
     
     !// Allocate the table
     if(allocated(OptCompute)) deallocate(OptCompute)
@@ -156,7 +156,7 @@ contains
       write(fTrc,'(2X,A)') OptCompute(nCompute)
     end do
     !
-    if(iDebug>0) write(fTrc,'(/,A,/)') "</ Test_ReadInput"
+    if(idebug>1) write(fTrc,'(/,A,/)') "</ Test_ReadInput"
 
   end subroutine Test_Read_ReInit
 

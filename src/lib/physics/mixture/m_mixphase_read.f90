@@ -69,7 +69,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
   integer :: ios,fInn
   real(dp),allocatable:: vXAtom(:)
   !
-  if(iDebug>0) write(fTrc,'(/,A)') "< MixPhase_BuildLnk"
+  if(idebug>1) write(fTrc,'(/,A)') "< MixPhase_BuildLnk"
   !
   Ok= .true.
   MsgError= "Ok"
@@ -142,7 +142,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
             return !----------------------------------------------return
           end if
 
-          if(iDebug>0) write(fTrc,'(2A)') "MODEL=", trim(W)
+          if(idebug>1) write(fTrc,'(2A)') "MODEL=", trim(W)
           MixFas%iModel=   iS
           !
           !=MixModel
@@ -152,7 +152,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
         !-----------------------------------------/read phase compositon
         case("COMPOSITION")
           !
-          if(iDebug>0) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
+          if(idebug>1) write(fTrc,'(A)') "!!! !!!Read_COMPOSITION"
           !
           if(MixFas%iModel==0) then
             Ok= .false.
@@ -198,7 +198,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
                   MixFas%vLPole(K)= (X1>Zero)
                   MixFas%vXPole(K)=  X1 !save to MixFas%composition
                   !
-                  if(iDebug>0) write(fTrc,'(2(A,I3))') &
+                  if(idebug>1) write(fTrc,'(2(A,I3))') &
                   & "K=",K,", (MixFas%iModel)%vIPole(K)=",MixModel%vIPole(K)
                   !
                   exit
@@ -247,7 +247,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
           !!!       ! save to vMixFas(J)%composition
           !!!       MixFas%vXAtom(K)= X1 / MixModel%vMulti(M)
           !!!       !
-          !!!       if(iDebug>0) &
+          !!!       if(idebug>1) &
           !!!       & write(fTrc,'(I3,1X,2A,G15.6)') K,MixModel%vNamAtom(K),"=",X1
           !!!       !
           !!!     end do
@@ -267,7 +267,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
             & vXAtom(1:MixModel%NAtom))
             !
             !------------------------------------------------------trace
-            if(iDebug>0) then
+            if(idebug>1) then
               !
               write(fTrc,'(/,A,/)') "POLE FRACTIONS"
               do i=1,MixModel%NPole
@@ -291,20 +291,20 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
             end if
             !-----------------------------------------------------/trace
 
-            if(iDebug>0) &
+            if(idebug>1) &
             & write(fTrc,'(/,A,/)') "for site models, initialize vLPole"
             !
             do K=1,MixModel%NPole
               !if(MixModel%vHasPole(K)) then
                 X1= MixModel_Site_ActivIdeal(MixModel,K,vXAtom)
-                if(iDebug>0) write(fTrc,'(A,1X,G15.6)') MixModel%vNamPole(K),X1
+                if(idebug>1) write(fTrc,'(A,1X,G15.6)') MixModel%vNamPole(K),X1
                 MixFas%vLPole(K)= (X1>Zero)
               !else
               !  MixFas%vLPole(K)= .false.
               !end if
             end do
             !
-            if(iDebug>0) write(fTrc,'(/,A,/)') "END vLPole"
+            if(idebug>1) write(fTrc,'(/,A,/)') "END vLPole"
             !
           end if
           !
@@ -331,7 +331,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
           end do
           N=N+1
           !
-          if(iDebug>0) &
+          if(idebug>1) &
           & write(fTrc,'(I3,1X,A24,A24)') N, MixFas%Name, MixModel%Name
           call LnkFas_Build(N==1,MixFas,LnkFas,pFas)
           !
@@ -349,7 +349,7 @@ subroutine MixPhase_BuildLnk(vSpc,vMixModel,N,LnkFas,Ok,MsgError)
   !
   close(fInn)
   !
-  if(iDebug>0) write(fTrc,'(A,/)') "</ MixPhase_BuildLnk"
+  if(idebug>1) write(fTrc,'(A,/)') "</ MixPhase_BuildLnk"
   !
   return
 end subroutine MixPhase_BuildLnk

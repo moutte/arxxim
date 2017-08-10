@@ -19,8 +19,8 @@ subroutine Broyden( &
 !!& TolMin,  & !in=    whether spurious convergence to a minimum of fmin has occurred
 & bFinDif, & !in=    use numeric Jacobian
 & MaxIts,  & !in=    maximum number of iterations
-& Error_F, & !out=   MAXVAL(ABS(fVec(:)))
-& Delta_X, & !out=   MAXVAL( ABS(vX(:)-vXOld(:)) / MAX(ABS(vX(:)),One) )
+& Error_F, & !out=   maxval(abs(fVec(:)))
+& Delta_X, & !out=   maxval( abs(vX(:)-vXOld(:)) / max(abs(vX(:)),One) )
 & Gradient, & !out=   
 & Nits,    & !out=   number of iterations
 & Check,   & !out=   if Check, should check convergence
@@ -80,11 +80,11 @@ subroutine Broyden( &
   vFunc= Residual(vX)
   F=    dot_product(vFunc,vFunc)/2.0D0
   !
-  !if (MAXVAL(ABS(vFunc(:))) < 0.01_dp*NewtTolF) then
+  !if (maxval(abs(vFunc(:))) < 0.01_dp*NewtTolF) then
   !  iErr=1; return !__________________________________________________________return
   !end if
   !
-  STPMAX= STPMX*MAX(VABS(vX(:)),real(N,dp))
+  STPMAX= STPMX*MAX(Vabs(vX(:)),real(N,dp))
   RESTRT= .true.
   !
   iErr= -1
@@ -128,13 +128,13 @@ subroutine Broyden( &
       !
       W(:)=vFunc(:)-vFuncOld(:) -matmul(T(:),QT(:,:))
       !
-      where (ABS(W(:)) < EPS*(ABS(vFunc(:))+ABS(vFuncOld(:)))) W(:)=Zero
-      if (ANY(W(:) /= Zero)) then
+      where (abs(W(:)) < EPS*(abs(vFunc(:))+abs(vFuncOld(:)))) W(:)=Zero
+      if (any(W(:) /= Zero)) then
         T(:)=matmul(QT(:,:),W(:))
         S(:)=S(:)/dot_product(S,S)
         call QRUPDT(R,QT,T,S)
         D(:)=GET_DIAG_RV(R(:,:)) !do J=1,size(MAT,1) GET_DIAG_RV(J)=MAT(J,J); end do
-        if (ANY(D(:)==Zero)) then !call Stop_('R SINGULAR IN Residual')
+        if (any(D(:)==Zero)) then !call Stop_('R SINGULAR IN Residual')
           iErr=-2; exit do0
         end if
       end if
@@ -148,9 +148,9 @@ subroutine Broyden( &
     !
     call LNSRCH(XOLD,FOLD,G,STPMAX,P,vX,F,CHECK) !-> this updates also vFunc !!
     !
-    Error_F= MAXVAL(ABS(vFunc(:)))
-    Gradient= MAXVAL(ABS(G(:))*MAX(ABS(vX(:)),One)/MAX(F,0.5_dp*N))
-    Delta_X= MAXVAL((ABS(vX(:)-XOLD(:)))/MAX(ABS(vX(:)),One))
+    Error_F= maxval(abs(vFunc(:)))
+    Gradient= maxval(abs(G(:))*MAX(abs(vX(:)),One)/MAX(F,0.5_dp*N))
+    Delta_X= maxval((abs(vX(:)-XOLD(:)))/MAX(abs(vX(:)),One))
     !
     if (Error_F < TolF) then
       iErr=0; return !__________________________________________________________return
@@ -223,7 +223,7 @@ subroutine LNSRCH( & !from NR
   !
   Slope=dot_product(vGrad,vDX) !______________Compute lambda_min
   if (slope>=Zero) call Stop_('roundoff problem in lnsrch') !____________________________stop
-  AlaMin=TolX / MAXVAL(ABS(vDX(:))/MAX(ABS(vXOld(:)),One))
+  AlaMin=TolX / maxval(abs(vDX(:))/MAX(abs(vXOld(:)),One))
   Alam=One !____________________________Always try full Newton step first
   do !__________________________________Start of iteration loop
     vXnew(:)= vXOld(:) +Alam *vDX(:)
@@ -280,7 +280,7 @@ subroutine Put_Diag_Rv(DIAGV,MAT) !used in Broyden method
   real(dp),dimension(:,:),intent(inout):: MAT
   integer::J,N
   !
-  if(size(DIAGV) /= MIN(size(MAT,1),size(MAT,2))) call Stop_("SIZE !!! PUT_DIAG_RV")
+  if(size(DIAGV) /= min(size(MAT,1),size(MAT,2))) call Stop_("SIZE !!! PUT_DIAG_RV")
   N=size(DIAGV)
   do J=1,N; MAT(J,J)=DIAGV(J); end do
 end subroutine Put_Diag_Rv
@@ -384,8 +384,8 @@ function Pythag(a,b) !from "NR"
   real(dp),intent(in):: a,b
   real(dp)           :: pythag
   real(dp):: absa,absb
-  absa=ABS(a)
-  absb=ABS(b)
+  absa=abs(a)
+  absb=abs(b)
   if (absa > absb) then
     pythag=absa*SQRT(One+(absb/absa)**2)
   else
@@ -406,7 +406,7 @@ subroutine Rotate(r,qt,i,a,b) !from "NR"
   if(a== Zero) then
     c=   Zero
     s=   SIGN(One,b)
-  elseif (ABS(a)>ABS(b)) then
+  elseif (abs(a)>abs(b)) then
     fact=b/a
     c=   sign(One/SQRT(One+fact**2),a)
     s=   fact*c
@@ -433,7 +433,7 @@ subroutine QRDcmp(a,c,d,sing) !QR decomposition, from "NR"
   n=Assert_Eq4(size(a,1),size(a,2),size(c),size(d),'qrdcmp')
   sing=.false.
   do k=1,n-1
-    scale=MAXVAL(ABS(a(k:n,k)))
+    scale=maxval(abs(a(k:n,k)))
     if (scale==Zero) then
       sing= .true.
       c(k)= Zero
