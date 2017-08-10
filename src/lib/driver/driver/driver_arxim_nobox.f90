@@ -63,7 +63,7 @@ subroutine Driver_Arxim
   !
   call Trace_Close
   !
-  write(*,'(A)') "PERFECT"
+  if(iDebug>1) write(*,'(A)') "PERFECT"
   !------------------------------------------------------------error.log
   if(iDebug>0) then
     if(fError==0) then
@@ -143,9 +143,9 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   use M_Dynam_Column
   use M_Path
   use M_GEM_Vars
-  use M_Simplex_Theriak
-  use M_Simplex_Path
-  use M_Simplex_Build
+  use M_GEM_Theriak
+  use M_GEM_Path
+  use M_GEM_Build
   use M_DiscretModel_Test
   use M_IO_Menu
 
@@ -325,41 +325,41 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
     !
   ! case("SPLMIX")
   !   call Global_Build
-  !   call Simplex_Build
-  !   call Simplex_Theriak(.false.)
+  !   call GEM_Build
+  !   call GEM_Theriak(.false.)
   
   ! case("SPLMIXID")
   !   call Global_Build
-  !   call Simplex_Build
-  !   call Simplex_Theriak(.true.)
+  !   call GEM_Build
+  !   call GEM_Theriak(.true.)
   
   case("GEM")
     call Global_Build
-    call Simplex_Build
-    call Simplex_Theriak
+    call GEM_Build
+    call GEM_Theriak
     call GEM_Vars_Clean
   
   ! case("GEMID")
   !   call Global_Build
-  !   call Simplex_Build
-  !   call Simplex_Theriak(.true.)
+  !   call GEM_Build
+  !   call GEM_Theriak(.true.)
   
   case("GEMPATH")
     call Global_Build
-    call Simplex_Build
-    call Simplex_Theriak_Path(.false.)
+    call GEM_Build
+    call GEM_Theriak_Path(.false.)
     call GEM_Vars_Clean
     
   case("SPLTP")
     call Global_Build
-    call Simplex_Build
-    call Simplex_Path("TP")
+    call GEM_Build
+    call GEM_Path("TP")
   
   case("SPLPATH")
     call Global_Build
-    call Simplex_Build
-    ! call Simplex_Path("PATH")
-    call Simplex_Theriak_Path(.true.)
+    call GEM_Build
+    ! call GEM_Path("PATH")
+    call GEM_Theriak_Path(.true.)
     call GEM_Vars_Clean
 
   case("DTBEQ36")

@@ -170,6 +170,7 @@ subroutine Equil_Zero(Cod)
 !--
 !-- for "very initial" speciation
 !--
+  use M_T_Species,  only: T_SpcData
   use M_Equil_Read ! <-equil_Read_Debug,Equil_Read_Conditions,Equil_Read_PhaseAdd,Equil_Read_YesList
   use M_Equil_Vars, only: Equil_Vars_Alloc
   !
@@ -178,7 +179,7 @@ subroutine Equil_Zero(Cod)
   use M_System_Vars,only: vCpn,iO_,iH_
   !
   use M_Basis_Vars, only: iBal,initMolNu
-  use M_Basis_Vars, only: vLAx,vLCi,nAs,tAlfFs
+  use M_Basis_Vars, only: vLAx,vLMx,vLCi,nAs,tAlfFs
   use M_Equil_Vars, only: DebFormula,DebNewt,DebJacob,vYesList
   use M_Equil_Vars, only: LogForAqu,DirectSub,cMethod,bFinDif
   use M_Equil_Vars, only: vLnAct
@@ -190,12 +191,12 @@ subroutine Equil_Zero(Cod)
   !
   integer,parameter:: AdjustMode= 2 !!1
   !
-  logical :: Error
+  logical :: Error,OK
   character(len=80):: ErrorMsg
   integer :: I,iSpc
   integer :: isW
   real(dp):: MWSv
-
+  type(T_SpcData),allocatable:: vDat(:)
   !
   logical:: test_initmolnu= .false.
   !
@@ -210,13 +211,13 @@ subroutine Equil_Zero(Cod)
   initMolNu= 1.0D-6
   !-----------------------------------------------------/ default values
   !
-  !----------------------------------------------------- read CONDITIONS
+  !------------------------------------------------------read CONDITIONS
   call Equil_Read_Debug(DebFormula,DebNewt,DebJacob)
   call Equil_Read_Numeric( &
   & initMolNu,LogForAqu,DirectSub,cMethod,bFinDif,Error,ErrorMsg)
   !
   !if(.not. LogForAqu) DirectSub= .true.
-  !----------------------------------------------------/ read CONDITIONS
+  !-----------------------------------------------------/read CONDITIONS
   !
   call Equil_Init_TotO_TotH( & !
   & AdjustMode,        &          !IN
@@ -243,10 +244,9 @@ subroutine Equil_Zero(Cod)
   !! if(trim(Cod)/="SPC") call Equil_Read_YesList(vFas,vYesList)
   if(Cod(1:2)=="EQ") call Equil_Read_YesList(size(vFas),vFas,vYesList)
   !
-  !----------------------------------------------------- initial gamma's
-  vSpcDat(:)%LGam= Zero
+  vSpcDat(:)%LGam= Zero !--------------------------------initial gamma's
   !
-  !--------------------------------------- initial mole numbers in fluid
+  !----------------------------------------initial mole numbers in fluid
   ! initialize vSpcDat(1:nAq)%Mole, used as initial guess for solver
   vSpcDat(1:nAq)%Mole= InitMolNu !initial value for all aqu'species
   vSpcDat(isW)%Mole=   One/MWSv  !except Solvent
@@ -260,6 +260,21 @@ subroutine Equil_Zero(Cod)
     end do
   end if
   !
+  !-------------------------------------------------------read from file
+  if(iDebug==1) then
+    allocate(vDat(size(vSpcDat)))
+    call Equil_Read_FromFile(vDat,OK)
+    if(OK) then
+      do i=1,size(vSpcDat)
+        if(.not.(vLAx(i) .or. vLMx(i))) then
+          vSpcDat(i)= vDat(i)
+        end if
+      end do
+    end if
+    deallocate(vDat)
+  end if
+  !-----------------------------------------------------------/from file
+  !
   != for mobile aqu'species, compute mole numbers estimates
   != from their activities (which are fixed) and the current gamma's
   do I=1,nAq
@@ -267,7 +282,7 @@ subroutine Equil_Zero(Cod)
     & vSpcDat(I)%Mole= exp(vSpcDat(I)%LAct -vSpcDat(I)%LGam)
     !this gives molality, should multiply by mass of solvent ...
   end do
-  !-----------------------------------/ initial mole numbers in fluid --
+  !---------------------------------------/initial mole numbers in fluid
   !!
   !call Specia_InitBalance(vTotS) !!NEW201010!!
   if(iBal/=0) vTotS(iBal)= Zero
@@ -321,7 +336,6 @@ subroutine Equil_Restart
     vAffScale(I)= sum(abs(tNuFas(I,:)))
   end do
   !
-  if(iDebug==1) call Equil_Read_FromFile(vSpcDat)
   ! retrieve data from current vSpcDat 
   vLnAct(:)=    vSpcDat(:)%LAct
   vLnGam(:)=    vSpcDat(:)%LGam
@@ -379,6 +393,7 @@ subroutine Equil_Save !(lEquil)
 !-- Update vSpc & vCpn for use in next speciations
 !--
   use M_Global_Vars,only: vEle,vSpc,vFas,nAq,vSpcDat
+  use M_Global_Vars,only: vMixModel,vMixFas
   use M_System_Vars,only: vCpn
   use M_Basis_Vars, only: nCi,nAx,nAs
   use M_Basis_Vars, only: tAlfPr,tAlfAs,tAlfFs,vOrdPr,vOrdAs
@@ -413,10 +428,11 @@ subroutine Equil_Save !(lEquil)
   !----/
   !
   !---------------------------------------------------------save to file
-  if(iDebug==1) then 
+  ! if(iDebug==1) then 
     call Equil_SaveSpc_ToFile(vSpcDat)
     call Equil_SaveCpn_ToFile(nAq,tStoikio,vSpcDat)
-  end if
+    call Equil_SaveFas_ToFile(vMixModel,vFas,vMixFas)
+  ! end if
   !--------------------------------------------------------/save to file
   !
   !----------------------------------------------------------------trace
@@ -433,6 +449,51 @@ subroutine Equil_Save !(lEquil)
   return
 end subroutine Equil_Save
 
+subroutine Equil_SaveFas_ToFile(vMixModel,vFas,vMixFas)
+  use M_IoTools,   only: GetUnit
+  use M_T_Phase,   only: T_Phase
+  use M_T_MixModel,only: T_MixModel
+  use M_T_MixPhase,only: T_MixPhase
+  !
+  type(T_MixModel), intent(in):: vMixModel(:)
+  type(T_Phase),    intent(in):: vFas(:)
+  type(T_MixPhase), intent(in):: vMixFas(:)
+  !
+  integer:: fo,iFs,iModel,J 
+  !
+  call GetUnit(fo)
+  open(fo,file="tmp_phase.tab")
+  !
+  do iFs=1,size(vFas)
+
+    if(vFas(iFs)%MolFs > Zero) then
+
+      write(fo,'(A,1X,G15.6)', advance="NO") &
+      & trim(vFas(iFs)%NamFs),vFas(iFs)%MolFs
+
+      if(vFas(iFs)%iMix>0) then
+        write(fo,'(A)',advance="NO") " X(:)="
+        !print *, "vFas(iFs)%iMix",vFas(iFs)%iMix
+        !pause
+        iModel= vMixFas(vFas(iFs)%iMix)%iModel
+        !print *, "iModel, nPole=",iModel,vMixModel(iModel)%nPole
+        !pause
+        do J=1,vMixModel(iModel)%nPole
+          write(fo,'(G15.6,1X)',advance="NO") &
+          & vMixFas(vFas(iFs)%iMix)%vXPole(J)
+        end do
+      end if
+      write(fo,*)
+
+    end if
+
+  end do
+  !
+  close(fo)
+  !
+  return
+end subroutine Equil_SaveFas_ToFile
+
 subroutine Equil_SaveSpc_ToFile(vSpcDat)
   use M_IoTools,  only: GetUnit
   use M_T_Species,only: T_SpcData
@@ -442,16 +503,22 @@ subroutine Equil_SaveSpc_ToFile(vSpcDat)
   integer:: F,i
   !
   call GetUnit(F)
-  open(F,file="tmp_species_mole.dat",form="unformatted",access="stream")
-  write(F) ( vSpcDat(i)%Mole, i=1,size(vSpcDat) )
+  !open(F,file="tmp_species_mole.dat",form="unformatted",access="stream")
+  !write(F) ( vSpcDat(i)%Mole, i=1,size(vSpcDat) )
+  open(F,file="tmp_species_mole.dat")
+  write(F,'(*(G15.6,1X))') (vSpcDat(i)%Mole, i=1,size(vSpcDat) )
   close(F)
   call GetUnit(F)
-  open(F,file="tmp_species_lact.dat",form="unformatted",access="stream")
-  write(F) ( vSpcDat(i)%LAct, i=1,size(vSpcDat) )
+  !open(F,file="tmp_species_lact.dat",form="unformatted",access="stream")
+  !write(F) ( vSpcDat(i)%LAct, i=1,size(vSpcDat) )
+  open(F,file="tmp_species_lact.dat")
+  write(F,'(*(G15.6,1X))') ( vSpcDat(i)%LAct, i=1,size(vSpcDat) )
   close(F)
   call GetUnit(F)
-  open(F,file="tmp_species_lgam.dat",form="unformatted",access="stream")
-  write(F) ( vSpcDat(i)%LGam, i=1,size(vSpcDat) )
+  !open(F,file="tmp_species_lgam.dat",form="unformatted",access="stream")
+  !write(F) ( vSpcDat(i)%LGam, i=1,size(vSpcDat) )
+  open(F,file="tmp_species_lgam.dat")
+  write(F,'(*(G15.6,1X))') ( vSpcDat(i)%LGam, i=1,size(vSpcDat) )
   close(F)
   !
   return
@@ -469,55 +536,64 @@ subroutine Equil_SaveCpn_ToFile(nAq,tStoikio,vSpcDat)
   real(dp):: X
   !
   call GetUnit(F)
-  open(F,file="tmp_cpn_fluid.dat",form="unformatted",access="stream")
+  ! open(F,file="tmp_cpn_fluid.dat",form="unformatted",access="stream")
+  open(F,file="tmp_cpn_fluid.dat")
   do iPr=1,size(tStoikio,1)
     X= sum(tStoikio(iPr,1:nAq)*vSpcDat(1:nAq)%Mole) !-> mole nrs in fluid
-    write(F) X
+    ! write(F) X
+    write(F,'(G15.6,1X)') X
   end do
   close(F)
   !
   return
 end subroutine Equil_SaveCpn_ToFile
 
-subroutine Equil_Read_FromFile(vSpcDat)
+subroutine Equil_Read_FromFile(vSpcDat,OK)
   use M_T_Species,only: T_SpcData
   !---------------------------------------------------------------------
   type(T_SpcData), intent(inout):: vSpcDat(:)
+  logical,         intent(out)  :: OK
   !---------------------------------------------------------------------
   real(dp):: v(size(vSpcDat))
-  logical :: OK
   !
-  call Read_FromFile("tmp_species_mole.dat",v,OK)
+  call Read_FromFile("tmp_species_mole.dat",size(vSpcDat),v,OK)
   if(OK) vSpcDat(:)%Mole= v(:)
-  call Read_FromFile("tmp_species_lact.dat",v,OK)
+  call Read_FromFile("tmp_species_lact.dat",size(vSpcDat),v,OK)
   if(OK) vSpcDat(:)%LAct= v(:)
-  call Read_FromFile("tmp_species_lgam.dat",v,OK)
+  call Read_FromFile("tmp_species_lgam.dat",size(vSpcDat),v,OK)
   if(OK) vSpcDat(:)%LGam= v(:)
   !
   return
 end subroutine  Equil_Read_FromFile
 
-subroutine Read_FromFile(str,v,OK)
-  use M_IoTools,  only: GetUnit
+subroutine Read_FromFile(str,N,V,OK)
+  use M_IoTools,  only: GetUnit, LineToArray 
   use M_FileUtils,only: File_Exist 
   !
   character(len=*),intent(in) :: str
-  real(dp),        intent(out):: v(:)
+  integer,         intent(in) :: N
+  real(dp),        intent(out):: V(N)
   logical,         intent(out):: OK
   !
+  character(len=512):: Line
   integer:: F,i
+  integer:: ios
+  !
+  OK= .false.
+  v(:)= 0.D0
   !
   if(File_Exist(str)) then
-    OK= .true.
     call GetUnit(F)
-    open(F,file=str,form="unformatted",access="stream")
-    do i=1,size(v)
-      read(F) v(i)
-    end do
+    !open(F,file=str,form="unformatted",access="stream")
+    !do i=1,size(v)
+    !  read(F) v(i)
+    !end do
+    open(F,file=str)
+    read(F, '(A)', iostat=ios) Line
+    if(ios/=0) return
+    call LineToArray(trim(Line),N,V)
     close(F)
-  else
-    OK= .false.
-    v(:)= 0.D0
+    OK= .true.
   end if
   !
   return

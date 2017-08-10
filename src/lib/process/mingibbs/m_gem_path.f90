@@ -1,4 +1,4 @@
-module M_Simplex_Path
+module M_GEM_Path
 !-- series of equilibrium calculations on pure phases using simplex method
 !-- under variable T,P conditions, or under variable bulk composition
   !
@@ -9,8 +9,8 @@ module M_Simplex_Path
   !
   private
   !
-  public:: Simplex_Path
-  ! series of equilibrium calculations ON pure PHASES using simplex method
+  public:: GEM_Path
+  ! series of equilibrium calculations ON PURE PHASES using simplex method
   !
   real(dp),allocatable,public:: tSimplexResult(:,:)
   logical, allocatable,public:: vSimplex_Ok(:)
@@ -18,7 +18,7 @@ module M_Simplex_Path
   !
 contains
 
-subroutine Simplex_Path(Cod)
+subroutine GEM_Path(Cod)
 !--
 !-- series of equilibrium calculations on pure phases
 !-- using simplex method
@@ -33,7 +33,7 @@ subroutine Simplex_Path(Cod)
   use M_Path_Read,   only: Path_ReadMode, Path_ReadParam_new
   use M_Path_Vars,   only: Path_Vars_Clean
   !
-  use M_Simplex_Build,only: Simplex_CloseFiles
+  use M_GEM_Build,only: Simplex_CloseFiles
   use M_Simplex_Calc, only: Simplex_Calc
   !
   use M_Global_Vars, only: vFas,vSpcDtb,vSpc,vMixModel
@@ -289,23 +289,20 @@ subroutine Simplex_Path(Cod)
   !
 contains
 
-subroutine Trace_1
+  subroutine Trace_1
+    write(fTrc,'(/,A)') "SPL2"
+    write(fTrc,'(3(A,A1))',advance="NO") "Count",T_,"TdgC",T_,"Pbar",T_
+    do I=1,size(vFas)
+      write(fTrc,'(A15,A1)',advance="NO") vFas(I)%NamFs,T_
+    end do
+    write(fTrc,*)
+    do I=1,size(vFas) !! check phase / species matching ...!!
+      write(fTrc,'(A15,A1)',advance="NO") vSpc(vFas(I)%iSpc)%NamSp,T_
+    end do
+    write(fTrc,*)
+  end subroutine Trace_1
 
-  write(fTrc,'(/,A)') "SPL2"
-  write(fTrc,'(3(A,A1))',advance="NO") "Count",T_,"TdgC",T_,"Pbar",T_
-  do I=1,size(vFas)
-    write(fTrc,'(A15,A1)',advance="NO") vFas(I)%NamFs,T_
-  end do
-  write(fTrc,*)
-
-  do I=1,size(vFas) !! check phase / species matching ...!!
-    write(fTrc,'(A15,A1)',advance="NO") vSpc(vFas(I)%iSpc)%NamSp,T_
-  end do
-  write(fTrc,*)
-
-end subroutine Trace_1
-
-end subroutine Simplex_Path
+end subroutine GEM_Path
 
 subroutine Simplex_Run( &
 & iCount,               &
@@ -623,7 +620,7 @@ subroutine Simplex_WriteResult( &
   use M_T_Component,only: T_Component
   !
   use M_Global_Vars, only: vFas
-  use M_Simplex_Build,only: fSpl1,fSpl2
+  use M_GEM_Build,only: fSpl1,fSpl2
   !
   real(dp),          intent(in):: TdgK,Pbar
   integer,           intent(in):: nCpn,nFs
@@ -771,4 +768,4 @@ subroutine Simplex_WriteResult( &
   return
 end subroutine Simplex_WriteResult
 
-end module M_Simplex_Path
+end module M_GEM_Path

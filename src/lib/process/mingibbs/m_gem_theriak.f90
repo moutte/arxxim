@@ -1,4 +1,4 @@
-module M_Simplex_Theriak
+module M_GEM_Theriak
 !--
 !-- equilibrium calculations on assemblage of pure phases and mixtures,
 !-- with THERIAK method (Capitani-Brown,1987)
@@ -14,8 +14,8 @@ module M_Simplex_Theriak
   !
   private
   !
-  public:: Simplex_Theriak
-  public:: Simplex_Theriak_Path
+  public:: GEM_Theriak
+  public:: GEM_Theriak_Path
   !
   type:: T_GemPhase
     character(len=23):: NamFs
@@ -62,7 +62,7 @@ module M_Simplex_Theriak
   !
 contains
 
-subroutine Simplex_Theriak
+subroutine GEM_Theriak
 !--
 !-- equilibrium calculations on assemblage of pure phases and mixtures,
 !-- with THERIAK method (Capitani-Brown,1987)
@@ -90,7 +90,7 @@ subroutine Simplex_Theriak
   real(dp):: x
   !---------------------------------------------------------------------
   !
-  if(idebug>1) write(fTrc,'(/,A)') "< Simplex_Theriak"
+  if(idebug>1) write(fTrc,'(/,A)') "< GEM_Theriak"
   !
   F1= 0
   F2= 0
@@ -150,7 +150,8 @@ subroutine Simplex_Theriak
   !
   !modif-----------------------------------------------------JM--2016-10
   call GetUnit(fo)
-  open(fo,file=trim(DirOut)//"_gem.out")
+  ! open(fo,file=trim(DirOut)//"_gem.out")
+  open(fo,file="tmp_gem.tab")
   !
   if(iError/=0) then
     write(fo,'(A)') "error"
@@ -169,16 +170,15 @@ subroutine Simplex_Theriak
       & vFasMolPur(I)*vFas(I)%VolM3, T_, &
       & vFas(I)%WeitKg/vFas(I)%VolM3,T_
     end do
-    !if(nMix>0) then
-      x= 0._dp
-      do I=1,nMix
-        if(vFasMolMix(I)>Zero) write(fo,'(A,A1,3(G15.6,A1))') &
-        & trim(vMixModel(I)%Name),T_, &
-        & vFasMolMix(I),          T_, &
-        & x,                      T_, &
-        & x,                      T_
-      end do
-    !end if
+    !
+    x= 0._dp
+    do I=1,nMix
+      if(vFasMolMix(I)>Zero) write(fo,'(A,A1,3(G15.6,A1))') &
+      & trim(vMixModel(I)%Name),T_, &
+      & vFasMolMix(I),          T_, &
+      & x,                      T_, &
+      & x,                      T_
+    end do
   end if
   close(fo)
   !---------------------------------------------------------/JM--2016-10
@@ -194,12 +194,12 @@ subroutine Simplex_Theriak
   deallocate(vSavPhase)
   deallocate(vModelConvex)
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ Simplex_Theriak"
+  if(idebug>1) write(fTrc,'(A,/)') "</ GEM_Theriak"
 
   return
-end subroutine Simplex_Theriak
+end subroutine GEM_Theriak
 
-subroutine Simplex_Theriak_Path(bPur)
+subroutine GEM_Theriak_Path(bPur)
 !--
 !-- equilibrium calculations on assemblage of pure phases and mixtures,
 !-- with THERIAK method (Capitani-Brown,1987)
@@ -247,9 +247,9 @@ subroutine Simplex_Theriak_Path(bPur)
   logical, parameter:: CheckThermo= .true.
   !---------------------------------------------------------------------
   
-  if(idebug>1) write(fTrc,'(/,A)') "< Simplex_Theriak_Path"
+  if(idebug>1) write(fTrc,'(/,A)') "< GEM_Theriak_Path"
   !
-  nC= size(vCpnGEM)
+  nC=    size(vCpnGEM)
   nFpur= size(vFas) ! + size(vMixModel)
   if(bPur) then
     nMix=0
@@ -290,7 +290,6 @@ subroutine Simplex_Theriak_Path(bPur)
     print *,trim(Msg)
     return
   end if
-  !
   !--------------------------------/read path parameters from PATH block
   
   !----------------------------------------------------------allocations
@@ -473,7 +472,7 @@ subroutine Simplex_Theriak_Path(bPur)
   if(ff>0) close(ff)
   if(CheckThermo) close(fThr)
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ Simplex_Theriak_Path"
+  if(idebug>1) write(fTrc,'(A,/)') "</ GEM_Theriak_Path"
   !
 contains
 
@@ -514,7 +513,7 @@ subroutine Check_vXMean(i)
   return
 end subroutine Check_vXMean
 
-end subroutine Simplex_Theriak_Path
+end subroutine GEM_Theriak_Path
 
 subroutine Simplex_GEM(iError)
 !--
@@ -1297,4 +1296,4 @@ subroutine Write_Log_Entete(vFas)
   !
 end subroutine Write_Log_Entete
 
-end module M_Simplex_Theriak
+end module M_GEM_Theriak

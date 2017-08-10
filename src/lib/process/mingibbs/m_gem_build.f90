@@ -1,4 +1,4 @@
-module M_Simplex_Build
+module M_GEM_Build
 !--
 !-- io module for simplex calculation
 !-- independant (provisionally) from other io modules
@@ -11,7 +11,7 @@ module M_Simplex_Build
   !
   private
   !
-  public:: Simplex_Build
+  public:: GEM_Build
   public:: Simplex_CloseFiles
   !
   integer:: nFasPur,nFasSol
@@ -26,7 +26,7 @@ module M_Simplex_Build
   !
 contains
 
-subroutine Simplex_Build
+subroutine GEM_Build
   !
   use M_T_Element,   only: Element_Index
   use M_T_Species,   only: T_Species,Species_Stoikio_Calc,Species_Append
@@ -45,11 +45,11 @@ subroutine Simplex_Build
   !
   use M_GEM_Vars,    only: TdgK,Pbar,vCpnGEM,tStoikioGEM
   !---------------------------------------------------------------------
-  logical:: Ok
+  logical:: Ok,Err
   integer:: N
   type(T_Species),allocatable:: vSpcTmp(:)
   !---------------------------------------------------------------------
-  if(iDebug>2) write(fTrc,'(/,A)') "<---------------------Simplex_Build"
+  if(iDebug>2) write(fTrc,'(/,A)') "<---------------------GEM_Build"
   !
   nFasPur=0
   nFasSol=0
@@ -61,7 +61,9 @@ subroutine Simplex_Build
   ! & call Stop_("Element Oxygen not found in vEle")
   !
   !--build vCpnGEM
-  call Component_Read(vEle)
+  call Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
+  !
+  if(Err) call Stop_("< Found No Components...Stop") !--------------stop
   !
   !--rebuild species array vSpc consistent with vCpnGEM
   call Species_Select(size(vEle),vCpnGEM)
@@ -141,10 +143,10 @@ subroutine Simplex_Build
   !--- write system stoikiometry
   if(iDebug>2) call Spl_WriteSystem(vFas,tFormula,vCpnGEM,tStoikioGEM)
   !
-  if(iDebug>2) write(fTrc,'(A,/)') "</--------------------Simplex_Build"
+  if(iDebug>2) write(fTrc,'(A,/)') "</--------------------GEM_Build"
   !
   return
-end subroutine Simplex_Build
+end subroutine GEM_Build
 
 subroutine Species_Select(nEl,vCpn)
 !--
@@ -240,10 +242,10 @@ subroutine Check_Independent(tStoikio,Ok)
     vIPivot(K)= iMaxLoc_R(abs(tStoikTmp(K,:)))
     Pivot= tStoikTmp(K,vIPivot(K))
     if(abs(Pivot)<1.D-9) then
-      != all coeff's are 0 -> this species is not independent -> exit ==
       Ok= .false.
+      !-------------all coeff's are 0 -> this species is not independent
       deallocate(tStoikTmp,vIPivot) !tStoikio,
-      return
+      return !----------------------------------------------------return
     end if
     !
     tStoikTmp(K,:)= tStoikTmp(K,:) /Pivot
@@ -264,7 +266,7 @@ subroutine Simplex_CloseFiles
   if(fSpl2>0) close(fSpl2) ; fSpl2= 0
 end subroutine Simplex_CloseFiles
 
-subroutine Component_Read(vEle)
+subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
 !--
 !-- read components from SYSTEM.GEM block -> build vCpnGEM
 !--
@@ -272,13 +274,15 @@ subroutine Component_Read(vEle)
   use M_Files,    only: NamFInn
   use M_Dtb_Const,only: T_CK
   use M_IoTools,  only: GetUnit,LinToWrd,AppendToEnd,WrdToReal,Str_Upper
+  use M_T_Component,only: T_Component
   use M_T_Element,only: T_Element,Formula_Read,Element_Index,Formula_Build
   use M_Dtb_Read_Tools
-  !
-  use M_GEM_Vars,only: vCpnGEM,TdgK,Pbar
-  !
-  type(T_Element),intent(in):: vEle(:)
-  !
+  !---------------------------------------------------------------------
+  type(T_Element),              intent(in) :: vEle(:)
+  type(T_Component),allocatable,intent(out):: vCpnGEM(:)
+  real(dp),                     intent(out):: TdgK,Pbar
+  logical,                      intent(out):: Err
+  !---------------------------------------------------------------------
   character(len=255)    :: L,W
   type(T_Component)     :: Cpn
   logical :: sOk,fOk,CpnOk
@@ -315,7 +319,8 @@ subroutine Component_Read(vEle)
   !
   if(iDebug>2) print *,"Component_Build"
   !
-  N=0
+  N=   0
+  Err= .false.
   DoFile: do
     !
     read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
@@ -391,7 +396,7 @@ subroutine Component_Read(vEle)
         !
         Cpn%Formula= trim(W)
         !
-        !----------------------------------------------- process formula 
+        !------------------------------------------------process formula 
         !--------------------- if formula is Ok, save component in vC(:) 
         call Formula_Read(Cpn%Formula,vEle,ZSp,nDiv,fOk,vStoik)
         !
@@ -416,7 +421,8 @@ subroutine Component_Read(vEle)
               print *,"ZSp,Stoikio=",ZSp,Ztest
               if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39)') &
               & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-              if(idebug>1) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+              if(idebug>1) &
+              & print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
               cycle
             end if
           end if
@@ -451,15 +457,19 @@ subroutine Component_Read(vEle)
           if(idebug>1) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
           !
         end if
-        !-------------------------------------------/ process formula --
+        !-----------------------------------------------/process formula
         !
       end do DoBlock
-      !
-      if(N==0) call Stop_("< Found No Components...Stop") !--=== stop ==
       !
     end select
     !
   end do DoFile
+  !
+  if(N==0) then
+    Err= .true.
+    return
+    !call Stop_("< Found No Components...Stop") !---------stop
+  end if
   !
   !! if(iDebug>2) call Pause_
   close(f)
@@ -978,5 +988,5 @@ subroutine Spl_WriteSystem( &
   return
 end subroutine Spl_WriteSystem
 
-end module M_Simplex_Build
+end module M_GEM_Build
 

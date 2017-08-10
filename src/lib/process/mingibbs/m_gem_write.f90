@@ -394,6 +394,8 @@ subroutine GEM_Write_Log_Entete(vFas)
   !
 end subroutine GEM_Write_Log_Entete
 
+end module M_GEM_Write
+
 !! !!unused!!
 !! subroutine Simplex_WriteTable(iFil,M,N,tSimplex)
 !!   use M_IoTools,     only: OutStrVec 
@@ -414,7 +416,6 @@ end subroutine GEM_Write_Log_Entete
 !!   !
 !! end subroutine Simplex_WriteTable
 
-end module M_GEM_Write
 
 !Simplex, notes from NumRecp:
 !

@@ -29,7 +29,7 @@ module M_Simplex_Calc
   !
   public:: Simplex_Calc
   !
-  logical,parameter:: new=.true.
+  ! logical,parameter:: new=.true.
   !
 contains
 
@@ -62,17 +62,17 @@ subroutine Simplex_Calc( &
   ! M= SIZE(tSimplex,1) -2 !or M= SIZE(IPOSV)
   ! N= SIZE(tSimplex,2) -1 !or N= SIZE(IZROV)
   !
-  if(new) then
+  ! if(new) then
     call simplx(tSimplex,0,0,M,iError,izrov,iposv)
-  else  
-    allocate(a(M+2,N+1))
-    a(1:M+2,1:N+1)= tSimplex(0:M+1,0:N)
-    !
-    call simplx(a,0,0,M,iError,izrov,iposv)
-    !
-    tSimplex(0:M+1,0:N)= a(1:M+2,1:N+1)
-    deallocate(a)
-  end if
+  ! else  
+  !   allocate(a(M+2,N+1))
+  !   a(1:M+2,1:N+1)= tSimplex(0:M+1,0:N)
+  !   !
+  !   call simplx(a,0,0,M,iError,izrov,iposv)
+  !   !
+  !   tSimplex(0:M+1,0:N)= a(1:M+2,1:N+1)
+  !   deallocate(a)
+  ! end if
   
   return
 end subroutine Simplex_Calc
@@ -139,184 +139,6 @@ end function Arth_I
 ! except that i >N +m1 +m2 denotes an artificial or slack variable 
 ! which was used only internally and should now be entirely ignored.
 
-subroutine simplx0(a,m1,m2,m3,icase,izrov,iposv)
-  use M_Numeric_Tools,only: iFirstLoc,iMaxLoc_R,OuterProd_R,Swap_I
-  implicit none
-  
-  real(DP), dimension(:,:), intent(inout) :: a
-  integer, intent(in) :: m1,m2,m3
-  integer, intent(out) :: icase
-  integer, dimension(:), intent(out) :: izrov,iposv
-  
-  real(DP), parameter :: EPS=1.0e-6_dp
-  
-  integer :: ip,k,kh,kp,nl1,m,n
-  integer, dimension(SIZE(a,2)) :: l1
-  integer, dimension(m2) :: l3
-  real(DP) :: bmax
-  logical:: init
-  
-  !! m=assert_eq(SIZE(a,1)-2,SIZE(iposv),'simplx: m')
-  !! n=assert_eq(SIZE(a,2)-1,SIZE(izrov),'simplx: n')
-  m=SIZE(a,1)-2
-  n=SIZE(a,2)-1
-  
-  !! if (m /= m1+m2+m3) call nrerror('simplx: bad input constraint counts')
-  if (any(a(2:m+1,1) < 0.0)) then
-    !! call nrerror('bad input tableau in simplx')
-    icase= -2
-    return
-  end if
-  
-  nl1=n
-  l1(1:n)=Arth_I(1,1,n)
-  izrov(:)=l1(1:n)
-  iposv(:)=n+Arth_I(1,1,m)
-  
-  init=.true.
-  
-  phase1: do
-    if (init) then
-      if (m2+m3 == 0) exit phase1
-      init=.false.
-      l3(1:m2)=1
-      a(m+2,1:n+1)=-sum(a(m1+2:m+1,1:n+1),dim=1)
-    end if
-    if (nl1 > 0) then
-      kp=l1(imaxloc_R(a(m+2,l1(1:nl1)+1)))
-      bmax=a(m+2,kp+1)
-    else
-      bmax=0.0
-    end if
-    
-    phase1a: do
-      if (bmax <= EPS .and. a(m+2,1) < -EPS) then
-        icase=-1
-        return
-      else if (bmax <= EPS .and. a(m+2,1) <= EPS) then
-        do ip=m1+m2+1,m
-          if (iposv(ip) == ip+n) then
-            if (nl1 > 0) then
-              kp=l1(imaxloc_R(abs(a(ip+1,l1(1:nl1)+1))))
-              bmax=a(ip+1,kp+1)
-            else
-              bmax=0.0
-            end if
-            if (bmax > EPS) exit phase1a
-          end if
-        end do
-        where (spread(l3(1:m2),2,n+1) == 1) &
-          a(m1+2:m1+m2+1,1:n+1)=-a(m1+2:m1+m2+1,1:n+1)
-        exit phase1
-      end if
-      call simp1
-      if (ip == 0) then
-        icase=-1
-        return
-      end if
-      exit phase1a
-    end do phase1a
-    
-    call simp2(m+1,n)
-    
-    if (iposv(ip) >= n+m1+m2+1) then
-      k=ifirstloc(l1(1:nl1) == kp)
-      nl1=nl1-1
-      l1(k:nl1)=l1(k+1:nl1+1)
-    else
-      kh=iposv(ip)-m1-n
-      if (kh >= 1) then
-        if (l3(kh) /= 0) then
-          l3(kh)=0
-          a(m+2,kp+1)=a(m+2,kp+1)+1.0_dp
-          a(1:m+2,kp+1)=-a(1:m+2,kp+1)
-        end if
-      end if
-    end if
-    
-    call Swap_I(izrov(kp),iposv(ip))
-  
-  end do phase1
-  
-  phase2: do
-    if (nl1 > 0) then
-      kp=l1(imaxloc_R(a(1,l1(1:nl1)+1)))
-      bmax=a(1,kp+1)
-    else
-      bmax=0.0
-    end if
-    if (bmax <= EPS) then
-      icase=0
-      return
-    end if
-    call simp1
-    if (ip == 0) then
-      icase=1
-      return
-    end if
-    call simp2(m,n)
-    call Swap_I(izrov(kp),iposv(ip))
-  end do phase2
-  
-  contains
-
-  subroutine simp1
-    integer :: i,k
-    real(DP) :: q,q0,q1,qp
-    
-    ip=0
-    i=ifirstloc(a(2:m+1,kp+1) < -EPS)
-    if (i > m) return
-    
-    q1=-a(i+1,1)/a(i+1,kp+1)
-    ip=i
-    do i=ip+1,m
-      if (a(i+1,kp+1) < -EPS) then
-        q=-a(i+1,1)/a(i+1,kp+1)
-        if (q < q1) then
-          ip=i
-          q1=q
-        else if (q == q1) then
-          do k=1,n
-            qp=-a(ip+1,k+1)/a(ip+1,kp+1)
-            q0=-a(i+1,k+1)/a(i+1,kp+1)
-            if (q0 /= qp) exit
-          end do
-          if (q0 < qp) ip=i
-        end if
-      end if
-    end do
-    
-  end subroutine simp1
-  
-  subroutine simp2(i1,k1)
-    integer, intent(in) :: i1,k1
-    
-    integer :: ip1,kp1
-    real(DP) :: piv
-    integer, dimension(k1) :: icol
-    integer, dimension(i1) :: irow
-    integer, dimension(max(i1,k1)+1) :: itmp
-    
-    ip1=ip+1
-    kp1=kp+1
-    
-    piv=1.0_dp/a(ip1,kp1)
-    
-    itmp(1:k1+1)=Arth_I(1,1,k1+1)
-    icol=pack(itmp(1:k1+1),itmp(1:k1+1) /= kp1)
-    itmp(1:i1+1)=Arth_I(1,1,i1+1)
-    irow=pack(itmp(1:i1+1),itmp(1:i1+1) /= ip1)
-    
-    a(irow,kp1)=a(irow,kp1)*piv
-    a(irow,icol)=a(irow,icol)-OuterProd_R(a(irow,kp1),a(ip1,icol))
-    a(ip1,icol)=-a(ip1,icol)*piv
-    a(ip1,kp1)=piv
-    
-  end subroutine simp2
-
-end subroutine simplx0
-
 subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
   use M_Numeric_Tools,only: iFirstLoc,iMaxLoc_R,OuterProd_R,Swap_I
   implicit none
@@ -352,7 +174,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
   !
   init=.true.
   !
-  phase1: do
+  phase1: do !---------------------------------------------------phase 1
     if (init) then
       if (m2+m3 == 0) exit phase1
       init=.false.
@@ -366,8 +188,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
       bmax=0.0D0
     end if
     
-    phase1a: do
-
+    phase1a: do !-----------------------------------------------phase 1A 
       if (bmax <= EPS .and. a(m+1,0) < -EPS) then
         icase=-1
         return
@@ -393,7 +214,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
         return
       end if
       exit phase1a
-    end do phase1a
+    end do phase1a !-------------------------------------------/phase 1A
     
     call simp2(m+1,n)
     
@@ -414,9 +235,9 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
     
     call Swap_I(izrov(kp),iposv(ip))
   
-  end do phase1
+  end do phase1 !-----------------------------------------------/phase 1
   
-  phase2: do
+  phase2: do !---------------------------------------------------phase 2
     !
     if (nl1 > 0) then
       kp=l1(imaxloc_R(a(0,l1(1:nl1))))
@@ -436,7 +257,7 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
     call simp2(m,n)
     call Swap_I(izrov(kp),iposv(ip))
     !
-  end do phase2
+  end do phase2 !-----------------------------------------------/phase 2
   
   contains
 
@@ -500,5 +321,184 @@ subroutine simplx(a,m1,m2,m3,icase,izrov,iposv)
   end subroutine simp2
 
 end subroutine simplx
+
+subroutine simplx0(a,m1,m2,m3,icase,izrov,iposv)
+!--UNUSED--UNUSED--UNUSED--UNUSED--UNUSED--UNUSED--UNUSED--UNUSED-------
+  use M_Numeric_Tools,only: iFirstLoc,iMaxLoc_R,OuterProd_R,Swap_I
+  implicit none
+  
+  real(DP), dimension(:,:), intent(inout) :: a
+  integer, intent(in) :: m1,m2,m3
+  integer, intent(out) :: icase
+  integer, dimension(:), intent(out) :: izrov,iposv
+  
+  real(DP), parameter :: EPS=1.0e-6_dp
+  
+  integer :: ip,k,kh,kp,nl1,m,n
+  integer, dimension(SIZE(a,2)) :: l1
+  integer, dimension(m2) :: l3
+  real(DP) :: bmax
+  logical:: init
+  
+  !! m=assert_eq(SIZE(a,1)-2,SIZE(iposv),'simplx: m')
+  !! n=assert_eq(SIZE(a,2)-1,SIZE(izrov),'simplx: n')
+  m=SIZE(a,1)-2
+  n=SIZE(a,2)-1
+  
+  !! if (m /= m1+m2+m3) call nrerror('simplx: bad input constraint counts')
+  if (any(a(2:m+1,1) < 0.0)) then
+    !! call nrerror('bad input tableau in simplx')
+    icase= -2
+    return
+  end if
+  
+  nl1=n
+  l1(1:n)=Arth_I(1,1,n)
+  izrov(:)=l1(1:n)
+  iposv(:)=n+Arth_I(1,1,m)
+  
+  init=.true.
+  
+  phase1: do !---------------------------------------------------phase 1
+    if (init) then
+      if (m2+m3 == 0) exit phase1
+      init=.false.
+      l3(1:m2)=1
+      a(m+2,1:n+1)=-sum(a(m1+2:m+1,1:n+1),dim=1)
+    end if
+    if (nl1 > 0) then
+      kp=l1(imaxloc_R(a(m+2,l1(1:nl1)+1)))
+      bmax=a(m+2,kp+1)
+    else
+      bmax=0.0
+    end if
+    
+    phase1a: do !-----------------------------------------------phase 1a
+      if (bmax <= EPS .and. a(m+2,1) < -EPS) then
+        icase=-1
+        return
+      else if (bmax <= EPS .and. a(m+2,1) <= EPS) then
+        do ip=m1+m2+1,m
+          if (iposv(ip) == ip+n) then
+            if (nl1 > 0) then
+              kp=l1(imaxloc_R(abs(a(ip+1,l1(1:nl1)+1))))
+              bmax=a(ip+1,kp+1)
+            else
+              bmax=0.0
+            end if
+            if (bmax > EPS) exit phase1a
+          end if
+        end do
+        where (spread(l3(1:m2),2,n+1) == 1) &
+          a(m1+2:m1+m2+1,1:n+1)=-a(m1+2:m1+m2+1,1:n+1)
+        exit phase1
+      end if
+      call simp1
+      if (ip == 0) then
+        icase=-1
+        return
+      end if
+      exit phase1a
+    end do phase1a !!!!!!!!!!!----------------------------------phase 1a
+    
+    call simp2(m+1,n)
+    
+    if (iposv(ip) >= n+m1+m2+1) then
+      k=ifirstloc(l1(1:nl1) == kp)
+      nl1=nl1-1
+      l1(k:nl1)=l1(k+1:nl1+1)
+    else
+      kh=iposv(ip)-m1-n
+      if (kh >= 1) then
+        if (l3(kh) /= 0) then
+          l3(kh)=0
+          a(m+2,kp+1)=a(m+2,kp+1)+1.0_dp
+          a(1:m+2,kp+1)=-a(1:m+2,kp+1)
+        end if
+      end if
+    end if
+    
+    call Swap_I(izrov(kp),iposv(ip))
+  
+  end do phase1 !----------------------------------------------//phase 1
+  
+  phase2: do !---------------------------------------------------phase 2
+    if (nl1 > 0) then
+      kp=l1(imaxloc_R(a(1,l1(1:nl1)+1)))
+      bmax=a(1,kp+1)
+    else
+      bmax=0.0
+    end if
+    if (bmax <= EPS) then
+      icase=0
+      return
+    end if
+    call simp1
+    if (ip == 0) then
+      icase=1
+      return
+    end if
+    call simp2(m,n)
+    call Swap_I(izrov(kp),iposv(ip))
+  end do phase2 !----------------------------------------------//phase 2
+  
+  contains
+
+  subroutine simp1
+    integer :: i,k
+    real(DP) :: q,q0,q1,qp
+    
+    ip=0
+    i=ifirstloc(a(2:m+1,kp+1) < -EPS)
+    if (i > m) return
+    
+    q1=-a(i+1,1)/a(i+1,kp+1)
+    ip=i
+    do i=ip+1,m
+      if (a(i+1,kp+1) < -EPS) then
+        q=-a(i+1,1)/a(i+1,kp+1)
+        if (q < q1) then
+          ip=i
+          q1=q
+        else if (q == q1) then
+          do k=1,n
+            qp=-a(ip+1,k+1)/a(ip+1,kp+1)
+            q0=-a(i+1,k+1)/a(i+1,kp+1)
+            if (q0 /= qp) exit
+          end do
+          if (q0 < qp) ip=i
+        end if
+      end if
+    end do
+    
+  end subroutine simp1
+  
+  subroutine simp2(i1,k1)
+    integer, intent(in) :: i1,k1
+    
+    integer :: ip1,kp1
+    real(DP) :: piv
+    integer, dimension(k1) :: icol
+    integer, dimension(i1) :: irow
+    integer, dimension(max(i1,k1)+1) :: itmp
+    
+    ip1=ip+1
+    kp1=kp+1
+    
+    piv=1.0_dp/a(ip1,kp1)
+    
+    itmp(1:k1+1)=Arth_I(1,1,k1+1)
+    icol=pack(itmp(1:k1+1),itmp(1:k1+1) /= kp1)
+    itmp(1:i1+1)=Arth_I(1,1,i1+1)
+    irow=pack(itmp(1:i1+1),itmp(1:i1+1) /= ip1)
+    
+    a(irow,kp1)=a(irow,kp1)*piv
+    a(irow,icol)=a(irow,icol)-OuterProd_R(a(irow,kp1),a(ip1,icol))
+    a(ip1,icol)=-a(ip1,icol)*piv
+    a(ip1,kp1)=piv
+    
+  end subroutine simp2
+
+end subroutine simplx0
 
 end module M_Simplex_Calc

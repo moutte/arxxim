@@ -10,6 +10,7 @@ module M_IOTools
   public:: Str_Upper
   public:: CarToInt,WrdToInt
   public:: WrdToReal,ReadRValsV
+  public:: LineToArray
   public:: IntToStr3,IntToStr4,FIntToStr3,FIntToStr4
   public:: In_Int,In_Car,In_Str
   public:: LinToWrd
@@ -27,6 +28,7 @@ contains
 
 character function cUpper(c)
   character,intent(in):: c
+  !
   integer:: j,d
   d= ichar('A') - ichar('a')
   cUpper= c
@@ -51,10 +53,11 @@ subroutine GetUnit(F) !returns a free unit number.
 !-- with the open command.
 !-- IUNIT=0
 !-- no free FORTRAN unit could be found, although all 99 units were checked
-  implicit none
   integer,intent(out)::F
+  !
   integer:: i, ios
   logical:: lOpen
+  !
   F= 0
   do i=10,200
     !if (i/=5 .and. i/=6 .and. i/=9) then
@@ -73,10 +76,10 @@ end subroutine GetUnit
 
 subroutine Str_Append(Str,Length,C)
 !.when length of str <Length, append character C (default for C = "_")
-  implicit none
   character*(*),intent(inout)      :: Str !,S
   integer,      intent(in)         :: Length
   character(1), intent(in),optional:: C
+  !
   do
     if(len_trim(Str)>=Length) exit
     if(present(C)) then; Str=trim(Str)//C
@@ -88,7 +91,6 @@ subroutine Str_Append(Str,Length,C)
 end subroutine Str_Append
 
 subroutine Str_Resize(Str,Length)
-  implicit none
   character*(*),intent(inout):: Str !,S
   integer,      intent(in)   :: Length
   integer:: L
@@ -100,8 +102,8 @@ end subroutine Str_Resize
 
 integer function CarToInt(C)
 !conversion of char C to integer, if(C NOT Valid) CarToInt=999
-  implicit none
   character,intent(in):: C
+  !
   integer  :: I
   CarToInt=999
   I=ichar(C)
@@ -114,7 +116,6 @@ end function CarToInt
 !!! read (str,'(i6)') i
 
 subroutine WrdToInt(StrIn,IOut) !conversion of string StrIn to integer IOut
-  implicit none
   character*(*),intent(in) :: StrIn
   integer,      intent(out):: iOut
   !
@@ -141,7 +142,6 @@ end subroutine WrdToInt
 
 subroutine WrdToInt2(StrIn,    IOut,IOk)
 !.conversion of string StrIn to integer IOut, with IO check
-  implicit none
   character*(*),intent(in) :: StrIn
   integer,      intent(out):: iOut
   logical,      intent(out):: IOk
@@ -174,7 +174,6 @@ end subroutine WrdToInt2
 
 subroutine WrdToReal(StrIn,    ROut)
 !-- conversion of string StrIn to real ROut
-  implicit none
   character*(*),intent(in) :: StrIn
   real(dp),     intent(out):: ROut
   !
@@ -228,11 +227,30 @@ subroutine WrdToReal(StrIn,    ROut)
   return
 end subroutine WrdToReal
 
+subroutine LineToArray(Line,N,vX)
+!-- reads array vX, of known dimension, from string Line
+  character(len=*),intent(in) :: Line
+  integer,         intent(in) :: N
+  real(dp),        intent(out):: vX(:)
+  !
+  character(512):: L,Word
+  logical       :: EoL
+  integer       :: i
+  !
+  L=trim(Line)
+  do i=1,N
+    call LinToWrd(L,Word,EoL)
+    call WrdToReal(Word,vX(i))
+    ! if(EoL) exit
+  end do
+  !
+  return
+end subroutine LineToArray
+
 subroutine ReadRValsV(Line,NRead,vX)
 !-- reads array vX from string Line; 
 !-- index of last element read is returned in NRead
-  implicit none
-  character(len=*),        intent(in) ::Line
+  character(len=*),        intent(in) :: Line
   integer,                 intent(out):: NRead
   real(dp),dimension(dimV),intent(out):: vX
   !
@@ -305,7 +323,6 @@ subroutine LinToWrd(Line,Word,Eol,Cod)
 !--
 !-- Reads Words From A String, with Case control
 !--
-  implicit none
   character(len=*),intent(inout)::Line !=a line of Words Separated By Spaces or Tabs
   character(len=*),intent(out)  ::Word !=First Word of Line
   logical,         intent(out)  :: EoL !=EndOfLine reached, or "!" found, if EoL then Line="!"
@@ -380,10 +397,10 @@ subroutine LinToWrd(Line,Word,Eol,Cod)
 end subroutine LinToWrd
 
 subroutine AppendToEnd(Line,Word,Eol)
-  implicit none
   character(len=*),intent(inout):: Line
   character(len=*),intent(inout):: Word !=
   logical,         intent(inout):: EoL  !=
+  !
   character(len=255):: WW
   if(.not. Eol) then
     if(Word=="END") then !when end followed by keyword, append
@@ -394,7 +411,6 @@ subroutine AppendToEnd(Line,Word,Eol)
 end subroutine AppendToEnd
 
 subroutine In_Car(S,C) !Screen/Kbd dialog
-  implicit none
   character(len=*),intent(in) :: S
   character,       intent(out):: C
   !
@@ -410,7 +426,6 @@ subroutine In_Car(S,C) !Screen/Kbd dialog
 end subroutine In_Car
 
 function In_Str(S) !Screen/Kbd dialog
-  implicit none
   character(len=3)           ::In_Str
   character(len=*),intent(in):: S
   !
@@ -428,29 +443,34 @@ function In_Str(S) !Screen/Kbd dialog
   in_Str=trim(Word)
 end function In_Str
 
-function In_Int(S,iMin,iMax) !Screen/Kbd dialog
-  implicit none
-  character(len=*):: S
-  integer         :: In_Int,iMin,iMax
-  integer         :: ist,nch
+function In_Int(S,iMin,iMax) 
+!--Screen/Kbd dialog
+  character(len=*),intent(in):: S
+  integer,         intent(in):: iMin,iMax
+  integer                    :: In_Int
   !
   character(32):: StrIn
-  integer      :: iOut
+  integer      :: iOut,ist,nch
   logical      :: IOk
   do
-    write(*,'(A)',advance="no") trim(S) !; read(*,*) StrIn !'(A)',advance="no") StrIn
+    write(*,'(A)',advance="no") trim(S) 
+    ! read(*,*) StrIn !'(A)',advance="no") StrIn
     read(*,'(A)',advance="no",size=nch,iostat=ist) StrIn
-    call WrdToInt2(StrIn,IOut,IOk) !iOk= StrIn is valid string
+    call WrdToInt2(StrIn,IOut,IOk) 
+    ! iOk= StrIn is valid string
     if(IOk .and. IOut>=iMin .and. IOut<=iMax) exit
   end do
   in_Int=iOut
 end function In_Int
 
-function In_Real(S,rMin,rMax) !Screen/Kbd dialog
-  !use M_Glob;
-  implicit none
-  character(len=32):: S
-  real(dp)        :: In_Real, r,rMin,rMax
+function In_Real(S,rMin,rMax)
+!--Screen/Kbd dialog
+  character(len=32),intent(in):: S
+  real(dp),         intent(in):: rMin,rMax
+  real(dp)                    :: In_Real
+  !
+  real(dp)::r
+  !
   do
     write(*,'(A)',advance="no") trim(S); read *,r
     if(r>=rMin .and. r<=rMax) exit
@@ -458,19 +478,25 @@ function In_Real(S,rMin,rMax) !Screen/Kbd dialog
   In_Real=r
 end function In_Real
 
-subroutine IntToStr3(I,Str) !conversion I<10000 to string(4), for writing index
-  implicit none
-  integer         ::I
+subroutine IntToStr3(I,Str) 
+!--conversion I<10000 to string(4), for writing index
+  integer,         intent(in) ::I
   character(len=3),intent(out)::Str
+  !
   integer::J
-  if(I>=1000.or.I<0) then; Str="999"; return; end if
+  !
+  if(I>=1000.or.I<0) then
+    Str="999"
+    return
+  end if
   !-> INTERNAL write STATEMENT
   write(Str,'(I3)') I
-  do J=1,len(Str); if(Str(J:J)==' ') Str(J:J)='0'; end do
+  do J=1,len(Str)
+    if(Str(J:J)==' ') Str(J:J)='0'
+  end do
 end subroutine IntToStr3
 
 character(len=3) function FIntToStr3(I) !conversion I<10000 to string(4), for writing index
-  implicit none
   integer,intent(in)::I
   !
   character(len=3)::Str
@@ -483,21 +509,22 @@ character(len=3) function FIntToStr3(I) !conversion I<10000 to string(4), for wr
 end function FIntToStr3
 
 subroutine IntToStr4(I,Str) !conversion I<10000 to string(4), for writing index
-  implicit none
   integer,         intent(in) ::I
   character(len=4),intent(out)::Str
+  !
   integer::J
+  !
   if(I>=10000.or.I<0) then; Str="9999"; return; end if
   write(Str,'(I4)') I
   do J=1,len(Str); if(Str(J:J)==' ') Str(J:J)='0'; end do
 end subroutine IntToStr4
 
 character(len=4) function FIntToStr4(I) !conversion I<10000 to string(4), for writing index
-  implicit none
   integer,intent(in)::I
   !
   character(len=4)::Str
   integer::J
+  !
   if(I>=10000.or.I<0) then; Str="9999"; return; end if
   !-> INTERNAL write STATEMENT
   write(Str,'(I4)') I
@@ -510,8 +537,6 @@ subroutine OutStrVec( &
 & Opt_I,Opt_J,Opt_S,Opt_R,Opt_C,vL,CR) !in, optional
 !-- write Counter Opt_I, tab, string Str, tab, array Vec,
 !-- according to filter vL and format Opt_C="E"/"F"/"G"
-  !
-  implicit none
   !
   integer,              intent(in):: fOut
   real(dp),dimension(:),intent(in):: Vec
@@ -559,7 +584,6 @@ subroutine OutStrVec( &
 end subroutine OutStrVec
 
 subroutine Str_Upper(Str)
-  implicit none
   character(len=*), intent(inout):: Str
   !
   integer:: I,J,D
@@ -592,22 +616,20 @@ end subroutine Str_Upper
 
 !---
 
-  subroutine OpenFile(F, FILE)
-   implicit none
-   integer :: F
-   character(len=*) :: FILE
-   !write(*,*) "Opening File Unit F=", F, "=", trim(FILE)
-   open(F,file=FILE)
-  end subroutine
+subroutine OpenFile(F, FILE)
+  integer :: F
+  character(len=*) :: FILE
+  !write(*,*) "Opening File Unit F=", F, "=", trim(FILE)
+  open(F,file=FILE)
+end subroutine
 
-   !---
+ !---
 
-  subroutine CloseFile(F)
-    implicit none
-    integer:: F
-    !write(*,*) "Closing File Unit F=", F
-    close(F)
-  end subroutine
+subroutine CloseFile(F)
+  integer:: F
+  !write(*,*) "Closing File Unit F=", F
+  close(F)
+end subroutine
 
 end module M_IoTools
 
