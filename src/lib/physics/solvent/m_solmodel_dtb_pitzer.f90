@@ -261,7 +261,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
           if(trim(W)=="LAMBDA") then
             if(vSolut(iSp2)%Z/=0) then
               ErrorMsg= "LAMBDA coeff: species 2 must be neutral"
-              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              if(iDebug>2) write(fTrc,'(A,/,A)') &
               & trim(ErrorMsg), &
               & trim(vSolut(iSp1)%NamSp)//"="// &
               & trim(vSolut(iSp2)%NamSp)
@@ -317,7 +317,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
           if(trim(W)=="PSI") then
             if(vSolut(iSp1)%Z*vSolut(iSp2)%Z<0) then
               ErrorMsg= "PSI coeff: Species 1 & 2 must be ions same charge"
-              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              if(iDebug>2) write(fTrc,'(A,/,A)') &
               & trim(ErrorMsg), &
               & trim(vSolut(iSp1)%NamSp)//"="// &
               & trim(vSolut(iSp2)%NamSp)//"="// &
@@ -330,7 +330,7 @@ subroutine Solmodel_Pitzer_Dtb_Read( &
           if(trim(W)=="ZETA") then
             if(vSolut(iSp1)%Z*vSolut(iSp2)%Z>0) then
               ErrorMsg= "PSI coeff: Species 1 & 2 must be ions opposite charge"
-              if(iDebug>2) write(fTrc,'(A,/,A)'), &
+              if(iDebug>2) write(fTrc,'(A,/,A)') &
               & trim(ErrorMsg), &
               & trim(vSolut(iSp1)%NamSp)//"="// &
               & trim(vSolut(iSp2)%NamSp)//"="// &
