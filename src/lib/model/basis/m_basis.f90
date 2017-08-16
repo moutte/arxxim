@@ -318,7 +318,7 @@ subroutine Basis_CpnInert(tStoikio,vCpnIn,vSpcDat,vCpnInert)
   !----------- compute total amount of each component in the fluid phase
   do i=1,size(vCpnInert)
     vCpnInert(i)%Mole= &
-    & sum( tStoikio(i,:)*vSpcDat(:)%Mole, MASK= (vSpc(:)%Typ=="AQU") )
+    & sum( tStoikio(i,:)*vSpcDat(:)%Mole, mask= (vSpc(:)%Typ=="AQU") )
   end do
   !
   !------------------------------------------------- assign prim'species

@@ -415,11 +415,11 @@ subroutine Newton_Press( & !from "NR"
     if(ForcePositive) then
       !--- under relaxation technique from Bethke
       !--- if (Xi/2 + dXi)-0
-      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,mask=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) " Press-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
-      !  X= MINVAL(vX(:),MASK=vIsPlus(:))
+      !  X= MINVAL(vX(:),mask=vIsPlus(:))
       !  if(X>Zero) exit
       !  vDX(:)= vDX(:)*0.5D0
       !  vX(:)= vX0(:) + vDX(:)
@@ -653,11 +653,11 @@ subroutine Newton_Walker( & !
     !---------------------/solve linear equations using LU decomposition
     !
     if(ForcePositive) then
-      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,mask=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) "Walker-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
-      !  X= MINVAL(vX(:),MASK=vIsPlus(:))
+      !  X= MINVAL(vX(:),mask=vIsPlus(:))
       !  if(X>Zero) exit
       !  vDX(:)= vDX(:)*0.5D0
       !  vX(:)= vX0(:) + vDX(:)
@@ -838,11 +838,11 @@ subroutine Newton_Kelley( & !
     !! end if
     !
     if(ForcePositive) then
-      X= maxval(-vDX(:)/vX0(:)*2.0D0,MASK=vIsPlus(:))
+      X= maxval(-vDX(:)/vX0(:)*2.0D0,mask=vIsPlus(:))
       if(iDebug>2 .and. X>1.0D0) write(69,*) "Kelley-UR, ", X
       if(X>1.0D0) vDX(:)= vDX(:) /X
       !do
-      !  X= MINVAL(vX(:),MASK=vIsPlus(:))
+      !  X= MINVAL(vX(:),mask=vIsPlus(:))
       !  if(X>Zero) exit
       !  vStep(:)= vStep(:)*0.5D0
       !  vX(:)= vX0(:) + vStep(:)
