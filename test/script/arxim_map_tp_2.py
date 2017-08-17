@@ -2,8 +2,9 @@ import os, glob, sys
 import pylab as plt
 import numpy as np
 
-sExe= "../bin/arxxim"
-sExe= "../../mybin_o3/arx-cell"
+sExe= "../../mybin_o3/arx-cell"  #develop
+sExe= "..\\bin\\arxim.exe"       #windows
+sExe= "../bin/arxxim"            #linux
 sDebug= "1"
 sCmd=  "GEM"
 

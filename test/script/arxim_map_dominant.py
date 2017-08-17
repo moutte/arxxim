@@ -9,8 +9,8 @@ def mynum(s):
   except exceptions.ValueError:
     return 0.
 
-sExe= "../../mybin_o3/arx-cell"
-sExe= "../bin/arxxim"
+sExe= "..\\bin\\arxim.exe"  #windows
+sExe= "../bin/arxxim"       #linux
 sDebug= "1"
 sCmd= "SPC"
 

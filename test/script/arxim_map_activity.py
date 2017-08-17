@@ -4,7 +4,8 @@ import pylab as plt
 import numpy as np
 import sys
 
-sExe= "../bin/arxxim"
+sExe= "..\\bin\\arxim.exe"  #windows
+sExe= "../bin/arxxim"       #linux
 sDebug= "1"
 sCmd= "GEM"
 
