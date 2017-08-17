@@ -128,7 +128,7 @@ subroutine MixPhase_NormCompo(Mix)
   where(.not. Mix%vLPole) Mix%vXPole=Zero
   !
   vX(1:MaxPole)=Mix%vXPole(1:MaxPole)
-  Y= sum(vX(1:MaxPole),MASK=Mix%vLPole(1:MaxPole))
+  Y= sum(vX(1:MaxPole),mask=Mix%vLPole(1:MaxPole))
   !
   if(Y>Eps) Mix%vXPole(1:MaxPole)=vX(1:MaxPole)/Y
   !
