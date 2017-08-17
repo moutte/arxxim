@@ -107,7 +107,7 @@ subroutine Global_Build
   & size(vSolModel)  )
   !!JM!!EN_COURS ... MySpace must be free'd at end of loop ....
   !
-  call Species_Write_AquSize(vSpc)
+  if(idebug>1) call Species_Write_AquSize(vSpc)
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ Global_Build"
   !
@@ -283,7 +283,7 @@ subroutine Global_Build_New !-------------------------------------UNUSED
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
   & vSpc,vMixModel,vMixFas,vFas) !inout
   !
-  call Species_Write_AquSize(vSpc)
+  if(idebug>1) call Species_Write_AquSize(vSpc)
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ Global_Build"
   !

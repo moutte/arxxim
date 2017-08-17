@@ -305,7 +305,7 @@ subroutine Species_Write_AquSize(vSpc)
   call GetUnit(F)
   open(F,file="aqusize.tab")
   !
-  write(F,'(A)') "SPECIES.size"
+  write(F,'(A)') "SPECIES.SIZE"
   !
   do i=1,size(vSpc)
     if(vSpc(i)%Typ=="AQU" .and. vSpc(i)%Z/=0) &

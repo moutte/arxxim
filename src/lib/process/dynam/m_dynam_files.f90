@@ -261,18 +261,18 @@ subroutine Dynam_Files_Close
   if(fSavTime>0) then; close(fSavTime); fSavTime= 0; end if
   if(fSavRate>0) then; close(fSavRate); fSavRate= 0; end if
   !
-  if(fDynMol>0)  then; write(fDynMol,*)  ; close(fDynMol);  fDynMol= 0; end if 
-  if(fDynAct>0)  then; write(fDynAct,*)  ; close(fDynAct);  fDynAct= 0; end if
-  if(fDynGam>0)  then; write(fDynAct,*)  ; close(fDynGam);  fDynGam= 0; end if
+  if(fDynMol>0) then; write(fDynMol,*); close(fDynMol);  fDynMol= 0; end if 
+  if(fDynAct>0) then; write(fDynAct,*); close(fDynAct);  fDynAct= 0; end if
+  if(fDynGam>0) then; write(fDynAct,*); close(fDynGam);  fDynGam= 0; end if
   !
-  if(fNewtF>0)   then; close(fNewtF);  fNewtF=  0; end if
-  if(fNewtR>0)   then; close(fNewtR);  fNewtR=  0; end if
+  if(fNewtF>0)  then ; close(fNewtF);  fNewtF=  0; end if
+  if(fNewtR>0)  then ; close(fNewtR);  fNewtR=  0; end if
   !
   !if(fNewtFm>0)  then; close(fNewtFm); fNewtFm= 0; end if
   !if(fNewtRm>0)  then; close(fNewtRm); fNewtRm= 0; end if
   !
-  if(fDynEle>0)  then; close(fDynEle); fDynEle=   0; end if 
-  if(fDynMnK>0)  then; close(fDynMnK); fDynMnK=    0; end if
+  if(fDynEle>0)  then ; close(fDynEle) ; fDynEle= 0 ; end if 
+  if(fDynMnK>0)  then ; close(fDynMnK) ; fDynMnK= 0 ; end if
   !
   if(fDynElement>0)  then; close(fDynElement); fDynElement=   0; end if 
   

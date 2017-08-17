@@ -16,4 +16,4 @@ INCLUDE dtb\hsvthr_thcalc_db55_min.tab
 !GAS  WATER  H2O     haar    THERIAK  SPECIAL H2O_HGK
 !END
 
-INCLUDE inn_gem/f1q_sial.include
+INCLUDE inn/f1q_sial.include

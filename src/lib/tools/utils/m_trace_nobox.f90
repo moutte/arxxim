@@ -24,8 +24,8 @@ module M_Trace
   character,parameter,public:: BACKSLASH_ = Achar(92)
 
   integer,public:: iDebug= -1
-  integer,public:: fTrc= 0
-  integer,public:: fHtm= 0
+  integer,public:: fTrc=   0
+  integer,public:: fHtm=   0
   integer,public:: fError= 0
   logical,public:: DebugCoores=.false.
 
