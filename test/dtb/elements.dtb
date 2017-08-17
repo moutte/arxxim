@@ -1,0 +1,135 @@
+!.name/ atomic_weight(kg)/ valency/ default.valency/ entropy(J)@refcond
+!.valency=0 is for elements with possibly multiple redox state
+!.entropy(J)@refcond is needed only for calculations from HSV files 
+!
+
+ELEMENTS
+
+Act 0.05904 1 1 0.0
+
+HE	0.004003	0	0	30.151
+NE	0.020179	0	0	34.973
+AR	0.039948	0	0	37.008
+KR	0.0838	0	0	39.217
+XE	0.1313	0	0	40.555
+
+AU	0.10787	1	1	0
+AG	0.19697	1	1	0
+
+LI	0.006941	1	1	29.09
+NA	0.02299	1	1	51.46
+K	0.039098	1	1	64.67
+MG	0.024305	2	2	32.67
+CA	0.040078	2	2	41.59
+SR	0.08762	2	2	55.69
+BA	0.137327	2	2	62.42
+FE	0.055847	0	3	27.28
+MN	0.054938	2	2	32.01
+P	0.030973	5	5	41.09
+AL	0.026982	3	3	28.3
+SI	0.028085	4	4	18.81
+TI	0.047879	4	4	30.76
+B	0.0108105	4	3	5.83
+CR	0.051996	0	3	23.62
+NI	0.05869	2	2	29.87
+CU	0.063546	0	2	33.14
+CD	0.112411	2	2	51.8
+PB	0.2072	2	2	64.8
+MO	0.09594	6	6	64.8
+ZN	0.06539	2	2	41.63
+AS	0.074921	0	3	35.69
+U	0.238029	0	6	50.2
+S	0.032066	0	-2	32.05
+CL	0.035453	0	-1	111.54
+F	0.018998	-1	-1	101.39
+BR	0.079904	-1	-1	76.1
+I	0.126905	-1	-1	58.07
+N	0.0140065	0	-3	95.805
+C	0.0120105	0	4	5.74
+H	0.001008	1	1	65.34
+O	0.0159995	-2	-2	102.575
+E_	0	1	1	65.34
+
+END ELEMENTS
+
+O	0.0159994	-2	-2	0	!Oxygen
+Ag	0.1078682	2	2	0	!Silver
+Al	0.0269815	3	3	0	!Aluminum
+Am	0.243	3	3	0	!Americium
+Ar	0.039948	0	0	0	!Argon
+Au	0.1969665	2	2	0	!Gold
+B	0.010811	3	3	0	!Boron
+Ba	0.137327	2	2	0	!Barium
+Be	0.0090122	2	2	0	!Beryllium
+Br	0.079904	-1	-1	0	!Bromine
+Ca	0.040078	2	2	0	!Calcium
+Cd	0.112411	2	2	0	!Cadmium
+Ce	0.140115	3	3	0	!Cerium
+Cl	0.0354527	-1	-1	0	!Chlorine
+Co	0.0589332	2	2	0	!Cobalt
+Cr	0.0519961	3	3	0	!Chromium
+Cs	0.1329054	1	1	0	!Cesium
+Cu	0.063546	2	2	0	!Copper
+Dy	0.1625	3	3	0	!Dysprosium
+Er	0.16726	3	3	0	!Erbium
+Eu	0.151965	2	2	0	!Europium
+F	0.0189984	-1	-1	0	!Fluorine
+Fe	0.055847	2	2	0	!Iron
+Ga	0.069723	3	3	0	!Gallium
+Gd	0.15725	3	3	0	!Gadolinium
+H	0.0010079	1	1	0	!Hydrogen
+As	0.0749216	5	5	0	!Arsenic
+C	0.012011	4	4	0	!Carbon
+P	0.0309738	5	5	0	!Phosphorus
+He	0.0040026	0	0	0	!Helium
+Hf	0.17849	4	4	0	!Hafnium
+Hg	0.20059	2	2	0	!Mercury
+Ho	0.1649303	3	3	0	!Holmium
+I	0.1269045	-1	-1	0	!Iodine
+In	0.11482	2	2	0	!Indium
+K	0.0390983	1	1	0	!Potassium
+Kr	0.0838	0	0	0	!Krypton
+La	0.1389055	3	3	0	!Lanthanum
+Li	0.006941	1	1	0	!Lithium
+Lu	0.174967	3	3	0	!Lutetium
+Mg	0.024305	2	2	0	!Magnesium
+Mn	0.054938	2	2	0	!Manganese
+Mo	0.09594	1	1	0	!Molybdenum
+N	0.0140067	3	3	0	!Nitrogen
+Na	0.0229898	1	1	0	!Sodium
+Nd	0.14424	3	3	0	!Neodymium
+Ne	0.0201797	0	0	0	!Neon
+Ni	0.05869	2	2	0	!Nickel
+Np	0.237048	1	1	0	!Neptunium
+Pb	0.2072	2	2	0	!Lead
+Pd	0.10642	2	2	0	!Palladium
+Pm	0.147	3	3	0	!Prometium
+Pr	0.1409076	3	3	0	!Praseodymium
+Pu	0.244	1	1	0	!Plutonium
+Ra	0.226025	2	2	0	!Radium
+Rb	0.0854678	1	1	0	!Rubidium
+Re	0.186207	1	1	0	!Rhenium
+Rn	0.222	0	0	0	!Radon
+Ru	0.10107	1	1	0	!Ruthenium
+S	0.032066	6	6	0	!Sulfur
+Sb	0.12175	3	3	0	!Antimony
+Sc	0.0449559	3	3	0	!Scandium
+Se	0.07896	1	1	0	!Selenium
+Si	0.0280855	4	4	0	!Silicon
+Sm	0.15036	3	3	0	!Samarium
+Sn	0.11871	4	4	0	!Tin
+Sr	0.08762	2	2	0	!Strontium
+Tb	0.1589253	3	3	0	!Terbium
+Tc	0.098	1	1	0	!Technetium
+Th	0.2320381	3	3	0	!Thorium
+Ti	0.04788	4	4	0	!Titanium
+Tl	0.2043833	2	2	0	!Thallium
+Tm	0.1689342	3	3	0	!Thulium
+U	0.2380289	5	5	0	!Uranium
+V	0.0509415	3	3	0	!Vanadium
+W	0.18385	5	5	0	!Tungsten
+Xe	0.13129	0	0	0	!Xenon
+Y	0.0889059	3	3	0	!Yttrium
+Yb	0.17304	3	3	0	!Ytterbium
+Zn	0.06539	2	2	0	!Zinc
+Zr	0.091224	4	4	0	!Zirconium
