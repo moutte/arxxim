@@ -35,7 +35,7 @@ Xmin,Xmax,Xdelta= 1., 13., 1.
 tol_x= 0.02
 
 lisY= ["OX"]
-Ymin,Ymax,Ydelta= 4., 40., 2.
+Ymin,Ymax,Ydelta= 40., 4., 2.
 tol_y= 0.1
 
 #----------------------------------------------------------//input files
@@ -364,6 +364,6 @@ for i,points in enumerate(lines):
     vy.append(y)
   fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
   
-plt.savefig("000_map_arxim_2"+".png")
+plt.savefig("arxim_map_dominant"+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
