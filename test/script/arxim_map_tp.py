@@ -2,7 +2,7 @@ import os, glob, sys
 import pylab as plt
 import numpy as np
 
-sExe= "../bin/arxxim"
+sExe= "../bin/arxim"
 sDebug= "1"
 sCmd=  "GEM"
 
@@ -34,12 +34,15 @@ iKeyword= 0
 iValue=   1
 
 lisX= ["TDGC"]
-Xmin,Xmax,Xdelta= 100.,  600., 50.
+lisY= ["PBAR"]
+
+Xmin,Xmax,Xdelta= 540., 560., 5.
+tol_x= 1.
+Ymin,Ymax,Ydelta= 4000., 5000.,50.
+tol_y= 5.
+
 Xmin,Xmax,Xdelta= 300., 1200., 50.
 tol_x= 5.
-
-lisY= ["PBAR"]
-Ymin,Ymax,Ydelta= 100.,  900., 100.
 Ymin,Ymax,Ydelta= 500., 6500., 500.
 tol_y= 10.
 
@@ -206,7 +209,6 @@ for iY in range(Ydim):
   y= tab_y[0,iY]
   include_modify(lisY,y)
   for iX in range(1,Xdim):
-    #if iX>0:
     if tab_phase[iX-1,iY] != tab_phase[iX,iY]:
       F0= tab_phase[iX-1,iY]
       F1= tab_phase[iX,iY]
@@ -214,8 +216,8 @@ for iY in range(Ydim):
       x1= tab_x[iX,iY]
       x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
       if OK:
-        if F0>F1: s= str(F1)+'='+str(F0)
-        else:     s= str(F0)+'='+str(F1)
+        if F0>F1 : s= str(F1)+'='+str(F0)
+        else     : s= str(F0)+'='+str(F1)
         if not s in lis_reac: lis_reac.append(s)
         val= s,x,y
         lis_xy_x.append(val)
@@ -235,8 +237,8 @@ for iX in range(Xdim):
       y1= tab_y[iX,iY]
       y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
       if OK:
-        if F0>F1: s= str(F1)+'='+str(F0)
-        else:     s= str(F0)+'='+str(F1)
+        if F0>F1 : s= str(F1)+'='+str(F0)
+        else     : s= str(F0)+'='+str(F1)
         if not s in lis_reac: lis_reac.append(s)
         val= s,x,y
         lis_xy_y.append(val)
