@@ -10,7 +10,7 @@ def mynum(s):
     return 0.
 
 sExe= "..\\bin\\arxim.exe"  #windows
-sExe= "../bin/arxxim"       #linux
+sExe= "../bin/arxim"       #linux
 sDebug= "1"
 sCmd= "SPC"
 

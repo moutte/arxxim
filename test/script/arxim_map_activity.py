@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 sExe= "..\\bin\\arxim.exe"  #windows
-sExe= "../bin/arxxim"       #linux
+sExe= "../bin/arxim"       #linux
 sDebug= "1"
 sCmd= "GEM"
 
@@ -33,18 +33,18 @@ iKeyword= 2
 iValue=   5
 
 lisX= ["SIO2_BUFF"]
-Xmin,Xmax,Xdelta= 5.,  2., 0.25
-tol_x= 0.02
-lisY= ["KOH_BUFF"]
-Ymin,Ymax,Ydelta= 0., -8., 0.25
-tol_y= 0.02
-
-lisX= ["SIO2_BUFF"]
 Xmin,Xmax,Xdelta= 4.,  3., 0.05
 tol_x= 0.01
 lisY= ["KOH_BUFF"]
 Ymin,Ymax,Ydelta= -4., -2., 0.1
 tol_y= 0.01
+
+lisX= ["SIO2_BUFF"]
+Xmin,Xmax,Xdelta= 5.,  2., 0.25
+tol_x= 0.02
+lisY= ["KOH_BUFF"]
+Ymin,Ymax,Ydelta= 0., -8., 0.25
+tol_y= 0.02
 #----------------------------------------------------------//input files
 
 fInclude= fInn.replace(".inn",".include")
