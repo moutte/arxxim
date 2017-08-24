@@ -5,7 +5,7 @@ import numpy as np
 import sys
 
 sExe= "..\\bin\\arxim.exe"  #windows
-sExe= "../bin/arxim"       #linux
+sExe= "../bin/arxim"        #linux
 sDebug= "1"
 sCmd= "GEM"
 
@@ -105,7 +105,7 @@ def arxim_result(fResult): #(sCommand):
   for i,line in enumerate(lines):
     mineral= line.split()[0]
     if i>0:
-      lis= lis + mineral + "-"
+      lis= lis + mineral + "="
   return lis 
 #--------------------------------------------------------/read results
 
@@ -129,7 +129,7 @@ def input_modify(lis,x):
 tab_phase=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
-lis_phase=[]
+lis_paragen=[]
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
   input_modify(lisY,y) #-------------------modify the include file for y
@@ -140,17 +140,32 @@ for iY,y in enumerate(Yser):
     input_modify(lisX,x) #-----------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
-      phase= arxim_result(fResult) #-------------------read arxim result
-      print phase
+      paragen= arxim_result(fResult) #-------------------read arxim result
+      print paragen
       #raw_input()
-      if not phase in lis_phase:
-        lis_phase.append(phase)
-      j= lis_phase.index(phase)
+      if not paragen in lis_paragen:
+        lis_paragen.append(paragen)
+      j= lis_paragen.index(paragen)
       tab_phase[iX,iY]= j
       tab_x[iX,iY]= x
       tab_y[iX,iY]= y
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
+    
+#---------------------------------compute the positions for field labels
+centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
+for iY,y in enumerate(Yser):
+  for iX,x in enumerate(Xser):
+    i= tab_phase[iX,iY]
+    x_,y_,n= centroids[i]
+    x_= (n*x_+ x)/(n+1)
+    y_= (n*y_+ y)/(n+1)
+    n +=1
+    centroids[i]= x_,y_,n
+if True:
+  for centroid in centroids:
+    print centroid
+#-------------------------------//compute the positions for field labels
     
 print tab_phase
 #--------------------------------------------//map the stable assemblage
@@ -165,11 +180,11 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
     input_modify(lis,x)
     OK= arxim_ok(sArximCommand)
     if OK:
-      phase= arxim_result(fResult)
-      if phase in lis_phase:
-        F= lis_phase.index(phase)
-        # if the phase at x is the same as the phase at x0,
-        # then the phase change occurs between x and x1, 
+      paragen= arxim_result(fResult)
+      if paragen in lis_paragen:
+        F= lis_paragen.index(paragen)
+        # if the paragen at x is the same as the paragen at x0,
+        # then the paragen change occurs between x and x1, 
         # then x becomes the new x0
         if   F==F0: x0= x
         elif F==F1: x1= x
@@ -178,8 +193,8 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
           OK= False
           break
       else:
-        lis_phase.append(phase)
-        print "NEW:",phase
+        lis_paragen.append(paragen)
+        print "NEW:",paragen
         OK= False
         break
       # print x0,x1
@@ -196,7 +211,7 @@ lis_xy_y=  []
 lis_false_x= []
 lis_false_y= []
 
-#--refining the x-coordinate of the phase change, at fixed y
+#--refining the x-coordinate of the paragen change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
   input_modify(lisY,y)
@@ -217,7 +232,7 @@ for iY in range(Ydim):
         val= iX,iY
         lis_false_x.append(val)
         
-#--refining the y-coordinate of the phase change, at fixed x
+#--refining the y-coordinate of the paragen change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
   input_modify(lisX,x)
@@ -253,8 +268,8 @@ for reac in lis_reac:
   points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
-for phase in lis_phase:
-  print phase
+for paragen in lis_paragen:
+  print paragen
 for reac in lis_reac:
   print reac
 #raw_input()
@@ -262,21 +277,59 @@ for reac in lis_reac:
 #sys.exit()
 #-------------------------------------------------------------//refining
 
-#--------------------------------------------------------plot TP diagram
+#-----------------------------------------processing the paragenese list
+#----------i.e. find the phases that are common to all parageneses found
+lis_phase= []
+for paragen in lis_paragen:
+  ww= paragen.split('=')
+  for w in ww:
+    if not w in lis_phase:
+      lis_phase.append(w)
+isPartout=[True for i in range(len(lis_phase))]
+for paragen in lis_paragen:
+  ww= paragen.split('=')
+  for i,phase in enumerate(lis_phase):
+    if not phase in ww:
+      isPartout[i]= False
+phase_Partout=[]
+for i,phase in enumerate(lis_phase):
+  if isPartout[i]:
+    phase_Partout.append(phase)
+for i,paragen in enumerate(lis_paragen):
+  ww= paragen.split('=')
+  newp= ""
+  for w in ww:
+    if not w in phase_Partout: 
+      newp= newp + w + '='
+  lis_paragen[i]= newp 
+#---------------------------------------//processing the paragenese list
+
+#-----------------------------------------------------------plot diagram
 plt.rcParams['figure.figsize']= 10,8
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
   
+fig.set_xlim(Xmin,Xmax)
+fig.set_ylim(Ymin,Ymax)
+
 for i,points in enumerate(lines):
   vx= []
   vy= []
   for x,y in points:
-    vx.append(-x)
-    vy.append(-y)
+    vx.append(x)
+    vy.append(y)
   fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
   
-plt.savefig("000_map_arxim"+".png")
+for i,centroid in enumerate(centroids):
+  x,y,n= centroid
+  textstr= lis_paragen[i].replace('=','\n')
+  fig.text(x,y,
+    textstr,
+    horizontalalignment='center',
+    verticalalignment='center')
+  
+plt.savefig("0_arxim_map_activity"+".png")
 plt.show()
-#------------------------------------------------------//plot TP diagram
+#---------------------------------------------------------//plot diagram

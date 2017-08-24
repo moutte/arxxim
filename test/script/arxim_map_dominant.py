@@ -243,6 +243,16 @@ for iY,y in enumerate(Yser):
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
     
+centroids=[ (0.,0.,0) for i in range(len(spc_names))]
+for iY,y in enumerate(Yser):
+  for iX,x in enumerate(Xser):
+    i= tab_spc[iX,iY]
+    x_,y_,n= centroids[i]
+    x_= (n*x_+ x)/(n+1)
+    y_= (n*y_+ y)/(n+1)
+    n +=1
+    centroids[i]= x_,y_,n
+    
 print tab_spc
 with open("res.tab",'w') as f:
   for j in range(Ydim):
@@ -251,7 +261,7 @@ with open("res.tab",'w') as f:
     f.write('\n')
 #--------------------------------------------//map the stable assemblage
 
-if 0:
+if False:
   plt.figure()
   # plt.imshow(Data, interpolation='none')
   plt.imshow(tab_spc, aspect='auto', interpolation='none', origin='lower')
@@ -264,7 +274,7 @@ if 0:
   # extent=[horizontal_min,horizontal_max,vertical_min,vertical_max]
 
   plt.show()
-  #sys.exit()
+  sys.exit()
   
   for species in lis_spc:
     print species,spc_names[species]
@@ -355,7 +365,10 @@ fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
-  
+
+fig.set_xlim(Xmin,Xmax)
+fig.set_ylim(Ymin,Ymax)
+
 for i,points in enumerate(lines):
   vx= []
   vy= []
@@ -364,6 +377,11 @@ for i,points in enumerate(lines):
     vy.append(y)
   fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
   
-plt.savefig("arxim_map_dominant"+".png")
+for i,centroid in enumerate(centroids):
+  x,y,n= centroid
+  textstr= spc_names[i]
+  fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.savefig("0_arxim_map_dominant"+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
