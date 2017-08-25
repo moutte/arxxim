@@ -42,18 +42,17 @@ iValue=   5
 nValue=   8
 
 
-lisX= ["SIO2_BUFF"]
-lisY= ["KOH_BUFF"]
+Xlis= ["SIO2_BUFF"]
+Ylis= ["KOH_BUFF"]
 
-Xmin,Xmax,Xdelta= 3.,  2., 0.05
-tol_x= 0.01
-Ymin,Ymax,Ydelta= -2., -4., 0.1
-tol_y= 0.01
+Xlabel= "-log[SiO2]"
+Ylabel= "-log[K+]/[H+]"
 
-Xmin,Xmax,Xdelta= 5.,  2., 0.25
-tol_x= 0.02
-Ymin,Ymax,Ydelta= 0., -8., 0.25
-tol_y= 0.02
+Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
+Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
+
+Xmin,Xmax,Xdelta,Xtol= 3.,  2., 0.05,  0.01
+Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
 
 #----------------------------------------------------------//input files
 
@@ -143,12 +142,12 @@ tab_x=plt.zeros((Xdim,Ydim),'float')
 lis_paragen=[]
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
-  input_modify(lisY,y) #-------------------modify the include file for y
+  input_modify(Ylis,y) #-------------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print iY,iX
     #
-    input_modify(lisX,x) #-----------------modify the include file for x
+    input_modify(Xlis,x) #-----------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
       paragen= arxim_result(fResult) #-------------------read arxim result
@@ -225,14 +224,14 @@ lis_false_y= []
 #--refining the x-coordinate of the paragen change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
-  input_modify(lisY,y)
+  input_modify(Ylis,y)
   for iX in range(Xdim-1):
     if tab_phase[iX,iY] != tab_phase[iX+1,iY]:
       F0= tab_phase[iX,iY]
       F1= tab_phase[iX+1,iY]
       x0= tab_x[iX,iY]
       x1= tab_x[iX+1,iY]
-      x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
+      x,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -246,14 +245,14 @@ for iY in range(Ydim):
 #--refining the y-coordinate of the paragen change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
-  input_modify(lisX,x)
+  input_modify(Xlis,x)
   for iY in range(Ydim-1):
     if tab_phase[iX,iY] != tab_phase[iX,iY+1]:
       F0= tab_phase[iX,iY]
       F1= tab_phase[iX,iY+1]
       y0= tab_y[iX,iY]
       y1= tab_y[iX,iY+1]
-      y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
+      y,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -341,6 +340,9 @@ for i,centroid in enumerate(centroids):
     horizontalalignment='center',
     verticalalignment='center')
 
+plt.xlabel(Xlabel)
+plt.ylabel(Ylabel)
+  
 plt.savefig(figName+".png")
 plt.show()
 #---------------------------------------------------------//plot diagram

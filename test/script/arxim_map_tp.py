@@ -29,18 +29,17 @@ Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
 Value is 1200 / 400,     its index is 1  -> iValue=   1
 '''
 
-lisX= ["TDGC"]
-lisY= ["PBAR"]
+Xlis= ["TDGC"]
+Ylis= ["PBAR"]
 
-Xmin,Xmax,Xdelta= 540., 560., 5.
-tol_x= 1.
-Ymin,Ymax,Ydelta= 4000., 5000.,50.
-tol_y= 5.
+Xlabel= "T /DGC"
+Ylabel= "P /BAR"
 
-Xmin,Xmax,Xdelta= 300., 900., 50.
-tol_x= 5.
-Ymin,Ymax,Ydelta= 500., 6500., 500.
-tol_y= 10.
+Xmin,Xmax,Xdelta,Xtol= 300., 900.,   50.,  5.
+Ymin,Ymax,Ydelta,Ytol= 500., 6500., 500., 10.
+
+Xmin,Xmax,Xdelta,Xtol=  500.,   600., 10.,   1.
+Ymin,Ymax,Ydelta,Ytol= 4000.,  5000., 50.,   5.
 
 #----------------------------------------------------------//input files
 
@@ -178,12 +177,12 @@ lis_false_y= []
 #--
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
-  include_modify(lisY,y) #-----------------modify the include file for y
+  include_modify(Ylis,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print iY,iX
     #
-    include_modify(lisX,x) #---------------modify the include file for x
+    include_modify(Xlis,x) #---------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
       paragen= arxim_result(fResult) #-----------------read arxim result
@@ -222,14 +221,14 @@ print tab_paragen
 #--refining the x-coordinate of the paragen change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
-  include_modify(lisY,y)
+  include_modify(Ylis,y)
   for iX in range(1,Xdim):
     if tab_paragen[iX-1,iY] != tab_paragen[iX,iY]:
       F0= tab_paragen[iX-1,iY]
       F1= tab_paragen[iX,iY]
       x0= tab_x[iX-1,iY]
       x1= tab_x[iX,iY]
-      x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
+      x,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
       if OK:
         if F0>F1 : s= str(F1)+'='+str(F0)
         else     : s= str(F0)+'='+str(F1)
@@ -243,14 +242,14 @@ for iY in range(Ydim):
 #--refining the y-coordinate of the paragen change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
-  include_modify(lisX,x)
+  include_modify(Xlis,x)
   for iY in range(1,Ydim):
     if tab_paragen[iX,iY-1] != tab_paragen[iX,iY]:
       F0= tab_paragen[iX,iY-1]
       F1= tab_paragen[iX,iY]
       y0= tab_y[iX,iY-1]
       y1= tab_y[iX,iY]
-      y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
+      y,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
       if OK:
         if F0>F1 : s= str(F1)+'='+str(F0)
         else     : s= str(F0)+'='+str(F1)
@@ -334,6 +333,9 @@ for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= lis_paragen[i].replace('=','\n')
   fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.xlabel(Xlabel)
+plt.ylabel(Ylabel)
   
 plt.savefig("0_arxim_map_tp"+".png")
 plt.show()

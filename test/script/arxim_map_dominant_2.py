@@ -30,8 +30,8 @@ fInn= "inn/map1a_fe_ox.inn"
 lisX= ["H"]
 lisY= ["OX"]
 
-labelX= "pH"
-labelY= "-log(f_O2(gaz))"
+Xlabel= "pH"
+Ylabel= "-log(f_O2(gaz))"
 
 Xmin,Xmax,Xdelta= 1., 13., 1.
 Xmin,Xmax,Xdelta= 2., 12., 2.
@@ -368,8 +368,8 @@ for i,centroid in enumerate(centroids):
   textstr= spc_names[i]
   fig.text(x,y,textstr,horizontalalignment='center')
   
-plt.xlabel(labelX)
-plt.ylabel(labelY)
+plt.xlabel(Xlabel)
+plt.ylabel(Ylabel)
   
 plt.savefig(figName+".png")
 plt.show()

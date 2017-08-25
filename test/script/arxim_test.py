@@ -6,7 +6,7 @@ import os
 os.chdir("../")
 print "DIR=", os.getcwd()
 
-filelist= glob.glob('inn/map1a*.inn')
+filelist= glob.glob('inn/map2b*.inn')
 
 filelist.sort()
 
