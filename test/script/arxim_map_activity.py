@@ -19,7 +19,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/c1f6_activ.inn"
+fInn= "inn/map2a_activ.inn"
 '''
 the include block to be modified:
 SPECIES

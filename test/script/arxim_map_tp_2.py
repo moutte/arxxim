@@ -2,9 +2,8 @@ import os, glob, sys
 import pylab as plt
 import numpy as np
 
-sExe= "../../mybin_o3/arx-cell"  #develop
 sExe= "..\\bin\\arxim.exe"       #windows
-sExe= "../bin/arxxim"            #linux
+sExe= "../bin/arxim"             #linux
 sDebug= "1"
 sCmd=  "GEM"
 
@@ -17,8 +16,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/f1r_sialh.inn"
-fInn= "inn/f1q_sial.inn"
+fInn= "inn/map3a_tp.inn"
 
 '''
 the include block to be modified:
@@ -37,7 +35,7 @@ iValue=   1
 
 lisX= ["TDGC"]
 Xmin,Xmax,Xdelta= 100.,  600., 50.
-Xmin,Xmax,Xdelta= 300., 1200., 50.
+Xmin,Xmax,Xdelta= 300.,  900., 50.
 tol_x= 5.
 
 lisY= ["PBAR"]
@@ -138,11 +136,11 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
     include_modify(lis,x)
     OK= arxim_ok(sArximCommand)
     if OK:
-      phase= arxim_result(fResult)
-      if phase in lis_phase:
-        F= lis_phase.index(phase)
-        # if the phase at x is the same as the phase at x0,
-        # then the phase change occurs between x and x1, 
+      paragen= arxim_result(fResult)
+      if paragen in lis_paragen:
+        F= lis_paragen.index(paragen)
+        # if the paragen at x is the same as the paragen at x0,
+        # then the paragen change occurs between x and x1, 
         # then x becomes the new x0
         if   F==F0: x0= x
         elif F==F1: x1= x
@@ -151,8 +149,8 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
           OK= False
           break
       else:
-        lis_phase.append(phase)
-        print "NEW:",phase
+        lis_paragen.append(paragen)
+        print "NEW:",paragen
         OK= False
         break
     # print x0,x1
@@ -164,10 +162,10 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
 
 #----------------------------------------------map the stable assemblage
 #----------------------------------------------------on the initial grid
-tab_phase=plt.zeros((Xdim,Ydim),'int')
+tab_paragen=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
-lis_phase=[]
+lis_paragen=[]
 
 #--for refining:
 lis_reac=  []
@@ -186,21 +184,21 @@ for iY,y in enumerate(Yser):
     include_modify(lisX,x) #---------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
-      phase= arxim_result(fResult) #-------------------read arxim result
-      print phase
+      paragen= arxim_result(fResult) #-------------------read arxim result
+      print paragen
       # raw_input()
-      if not phase in lis_phase:
-        lis_phase.append(phase)
-      j= lis_phase.index(phase)
-      tab_phase[iX,iY]= j
+      if not paragen in lis_paragen:
+        lis_paragen.append(paragen)
+      j= lis_paragen.index(paragen)
+      tab_paragen[iX,iY]= j
       tab_x[iX,iY]= x
       tab_y[iX,iY]= y
       #
       if iX>0:
-        #--refining the x-coordinate of a phase change        
-        if tab_phase[iX-1,iY] != tab_phase[iX,iY]:
-          F0= tab_phase[iX-1,iY]
-          F1= tab_phase[iX,iY]
+        #--refining the x-coordinate of a paragen change        
+        if tab_paragen[iX-1,iY] != tab_paragen[iX,iY]:
+          F0= tab_paragen[iX-1,iY]
+          F1= tab_paragen[iX,iY]
           x0= tab_x[iX-1,iY]
           x1= tab_x[iX,iY]
           x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
@@ -214,10 +212,10 @@ for iY,y in enumerate(Yser):
             val= iX,iY
             lis_false_x.append(val)
       if iY>0:
-        #--refining the y-coordinate of a phase change        
-        if tab_phase[iX,iY-1] != tab_phase[iX,iY]:
-          F0= tab_phase[iX,iY-1]
-          F1= tab_phase[iX,iY]
+        #--refining the y-coordinate of a paragen change        
+        if tab_paragen[iX,iY-1] != tab_paragen[iX,iY]:
+          F0= tab_paragen[iX,iY-1]
+          F1= tab_paragen[iX,iY]
           y0= tab_y[iX,iY-1]
           y1= tab_y[iX,iY]
           y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
@@ -234,21 +232,21 @@ for iY,y in enumerate(Yser):
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
     
-print tab_phase
+print tab_paragen
 #--------------------------------------------//map the stable assemblage
 #sys.exit()
 
 #---------------------------------------------------------------refining
-#--refining the x-coordinate of the phase change, at fixed y
+#--refining the x-coordinate of the paragen change, at fixed y
 if 0:
   for iY in range(Ydim):
     y= tab_y[0,iY]
     include_modify(lisY,y)
     for iX in range(1,Xdim):
       #if iX>0:
-      if tab_phase[iX-1,iY] != tab_phase[iX,iY]:
-        F0= tab_phase[iX-1,iY]
-        F1= tab_phase[iX,iY]
+      if tab_paragen[iX-1,iY] != tab_paragen[iX,iY]:
+        F0= tab_paragen[iX-1,iY]
+        F1= tab_paragen[iX,iY]
         x0= tab_x[iX-1,iY]
         x1= tab_x[iX,iY]
         x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
@@ -262,15 +260,15 @@ if 0:
           val= iX,iY
           lis_false_x.append(val)
         
-#--refining the y-coordinate of the phase change, at fixed x
+#--refining the y-coordinate of the paragen change, at fixed x
 if 0:
   for iX in range(Xdim):
     x= tab_x[iX,0]
     include_modify(lisX,x)
     for iY in range(1,Ydim):
-      if tab_phase[iX,iY-1] != tab_phase[iX,iY]:
-        F0= tab_phase[iX,iY-1]
-        F1= tab_phase[iX,iY]
+      if tab_paragen[iX,iY-1] != tab_paragen[iX,iY]:
+        F0= tab_paragen[iX,iY-1]
+        F1= tab_paragen[iX,iY]
         y0= tab_y[iX,iY-1]
         y1= tab_y[iX,iY]
         y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
@@ -299,14 +297,56 @@ for reac in lis_reac:
   points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
-for phase in lis_phase:
-  print phase
+for paragen in lis_paragen:
+  print paragen
 for reac in lis_reac:
   print reac
 #raw_input()
 
 #sys.exit()
 #-------------------------------------------------------------//refining
+
+#---------------------------------compute the positions for field labels
+centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
+for iY,y in enumerate(Yser):
+  for iX,x in enumerate(Xser):
+    i= tab_paragen[iX,iY]
+    x_,y_,n= centroids[i]
+    x_= (n*x_+ x)/(n+1)
+    y_= (n*y_+ y)/(n+1)
+    n +=1
+    centroids[i]= x_,y_,n
+if False:
+  for centroid in centroids:
+    print centroid
+#-------------------------------//compute the positions for field labels
+    
+#-----------------------------------------processing the paragenese list
+#----------i.e. find the phases that are common to all parageneses found
+lis_phase= []
+for paragen in lis_paragen:
+  ww= paragen.split('=')
+  for w in ww:
+    if not w in lis_phase:
+      lis_phase.append(w)
+isPartout=[True for i in range(len(lis_phase))]
+for paragen in lis_paragen:
+  ww= paragen.split('=')
+  for i,phase in enumerate(lis_phase):
+    if not phase in ww:
+      isPartout[i]= False
+phase_Partout=[]
+for i,phase in enumerate(lis_phase):
+  if isPartout[i]:
+    phase_Partout.append(phase)
+for i,paragen in enumerate(lis_paragen):
+  ww= paragen.split('=')
+  newp= ""
+  for w in ww:
+    if not w in phase_Partout: 
+      newp= newp + w + '='
+  lis_paragen[i]= newp 
+#---------------------------------------//processing the paragenese list
 
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6
@@ -315,6 +355,9 @@ symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
   
+fig.set_xlim(Xmin,Xmax)
+fig.set_ylim(Ymin,Ymax)
+
 for i,points in enumerate(lines):
   vx= []
   vy= []
@@ -323,6 +366,11 @@ for i,points in enumerate(lines):
     vy.append(y)
   fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
   
-plt.savefig("000_arxim_map_tp"+".png")
+for i,centroid in enumerate(centroids):
+  x,y,n= centroid
+  textstr= lis_paragen[i].replace('=','\n')
+  fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.savefig("0_arxim_map_tp"+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram

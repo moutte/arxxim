@@ -5,7 +5,7 @@ END TEST
 
 CONDITIONS
   TITLE   K-Si-Al
-  OUTPUT  out\c1f6
+  OUTPUT  out\map2a
   DEBUG   3
 END
 
@@ -176,7 +176,7 @@ MIN	LLNL_337_00329	Pyrophyllite	Al2Si4O10(OH)2	2600	-0.4397
 MIN	LLNL_337_00165	Boehmite	AlO2H	2600	-7.5642
 END
 
-INCLUDE  inn\c1f6_activ.include
+INCLUDE  inn\map2a_activ.include
 
 MIN	LLNL_337_00330	Quartz	SiO2	2600	3.9993
 MIN	LLNL_337_00330	Quartz	SiO2	2600	3.9993

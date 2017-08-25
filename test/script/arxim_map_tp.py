@@ -15,8 +15,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/f1r_sialh.inn"
-fInn= "inn/f1q_sial.inn"
+fInn= "inn/map3a_tp.inn"
 
 '''
 the include block to be modified:
@@ -165,7 +164,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
 
 #----------------------------------------------map the stable assemblage
 #----------------------------------------------------on the initial grid
-tab_phase=plt.zeros((Xdim,Ydim),'int')
+tab_paragen=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
 lis_paragen=[]
@@ -194,7 +193,7 @@ for iY,y in enumerate(Yser):
         lis_paragen.append(paragen)
         #centroids.append((x,y,0))
       j= lis_paragen.index(paragen)
-      tab_phase[iX,iY]= j
+      tab_paragen[iX,iY]= j
       tab_x[iX,iY]= x
       tab_y[iX,iY]= y
   #-------------------------------------------------------------//x-loop
@@ -204,7 +203,7 @@ for iY,y in enumerate(Yser):
 centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
 for iY,y in enumerate(Yser):
   for iX,x in enumerate(Xser):
-    i= tab_phase[iX,iY]
+    i= tab_paragen[iX,iY]
     x_,y_,n= centroids[i]
     x_= (n*x_+ x)/(n+1)
     y_= (n*y_+ y)/(n+1)
@@ -215,7 +214,7 @@ if False:
     print centroid
 #-------------------------------//compute the positions for field labels
     
-print tab_phase
+print tab_paragen
 #--------------------------------------------//map the stable assemblage
 #sys.exit()
 
@@ -225,9 +224,9 @@ for iY in range(Ydim):
   y= tab_y[0,iY]
   include_modify(lisY,y)
   for iX in range(1,Xdim):
-    if tab_phase[iX-1,iY] != tab_phase[iX,iY]:
-      F0= tab_phase[iX-1,iY]
-      F1= tab_phase[iX,iY]
+    if tab_paragen[iX-1,iY] != tab_paragen[iX,iY]:
+      F0= tab_paragen[iX-1,iY]
+      F1= tab_paragen[iX,iY]
       x0= tab_x[iX-1,iY]
       x1= tab_x[iX,iY]
       x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
@@ -246,9 +245,9 @@ for iX in range(Xdim):
   x= tab_x[iX,0]
   include_modify(lisX,x)
   for iY in range(1,Ydim):
-    if tab_phase[iX,iY-1] != tab_phase[iX,iY]:
-      F0= tab_phase[iX,iY-1]
-      F1= tab_phase[iX,iY]
+    if tab_paragen[iX,iY-1] != tab_paragen[iX,iY]:
+      F0= tab_paragen[iX,iY-1]
+      F1= tab_paragen[iX,iY]
       y0= tab_y[iX,iY-1]
       y1= tab_y[iX,iY]
       y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)

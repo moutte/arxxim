@@ -25,7 +25,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/a5a3_fe_ox.inn"
+fInn= "inn/map1a_fe_ox.inn"
 
 iKeyword= 0
 iValue=   3

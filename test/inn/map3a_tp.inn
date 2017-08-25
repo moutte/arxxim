@@ -5,7 +5,7 @@ END
 
 CONDITIONS
   TITLE  al-silicate
-  OUTPUT out\f1q
+  OUTPUT out\map3a
   DEBUG  1
 END CONDITIONS
 
@@ -16,4 +16,4 @@ INCLUDE dtb\hsvthr_thcalc_db55_min.tab
 !GAS  WATER  H2O     haar    THERIAK  SPECIAL H2O_HGK
 !END
 
-INCLUDE inn/f1q_sial.include
+INCLUDE inn/map3a_tp.include
