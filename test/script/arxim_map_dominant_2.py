@@ -10,7 +10,7 @@ def mynum(s):
     return 0.
     
 sExe= "..\\bin\\arxim.exe"  #windows
-sExe= "../bin/arxxim"       #linux
+sExe= "../bin/arxim"       #linux
 sDebug= "1"
 sCmd= "SPC"
 
@@ -25,7 +25,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/a5a3_fe_ox.inn"
+fInn= "inn/map1a_fe_ox.inn"
+
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
 
 iKeyword= 0
 iValue=   3
@@ -35,7 +41,7 @@ Xmin,Xmax,Xdelta= 1., 13., 1.
 tol_x= 0.02
 
 lisY= ["OX"]
-Ymin,Ymax,Ydelta= 4., 40., 2.
+Ymin,Ymax,Ydelta= 40., 4., 2.
 tol_y= 0.02
 
 #----------------------------------------------------------//input files
@@ -325,13 +331,26 @@ if DEBUG: raw_input("type ENTER")
 #sys.exit()
 #-------------------------------------------------------------//refining
 
+centroids=[ (0.,0.,0) for i in range(len(spc_names))]
+for iY,y in enumerate(Yser):
+  for iX,x in enumerate(Xser):
+    i= tab_spc[iX,iY]
+    x_,y_,n= centroids[i]
+    x_= (n*x_+ x)/(n+1)
+    y_= (n*y_+ y)/(n+1)
+    n +=1
+    centroids[i]= x_,y_,n
+    
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
-  
+
+fig.set_xlim(Xmin,Xmax)
+fig.set_ylim(Ymin,Ymax)
+
 for i,points in enumerate(lines):
   vx= []
   vy= []
@@ -340,7 +359,12 @@ for i,points in enumerate(lines):
     vy.append(y)
   fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
   
-plt.savefig("000_map_arxim_2"+".png")
+for i,centroid in enumerate(centroids):
+  x,y,n= centroid
+  textstr= spc_names[i]
+  fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.savefig(figName+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
 

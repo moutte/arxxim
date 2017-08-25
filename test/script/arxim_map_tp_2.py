@@ -18,6 +18,12 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map3a_tp.inn"
 
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
+
 '''
 the include block to be modified:
 SYSTEM.GEM
@@ -372,6 +378,6 @@ for i,centroid in enumerate(centroids):
   textstr= lis_paragen[i].replace('=','\n')
   fig.text(x,y,textstr,horizontalalignment='center')
   
-plt.savefig("0_arxim_map_tp"+".png")
+plt.savefig(figName+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram

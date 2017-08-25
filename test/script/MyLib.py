@@ -20,6 +20,14 @@ def mymakedir(newdir):
       os.mkdir(newdir)
 #------------------------------------------------------------//mymakedir
 
+def extractFileName(s)
+  head, tail = os.path.split(s)
+  if '.' in tail:
+    name_= tail.split('.')[0]
+  else:
+    name_= tail
+  return name_
+  
 #-------------------------------------------------------------------data
 import exceptions
 def num(s):

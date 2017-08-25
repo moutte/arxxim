@@ -21,6 +21,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map2a_activ.inn"
 fInn= "inn/map2b_activ.inn"
+
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
+
 '''
 the include block to be modified:
 SPECIES
@@ -36,16 +43,18 @@ nValue=   8
 
 
 lisX= ["SIO2_BUFF"]
-Xmin,Xmax,Xdelta= 5.,  2., 0.25
-tol_x= 0.02
+lisY= ["KOH_BUFF"]
+
 Xmin,Xmax,Xdelta= 3.,  2., 0.05
 tol_x= 0.01
-
-lisY= ["KOH_BUFF"]
-Ymin,Ymax,Ydelta= 0., -8., 0.25
-tol_y= 0.02
 Ymin,Ymax,Ydelta= -2., -4., 0.1
 tol_y= 0.01
+
+Xmin,Xmax,Xdelta= 5.,  2., 0.25
+tol_x= 0.02
+Ymin,Ymax,Ydelta= 0., -8., 0.25
+tol_y= 0.02
+
 #----------------------------------------------------------//input files
 
 fInclude= fInn.replace(".inn",".include")
@@ -331,7 +340,7 @@ for i,centroid in enumerate(centroids):
     textstr,
     horizontalalignment='center',
     verticalalignment='center')
-  
-plt.savefig("0_arxim_map_activity"+".png")
+
+plt.savefig(figName+".png")
 plt.show()
 #---------------------------------------------------------//plot diagram

@@ -27,6 +27,12 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
 
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
+
 iKeyword= 0
 iValue=   3
 
@@ -202,7 +208,7 @@ first= True
 START= time.time()
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
-  include_modify(lisY,y) #-------------------modify the include file for y
+  include_modify(lisY,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print iY,iX
@@ -382,6 +388,6 @@ for i,centroid in enumerate(centroids):
   textstr= spc_names[i]
   fig.text(x,y,textstr,horizontalalignment='center')
   
-plt.savefig("0_arxim_map_dominant"+".png")
+plt.savefig(figName+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
