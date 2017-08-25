@@ -54,17 +54,18 @@ def compute_gibbs(name,TK,Pbar):
     K1=  256.73158
     K4= -1887.225
     K3= -2977353
-    K8=  251000000
+    K8=  250959080 #251000000
     K2= 0
     K5= 0
     K6= 0
     K7= 0
     K9= 0
     # coeff's for volume function
-    VTA=  6.69252E-5 *Vref
-    VTB=  0.0      *Vref
-    VPA= -0.375E-5 *Vref
-    VPB=  0.0      *Vref
+    # V1	1.34307044	0	-0.07525587	0
+    VTA=  1.34307044E-5 *Vref  #6.69252E-5 
+    VTB=  0.0
+    VPA= -0.07525587E-5 *Vref  #-0.375E-5 
+    VPB=  0.0
   elif name=="kya":
     #kyanite
     Href= -2594221
