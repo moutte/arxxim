@@ -20,6 +20,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 
 #------------------------------------------------------------input files
 fInn= "inn/map2a_activ.inn"
+fInn= "inn/map2b_activ.inn"
 '''
 the include block to be modified:
 SPECIES
@@ -31,20 +32,20 @@ Value is the last one, its index is 5  -> iValue=   5
 '''
 iKeyword= 2
 iValue=   5
+nValue=   8
 
-lisX= ["SIO2_BUFF"]
-Xmin,Xmax,Xdelta= 4.,  3., 0.05
-tol_x= 0.01
-lisY= ["KOH_BUFF"]
-Ymin,Ymax,Ydelta= -4., -2., 0.1
-tol_y= 0.01
 
 lisX= ["SIO2_BUFF"]
 Xmin,Xmax,Xdelta= 5.,  2., 0.25
 tol_x= 0.02
+Xmin,Xmax,Xdelta= 3.,  2., 0.05
+tol_x= 0.01
+
 lisY= ["KOH_BUFF"]
 Ymin,Ymax,Ydelta= 0., -8., 0.25
 tol_y= 0.02
+Ymin,Ymax,Ydelta= -2., -4., 0.1
+tol_y= 0.01
 #----------------------------------------------------------//input files
 
 fInclude= fInn.replace(".inn",".include")
@@ -117,8 +118,9 @@ def input_modify(lis,x):
   for line in lines:
     ww= line.split()
     if len(ww)>iValue and ww[iKeyword] in lis:
-      for i in range(iValue): f.write("  %s" % (ww[i]))
-      f.write("  %.4g\n" % (x))
+      for i in range(iValue): f.write("  %s"   % (ww[i]))
+      for i in range(nValue): f.write("  %.4g" % (x))
+      f.write('\n')
     else:
       f.write(line)
   f.close()

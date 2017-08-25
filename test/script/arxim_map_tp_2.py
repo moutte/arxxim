@@ -308,6 +308,7 @@ for reac in lis_reac:
 
 #---------------------------------compute the positions for field labels
 centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
+# x,y,n : coordinates of centroid and index of the paragenesis
 for iY,y in enumerate(Yser):
   for iX,x in enumerate(Xser):
     i= tab_paragen[iX,iY]

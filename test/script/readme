@@ -1,0 +1,20 @@
+python scripts for arxim
+
+arxim_map_activity.py
+  equilibrium assemblages as a function of the activities of two independent species
+  
+
+arxim_map_dominant.py
+
+arxim_map_dominant_2.py
+
+arxim_map_tp.py
+
+arxim_map_tp_0.py
+
+arxim_map_tp_2.py
+
+MyLib.py
+MyLibTk.py
+MyThermo.py
+path_XY_plot.py
