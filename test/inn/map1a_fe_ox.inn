@@ -1,8 +1,8 @@
 TEST
-  COMPUTE SPC
+  COMPUTE SPCPATH
   COMPUTE Q
 END TEST
-  COMPUTE SPCPATH
+  COMPUTE SPC
 
 CONDITIONS
   TITLE  Sillen-pH diagram for Fe species, under fixed fO2
@@ -18,13 +18,14 @@ INCLUDE inn/map1a_fe_ox.include
   OX	PK	O2(G) 3
 !END
 
-PATH CHANGE
-  H initial 0.0 final 14.0 delta 0.25
-END PATH
-
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
 
 SOLVENT
   MODEL DAV_1 !DH1 !
 END
+
+PATH CHANGE
+  H initial 0.0 final 14.0 delta 0.25
+END PATH
+

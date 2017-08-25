@@ -27,6 +27,20 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
 
+lisX= ["H"]
+lisY= ["OX"]
+
+labelX= "pH"
+labelY= "-log(f_O2(gaz))"
+
+Xmin,Xmax,Xdelta= 1., 13., 1.
+Xmin,Xmax,Xdelta= 2., 12., 2.
+tol_x= 0.02
+
+Ymin,Ymax,Ydelta= 40., 4., 2.
+tol_y= 0.02
+#----------------------------------------------------------//input files
+
 head,tail= os.path.split(fInn)
 if '.' in tail:
   figName= tail.split('.')[0]
@@ -35,16 +49,6 @@ else:
 
 iKeyword= 0
 iValue=   3
-
-lisX= ["H"]
-Xmin,Xmax,Xdelta= 1., 13., 1.
-tol_x= 0.02
-
-lisY= ["OX"]
-Ymin,Ymax,Ydelta= 40., 4., 2.
-tol_y= 0.02
-
-#----------------------------------------------------------//input files
 
 fInclude= fInn.replace(".inn",".include")
 
@@ -363,6 +367,9 @@ for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= spc_names[i]
   fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.xlabel(labelX)
+plt.ylabel(labelY)
   
 plt.savefig(figName+".png")
 plt.show()

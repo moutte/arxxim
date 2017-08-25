@@ -29,9 +29,6 @@ Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
 Value is 1200 / 400,     its index is 1  -> iValue=   1
 '''
 
-iKeyword= 0
-iValue=   1
-
 lisX= ["TDGC"]
 lisY= ["PBAR"]
 
@@ -46,6 +43,9 @@ Ymin,Ymax,Ydelta= 500., 6500., 500.
 tol_y= 10.
 
 #----------------------------------------------------------//input files
+
+iKeyword= 0
+iValue=   1
 
 fInclude= fInn.replace(".inn",".include")
 #--clean the include file
@@ -186,7 +186,7 @@ for iY,y in enumerate(Yser):
     include_modify(lisX,x) #---------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
-      paragen= arxim_result(fResult) #-------------------read arxim result
+      paragen= arxim_result(fResult) #-----------------read arxim result
       print paragen
       # raw_input()
       if not paragen in lis_paragen:

@@ -59,8 +59,8 @@ for line in lines:
 f.close()
 
 sArximCommand= sExe,fInn,sDebug,sCmd
-fResult= "tmp_species_lact.dat"
 fResult= "tmp_species_mole.dat"
+fResult= "tmp_species_lact.dat"
 
 if DEBUG: fMoles= open("species_moles.restab",'w')
 if DEBUG: fLngam= open("species_lngam.restab",'w')
