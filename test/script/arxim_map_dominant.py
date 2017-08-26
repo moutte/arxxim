@@ -129,8 +129,8 @@ def arxim_result(s_include):
   max_idx = -1
   max_val = float('-inf')
   for i,w in enumerate(ww):
-    if "FE" in spc_names[i]:
-    #if s_include[i]:
+    #if "FE" in spc_names[i]:
+    if s_include[i]:
       val= mynum(w)
       if val > max_val:
         max_val = val
@@ -216,12 +216,14 @@ for iY,y in enumerate(Yser):
       with open("tmp_species.tab") as f:
         spc_names= f.readline().split()
         spc_types= f.readline().split()
-      for name in spc_names: print name
+      for i,name in enumerate(spc_names):
+        print spc_types[i]," ",name
       if DEBUG: raw_input()
       spc_include=np.zeros(len(spc_names), dtype=bool)
       for i in range(len(spc_names)):
-        if "FE" in spc_names[i]:
-          spc_include[i]= True
+        if spc_types[i]=="AQU":
+          if "FE" in spc_names[i]:
+            spc_include[i]= True
       for (i,name) in enumerate(spc_names):
         if spc_include[i]: print spc_names[i]
       if DEBUG: raw_input()
