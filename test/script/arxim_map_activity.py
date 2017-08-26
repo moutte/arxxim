@@ -22,12 +22,6 @@ if os.path.isfile("error.log"): os.remove("error.log")
 fInn= "inn/map2a_activ.inn"
 fInn= "inn/map2b_activ.inn"
 
-head,tail= os.path.split(fInn)
-if '.' in tail:
-  figName= tail.split('.')[0]
-else:
-  figName= tail
-
 '''
 the include block to be modified:
 SPECIES
@@ -41,18 +35,17 @@ iKeyword= 2
 iValue=   5
 nValue=   8
 
-
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
 
 Xlabel= "-log[SiO2]"
 Ylabel= "-log[K+]/[H+]"
 
-Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
-Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
-
 Xmin,Xmax,Xdelta,Xtol= 3.,  2., 0.05,  0.01
 Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
+
+Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
+Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 
 #----------------------------------------------------------//input files
 
@@ -136,7 +129,7 @@ def input_modify(lis,x):
 
 #----------------------------------------------map the stable assemblage
 #----------------------------------------------------on the initial grid
-tab_phase=plt.zeros((Xdim,Ydim),'int')
+tab_paragen=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
 lis_paragen=[]
@@ -156,7 +149,7 @@ for iY,y in enumerate(Yser):
       if not paragen in lis_paragen:
         lis_paragen.append(paragen)
       j= lis_paragen.index(paragen)
-      tab_phase[iX,iY]= j
+      tab_paragen[iX,iY]= j
       tab_x[iX,iY]= x
       tab_y[iX,iY]= y
   #-------------------------------------------------------------//x-loop
@@ -166,7 +159,7 @@ for iY,y in enumerate(Yser):
 centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
 for iY,y in enumerate(Yser):
   for iX,x in enumerate(Xser):
-    i= tab_phase[iX,iY]
+    i= tab_paragen[iX,iY]
     x_,y_,n= centroids[i]
     x_= (n*x_+ x)/(n+1)
     y_= (n*y_+ y)/(n+1)
@@ -177,7 +170,7 @@ if True:
     print centroid
 #-------------------------------//compute the positions for field labels
     
-print tab_phase
+print tab_paragen
 #--------------------------------------------//map the stable assemblage
 #sys.exit()
 
@@ -204,14 +197,15 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
           break
       else:
         lis_paragen.append(paragen)
-        print "NEW:",paragen
+        F= lis_paragen.index(paragen)
+        #print "NEW:",paragen
         OK= False
         break
       # print x0,x1
       # raw_input()
-  x= (x0+x1)/2.
+  if OK: x= (x0+x1)/2.
   #
-  return x,OK
+  return x,F,OK
 #-----------------------------------------------------//refining routine
 
 #---------------------------------------------------------------refining
@@ -221,17 +215,17 @@ lis_xy_y=  []
 lis_false_x= []
 lis_false_y= []
 
-#--refining the x-coordinate of the paragen change, at fixed y
+#--refining the x-coordinate of the paragenesis change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
   input_modify(Ylis,y)
-  for iX in range(Xdim-1):
-    if tab_phase[iX,iY] != tab_phase[iX+1,iY]:
-      F0= tab_phase[iX,iY]
-      F1= tab_phase[iX+1,iY]
-      x0= tab_x[iX,iY]
-      x1= tab_x[iX+1,iY]
-      x,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
+  for iX in range(1,Xdim):
+    if tab_paragen[iX-1,iY] != tab_paragen[iX,iY]:
+      F0= tab_paragen[iX-1,iY]
+      F1= tab_paragen[iX,  iY]
+      x0= tab_x[iX-1,iY]
+      x1= tab_x[iX,  iY]
+      x,F,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -239,20 +233,45 @@ for iY in range(Ydim):
         val= s,x,y
         lis_xy_x.append(val)
       else:
-        val= iX,iY
-        lis_false_x.append(val)
+      #-there is a paragen' Fm on [x0,x1] that is different from F0 & F1
+      #--we need two second stage refinements
+        xm=x
+        Fm=F
+        #----------------------second stage refinement between x0 and xm
+        x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
+        if OK:
+          if F0>Fm: s= str(Fm)+'='+str(F0)
+          else:     s= str(F0)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_x.append(val)
+        else:
+          val= iX,iY
+          lis_false_x.append(val)
+        #----------------------second stage refinement between xm and x1
+        x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
+        if OK:
+          if F1>Fm: s= str(Fm)+'='+str(F1)
+          else:     s= str(F1)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_x.append(val)
+        else:
+          val= iX,iY
+          lis_false_x.append(val)
+        #
         
-#--refining the y-coordinate of the paragen change, at fixed x
+#--refining the y-coordinate of the paragenesis change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
   input_modify(Xlis,x)
-  for iY in range(Ydim-1):
-    if tab_phase[iX,iY] != tab_phase[iX,iY+1]:
-      F0= tab_phase[iX,iY]
-      F1= tab_phase[iX,iY+1]
-      y0= tab_y[iX,iY]
-      y1= tab_y[iX,iY+1]
-      y,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
+  for iY in range(1,Ydim):
+    if tab_paragen[iX,iY-1] != tab_paragen[iX,iY]:
+      F0= tab_paragen[iX,iY-1]
+      F1= tab_paragen[iX,iY]
+      y0= tab_y[iX,iY-1]
+      y1= tab_y[iX,iY]
+      y,F,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -260,8 +279,32 @@ for iX in range(Xdim):
         val= s,x,y
         lis_xy_y.append(val)
       else:
-        val= iX,iY
-        lis_false_y.append(val)
+      #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
+      #--we need two second stage refinements
+        ym=y
+        Fm=F
+        #----------------------second stage refinement between y0 and ym
+        y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
+        if OK:
+          if F0>Fm: s= str(Fm)+'='+str(F0)
+          else:     s= str(F0)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_y.append(val)
+        else:
+          val= iX,iY
+          lis_false_y.append(val)
+        #----------------------second stage refinement between ym and y1
+        y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+        if OK:
+          if F1>Fm: s= str(Fm)+'='+str(F1)
+          else:     s= str(F1)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_y.append(val)
+        else:
+          val= iX,iY
+          lis_false_y.append(val)
 
 #--
 lines= []
@@ -311,8 +354,27 @@ for i,paragen in enumerate(lis_paragen):
   for w in ww:
     if not w in phase_Partout: 
       newp= newp + w + '='
-  lis_paragen[i]= newp 
+  lis_paragen[i]= newp
+#--print simplified paragesis
+print "SIMPLIFIED PARAGENESIS="
+for i,paragen in enumerate(lis_paragen):
+  print i, paragen
+print "PHASES FOUND IN ALL PARAGENESIS="
+for phase in phase_Partout:
+  print phase
+#--
 #---------------------------------------//processing the paragenese list
+
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
+if os.path.isdir("png"):
+  pass
+else:
+  os.mkdir("png")
+figName= "png/"+figName
 
 #-----------------------------------------------------------plot diagram
 plt.rcParams['figure.figsize']= 10,8

@@ -27,22 +27,14 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
 
-head,tail= os.path.split(fInn)
-if '.' in tail:
-  figName= tail.split('.')[0]
-else:
-  figName= tail
-
 iKeyword= 0
 iValue=   3
 
-lisX= ["H"]
-Xmin,Xmax,Xdelta= 1., 13., 1.
-tol_x= 0.02
-
-lisY= ["OX"]
-Ymin,Ymax,Ydelta= 40., 4., 2.
-tol_y= 0.1
+Xlis= ["H"]
+Ylis= ["OX"]
+Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
+Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
+Ymin,Ymax,Ydelta,Ytol= 40.,  4., 2., 0.1
 
 #----------------------------------------------------------//input files
 
@@ -59,8 +51,8 @@ for line in lines:
 f.close()
 
 sArximCommand= sExe,fInn,sDebug,sCmd
-fResult= "tmp_species_mole.dat"
 fResult= "tmp_species_lact.dat"
+fResult= "tmp_species_mole.dat"
 
 if DEBUG: fMoles= open("species_moles.restab",'w')
 if DEBUG: fLngam= open("species_lngam.restab",'w')
@@ -193,9 +185,9 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
       break
     # print x0,x1
     # raw_input()
-  x= (x0+x1)/2.
+  if OK: x= (x0+x1)/2.
   #
-  return x,OK
+  return x,F,OK
 #-----------------------------------------------------//refining routine
 
 #-----------------------------------------------map the dominant species
@@ -208,12 +200,12 @@ first= True
 START= time.time()
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
-  include_modify(lisY,y) #-----------------modify the include file for y
+  include_modify(Ylis,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print iY,iX
     #
-    include_modify(lisX,x) #-----------------modify the include file for x
+    include_modify(Xlis,x) #-----------------modify the include file for x
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
     #
     #--------------------------------------------------done on first run
@@ -297,15 +289,15 @@ lis_false_y= []
 #--refining the x-coordinate of the species change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
-  include_modify(lisY,y)
-  for iX in range(Xdim-1):
-    if tab_spc[iX,iY] != tab_spc[iX+1,iY]:
+  include_modify(Ylis,y)
+  for iX in range(1,Xdim):
+    if tab_spc[iX-1,iY] != tab_spc[iX,iY]:
       print iX,iY
-      F0= tab_spc[iX,iY]
-      F1= tab_spc[iX+1,iY]
-      x0= tab_x[iX,iY]
-      x1= tab_x[iX+1,iY]
-      x,OK= refine_xy(lisX,F0,F1,x0,x1,tol_x)
+      F0= tab_spc[iX-1,iY]
+      F1= tab_spc[iX,  iY]
+      x0= tab_x[iX-1,iY]
+      x1= tab_x[iX,  iY]
+      x,F,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -313,20 +305,44 @@ for iY in range(Ydim):
         val= s,x,y
         lis_xy_x.append(val)
       else:
-        val= iX,iY
-        lis_false_x.append(val)
+      #-there is a species Fm on [x0,x1] that is different from F0 & F1
+      #--we need two second stage refinements
+        xm=x
+        Fm=F
+        #----------------------second stage refinement between x0 and xm
+        x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
+        if OK:
+          if F0>Fm: s= str(Fm)+'='+str(F0)
+          else:     s= str(F0)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_x.append(val)
+        else:
+          val= iX,iY
+          lis_false_x.append(val)
+        #----------------------second stage refinement between xm and x1
+        x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
+        if OK:
+          if F1>Fm: s= str(Fm)+'='+str(F1)
+          else:     s= str(F1)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_x.append(val)
+        else:
+          val= iX,iY
+          lis_false_x.append(val)
         
 #--refining the y-coordinate of the species change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
-  include_modify(lisX,x)
-  for iY in range(Ydim-1):
-    if tab_spc[iX,iY] != tab_spc[iX,iY+1]:
-      F0= tab_spc[iX,iY]
-      F1= tab_spc[iX,iY+1]
-      y0= tab_y[iX,iY]
-      y1= tab_y[iX,iY+1]
-      y,OK= refine_xy(lisY,F0,F1,y0,y1,tol_y)
+  include_modify(Xlis,x)
+  for iY in range(1,Ydim):
+    if tab_spc[iX,iY-1] != tab_spc[iX,iY]:
+      F0= tab_spc[iX,iY-1]
+      F1= tab_spc[iX,iY]
+      y0= tab_y[iX,iY-1]
+      y1= tab_y[iX,iY]
+      y,F,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
       if OK:
         if F0>F1: s= str(F1)+'='+str(F0)
         else:     s= str(F0)+'='+str(F1)
@@ -334,8 +350,32 @@ for iX in range(Xdim):
         val= s,x,y
         lis_xy_y.append(val)
       else:
-        val= iX,iY
-        lis_false_y.append(val)
+      #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
+      #--we need two second stage refinements
+        ym=y
+        Fm=F
+        #----------------------second stage refinement between y0 and ym
+        y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
+        if OK:
+          if F0>Fm: s= str(Fm)+'='+str(F0)
+          else:     s= str(F0)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_y.append(val)
+        else:
+          val= iX,iY
+          lis_false_y.append(val)
+        #----------------------second stage refinement between ym and y1
+        y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+        if OK:
+          if F1>Fm: s= str(Fm)+'='+str(F1)
+          else:     s= str(F1)+'='+str(Fm)
+          if not s in lis_reac: lis_reac.append(s)
+          val= s,x,y
+          lis_xy_y.append(val)
+        else:
+          val= iX,iY
+          lis_false_y.append(val)
 
 #--from the lists of points, build the lines for each "reaction"
 lines= []
@@ -365,6 +405,17 @@ print "TIME=", END - START
 #sys.exit()
 #-------------------------------------------------------------//refining
 
+head,tail= os.path.split(fInn)
+if '.' in tail:
+  figName= tail.split('.')[0]
+else:
+  figName= tail
+if os.path.isdir("png"):
+  pass
+else:
+  os.mkdir("png")
+figName= "png/"+figName
+  
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6
 fig= plt.subplot(1,1,1)

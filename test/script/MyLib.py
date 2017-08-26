@@ -14,13 +14,13 @@ def mymakedir(newdir):
   else:
     head, tail = os.path.split(newdir)
     if head and not os.path.isdir(head) :
-      _mkdir(head)
+      mymakedir(head)
     #print "_mkdir %s" % repr(newdir)
     if tail :
       os.mkdir(newdir)
 #------------------------------------------------------------//mymakedir
 
-def extractFileName(s)
+def extractFileName(s):
   head, tail = os.path.split(s)
   if '.' in tail:
     name_= tail.split('.')[0]
@@ -151,3 +151,4 @@ def plot_single_1(fig,xLog,yLog,vx,vy,vlabs,titX,titY,titre):
 
 if __name__ == '__main__':
   raw_input("in progress ... type return ...")
+  
