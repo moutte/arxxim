@@ -27,16 +27,19 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
 
-iKeyword= 0
-iValue=   3
-
 Xlis= ["H"]
 Ylis= ["OX"]
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 2., 0.1
 
+Xlabel= "pH"
+Ylabel= "-log(f_O2(g))"
+
 #----------------------------------------------------------//input files
+
+iKeyword= 0
+iValue=   3
 
 fInclude= fInn.replace(".inn",".include")
 
@@ -418,6 +421,11 @@ figName= "png/"+figName
   
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6
+plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
+plt.rcParams['figure.figsize']= 5.,3.75 #ratio 4/3
+plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
+plt.rcParams.update({'font.size': 12})
+
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
@@ -438,6 +446,9 @@ for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= spc_names[i]
   fig.text(x,y,textstr,horizontalalignment='center')
+  
+plt.xlabel(Xlabel)
+plt.ylabel(Ylabel)
   
 plt.savefig(figName+".png")
 plt.show()
