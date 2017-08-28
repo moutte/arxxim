@@ -26,6 +26,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
+fInn= "inn/map1b_cr_ox.inn"
 
 Xlis= ["H"]
 Ylis= ["OX"]
@@ -225,7 +226,7 @@ for iY,y in enumerate(Yser):
       spc_include=plt.zeros(len(spc_names), dtype=bool)
       for i in range(len(spc_names)):
         if spc_types[i]=="AQU":
-          if "FE" in spc_names[i]:
+          if "CR" in spc_names[i]:
             spc_include[i]= True
       for (i,name) in enumerate(spc_names):
         if spc_include[i]: print spc_names[i]
