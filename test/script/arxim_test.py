@@ -4,22 +4,24 @@ import glob #for listing files, Langtangen, p118
 import os
 
 os.chdir("../")
-print "DIR=", os.getcwd()
+#print "DIR=", os.getcwd()
 
-filelist= glob.glob('inn/map2b*.inn')
+#----------------------------------------------------------INPUT FILE(S)
+files= glob.glob('inn/map1a*.inn')
+files.sort()
+for f in files: print f
+#raw_input()
+#---------------------------------------------------------------------//
 
-filelist.sort()
-
-for i in range(len(filelist)):
-  print filelist[i]
-
+#---------------------------------------------------------------EXE FILE
 sProg= "../bin/arxim"
-
 Debug= "3"
+#---------------------------------------------------------------------//
+
 i0= 0
 
 i= 0
-for sFile in filelist:
+for sFile in files:
   print '\n=========processing '+ sFile + '==========================\n'
   os.system("%s %s %s" % (sProg,sFile,Debug))
   

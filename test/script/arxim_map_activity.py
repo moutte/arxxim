@@ -6,7 +6,7 @@ import sys
 
 sExe= "..\\bin\\arxim.exe"  #windows
 sExe= "../bin/arxim"        #linux
-sDebug= "1"
+sDebug= "2"
 sCmd= "GEM"
 
 
@@ -38,8 +38,8 @@ nValue=   8
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
 
-Xlabel= "-log[SiO2]"
-Ylabel= "-log[K+]/[H+]"
+Xlabel= "colog[SiO2]"
+Ylabel= "colog[K+]/[H+]"
 
 Xmin,Xmax,Xdelta,Xtol= 3.,  2., 0.05,  0.01
 Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
@@ -381,7 +381,7 @@ plt.rcParams['figure.figsize']= 10,8
 plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
 plt.rcParams['figure.figsize']= 5.,3.75 #ratio 4/3
 plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 10})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']

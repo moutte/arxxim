@@ -11,7 +11,8 @@ def mynum(s):
 
 sExe= "..\\bin\\arxim.exe"  #windows
 sExe= "../bin/arxim"       #linux
-sDebug= "1"
+sExe= "../../mybin_o3/arxim"  
+sDebug= "2"
 sCmd= "SPC"
 
 DEBUG= False
@@ -29,12 +30,14 @@ fInn= "inn/map1a_fe_ox.inn"
 
 Xlis= ["H"]
 Ylis= ["OX"]
+Xmin,Xmax,Xdelta,Xtol=  1., 13., 4., 0.02
+Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
+
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 2., 0.1
 
 Xlabel= "pH"
-Ylabel= "-log(f_O2(g))"
+Ylabel= "colog(f_O2(g))"
 
 #----------------------------------------------------------//input files
 
@@ -185,6 +188,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
         break
     else:
       print "error in refine"
+      F= -1
       break
     # print x0,x1
     # raw_input()
@@ -206,7 +210,7 @@ for iY,y in enumerate(Yser):
   include_modify(Ylis,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
-    print iY,iX
+    print x,y
     #
     include_modify(Xlis,x) #-----------------modify the include file for x
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
@@ -297,7 +301,7 @@ for iY in range(Ydim):
   include_modify(Ylis,y)
   for iX in range(1,Xdim):
     if tab_spc[iX-1,iY] != tab_spc[iX,iY]:
-      print iX,iY
+      print tab_x[iX,iY],tab_y[iX,iY]
       F0= tab_spc[iX-1,iY]
       F1= tab_spc[iX,  iY]
       x0= tab_x[iX-1,iY]
@@ -310,32 +314,37 @@ for iY in range(Ydim):
         val= s,x,y
         lis_xy_x.append(val)
       else:
-      #-there is a species Fm on [x0,x1] that is different from F0 & F1
-      #--we need two second stage refinements
-        xm=x
-        Fm=F
-        #----------------------second stage refinement between x0 and xm
-        x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
-        if OK:
-          if F0>Fm: s= str(Fm)+'='+str(F0)
-          else:     s= str(F0)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_x.append(val)
+        if F>0:
+        #-there is a species Fm on [x0,x1] that is different from F0 & F1
+        #--we need two second stage refinements
+          xm=x
+          Fm=F
+          #--------------------second stage refinement between x0 and xm
+          x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
+          if OK:
+            if F0>Fm: s= str(Fm)+'='+str(F0)
+            else:     s= str(F0)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_x.append(val)
+          else:
+            val= iX,iY
+            lis_false_x.append(val)
+          #--------------------second stage refinement between xm and x1
+          x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
+          if OK:
+            if F1>Fm: s= str(Fm)+'='+str(F1)
+            else:     s= str(F1)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_x.append(val)
+          else:
+            val= iX,iY
+            lis_false_x.append(val)
         else:
           val= iX,iY
           lis_false_x.append(val)
-        #----------------------second stage refinement between xm and x1
-        x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
-        if OK:
-          if F1>Fm: s= str(Fm)+'='+str(F1)
-          else:     s= str(F1)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_x.append(val)
-        else:
-          val= iX,iY
-          lis_false_x.append(val)
+          continue
         
 #--refining the y-coordinate of the species change, at fixed x
 for iX in range(Xdim):
@@ -355,32 +364,37 @@ for iX in range(Xdim):
         val= s,x,y
         lis_xy_y.append(val)
       else:
-      #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
-      #--we need two second stage refinements
-        ym=y
-        Fm=F
-        #----------------------second stage refinement between y0 and ym
-        y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
-        if OK:
-          if F0>Fm: s= str(Fm)+'='+str(F0)
-          else:     s= str(F0)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_y.append(val)
+        if F>0:
+        #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
+        #--we need two second stage refinements
+          ym=y
+          Fm=F
+          #----------------------second stage refinement between y0 and ym
+          y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
+          if OK:
+            if F0>Fm: s= str(Fm)+'='+str(F0)
+            else:     s= str(F0)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_y.append(val)
+          else:
+            val= iX,iY
+            lis_false_y.append(val)
+          #----------------------second stage refinement between ym and y1
+          y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+          if OK:
+            if F1>Fm: s= str(Fm)+'='+str(F1)
+            else:     s= str(F1)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_y.append(val)
+          else:
+            val= iX,iY
+            lis_false_y.append(val)
         else:
           val= iX,iY
           lis_false_y.append(val)
-        #----------------------second stage refinement between ym and y1
-        y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
-        if OK:
-          if F1>Fm: s= str(Fm)+'='+str(F1)
-          else:     s= str(F1)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_y.append(val)
-        else:
-          val= iX,iY
-          lis_false_y.append(val)
+          continue
 
 #--from the lists of points, build the lines for each "reaction"
 lines= []

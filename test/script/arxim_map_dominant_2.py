@@ -34,8 +34,8 @@ Xlabel= "pH"
 Ylabel= "-log(f_O2(g))"
 
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
+Ymin,Ymax,Ydelta,Ytol=  4., 40., 2., 0.1
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 2., 0.1
 
 #----------------------------------------------------------//input files
 
@@ -194,6 +194,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
         break
     else:
       print "error in refine"
+      F= -1
       break
     # print x0,x1
     # raw_input()
@@ -271,32 +272,37 @@ for iY,y in enumerate(Yser):
             #lis_xy_x.append(val)
             lis_xy.append(val)
           else:
-          #-there is a species Fm on [x0,x1] that is different from F0 & F1
-          #--we need two second stage refinements
-            xm=x
-            Fm=F
-            #------------------second stage refinement between x0 and xm
-            x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
-            if OK:
-              if F0>Fm: s= str(Fm)+'='+str(F0)
-              else:     s= str(F0)+'='+str(Fm)
-              if not s in lis_reac: lis_reac.append(s)
-              val= s,x,y
-              lis_xy.append(val)
+            if F>0:
+            #-there is a species Fm on [x0,x1] that is different from F0 & F1
+            #--we need two second stage refinements
+              xm=x
+              Fm=F
+              #------------------second stage refinement between x0 and xm
+              x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
+              if OK:
+                if F0>Fm: s= str(Fm)+'='+str(F0)
+                else:     s= str(F0)+'='+str(Fm)
+                if not s in lis_reac: lis_reac.append(s)
+                val= s,x,y
+                lis_xy.append(val)
+              else:
+                val= iX,iY
+                lis_false_x.append(val)
+              #------------------second stage refinement between xm and x1
+              x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
+              if OK:
+                if F1>Fm: s= str(Fm)+'='+str(F1)
+                else:     s= str(F1)+'='+str(Fm)
+                if not s in lis_reac: lis_reac.append(s)
+                val= s,x,y
+                lis_xy.append(val)
+              else:
+                val= iX,iY
+                lis_false_x.append(val)
             else:
               val= iX,iY
               lis_false_x.append(val)
-            #------------------second stage refinement between xm and x1
-            x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
-            if OK:
-              if F1>Fm: s= str(Fm)+'='+str(F1)
-              else:     s= str(F1)+'='+str(Fm)
-              if not s in lis_reac: lis_reac.append(s)
-              val= s,x,y
-              lis_xy.append(val)
-            else:
-              val= iX,iY
-              lis_false_x.append(val)
+              continue
       
       #--refining the y-coordinate of a species change        
       if iY>0:
@@ -315,32 +321,33 @@ for iY,y in enumerate(Yser):
             #lis_xy_y.append(val)
             lis_xy.append(val)
           else:
-          #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
-          #--we need two second stage refinements
-            ym=y
-            Fm=F
-            #------------------second stage refinement between y0 and ym
-            y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
-            if OK:
-              if F0>Fm: s= str(Fm)+'='+str(F0)
-              else:     s= str(F0)+'='+str(Fm)
-              if not s in lis_reac: lis_reac.append(s)
-              val= s,x,y
-              lis_xy.append(val)
-            else:
-              val= iX,iY
-              lis_false_y.append(val)
-            #------------------second stage refinement between ym and y1
-            y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
-            if OK:
-              if F1>Fm: s= str(Fm)+'='+str(F1)
-              else:     s= str(F1)+'='+str(Fm)
-              if not s in lis_reac: lis_reac.append(s)
-              val= s,x,y
-              lis_xy_y.append(val)
-            else:
-              val= iX,iY
-              lis_false_y.append(val)
+            if F>0:
+            #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
+            #--we need two second stage refinements
+              ym=y
+              Fm=F
+              #------------------second stage refinement between y0 and ym
+              y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
+              if OK:
+                if F0>Fm: s= str(Fm)+'='+str(F0)
+                else:     s= str(F0)+'='+str(Fm)
+                if not s in lis_reac: lis_reac.append(s)
+                val= s,x,y
+                lis_xy.append(val)
+              else:
+                val= iX,iY
+                lis_false_y.append(val)
+              #------------------second stage refinement between ym and y1
+              y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+              if OK:
+                if F1>Fm: s= str(Fm)+'='+str(F1)
+                else:     s= str(F1)+'='+str(Fm)
+                if not s in lis_reac: lis_reac.append(s)
+                val= s,x,y
+                lis_xy_y.append(val)
+              else:
+                val= iX,iY
+                lis_false_y.append(val)
     else:
       spc= -1
       tab_spc[iX,iY]= spc

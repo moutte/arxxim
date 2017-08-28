@@ -10,13 +10,15 @@ CONDITIONS
   DEBUG  3
 END CONDITIONS
 
-INCLUDE inn/map1a_fe_ox.include
-!SYSTEM
+!INCLUDE inn/map1a_fe_ox.include
+SYSTEM
   TDGC 25.
   FE  MOLE FE+3  1E-3
   H	  PK	H+    2
   OX	PK	O2(G) 40
-!END
+  NA  MOLE NA+ 0.5
+  CL  MOLE CL- 0.5
+END
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
