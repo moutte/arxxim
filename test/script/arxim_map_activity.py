@@ -1,12 +1,9 @@
-import os
-import glob
+import os,glob,sys
 import pylab as plt
-import numpy as np
-import sys
 
 sExe= "..\\bin\\arxim.exe"  #windows
 sExe= "../bin/arxim"        #linux
-sDebug= "2"
+sDebug= "1"
 sCmd= "GEM"
 
 
@@ -68,10 +65,10 @@ fResult= "tmp_gem.tab"
 
 #------------------------------------------------initialize the x,y grid
 Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
-Yser= np.linspace(Ymin,Ymax,num=Ydim)
+Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
-Xser= np.linspace(Xmin,Xmax,num=Xdim)
+Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
 if 0:
   print Xser
@@ -365,6 +362,7 @@ for phase in phase_Partout:
 #--
 #---------------------------------------//processing the paragenese list
 
+#-----------------------------------------------file name for the figure
 head,tail= os.path.split(fInn)
 if '.' in tail:
   figName= tail.split('.')[0]
@@ -375,6 +373,7 @@ if os.path.isdir("png"):
 else:
   os.mkdir("png")
 figName= "png/"+figName
+#---------------------------------------------------------------------//
 
 #-----------------------------------------------------------plot diagram
 plt.rcParams['figure.figsize']= 10,8

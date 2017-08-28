@@ -1,6 +1,5 @@
 import os, glob, sys
 import pylab as plt
-import numpy as np
 
 sExe= "../bin/arxim"
 sDebug= "1"
@@ -359,6 +358,7 @@ for i,paragen in enumerate(lis_paragen):
   lis_paragen[i]= newp 
 #---------------------------------------//processing the paragenese list
 
+#-----------------------------------------------file name for the figure
 head,tail= os.path.split(fInn)
 if '.' in tail:
   figName= tail.split('.')[0]
@@ -369,6 +369,7 @@ if os.path.isdir("png"):
 else:
   os.mkdir("png")
 figName= "png/"+figName
+#---------------------------------------------------------------------//
 
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6

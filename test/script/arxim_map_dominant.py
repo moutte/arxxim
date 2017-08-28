@@ -1,6 +1,5 @@
 import os, glob, sys, time
 import pylab as plt
-import numpy as np
 
 import exceptions
 def mynum(s):
@@ -11,7 +10,7 @@ def mynum(s):
 
 sExe= "..\\bin\\arxim.exe"  #windows
 sExe= "../bin/arxim"       #linux
-sExe= "../../mybin_o3/arxim"  
+sExe= "../../mybin_o3/arx-cell"  
 sDebug= "2"
 sCmd= "SPC"
 
@@ -72,10 +71,10 @@ lis_spc=[]
 
 #------------------------------------------------initialize the x,y grid
 Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
-Xser= np.linspace(Xmin,Xmax,num=Xdim)
+Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
 Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
-Yser= np.linspace(Ymin,Ymax,num=Ydim)
+Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if 0:
   print Xser
@@ -223,7 +222,7 @@ for iY,y in enumerate(Yser):
       for i,name in enumerate(spc_names):
         print spc_types[i]," ",name
       if DEBUG: raw_input()
-      spc_include=np.zeros(len(spc_names), dtype=bool)
+      spc_include=plt.zeros(len(spc_names), dtype=bool)
       for i in range(len(spc_names)):
         if spc_types[i]=="AQU":
           if "FE" in spc_names[i]:
@@ -411,8 +410,10 @@ for reac in lis_reac:
   points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
-for species in lis_spc:
-  print species
+print "LIST OF SPECIES :"
+for i,species in enumerate(lis_spc):
+  print i, species, spc_names[species]
+
 for reac in lis_reac:
   print reac
 #raw_input()
@@ -424,6 +425,9 @@ print "TIME=", END - START
 #sys.exit()
 #-------------------------------------------------------------//refining
 
+
+
+#-----------------------------------------------file name for the figure
 head,tail= os.path.split(fInn)
 if '.' in tail:
   figName= tail.split('.')[0]
@@ -434,6 +438,7 @@ if os.path.isdir("png"):
 else:
   os.mkdir("png")
 figName= "png/"+figName
+#---------------------------------------------------------------------//
   
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8,6

@@ -1,8 +1,6 @@
 SYSTEM
   TDGC 25.
   FE  MOLE FE+3  1E-6
-  H  PK  H+  13
-  OX  PK  O2(G)  36.81
-  NA  MOLE NA+ 0.5
-  CL  MOLE CL- 0.5
+  H  PK  H+  3.453
+  OX  PK  O2(G)  8
 END

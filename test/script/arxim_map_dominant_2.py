@@ -1,6 +1,5 @@
 import os, glob, sys, time
 import pylab as plt
-import numpy as np
 
 import exceptions
 def mynum(s):
@@ -78,10 +77,10 @@ DEBUG= False
 
 #------------------------------------------------initialize the x,y grid
 Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
-Xser= np.linspace(Xmin,Xmax,num=Xdim)
+Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
 Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
-Yser= np.linspace(Ymin,Ymax,num=Ydim)
+Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if False:
   print Xser
@@ -235,7 +234,7 @@ for iY,y in enumerate(Yser):
       for i,name in enumerate(spc_names):
         print spc_types[i]," ",name
       if DEBUG: raw_input()
-      spc_include=np.zeros(len(spc_names), dtype=bool)
+      spc_include=plt.zeros(len(spc_names), dtype=bool)
       for i in range(len(spc_names)):
         if "FE" in spc_names[i]:
           spc_include[i]= True
@@ -411,7 +410,7 @@ if os.path.isdir("png"):
 else:
   os.mkdir("png")
 figName= "png/"+figName
-#-------------------------------------------//the file name for the plot
+#---------------------------------------------------------------------//
   
 #--------------------------------------------------------plot XY diagram
 plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
