@@ -69,10 +69,10 @@ fResult= "tmp_gem.tab"
 
 #------------------------------------------------initialize the x,y grid
 Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
-Xser= np.linspace(Xmin,Xmax,num=Xdim)
+Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
 Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
-Yser= np.linspace(Ymin,Ymax,num=Ydim)
+Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if 0:
   print Xser
