@@ -288,7 +288,7 @@ if False:
   raw_input()
 
 #---------------------------------------------------------------refining
-lis_reac=  []
+lis_limits=  []
 lis_xy_x=  []
 lis_xy_y=  []
 lis_false_x= []
@@ -307,9 +307,9 @@ for iY in range(Ydim):
       x1= tab_x[iX,  iY]
       x,F,OK= refine_xy(Xlis,F0,F1,x0,x1,Xtol)
       if OK:
-        if F0>F1: s= str(F1)+'='+str(F0)
-        else:     s= str(F0)+'='+str(F1)
-        if not s in lis_reac: lis_reac.append(s)
+        if F1>F0: s= (F0,F1)
+        else:     s= (F1,F0)
+        if not s in lis_limits: lis_limits.append(s)
         val= s,x,y
         lis_xy_x.append(val)
       else:
@@ -321,9 +321,9 @@ for iY in range(Ydim):
           #--------------------second stage refinement between x0 and xm
           x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
           if OK:
-            if F0>Fm: s= str(Fm)+'='+str(F0)
-            else:     s= str(F0)+'='+str(Fm)
-            if not s in lis_reac: lis_reac.append(s)
+            if F1>Fm: s= (Fm,F1)
+            else:     s= (F1,Fm)
+            if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_x.append(val)
           else:
@@ -332,9 +332,9 @@ for iY in range(Ydim):
           #--------------------second stage refinement between xm and x1
           x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
           if OK:
-            if F1>Fm: s= str(Fm)+'='+str(F1)
-            else:     s= str(F1)+'='+str(Fm)
-            if not s in lis_reac: lis_reac.append(s)
+            if F1>Fm: s= (Fm,F1)
+            else:     s= (F1,Fm)
+            if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_x.append(val)
           else:
@@ -357,9 +357,9 @@ for iX in range(Xdim):
       y1= tab_y[iX,iY]
       y,F,OK= refine_xy(Ylis,F0,F1,y0,y1,Ytol)
       if OK:
-        if F0>F1: s= str(F1)+'='+str(F0)
-        else:     s= str(F0)+'='+str(F1)
-        if not s in lis_reac: lis_reac.append(s)
+        if F1>F0: s= (F0,F1)
+        else:     s= (F1,F0)
+        if not s in lis_limits: lis_limits.append(s)
         val= s,x,y
         lis_xy_y.append(val)
       else:
@@ -371,9 +371,9 @@ for iX in range(Xdim):
           #----------------------second stage refinement between y0 and ym
           y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
           if OK:
-            if F0>Fm: s= str(Fm)+'='+str(F0)
-            else:     s= str(F0)+'='+str(Fm)
-            if not s in lis_reac: lis_reac.append(s)
+            if F1>Fm: s= (Fm,F1)
+            else:     s= (F1,Fm)
+            if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_y.append(val)
           else:
@@ -382,9 +382,9 @@ for iX in range(Xdim):
           #----------------------second stage refinement between ym and y1
           y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
           if OK:
-            if F1>Fm: s= str(Fm)+'='+str(F1)
-            else:     s= str(F1)+'='+str(Fm)
-            if not s in lis_reac: lis_reac.append(s)
+            if F1>Fm: s= (Fm,F1)
+            else:     s= (F1,Fm)
+            if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_y.append(val)
           else:
@@ -397,7 +397,7 @@ for iX in range(Xdim):
 
 #--from the lists of points, build the lines for each "reaction"
 lines= []
-for reac in lis_reac:
+for reac in lis_limits:
   points= []
   for val in lis_xy_x:
     if val[0]==reac:
@@ -414,7 +414,7 @@ print "LIST OF SPECIES :"
 for i,species in enumerate(lis_spc):
   print i, species, spc_names[species]
 
-for reac in lis_reac:
+for reac in lis_limits:
   print reac
 #raw_input()
 

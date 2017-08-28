@@ -602,7 +602,7 @@ subroutine Equil_Write_Detail(cSelec,TdgK,Pbar,vCpn)
   if(idebug>1) then
     print '(/,A,/)',&
     & "Speciation detail saved in file "//trim(DirOut)//trim(strFile)
-    if(iDebug>1) call Pause_
+    if(iDebug>2) call Pause_
   end if
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ Equil_Write_Detail"
