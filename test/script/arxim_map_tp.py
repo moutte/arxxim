@@ -1,7 +1,9 @@
 import os, glob, sys
 import pylab as plt
 
-sExe= "../bin/arxim"
+sExe= "arxim.exe"    #windows
+sExe= "arxim"        #linux
+sExe= os.path.join("..","bin",sExe)
 sDebug= "1"
 sCmd=  "GEM"
 
