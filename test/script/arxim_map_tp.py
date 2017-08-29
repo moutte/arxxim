@@ -2,9 +2,9 @@ import os, glob, sys
 import pylab as plt
 
 sExe= "arxim.exe"    #windows
-sExe= "arxim"        #linux
+sExe= "arxxim"        #linux
 sExe= os.path.join("..","bin",sExe)
-sDebug= "1"
+sDebug= "2"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
@@ -16,7 +16,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/map3a_tp.inn"
+fInn= "inn/map3b_tp.inn"
 
 '''
 the include block to be modified:
