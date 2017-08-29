@@ -17,8 +17,8 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/map2a_activ.inn"
 fInn= "inn/map2b_activ.inn"
+fInn= "inn/map2a_activ.inn"
 
 '''
 the include block to be modified:

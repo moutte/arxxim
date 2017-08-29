@@ -33,8 +33,8 @@ Ylis= ["OX"]
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 4., 0.02
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
 
-Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
+Xmin,Xmax,Xdelta,Xtol=  1., 13., 1., 0.02
+Ymin,Ymax,Ydelta,Ytol= 40.,  4., 1., 0.01
 
 Xlabel= "pH"
 Ylabel= "colog(f_O2(g))"

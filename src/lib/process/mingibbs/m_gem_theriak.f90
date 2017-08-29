@@ -563,7 +563,7 @@ subroutine Simplex_GEM(iError)
   nC=    size(vCpnGEM)
   nFpur= size(vFas) !--------at this point, only pure phases are in vFas
   nMix=  size(vMixModel)
-  nMix=  0
+  !nMix=  0
   !
   nFmix= nMix
   !
