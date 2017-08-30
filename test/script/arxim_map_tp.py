@@ -403,7 +403,7 @@ plt.rcParams['figure.figsize']= 8,6
 plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
 plt.rcParams['figure.figsize']= 5.,3.75 #ratio 4/3
 plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 9})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd']

@@ -7,7 +7,7 @@ os.chdir("../")
 #print "DIR=", os.getcwd()
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob('inn/map3a*.inn')
+files= glob.glob('inn/map3b*.inn')
 files.sort()
 for f in files: print f
 #raw_input()
@@ -15,10 +15,14 @@ for f in files: print f
 
 #---------------------------------------------------------------EXE FILE
 sExe= "arxim.exe"    #windows
+sExe= os.path.join("..","bin",sExe)
+
 sExe= "arxxim"        #linux
 sExe= os.path.join("..","bin",sExe)
+
 sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
+
 Debug= "3"
 #---------------------------------------------------------------------//
 

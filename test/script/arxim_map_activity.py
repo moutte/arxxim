@@ -382,7 +382,7 @@ plt.rcParams['figure.figsize']= 10,8
 plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
 plt.rcParams['figure.figsize']= 5.,3.75 #ratio 4/3
 plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
-plt.rcParams.update({'font.size': 10})
+plt.rcParams.update({'font.size': 8})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
@@ -399,7 +399,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=1.0)
+  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=2.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
