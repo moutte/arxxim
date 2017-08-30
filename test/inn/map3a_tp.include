@@ -1,6 +1,8 @@
 SYSTEM.GEM
-  TDGC  900
-  PBAR  882.8
+  TDGC  700
+  PBAR  5888
   SIO2   SiO2  1.0
   AL2O3  Al2O3 1.0
+  FEO    FeO   0.1
+  MGO    MgO   0.1
 END

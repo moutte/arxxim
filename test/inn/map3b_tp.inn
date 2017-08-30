@@ -1,7 +1,8 @@
 TEST
-  COMPUTE GEMPATH
+  COMPUTE GEM
   COMPUTE Q
 END
+  COMPUTE GEMPATH
 
 CONDITIONS
   TITLE gem_test, with special mixtures, TP path, HIGH T/P

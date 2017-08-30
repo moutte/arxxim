@@ -26,7 +26,10 @@ if os.path.isfile("error.log"): os.remove("error.log")
 
 #------------------------------------------------------------input files
 fInn= "inn/map1a_fe_ox.inn"
+Selection="FE"
+
 fInn= "inn/map1b_cr_ox.inn"
+Selection="CR"
 
 Xlis= ["H"]
 Ylis= ["OX"]
@@ -226,7 +229,7 @@ for iY,y in enumerate(Yser):
       spc_include=plt.zeros(len(spc_names), dtype=bool)
       for i in range(len(spc_names)):
         if spc_types[i]=="AQU":
-          if "CR" in spc_names[i]:
+          if Selection in spc_names[i]:
             spc_include[i]= True
       for (i,name) in enumerate(spc_names):
         if spc_include[i]: print spc_names[i]
@@ -322,8 +325,8 @@ for iY in range(Ydim):
           #--------------------second stage refinement between x0 and xm
           x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
           if OK:
-            if F1>Fm: s= (Fm,F1)
-            else:     s= (F1,Fm)
+            if F0>Fm: s= (Fm,F0)
+            else:     s= (F0,Fm)
             if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_x.append(val)
@@ -372,8 +375,8 @@ for iX in range(Xdim):
           #----------------------second stage refinement between y0 and ym
           y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
           if OK:
-            if F1>Fm: s= (Fm,F1)
-            else:     s= (F1,Fm)
+            if F0>Fm: s= (Fm,F0)
+            else:     s= (F0,Fm)
             if not s in lis_limits: lis_limits.append(s)
             val= s,x,y
             lis_xy_y.append(val)
@@ -450,7 +453,8 @@ plt.rcParams.update({'font.size': 12})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
-fig.grid(color='r', linestyle='-', linewidth=0.2)
+symbols=['b','g','r','c','m','y']
+fig.grid(color='r', linestyle='-', linewidth=0.1)
 fig.grid(True)
 
 fig.set_xlim(Xmin,Xmax)
@@ -462,12 +466,15 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
+  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=2.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= spc_names[i]
-  fig.text(x,y,textstr,horizontalalignment='center')
+  fig.text(x,y,
+    textstr,
+    verticalalignment='center',
+    horizontalalignment='center')
   
 plt.xlabel(Xlabel)
 plt.ylabel(Ylabel)

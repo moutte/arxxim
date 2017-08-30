@@ -386,6 +386,7 @@ plt.rcParams.update({'font.size': 10})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
+symbols=['b','g','r','c','m','y']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
   
@@ -398,7 +399,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
+  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=1.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid

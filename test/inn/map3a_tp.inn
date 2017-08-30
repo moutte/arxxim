@@ -9,7 +9,20 @@ CONDITIONS
   DEBUG  1
 END CONDITIONS
 
-INCLUDE dtb\elements.dtb
+ELEMENTS
+  O  0.0159995 -2 -2  102.575 
+  H  0.001008   1  1  65.34 
+  C  0.0120105  4  4  5.74 
+  P  0.030973   5  5  41.09 
+  Si 0.028085   4  4  18.81 
+  Al 0.026982   3  3  31.00 !28.30 
+  Fe 0.055847   2  2  27.28 !27.09
+  Ca 0.040078   2  2  41.59 !42.9
+  Mg 0.024305   2  2  32.67 
+  K  0.039098   1  1  64.67 
+  Na 0.022990   1  1  51.46 
+END ELEMENTS
+
 INCLUDE dtb\hsvthr_thcalc_db55_min.tab
 
 !SPECIES HSV.THR

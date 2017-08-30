@@ -3,6 +3,9 @@ import pylab as plt
 
 sExe= "arxim.exe"    #windows
 sExe= "arxxim"        #linux
+sExe= "arx-win"
+sExe= os.path.join("..","..","mybin_debug",sExe)
+sExe= "arxim"        #linux
 sExe= os.path.join("..","bin",sExe)
 sDebug= "2"
 sCmd=  "GEM"
@@ -16,7 +19,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/map3b_tp.inn"
+fInn= "inn/map3a_tp.inn"
 
 '''
 the include block to be modified:
@@ -41,6 +44,9 @@ Ymin,Ymax,Ydelta,Ytol= 4000.,  5000., 50.,   5.
 
 Xmin,Xmax,Xdelta,Xtol= 300., 900.,   50.,  5.
 Ymin,Ymax,Ydelta,Ytol= 500., 6500., 500., 10.
+
+Xmin,Xmax,Xdelta,Xtol=  400.,   700.,  20.,   5.
+Ymin,Ymax,Ydelta,Ytol= 3000.,  6000., 200.,  20.
 
 #----------------------------------------------------------//input files
 
@@ -153,6 +159,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
       else:
         lis_paragen.append(paragen)
         print "NEW:",paragen
+        F= -1
         OK= False
         break
     # print x0,x1
@@ -237,32 +244,36 @@ for iY in range(Ydim):
         val= s,x,y
         lis_xy_x.append(val)
       else:
-      #-there is a paragen' Fm on [x0,x1] that is different from F0 & F1
-      #--we need two second stage refinements
-        xm=x
-        Fm=F
-        #----------------------second stage refinement between x0 and xm
-        x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
-        if OK:
-          if F0>Fm: s= str(Fm)+'='+str(F0)
-          else:     s= str(F0)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_x.append(val)
-        else:
+        if F>0:
+        #-there is a paragen' Fm on [x0,x1] that is different from F0 & F1
+        #--we need two second stage refinements
+          xm=x
+          Fm=F
+          #----------------------second stage refinement between x0 and xm
+          x,F,OK= refine_xy(Xlis,F0,Fm,x0,xm,Xtol)
+          if OK:
+            if F0>Fm: s= str(Fm)+'='+str(F0)
+            else:     s= str(F0)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_x.append(val)
+          else:
+            val= iX,iY
+            lis_false_x.append(val)
+          #----------------------second stage refinement between xm and x1
+          x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
+          if OK:
+            if F1>Fm: s= str(Fm)+'='+str(F1)
+            else:     s= str(F1)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_x.append(val)
+          else:
+            val= iX,iY
+            lis_false_x.append(val)
+        else: #F<0
           val= iX,iY
-          lis_false_x.append(val)
-        #----------------------second stage refinement between xm and x1
-        x,F,OK= refine_xy(Xlis,Fm,F1,xm,x1,Xtol)
-        if OK:
-          if F1>Fm: s= str(Fm)+'='+str(F1)
-          else:     s= str(F1)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_x.append(val)
-        else:
-          val= iX,iY
-          lis_false_x.append(val)
+          lis_false_y.append(val)
         
 #--refining the y-coordinate of the paragenesis change, at fixed x
 for iX in range(Xdim):
@@ -282,32 +293,37 @@ for iX in range(Xdim):
         val= s,x,y
         lis_xy_y.append(val)
       else:
-      #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
-      #--we need two second stage refinements
-        ym=y
-        Fm=F
-        #----------------------second stage refinement between y0 and ym
-        y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
-        if OK:
-          if F0>Fm: s= str(Fm)+'='+str(F0)
-          else:     s= str(F0)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_y.append(val)
-        else:
+        if F>0:
+        #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
+        #--we need two second stage refinements
+          ym=y
+          Fm=F
+          #----------------------second stage refinement between y0 and ym
+          y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
+          if OK:
+            if F0>Fm: s= str(Fm)+'='+str(F0)
+            else:     s= str(F0)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_y.append(val)
+          else:
+            val= iX,iY
+            lis_false_y.append(val)
+          #----------------------second stage refinement between ym and y1
+          y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+          if OK:
+            if F1>Fm: s= str(Fm)+'='+str(F1)
+            else:     s= str(F1)+'='+str(Fm)
+            if not s in lis_reac: lis_reac.append(s)
+            val= s,x,y
+            lis_xy_y.append(val)
+          else:
+            val= iX,iY
+            lis_false_y.append(val)
+        else: #F<0
           val= iX,iY
           lis_false_y.append(val)
-        #----------------------second stage refinement between ym and y1
-        y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
-        if OK:
-          if F1>Fm: s= str(Fm)+'='+str(F1)
-          else:     s= str(F1)+'='+str(Fm)
-          if not s in lis_reac: lis_reac.append(s)
-          val= s,x,y
-          lis_xy_y.append(val)
-        else:
-          val= iX,iY
-          lis_false_y.append(val)
+          
 
 #--build the lines for each reaction from the lists of points
 lines= []
@@ -355,9 +371,18 @@ for i,paragen in enumerate(lis_paragen):
   ww= paragen.split('=')
   newp= ""
   for w in ww:
-    if not w in phase_Partout: 
+    if not w in phase_Partout:
+      if len(w)>3: w=w[0:3]
       newp= newp + w + '='
   lis_paragen[i]= newp 
+#--print simplified paragesis
+if len(phase_Partout):
+  print "PHASES FOUND IN ALL PARAGENESIS="
+  for phase in phase_Partout:
+    print phase
+print "(SIMPLIFIED) PARAGENESIS="
+for i,paragen in enumerate(lis_paragen):
+  print i, paragen
 #---------------------------------------//processing the paragenese list
 
 #-----------------------------------------------file name for the figure
@@ -381,7 +406,8 @@ plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
 plt.rcParams.update({'font.size': 12})
 
 fig= plt.subplot(1,1,1)
-symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
+symbols=['bo','go','ro','cs','mD','yd']
+symbols=['b','g','r','c','m','y']
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
   
@@ -394,12 +420,16 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
+  j= i%6
+  fig.plot(vx, vy, symbols[j], linestyle='-', linewidth=2.0)
 
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= lis_paragen[i].replace('=','\n')
-  fig.text(x,y,textstr,horizontalalignment='center')
+  fig.text(x,y,
+    textstr,
+    verticalalignment='center',
+    horizontalalignment='center')
   
 plt.xlabel(Xlabel)
 plt.ylabel(Ylabel)
