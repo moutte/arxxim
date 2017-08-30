@@ -85,13 +85,11 @@ subroutine DtbH2OHkf_Calc(TdgK,Pbar,pW)
 !-- (routines implemented outside the module, could be nested inside,
 !--  as they are of no use outside)
 !--
-
   use M_Fluid_Calc,only: Eos_H2O_Rho
-  use M_Trace,     only: iDebug,fTrc
-  
+  !---------------------------------------------------------------------
   real(dp),         intent(in) :: TdgK,Pbar
   type(T_DtbH2OHkf),intent(out):: pW
-  
+  !---------------------------------------------------------------------
   pW%TdgK=TdgK
   pW%Pbar=Pbar
   

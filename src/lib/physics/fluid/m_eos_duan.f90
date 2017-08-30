@@ -55,7 +55,7 @@ subroutine EoS_H2O_Duan92( &  !
   real(dp),intent(out):: Grt,V_m3,LnPhi
   !---------------------------------------------------------------------
   real(dp):: &
-  & PR,TR,TR2,TR3, &
+  & TR,TR2,TR3, &
   & VC,VC2,VC4,VC5,EU3,Z,V,INTE, &
   & V2,V4,V5,EXPON, &
   & G,H0,S0,S0Ele, &
@@ -935,7 +935,7 @@ subroutine DuanZ( &
   do I=1,5
   
     call FINDPT( &
-    & T,P,START,DELTA, &
+    & P,START,DELTA, &
     & FOUND,Z,XX)
     
     if (FOUND) then
@@ -990,7 +990,7 @@ subroutine DuanZ( &
 end subroutine DuanZ
 
 subroutine FINDPT( &
-& T,P,START,DELTA, &
+& P,START,DELTA, &
 & FOUND,Z,XX)
 !--
 !-- code (MODIFIED) from THERIAK / C DeCapitani
@@ -998,7 +998,7 @@ subroutine FINDPT( &
 !--
   implicit none
   !---------------------------------------------------------------------
-  real(dp),intent(in) :: T,P
+  real(dp),intent(in) :: P
   real(dp),intent(in) :: START,DELTA
   logical, intent(out):: FOUND
   real(dp),intent(out):: Z,XX

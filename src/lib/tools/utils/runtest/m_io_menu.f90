@@ -22,7 +22,6 @@ contains
 !---
 
 subroutine IO_Menu(S,OkCmd,DebugLevel)
-  use M_Trace,  only: iDebug
   use M_FArgC,  only: F_IARGC, F_GETARG
   use M_IoTools,only: WrdToInt,CarToInt,Str_Upper
   use M_VarStr
@@ -41,7 +40,7 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
     ! 2 arguments on command line
     ! -> 2nd arg' is the debug level if it is 1 char, or the mode
     call getarg(2,S)
-    if(idebug>1) write(*,*) "READING ARG2 = ", S
+    ! if(idebug>1) write(*,*) "READING ARG2 = ", S
     if(len_trim(S)==1) then
 
       J= CarToInt(S(1:1))
@@ -53,7 +52,7 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
       !    3nd arg' is the mode (SPC, EQU, etc)
       if(IARGC()>2) then
         call getarg(3,S)
-        if(idebug>1) write(*,*) "READING ARG3 = ", S
+        if(DebugLevel>1) write(*,*) "READING ARG3 = ", S
         OkCmd=.true.
       end if
 
@@ -61,11 +60,8 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
       OkCmd=.true.
     end if
 
-
-  else
-    
+  else    
     OkCmd=.false.
-    
   end if
 
   if(.not. OkCmd) then
@@ -76,7 +72,7 @@ subroutine IO_Menu(S,OkCmd,DebugLevel)
     if (.not. OkFInn) then
       call IO_Menu_Selection(S)
     else
-      if(idebug>1) write(*,'(A,A)') "TEST COMPUTE ", S
+      write(*,'(A,A)') "TEST COMPUTE ", S
     end if
     
   end if
