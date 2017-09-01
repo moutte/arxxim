@@ -321,23 +321,23 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   ! case("SPLMIX")
   !   call Global_Build
   !   call GEM_Build
-  !   call GEM_Theriak(.false.)
+  !   call GEM_Theriak_Single(.false.)
   
   ! case("SPLMIXID")
   !   call Global_Build
   !   call GEM_Build
-  !   call GEM_Theriak(.true.)
+  !   call GEM_Theriak_Single(.true.)
   
   case("GEM")
     call Global_Build
     call GEM_Build
-    call GEM_Theriak
+    call GEM_Theriak_Single
     call GEM_Vars_Clean
   
   ! case("GEMID")
   !   call Global_Build
   !   call GEM_Build
-  !   call GEM_Theriak(.true.)
+  !   call GEM_Theriak_Single(.true.)
   
   case("GEMPATH")
     call Global_Build

@@ -220,9 +220,9 @@ subroutine GEM_Theriak_Grid
     !change ... ! tResult(2,     iPath)= Pbar
     !change ... ! tResult(3:nC+2,iPath)= vCpnGEM(1:nC)%Mole
     !
-    !--------------------------------------------------------SIMPLEX_GEM
-    call Simplex_GEM(iError)
-    !-------------------------------------------------------/SIMPLEX_GEM
+    !--------------------------------------------------------Theriak
+    call Theriak(iError)
+    !-------------------------------------------------------/Theriak
     !
     !------------------------store results in tables tResult, tResultMix
     if(iError/=0) then
@@ -314,7 +314,7 @@ end subroutine Check_vXMean
 
 end subroutine GEM_Theriak_Grid
 
-subroutine Simplex_GEM(iError)
+subroutine Theriak(iError)
 !--
 !-- equilibrium calculations on assemblage of pure phases and mixtures,
 !-- with THERIAK method (Capitani-Brown,1987)
@@ -614,7 +614,7 @@ contains
     return
   end subroutine StoreResults
 
-end subroutine Simplex_GEM
+end subroutine Theriak
 
 real(dp) function MixPhase_Grt(TdgK,Pbar,nP,MM,vMu0rt,vX)
   use M_T_MixModel,only: MixModel_Activities

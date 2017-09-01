@@ -7,8 +7,8 @@ sExe= "arxim"        #linux
 sExe= os.path.join("..","bin",sExe)
 sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
-sExe= "arx_bis"
 sExe= "arxxim"
+sExe= "arx_bis"
 sExe= os.path.join("..","bin",sExe)
 
 sDebug= "2"
@@ -206,7 +206,7 @@ for iY,y in enumerate(Yser):
       paragen= arxim_result(fResult) #-----------------read arxim result
       if not paragen in lis_paragen:
         print paragen
-        raw_input()
+        #raw_input()
         lis_paragen.append(paragen)
         fParagen.write("%s\n" % paragen)
         #centroids.append((x,y,0))

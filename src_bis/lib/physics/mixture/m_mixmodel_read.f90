@@ -78,7 +78,8 @@ subroutine MixModel_BuildLnk( &
 
   DoFile: do
     !
-    read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
+    read(F,'(A)',iostat=ios) L
+    if(ios/=0) exit DoFile
     call LinToWrd(L,W,sEol)
     if(W(1:1)=='!')   cycle DoFile
     call AppendToEnd(L,W,sEoL)
@@ -92,6 +93,9 @@ subroutine MixModel_BuildLnk( &
     ! MIXTURE.MODEL is the preferred keyword for symmetric models,
     ! SOLUTION.MODEL should be for assymetric solvent / solute mixtures
     !
+
+    print *,trim(L)
+
       call MixModel_Zero(S)
       !
       call LinToWrd(L,W,sEol) !MIXTURE.MODEL OLIVINE ->S%Name="OLIVINE"
