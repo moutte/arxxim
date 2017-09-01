@@ -51,8 +51,8 @@ module M_GEM_Theriak
   !
   !---------------------------------------------------private parameters
   real(dp),parameter:: MixMinim_TolX= 1.D-4
-  real(dp),parameter:: GEM_G_Iota= 1.0D-9 !1.0D-9
-  integer, parameter:: GEM_IterMax= 500
+  real(dp),parameter:: GEM_G_Iota= 1.0D-6 !1.0D-9
+  integer, parameter:: GEM_IterMax= 200
   !
   logical:: WarmRestart= .false.  !!.true.   !!
   logical:: WriteTrace=  .true.   !!.false.  !!

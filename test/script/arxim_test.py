@@ -17,11 +17,13 @@ for f in files: print f
 sExe= "arxim.exe"    #windows
 sExe= os.path.join("..","bin",sExe)
 
-sExe= "arxxim"        #linux
-sExe= os.path.join("..","bin",sExe)
-
+sExe= "arx-cell"
 sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
+
+sExe= "arxxim"        #linux
+sExe= "arx_bis"
+sExe= os.path.join("..","bin",sExe)
 
 Debug= "3"
 #---------------------------------------------------------------------//

@@ -7,6 +7,8 @@ sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
 sExe= "arxim"        #linux
 sExe= os.path.join("..","bin",sExe)
+sExe= "arx_bis"
+sExe= os.path.join("..","bin",sExe)
 sDebug= "2"
 sCmd=  "GEM"
 
@@ -39,11 +41,11 @@ Ylis= ["PBAR"]
 Xlabel= "T /DGC"
 Ylabel= "P /BAR"
 
-Xmin,Xmax,Xdelta,Xtol=  500.,   600., 10.,   1.
-Ymin,Ymax,Ydelta,Ytol= 4000.,  5000., 50.,   5.
-
 Xmin,Xmax,Xdelta,Xtol= 300., 900.,   50.,  5.
 Ymin,Ymax,Ydelta,Ytol= 500., 6500., 500., 10.
+
+Xmin,Xmax,Xdelta,Xtol=  500.,   600., 10.,   1.
+Ymin,Ymax,Ydelta,Ytol= 4000.,  5000., 50.,   5.
 
 Xmin,Xmax,Xdelta,Xtol=  400.,   700.,  20.,   5.
 Ymin,Ymax,Ydelta,Ytol= 3000.,  6000., 200.,  20.
