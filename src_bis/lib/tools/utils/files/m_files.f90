@@ -45,10 +45,11 @@ contains
     !===================================================================
     ! Print the Input FileName 
     !===================================================================
-    use M_Trace,  only: fHtm
+    use M_Trace,  only: fHtm,iDebug
     implicit none
     !--
-    write(*,'(A)') "Arxim Script File : "// trim(NamFIn0)
+    if(iDebug>2) &
+    & write(*,'(A)') "Arxim Script File : "// trim(NamFIn0)
     call Files_Index_InputFile(fHtm, NamFIn0)
 
   end subroutine Info_PathRead
@@ -262,7 +263,8 @@ contains
         
         if (File_Exist_System(sIncludeFile1)) then 
           
-          write(*,*) "INCLUDE LEVEL 1 : ", trim(sIncludeFile1)
+          if(iDebug>2) &
+          & write(*,*) "INCLUDE LEVEL 1 : ", trim(sIncludeFile1)
           
           ! Open Include File Level 1
           call GetUnit(fAdd)
@@ -305,7 +307,8 @@ contains
               
               if(File_Exist_System(sIncludeFile2)) then 
                 
-                write(*,*) "INCLUDE LEVEL 2 : .. ", trim(sIncludeFile2)
+                if(iDebug>2) &
+                & write(*,*) "INCLUDE LEVEL 2 : .. ", trim(sIncludeFile2)
                 
                 ! Open Include File Level 2
                 call GetUnit(fAdd2)

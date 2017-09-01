@@ -3,12 +3,14 @@ import pylab as plt
 
 sExe= "arxim.exe"    #windows
 sExe= "arxxim"        #linux
-sExe= "arx-win"
-sExe= os.path.join("..","..","mybin_debug",sExe)
 sExe= "arxim"        #linux
 sExe= os.path.join("..","bin",sExe)
+sExe= "arx-win"
+sExe= os.path.join("..","..","mybin_debug",sExe)
 sExe= "arx_bis"
+sExe= "arxxim"
 sExe= os.path.join("..","bin",sExe)
+
 sDebug= "2"
 sCmd=  "GEM"
 
@@ -21,7 +23,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/map3a_tp.inn"
+fInn= "inn/map3c_tp.inn"
 
 '''
 the include block to be modified:
@@ -35,8 +37,8 @@ Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
 Value is 1200 / 400,     its index is 1  -> iValue=   1
 '''
 
-Xlis= ["TDGC"]
-Ylis= ["PBAR"]
+Xlis= ["TDGC"]  # must be uppercase ...
+Ylis= ["PBAR"]  # must be uppercase ...
 
 Xlabel= "T /DGC"
 Ylabel= "P /BAR"
@@ -76,6 +78,9 @@ sArximCommand= sExe,fInn,sDebug,sCmd
 fResult= "tmp_gem.tab"
 #------------------------------------------------------------------/INIT
 
+#DEBUG= True
+#fLog= open("log",'w',0)
+fParagen= open("paragen.txt",'w',0)
 
 #------------------------------------------------initialize the x,y grid
 Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
@@ -129,7 +134,7 @@ def include_modify(lis,x):
   f=open(fInclude,'w')
   for line in lines:
     ww= line.split()
-    if len(ww)>iValue and ww[iKeyword] in lis:
+    if len(ww)>iValue and ww[iKeyword].upper() in lis:
       for i in range(iValue): f.write("  %s" % (ww[i]))
       f.write("  %.4g\n" % (x))
     else:
@@ -140,9 +145,11 @@ def include_modify(lis,x):
 #-------------------------------------------------------refining routine
 def refine_xy(lis,F0,F1,x0,x1,tolerance):
   OK= True
+  F= -1
   #
   while abs(x0-x1)>tolerance:
     x= (x0+x1) /2.
+    #if DEBUG: fLog.write("%s  %.4g\n" % (lis[0],x))
     include_modify(lis,x)
     OK= arxim_ok(sArximCommand)
     if OK:
@@ -160,8 +167,9 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
           break
       else:
         lis_paragen.append(paragen)
-        print "NEW:",paragen
-        F= -1
+        fParagen.write("%s\n" % paragen)
+        F= lis_paragen.index(paragen)
+        print "F,F0,F1=", F,F0,F1
         OK= False
         break
     # print x0,x1
@@ -190,16 +198,17 @@ for iY,y in enumerate(Yser):
   include_modify(Ylis,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
-    print iY,iX
+    print x,y
     #
     include_modify(Xlis,x) #---------------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
       paragen= arxim_result(fResult) #-----------------read arxim result
-      print paragen
-      # raw_input()
       if not paragen in lis_paragen:
+        print paragen
+        raw_input()
         lis_paragen.append(paragen)
+        fParagen.write("%s\n" % paragen)
         #centroids.append((x,y,0))
       j= lis_paragen.index(paragen)
       tab_paragen[iX,iY]= j
@@ -312,7 +321,7 @@ for iX in range(Xdim):
             val= iX,iY
             lis_false_y.append(val)
           #----------------------second stage refinement between ym and y1
-          y,F,OK= refine_xy(Xlis,Fm,F1,ym,y1,Ytol)
+          y,F,OK= refine_xy(Ylis,Fm,F1,ym,y1,Ytol)
           if OK:
             if F1>Fm: s= str(Fm)+'='+str(F1)
             else:     s= str(F1)+'='+str(Fm)
@@ -326,7 +335,6 @@ for iX in range(Xdim):
           val= iX,iY
           lis_false_y.append(val)
           
-
 #--build the lines for each reaction from the lists of points
 lines= []
 for reac in lis_reac:
@@ -342,8 +350,9 @@ for reac in lis_reac:
   points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
-for paragen in lis_paragen:
+for i,paragen in enumerate(lis_paragen):
   print paragen
+  
 for reac in lis_reac:
   print reac
 #raw_input()
@@ -405,6 +414,7 @@ plt.rcParams['figure.figsize']= 8,6
 plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
 plt.rcParams['figure.figsize']= 5.,3.75 #ratio 4/3
 plt.rcParams['figure.figsize']= 6.,6.   #ratio 4/4
+plt.rcParams['figure.figsize']= 8.,8.   #ratio 4/4
 plt.rcParams.update({'font.size': 9})
 
 fig= plt.subplot(1,1,1)

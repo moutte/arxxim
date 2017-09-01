@@ -1,12 +1,9 @@
 SYSTEM.GEM
-  TdgC   600.
-  Pbar   2300.
-  H2O    H2O   30.0   1.00
-  SIO2   SiO2  127.0  11.8
-  AL2O3  Al2O3 20.3   1.38
-  CAO    CaO   1.41   0.141
-  NA2O   Na2O  2.67   0.267
-  K2O    K2O   4.66   0.316
-  FEO    FeO   4.80   0.5
-  MGO    MgO   3.80   0.4
+  TDGC  700
+  PBAR  5638
+  SIO2   SiO2  1.0
+  AL2O3  Al2O3 1.0
+  FEO    FeO   0.1
+  MGO    MgO   0.1
+  H2O    H2O   1.0
 END
