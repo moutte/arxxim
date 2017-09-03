@@ -20,19 +20,6 @@ if os.path.isfile("error.log"): os.remove("error.log")
 fInn= "inn/map2b_activ.inn"
 fInn= "inn/map2a_activ.inn"
 
-'''
-the include block to be modified:
-SPECIES
-MIN	VIRTUAL	SIO2_BUFF	SI(1)O(2)	2700.	3.5
-MIN	VIRTUAL	KOH_BUFF	K(1)O(1)H(1)	2700.	-1.5
-END
-Keyword is SIO2_BUFF,  its index is 2  -> iKeyword= 2
-Value is the last one, its index is 5  -> iValue=   5
-'''
-iKeyword= 2
-iValue=   5
-nValue=   8
-
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
 
@@ -47,10 +34,24 @@ Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 
 #----------------------------------------------------------//input files
 
-fInclude= fInn.replace(".inn",".include")
+'''
+the include block to be modified:
+SPECIES
+MIN	VIRTUAL	SIO2_BUFF	SI(1)O(2)	2700.	3.5
+MIN	VIRTUAL	KOH_BUFF	K(1)O(1)H(1)	2700.	-1.5
+END
+Keyword is SIO2_BUFF,  its index is 2  -> iKeyword= 2
+Value is the last one, its index is 5  -> iValue=   5
+'''
+iKeyword= 2
+iValue=   5
+nValue=   8 #number of T-P points in the logK file
 
+fInclude= fInn.replace(".inn",".include")
+#--clean the include file
 with open(fInclude,'r') as f:
   lines = f.readlines()
+#--clean the include file
 f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
@@ -59,10 +60,33 @@ for line in lines:
   f.write(line)
 f.close()
 
+#--store line numbers and headers for X and Y
+Xhead= "  "
+Yhead= "  "
+with open(fInclude,'r') as f:
+  lines = f.readlines()
+for i,line in enumerate(lines):
+  ww= line.split()
+  if len(ww)>iValue:
+    if ww[iKeyword].upper() in Xlis:
+      Xindex= i
+      for j in range(iValue):
+        Xhead= Xhead + "  " + ww[j]
+    if ww[iKeyword].upper() in Ylis:
+      Yindex= i
+      for j in range(iValue):
+        Yhead= Yhead + "  " + ww[j]
+if 1:
+  print Xindex, Xhead
+  print Yindex, Yhead
+  raw_input()
+Xlis= Xindex, Xhead
+Ylis= Yindex, Yhead
+#--
+
 sArximCommand= sExe,fInn,sDebug,sCmd
 fResult= "tmp_gem.tab"
 #------------------------------------------------------------------/INIT
-
 
 #------------------------------------------------initialize the x,y grid
 Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
@@ -76,6 +100,32 @@ if 0:
   print Yser
   sys.exit()
 #----------------------------------------------//initialize the x,y grid
+
+#------------------------------------------------modify the include file
+def input_modify(lis,x):
+  idx,headd= lis
+  with open(fInclude,'r') as f:
+    lines = f.readlines()
+  f=open(fInclude,'w')
+  for i,line in enumerate(lines):
+    if i==idx:
+      f.write("%s " % (headd))
+      for j in range(nValue): f.write("  %.4g" % (x))
+      f.write('\n')
+    else:
+      f.write(line)
+    #--old version
+    if 0:
+      ww= line.split()
+      if len(ww)>iValue and ww[iKeyword] in lis:
+        for i in range(iValue): f.write("  %s"   % (ww[i]))
+        for i in range(nValue): f.write("  %.4g" % (x))
+        f.write('\n')
+      else:
+        f.write(line)
+    #--/
+  f.close()
+#----------------------------------------------//modify the include file
 
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
@@ -97,7 +147,7 @@ def arxim_ok(sCommand):
   return OK
 #------------------------------------------------------------//arxim run
   
-#---------------------------------------------------------read results
+#-----------------------------------------------------------read results
 def arxim_result(fResult): #(sCommand):
   with open(fResult,'r') as f:
     lines= f.readlines()
@@ -107,23 +157,7 @@ def arxim_result(fResult): #(sCommand):
     if i>0:
       lis= lis + mineral + "="
   return lis 
-#--------------------------------------------------------/read results
-
-#------------------------------------------------modify the include file
-def input_modify(lis,x):
-  with open(fInclude,'r') as f:
-    lines = f.readlines()
-  f=open(fInclude,'w')
-  for line in lines:
-    ww= line.split()
-    if len(ww)>iValue and ww[iKeyword] in lis:
-      for i in range(iValue): f.write("  %s"   % (ww[i]))
-      for i in range(nValue): f.write("  %.4g" % (x))
-      f.write('\n')
-    else:
-      f.write(line)
-  f.close()
-#----------------------------------------------//modify the include file
+#----------------------------------------------------------/read results
 
 #----------------------------------------------map the stable assemblage
 #----------------------------------------------------on the initial grid

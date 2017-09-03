@@ -18,8 +18,6 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/f1r_sialh.inn"
-fInn= "inn/f1q_sial.inn"
 
 '''
 the include block to be modified:
@@ -32,12 +30,6 @@ END
 Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
 Value is 1200 / 400,     its index is 1  -> iValue=   1
 '''
-
-iKeyword= 0
-iValue=   1
-
-lisX= ["TDGC"]
-lisY= ["PBAR"]
 
 Xmin,Xmax,Xdelta= 540., 560., 5.
 tol_x= 1.

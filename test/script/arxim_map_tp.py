@@ -7,11 +7,11 @@ sExe= "arxim"        #linux
 sExe= os.path.join("..","bin",sExe)
 sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
-sExe= "arxxim"
 sExe= "arx_bis"
+sExe= "arxxim"
 sExe= os.path.join("..","bin",sExe)
 
-sDebug= "2"
+sDebug= "1"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
@@ -23,13 +23,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #------------------------------------------------------------input files
-fInn= "inn/map3c_tp.inn"
+fInn= "inn/map3b_tp.inn"
 
 '''
 the include block to be modified:
 SYSTEM.GEM
-  TDGC  1200
-  PBAR  400
+  TDGC  700
+  PBAR  5638
   SIO2   SiO2  1.0
   AL2O3  Al2O3 1.0
 END
@@ -59,7 +59,9 @@ iValue=   1
 
 fInclude= fInn.replace(".inn",".include")
 #--clean the include file
-with open(fInclude,'r') as f: lines = f.readlines()
+with open(fInclude,'r') as f:
+  lines = f.readlines()
+#--clean the include file
 f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
@@ -67,6 +69,33 @@ for line in lines:
   if ll[0]=='!': continue
   f.write(line)
 f.close()
+
+#--store line numbers and header for X and Y
+Xhead= "  "
+Yhead= "  "
+with open(fInclude,'r') as f:
+  lines = f.readlines()
+for i,line in enumerate(lines):
+  ww= line.split()
+  if len(ww)>iValue:
+    if ww[iKeyword].upper() in Xlis:
+      Xindex= i
+      for j in range(iValue):
+        Xhead= Xhead + "  " + ww[j]
+    if ww[iKeyword].upper() in Ylis:
+      Yindex= i
+      for j in range(iValue):
+        Yhead= Yhead + ww[j]
+if 0:
+  print Xindex, Xhead
+  print Yindex, Yhead
+  raw_input()
+Xlis= Xindex, Xhead
+Ylis= Yindex, Yhead
+
+#--write fInclude to the global variable IncLines -> don't work ...
+with open(fInclude,'r') as f:
+  IncLines = f.readlines()
 #--
 
 sArximCommand= sExe,fInn,sDebug,sCmd
@@ -94,6 +123,29 @@ if 0:
   print Yser
   sys.exit()
 #----------------------------------------------//initialize the x,y grid
+
+#------------------------------------------------modify the include file
+def include_modify(lis,x):
+  idx,headd= lis
+  with open(fInclude,'r') as f:
+    lines = f.readlines()
+  f=open(fInclude,'w')
+  for i,line in enumerate(lines):
+    if i==idx: f.write("%s  %.4g\n" % (headd,x))
+    else:      f.write(line)
+    #old version
+    if 0:
+      ww= line.split()
+      if len(ww)>iValue:
+        if ww[iKeyword].upper() in lis:
+          for i in range(iValue): f.write("  %s" % (ww[i]))
+          f.write("  %.4g\n" % (x))
+        else: f.write(line)
+      else:
+        f.write(line)
+    #--/
+  f.close()
+#----------------------------------------------//modify the include file
 
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
@@ -126,21 +178,6 @@ def arxim_result(fResult): #(sCommand):
       lis= lis + mineral + "="
   return lis 
 #----------------------------------------------------------/read results
-
-#------------------------------------------------modify the include file
-def include_modify(lis,x):
-  with open(fInclude,'r') as f:
-    lines = f.readlines()
-  f=open(fInclude,'w')
-  for line in lines:
-    ww= line.split()
-    if len(ww)>iValue and ww[iKeyword].upper() in lis:
-      for i in range(iValue): f.write("  %s" % (ww[i]))
-      f.write("  %.4g\n" % (x))
-    else:
-      f.write(line)
-  f.close()
-#----------------------------------------------//modify the include file
 
 #-------------------------------------------------------refining routine
 def refine_xy(lis,F0,F1,x0,x1,tolerance):
