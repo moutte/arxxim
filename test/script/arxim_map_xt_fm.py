@@ -38,7 +38,7 @@ Xmin,Xmax,Xdelta,Xtol=  0.05,   0.95, 0.05,   0.01
 Ymin,Ymax,Ydelta,Ytol=  400.,   700.,  20.,   5.
 
 def Xfunc(x): return 1. - x
-def Yfunc(y): return 3000. #+ (y-400.)*10.
+def Yfunc(y): return 3000. + (y-400.)*10.
 
 #---------------------------------------------------------//user-defined
 '''
@@ -433,7 +433,7 @@ for i,paragen in enumerate(lis_paragen):
   newp= ""
   for w in ww:
     if not w in phase_Partout:
-      if len(w)>3: w=w[0:3]
+      if len(w)>7: w=w[0:7]
       newp= newp + w + '='
   lis_paragen[i]= newp 
 #--print simplified paragesis
