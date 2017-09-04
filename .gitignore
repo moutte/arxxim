@@ -2,5 +2,3 @@ bin/*.mod
 bin/*.o
 bin/arx_bis
 bin/arxxim
-test/*
-

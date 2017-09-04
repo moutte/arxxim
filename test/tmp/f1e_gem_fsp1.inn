@@ -1,0 +1,70 @@
+TEST
+  COMPUTE GEMPATH
+  COMPUTE Q
+END
+  COMPUTE GEM
+
+CONDITIONS
+  TITLE  simplex_test, felspars
+  OUTPUT out\f1e
+  DEBUG  3
+END CONDITIONS
+
+ELEMENTS
+  O  0.0159995 -2 -2  102.575 
+  H  0.001008   1  1  65.34 
+  Si 0.028085   4  4  18.81 
+  Al 0.026982   3  3  28.30 
+  Ca 0.040078   2  2  41.59 !42.9
+  K  0.039098   1  1  64.67 
+  Na 0.022990   1  1  51.46 
+END ELEMENTS
+
+INCLUDE tmp\f1e_gem_fsp1.include
+
+!SYSTEM.GEM
+  TdgC 400
+  Pbar 1000
+  Or_ KAlSi3O8   1.0
+  Ab_ NaAlSi3O8  1.0
+  An_ CaAl2Si2O8 1.0
+  Cor Al2O3      1.0
+  Qtz SiO2       2.0
+!END
+
+PATH CHANGE
+Or_	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50
+Ab_	1	2	4	6	8	10	12	14	16	18	20	22	24	26	28	30	32	34	36	38	40	42	44	46	48	49
+An_	49	48	46	44	42	40	38	36	34	32	30	28	26	24	22	20	18	16	14	12	10	8	6	4	2	1
+END
+
+!!--------------------------------------------------------------DATABASE
+INCLUDE tmp\thr_twq_dec06_min.dtb !-> database for min'species 
+species.exclude
+  ALBITE-HIGH
+  SANIDINE
+end
+
+MIXTURE.MODEL FELDSPAR_SS1
+  MODEL FELSPAR
+  POLE !for FELSPAR model, order MUST be Ab - Or - An
+    ALBITE-LOW
+    K-FELDSPAR
+    ANORTHITE
+  END POLE
+  MARGULES !Fuhrman&Lindsley(1988)
+  !! CAVEAT :
+  !! indices in codes 112, 113, etc refer to e-m order given in POLE block !!
+    !poly  WH         WS    WV      WCp
+    122    18810.0    10.3  0.394   0   ! was 122 ALBITE-LOW K-FELDSPAR
+    112    27320.0    10.3  0.394   0   ! was 112 ALBITE-LOW K-FELDSPAR
+    !
+    233    52468.0    0     -0.120  0   !was 122 K-FELDSPAR ANORTHITE
+    223    47396.0    0      0      0   !was 112 K-FELDSPAR ANORTHITE
+    !
+    311     8471.0    0      0      0   !was 122 ANORTHITE ALBITE-LOW
+    331    28226.0    0      0      0   !was 112 ANORTHITE ALBITE-LOW
+    !
+    123   100045.5    10.3   -0.76  0   !was 123 ALBITE-LOW ANORTHITE K-FELDSPAR
+  END MARGULES
+END
