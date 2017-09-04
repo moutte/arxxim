@@ -16,7 +16,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user-defined
 fInn= "inn/map2b_activ.inn"
 fInn= "inn/map2a_activ.inn"
 
@@ -32,7 +32,7 @@ Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
 Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
 Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 
-#----------------------------------------------------------//input files
+#---------------------------------------------------------//user-defined
 
 '''
 the include block to be modified:

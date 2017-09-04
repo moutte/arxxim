@@ -93,9 +93,6 @@ subroutine MixModel_BuildLnk( &
     ! MIXTURE.MODEL is the preferred keyword for symmetric models,
     ! SOLUTION.MODEL should be for assymetric solvent / solute mixtures
     !
-
-    print *,trim(L)
-
       call MixModel_Zero(S)
       !
       call LinToWrd(L,W,sEol) !MIXTURE.MODEL OLIVINE ->S%Name="OLIVINE"

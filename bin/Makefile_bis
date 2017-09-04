@@ -2,8 +2,8 @@
 
 FC = gfortran-6
 LD = gfortran-6
-#FFLAGS= -O0 -g  -fbounds-check -Wall -fbacktrace
-FFLAGS= -O3
+FFLAGS= -O0 -g  -fbounds-check -Wall -fbacktrace
+#FFLAGS= -O3
 
 .DEFAULT:
 	-echo $@ does not exist.

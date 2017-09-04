@@ -5,8 +5,8 @@ END TEST
   COMPUTE SPC
 
 CONDITIONS
-  TITLE  Sillen-pH diagram for Fe species, under fixed fO2
-  OUTPUT out\map1a
+  TITLE  Sillen-pH diagram for Cr species, under fixed fO2
+  OUTPUT out\map1b
   DEBUG  3
 END CONDITIONS
 

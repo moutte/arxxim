@@ -24,11 +24,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user-defined
 fInn= "inn/map1a_fe_ox.inn"
+#Elements=["FE"]
 Selection="FE"
 
 fInn= "inn/map1b_cr_ox.inn"
+#Elements=["CR"]
 Selection="CR"
 
 Xlis= ["H"]
@@ -42,7 +44,7 @@ Ymin,Ymax,Ydelta,Ytol= 40.,  4., 1., 0.01
 Xlabel= "pH"
 Ylabel= "colog(f_O2(g))"
 
-#----------------------------------------------------------//input files
+#---------------------------------------------------------//user-defined
 
 iKeyword= 0
 iValue=   3
@@ -166,6 +168,7 @@ def include_modify(lis,x):
 
 #-------------------------------------------------------refining routine
 def refine_xy(lis,F0,F1,x0,x1,tolerance):
+  F= -1
   OK= True
   #
   while abs(x0-x1)>tolerance:
@@ -191,10 +194,9 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
         break
     else:
       print "error in refine"
-      F= -1
+      OK= False
       break
-    # print x0,x1
-    # raw_input()
+  #
   if OK: x= (x0+x1)/2.
   #
   return x,F,OK

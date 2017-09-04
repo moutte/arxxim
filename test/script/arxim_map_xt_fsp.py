@@ -1,14 +1,16 @@
 import os, glob, sys
 import pylab as plt
 
-sExe= "arxim.exe"    #windows
-sExe= "arxxim"        #linux
-sExe= "arxim"        #linux
+#windows
+sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
+
+#linux
 sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
-sExe= "arx_bis"
+
 sExe= "arxxim"
+sExe= "arx_bis"
 sExe= os.path.join("..","bin",sExe)
 
 sDebug= "2"
@@ -22,7 +24,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user-defined
 fInn= "tmp/f1e_gem_fsp1.inn"
 
 Xlis= ["OR_","AB_"]         # must be uppercase ...
@@ -35,8 +37,8 @@ Ymin,Ymax,Ydelta,Ytol=  400.,   700.,  20.,   5.
 
 def Xfunc(x): return 100. - x
 def Yfunc(y): return 1000. #+ (y-400.)*10.
+#---------------------------------------------------------//user-defined
 
-#----------------------------------------------------------//input files
 '''
 the include block to be modified:
 SYSTEM.GEM
@@ -52,8 +54,6 @@ for composition:
 iKeyword= 0
 iValue=   2
 '''
-
-
 XKeyword= 0
 XValue=   2
 
@@ -127,10 +127,9 @@ Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 Ydim= int(round(abs(Ymax-Ymin)/Ydelta))+1
 Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
-Xser2= [Xfunc(x) for x in Xser]
-Yser2= [Yfunc(y) for y in Yser]
-
 if 1:
+  Xser2= [Xfunc(x) for x in Xser]
+  Yser2= [Yfunc(y) for y in Yser]
   print Xser
   print Xser2
   print Yser

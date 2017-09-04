@@ -22,20 +22,8 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user defined
 fInn= "inn/map3b_tp.inn"
-
-'''
-the include block to be modified:
-SYSTEM.GEM
-  TDGC  700
-  PBAR  5638
-  SIO2   SiO2  1.0
-  AL2O3  Al2O3 1.0
-END
-Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
-Value is 1200 / 400,     its index is 1  -> iValue=   1
-'''
 
 Xlis= ["TDGC"]  # must be uppercase ...
 Ylis= ["PBAR"]  # must be uppercase ...
@@ -52,7 +40,19 @@ Ymin,Ymax,Ydelta,Ytol= 4000.,  5000., 50.,   5.
 Xmin,Xmax,Xdelta,Xtol=  400.,   700.,  20.,   5.
 Ymin,Ymax,Ydelta,Ytol= 3000.,  6000., 200.,  20.
 
-#----------------------------------------------------------//input files
+#---------------------------------------------------------//user defined
+
+'''
+the include block to be modified:
+SYSTEM.GEM
+  TDGC  700
+  PBAR  5638
+  SIO2   SiO2  1.0
+  AL2O3  Al2O3 1.0
+END
+Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
+Value is 1200 / 400,     its index is 1  -> iValue=   1
+'''
 
 iKeyword= 0
 iValue=   1
@@ -92,11 +92,12 @@ if 0:
   raw_input()
 Xlis= Xindex, Xhead
 Ylis= Yindex, Yhead
+#--/
 
 #--write fInclude to the global variable IncLines -> don't work ...
 with open(fInclude,'r') as f:
   IncLines = f.readlines()
-#--
+#--/
 
 sArximCommand= sExe,fInn,sDebug,sCmd
 # the arxim executable (sExe) accepts 3 arguments, successively:
@@ -112,10 +113,10 @@ fResult= "tmp_gem.tab"
 fParagen= open("paragen.txt",'w',0)
 
 #------------------------------------------------initialize the x,y grid
-Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
+Xdim= int(round(abs(Xmax-Xmin)/Xdelta))+1
 Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
-Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
+Ydim= int(round(abs(Ymax-Ymin)/Ydelta))+1
 Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if 0:

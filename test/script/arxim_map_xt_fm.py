@@ -1,14 +1,16 @@
 import os, glob, sys
 import pylab as plt
 
-sExe= "arxim.exe"    #windows
-sExe= "arxxim"        #linux
-sExe= "arxim"        #linux
+#windows
+sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
-sExe= "arx-win"
+
+#linux
+sExe= "arx-bis"
 sExe= os.path.join("..","..","mybin_debug",sExe)
-sExe= "arx_bis"
+
 sExe= "arxxim"
+sExe= "arx-bis"
 sExe= os.path.join("..","bin",sExe)
 
 sDebug= "1"
@@ -22,10 +24,10 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user-defined
 fInn= "tmp/map3b_tp.inn"
-Xlis= ["FEO","MGO"]         # must be uppercase ...
-Ylis= ["TDGC","PBAR"]       # must be uppercase ...
+Xlis= ["FeO","MGO"]
+Ylis= ["TDGC","PBAR"]
 Xlabel= "FM"
 Ylabel= "T /DGC"
 
@@ -38,7 +40,7 @@ Ymin,Ymax,Ydelta,Ytol=  400.,   700.,  20.,   5.
 def Xfunc(x): return 1. - x
 def Yfunc(y): return 3000. #+ (y-400.)*10.
 
-#----------------------------------------------------------//input files
+#---------------------------------------------------------//user-defined
 '''
 the include block to be modified:
 SYSTEM.GEM
@@ -54,11 +56,15 @@ for composition:
 iKeyword= 0
 iValue=   2
 '''
+# keywords must be uppercase
+Xlis=[x.upper() for x in Xlis]
+Ylis=[y.upper() for y in Ylis]
 
-
+# SIO2=0   SiO2  1.0=2
 XKeyword= 0
 XValue=   2
 
+# TDGC=0  1200=1
 YKeyword= 0
 YValue=   1
 
@@ -66,7 +72,6 @@ fInclude= fInn.replace(".inn",".include")
 #--clean the include file
 with open(fInclude,'r') as f:
   lines = f.readlines()
-#--clean the include file
 f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
@@ -74,6 +79,7 @@ for line in lines:
   if ll[0]=='!': continue
   f.write(line)
 f.close()
+#--/
 
 #--store line numbers and header for X and Y
 Xindex= [-1 for s in Xlis] 
@@ -129,46 +135,31 @@ Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 Ydim= int(round(abs(Ymax-Ymin)/Ydelta))+1
 Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
-Xser2= [Xfunc(x) for x in Xser]
-Yser2= [Yfunc(y) for y in Yser]
-
-if 1:
+if 0:
   print Xser
-  print Xser2
   print Yser
+if 0:
+  Xser2= [Xfunc(x) for x in Xser]
+  Yser2= [Yfunc(y) for y in Yser]
+  print Xser2
   print Yser2
-  #sys.exit()
+  sys.exit()
 #----------------------------------------------//initialize the x,y grid
 
-if 0:
-  def test_func_in_func(x,f):
-    y= f(x)
-    return y
-  x= 0.95
-  y= test_func_in_func(x,Xfunc)
-  print x,y
-  sys.exit()
 #------------------------------------------------modify the include file
 def include_modify(lis,func,x):
-  idx,headd= lis
   with open(fInclude,'r') as f:
     lines = f.readlines()
+  idx,headd= lis
+  y= func(x)
   f=open(fInclude,'w')
   for i,line in enumerate(lines):
-    if i==idx[0]:
-      f.write("%s  %.4g\n" % (headd[0],x))
-    elif i==idx[1]:
-      y= func(x)
-      f.write("%s  %.4g\n" % (headd[1],y))
-    else:
-      f.write(line)
+    if   i==idx[0]:  f.write("%s  %.4g\n" % (headd[0],x))
+    elif i==idx[1]:  f.write("%s  %.4g\n" % (headd[1],y))
+    else:            f.write(line)
   f.close()
 #----------------------------------------------//modify the include file
 
-if 0:
-  x= 0.45
-  include_modify(Xlis,Xfunc,x)
-  sys.exit()
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
   OK= True
