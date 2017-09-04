@@ -7,7 +7,7 @@ os.chdir("../")
 #print "DIR=", os.getcwd()
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob('inn/map3c*.inn')
+files= glob.glob('tmp/f1e*.inn')
 files.sort()
 for f in files: print f
 #raw_input()

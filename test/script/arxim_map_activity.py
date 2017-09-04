@@ -60,7 +60,7 @@ for line in lines:
   f.write(line)
 f.close()
 
-#--store line numbers and headers for X and Y
+#--read the include file and store line numbers and 'headers' for X and Y
 Xhead= "  "
 Yhead= "  "
 with open(fInclude,'r') as f:
@@ -71,11 +71,11 @@ for i,line in enumerate(lines):
     if ww[iKeyword].upper() in Xlis:
       Xindex= i
       for j in range(iValue):
-        Xhead= Xhead + "  " + ww[j]
+        Xhead= Xhead + ww[j] + "  "
     if ww[iKeyword].upper() in Ylis:
       Yindex= i
       for j in range(iValue):
-        Yhead= Yhead + "  " + ww[j]
+        Yhead= Yhead + ww[j] + "  "
 if 1:
   print Xindex, Xhead
   print Yindex, Yhead
@@ -109,21 +109,11 @@ def input_modify(lis,x):
   f=open(fInclude,'w')
   for i,line in enumerate(lines):
     if i==idx:
-      f.write("%s " % (headd))
-      for j in range(nValue): f.write("  %.4g" % (x))
+      f.write("%s" % (headd))
+      for j in range(nValue): f.write("%.4g  " % (x))
       f.write('\n')
     else:
       f.write(line)
-    #--old version
-    if 0:
-      ww= line.split()
-      if len(ww)>iValue and ww[iKeyword] in lis:
-        for i in range(iValue): f.write("  %s"   % (ww[i]))
-        for i in range(nValue): f.write("  %.4g" % (x))
-        f.write('\n')
-      else:
-        f.write(line)
-    #--/
   f.close()
 #----------------------------------------------//modify the include file
 

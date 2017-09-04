@@ -81,11 +81,11 @@ for i,line in enumerate(lines):
     if ww[iKeyword].upper() in Xlis:
       Xindex= i
       for j in range(iValue):
-        Xhead= Xhead + "  " + ww[j]
+        Xhead= Xhead + ww[j] + "  "
     if ww[iKeyword].upper() in Ylis:
       Yindex= i
       for j in range(iValue):
-        Yhead= Yhead + ww[j]
+        Yhead= Yhead + ww[j] + "  "
 if 0:
   print Xindex, Xhead
   print Yindex, Yhead
