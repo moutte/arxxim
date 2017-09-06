@@ -10,7 +10,7 @@ sExe= "arxxim"
 sExe= "arx-bis"
 sExe= os.path.join("..","bin",sExe)
 
-sExe= "arx-basis"
+sExe= "arx_o3"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
 sExe= "arx-win"
