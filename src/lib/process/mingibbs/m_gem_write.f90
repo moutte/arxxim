@@ -7,13 +7,15 @@ module M_GEM_Write
   !
   private
   !
-  public:: GEM_Write_Phases
-  public:: GEM_Write_Mixtures
+  public:: GEM_Path_Write_Phases
+  public:: GEM_Path_Write_Mixtures
   public:: GEM_Write_Log_Entete
+  public:: GEM_Single_Write_Mixtures_Moles
+  public:: GEM_Single_Write_Mixtures_Title
   !
 contains
 
-subroutine GEM_Write_Phases( &
+subroutine GEM_Path_Write_Phases( &
 & DimPath, &
 & vFasIsPresent, &
 & vSimplex_Ok, &
@@ -27,7 +29,7 @@ subroutine GEM_Write_Phases( &
   use M_Dtb_Const,    only: T_CK
   use M_IoTools,      only: GetUnit
   use M_T_MixModel,   only: T_MixModel
-  use M_GEM_Vars,     only: T_SavPhase
+  use M_GEM_Vars,     only: T_SavModel
   !
   use M_Global_Vars,only: vSpc,vFas,vMixModel
   use M_GEM_Vars,   only: vCpnGEM
@@ -37,14 +39,14 @@ subroutine GEM_Write_Phases( &
   logical,       intent(in):: vSimplex_Ok(DimPath)
   real(dp),      intent(in):: tResult(:,:)
   real(dp),      intent(in):: tVolume(:,:)
-  type(T_SavPhase),intent(in):: tResultMix(:,:)
+  type(T_SavModel),intent(in):: tResultMix(:,:)
   !---------------------------------------------------------------------
   integer :: iPath,iFs,I,J,K
   integer :: nC,nF,nP,nFpur,nFmix
   integer :: fMol,fVol,fGrm,fMov
   !real(dp):: vX(MaxPole)
   real(dp):: Tot,X,Y
-  type(T_SavPhase):: Fas0
+  type(T_SavModel):: Fas0
   type(T_MixModel):: MM
   !
   logical,parameter:: ComputeXMean= .true. !.false.
@@ -190,9 +192,92 @@ contains
     !-------------------------------------------------------/title lines
   end subroutine Write_Title
 
-end subroutine GEM_Write_Phases
+end subroutine GEM_Path_Write_Phases
 
-subroutine GEM_Write_Mixtures( &
+subroutine GEM_Single_Write_Mixtures_Title
+  use M_IoTools,      only: GetUnit
+  use M_T_MixModel,   only: T_MixModel,MaxPole,Mix_Molecular
+  !
+  use M_Global_Vars,  only: vSpc,vFas,vMixModel
+  !
+  integer :: iFs,I,P,nP,nPP
+  integer :: F
+  type(T_MixModel):: MM
+  !
+  call GetUnit(F)
+  open(F,file="tmp_mixmodels_names.tab")
+  !
+  do iFs=1,size(vMixModel)
+    !
+    !if(vFasIsPresent(nFpur +iFs)) then
+    !
+    MM= vMixModel(iFs)
+    nP= MM%nPole
+    !if(Fas0%iModel /= 0) then
+    if( MM%Model==Mix_Molecular .and. MM%NMarg==0 ) then
+      nPP= 1
+    else
+      nPP= MM%nPole
+    end if
+    do I=1,nPP
+      write(F,'(A,A1)',advance="NO") trim(MM%Name),T_
+      do P=1,nP
+        write(F,'(A,A1)',advance="NO") &
+        & trim(vSpc(MM%vIPole(P))%NamSp),T_
+      end do
+    end do
+    !
+    !end if
+    !
+  end do
+  !
+  close(F)
+end subroutine GEM_Single_Write_Mixtures_Title
+
+subroutine GEM_Single_Write_Mixtures_Moles(vSavModel)
+  use M_IoTools,      only: GetUnit
+  use M_Global_Vars,  only: vSpc,vFas,vMixModel
+  use M_T_MixModel,   only: T_MixModel,MaxPole,Mix_Molecular
+  use M_GEM_Vars,     only: T_SavModel
+  !
+  type(T_SavModel),intent(in):: vSavModel(:)
+  !
+  integer :: iFs,I,P,nP,nPP
+  integer :: F
+  type(T_MixModel):: MM
+  type(T_SavModel):: Fas0
+  !
+  call GetUnit(F)
+  open(F,file="tmp_mixmodels_moles.tab")
+  !
+  do iFs=1,size(vMixModel)
+    !!if(vFasIsPresent(nFpur +J)) then
+    Fas0= vSavModel(iFs)
+    MM= vMixModel(Fas0%iModel)
+    nP= MM%nPole
+    !if(Fas0%iModel /= 0) then
+    if( MM%Model==Mix_Molecular .and. MM%NMarg==0 ) then
+      nPP= 1
+    else
+      nPP= MM%nPole
+    end if
+    ! print *,"Fas0%iModel=",Fas0%iModel
+    ! print *,"nP=",nP ;  pause
+    do I=1,nPP
+      write(F,'(G15.6,A1)',advance="NO") Fas0%vMole(I),T_
+      do P=1,nP
+        write(F,'(F7.3,A1)',advance="NO") &
+        & Fas0%tXPole(I,P),T_
+      end do
+    end do
+    !end if
+    !!end if
+  end do
+  !
+  close(F)
+end subroutine GEM_Single_Write_Mixtures_Moles
+
+subroutine GEM_Path_Write_Mixtures( &
 & DimPath,       &
 & vFasIsPresent, &
 & vSimplex_Ok,   &
@@ -211,7 +296,7 @@ subroutine GEM_Write_Mixtures( &
   use M_T_MixModel,   only: T_MixModel,MaxPole,Mix_Molecular
   !
   use M_Global_Vars,  only: vSpc,vFas,vMixModel
-  use M_GEM_Vars,     only: T_SavPhase
+  use M_GEM_Vars,     only: T_SavModel
   use M_GEM_Vars,     only: vCpnGEM
   !---------------------------------------------------------------------
   integer, intent(in):: DimPath
@@ -219,14 +304,14 @@ subroutine GEM_Write_Mixtures( &
   logical, intent(in):: vSimplex_Ok(DimPath)
   real(dp),intent(in):: TolX ! <-MixMinim_TolX
   real(dp),intent(in) :: tResult(:,:) ! for T,P values
-  type(T_SavPhase),intent(inout):: tResultMix(:,:)
+  type(T_SavModel),intent(inout):: tResultMix(:,:)
   !---------------------------------------------------------------------
   integer :: iPath,iFs,I,J,K,P,Q
   integer :: nP,nFmix,nFPur,nPP
   integer :: FMIX
   real(dp):: vX(MaxPole)
   real(dp):: Tot
-  type(T_SavPhase):: Fas0,Fas1,SavPhaseZero
+  type(T_SavModel):: Fas0,Fas1,SavModelZero
   type(T_MixModel):: MM
   !
   logical,parameter:: ComputeXMean= .true. !.false.
@@ -237,12 +322,12 @@ subroutine GEM_Write_Mixtures( &
   nFpur= size(vFas)
   nFmix= size(vMixModel)
   !
-  SavPhaseZero%iModel=      0
-  SavPhaseZero%nFas=        0
-  SavPhaseZero%tXPole(:,:)= Zero
-  SavPhaseZero%vMole(:)=    Zero
-  SavPhaseZero%vGrt0(:)=    Zero
-  SavPhaseZero%vVol0(:)=    Zero
+  SavModelZero%iModel=      0
+  SavModelZero%nFas=        0
+  SavModelZero%tXPole(:,:)= Zero
+  SavModelZero%vMole(:)=    Zero
+  SavModelZero%vGrt0(:)=    Zero
+  SavModelZero%vVol0(:)=    Zero
   !
   !-----------------------------------------------------------title line
   write(FMIX,'(3(A,A1))',advance="no") "count",T_, "TdgC",T_, "Pbar",T_
@@ -269,13 +354,13 @@ subroutine GEM_Write_Mixtures( &
       end do
       !
     end if
-  
+    !
   end do
   write(FMIX,*)
   !----------------------------------------------------------/title line
   
   K=0
-  do iPath=1,DimPath
+  doPath: do iPath=1,DimPath
 
     if(vSimplex_Ok(iPath)) then
       !
@@ -287,14 +372,11 @@ subroutine GEM_Write_Mixtures( &
         do J=1,nFmix
           !
           Fas0=        tResultMix(J,iPath)
-          Fas1=        SavPhaseZero
+          Fas1=        SavModelZero
           Fas1%iModel= Fas0%iModel
           nP=          vMixModel(Fas0%iModel)%nPole
           Fas1%nFas=   nP
           !
-          ! print *,"Fas0%iModel=",Fas0%iModel
-          ! print *,"nP=",nP ;  pause
-          !if(Fas0%iModel /= 0) then
           do P=1,Fas0%nFas
             do Q=1,Fas1%nFas
               !
@@ -316,7 +398,6 @@ subroutine GEM_Write_Mixtures( &
           end do
           !
           tResultMix(J,iPath)= Fas1
-          !end if
           !
         end do
         !
@@ -360,12 +441,12 @@ subroutine GEM_Write_Mixtures( &
       !
     end if !!if(vSimplex_Ok(iPath))
 
-  end do !!do iPath
+  end do doPath
   !
   if(iDebug>2) &
   & print '(2A)', "Mixtures: Results in ",trim(DirOut)//"_mixtures.restab"
   !
-end subroutine GEM_Write_Mixtures
+end subroutine GEM_Path_Write_Mixtures
 
 subroutine GEM_Write_Log_Entete(vFas)
   use M_IoTools,only: GetUnit

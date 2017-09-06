@@ -8,7 +8,7 @@ module M_GEM_Theriak
   use M_T_Phase,     only: T_Phase
   use M_T_MixPhase,  only: T_MixPhase
   use M_T_MixModel,  only: T_MixModel,MaxPole,Mix_Molecular
-  use M_GEM_Vars,    only: T_SavPhase
+  use M_GEM_Vars,    only: T_SavModel
   !
   implicit none
   !
@@ -39,8 +39,8 @@ module M_GEM_Theriak
   !----------------------------------------------------private variables
   integer:: F1,F2,FF
   !
-  type(T_SavPhase),allocatable:: vSavPhase(:)
-  type(T_SavPhase),allocatable:: tResultMix(:,:)
+  type(T_SavModel),allocatable:: vSavModel(:)
+  type(T_SavModel),allocatable:: tResultMix(:,:)
   !
   real(dp),allocatable:: tResult(:,:)
   real(dp),allocatable:: tVolume(:,:)
@@ -51,7 +51,7 @@ module M_GEM_Theriak
   !--------------------------------------------------------------------/
   !
   !---------------------------------------------------private parameters
-  real(dp),parameter:: MixMinim_TolX= 1.D-4
+  real(dp),parameter:: MixMinim_TolX= 1.D-2
   real(dp),parameter:: GEM_G_Iota= 1.0D-9 !1.0D-9
   integer, parameter:: GEM_IterMax= 100
   !
@@ -68,6 +68,8 @@ subroutine GEM_Theriak_Single
 !--
   use M_IoTools,     only: GetUnit
   use M_Files,       only: DirOut
+  use M_GEM_Write
+  !
   use M_Simplex_Vars,only: tSimplex
   use M_Simplex_Vars,only: Simplex_Vars_Alloc,Simplex_Vars_Clean
   !
@@ -81,7 +83,7 @@ subroutine GEM_Theriak_Single
   use M_GEM_Vars,    only: TdgK,Pbar
   !---/
   !
-  type(T_SavPhase):: SavPhaseZero
+  type(T_SavModel):: SavModelZero
   integer:: iError
   integer:: I,nC,nFpur,nMix
   integer :: fo !!JM!!216-10
@@ -94,12 +96,12 @@ subroutine GEM_Theriak_Single
   F2= 0
   FF= 0
   !
-  SavPhaseZero%iModel=      0
-  SavPhaseZero%nFas=        0
-  SavPhaseZero%tXPole(:,:)= Zero
-  SavPhaseZero%vMole(:)=    Zero
-  SavPhaseZero%vGrt0(:)=    Zero
-  SavPhaseZero%vVol0(:)=    Zero
+  SavModelZero%iModel=      0
+  SavModelZero%nFas=        0
+  SavModelZero%tXPole(:,:)= Zero
+  SavModelZero%vMole(:)=    Zero
+  SavModelZero%vGrt0(:)=    Zero
+  SavModelZero%vVol0(:)=    Zero
   !
   nC= size(vCpnGEM)
   nFpur= size(vFas)
@@ -115,13 +117,13 @@ subroutine GEM_Theriak_Single
   end if
   !
   allocate(vFasMolMix(nMix))
-  allocate(vSavPhase(nMix))
+  allocate(vSavModel(nMix))
   allocate(vModelConvex(nMix))
   !
   if(nMix>0) then
     !
     vFasMolMix(:)= Zero
-    vSavPhase(:)= SavPhaseZero
+    vSavModel(:)= SavModelZero
     !
     vModelConvex(:)=.false.
     !
@@ -144,9 +146,9 @@ subroutine GEM_Theriak_Single
   & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
   & vSpc,vMixModel,vMixFas,vFas)
   
-  !--------------------------------------------------------------SIMPLEX
+  !--------------------------------------------------------------THERIAK
   call Theriakk(iError)
-  !-------------------------------------------------------------/SIMPLEX
+  !-------------------------------------------------------------/THERIAK
   !
   !if(iError/=0) then
   !  call Error_Show(iError)
@@ -196,6 +198,10 @@ subroutine GEM_Theriak_Single
     end do
   end if
   close(fo)
+  if(iError==0) then
+    call GEM_Single_Write_Mixtures_Title
+    call GEM_Single_Write_Mixtures_Moles(vSavModel)
+  end if
   !---------------------------------------------------------/JM--2016-10
 
   if(F1>0) close(F1)
@@ -206,7 +212,7 @@ subroutine GEM_Theriak_Single
   deallocate(vFasIsPresent)
   !
   deallocate(vFasMolMix)
-  deallocate(vSavPhase)
+  deallocate(vSavModel)
   deallocate(vModelConvex)
   !
   if(iDebug>0) write(fTrc,'(A,/)') "</ GEM_Theriak_Single"
@@ -236,7 +242,7 @@ subroutine GEM_Theriak_Path
   use M_Path_Vars,   only: vTPpath,vLPath,tPathData,DimPath
   use M_Path_Vars,   only: Path_Vars_Clean
   use M_Simplex_Vars,only: tSimplex
-  use M_GEM_Write,   only: GEM_Write_Phases,GEM_Write_Mixtures
+  use M_GEM_Write,   only: GEM_Path_Write_Phases,GEM_Path_Write_Mixtures
   !
   !--for Global_TP_Update
   use M_Global_Tools,only: Global_TP_Update
@@ -244,7 +250,7 @@ subroutine GEM_Theriak_Path
   use M_Global_Vars, only: vDiscretModel,vDiscretParam,vMixFas
   !---------------------------------------------------------------------
   !
-  type(T_SavPhase):: SavPhaseZero
+  type(T_SavModel):: SavModelZero
   integer :: iPath,I,J
   integer :: iError
   integer :: nC,nFpur,nMix
@@ -268,12 +274,12 @@ subroutine GEM_Theriak_Path
   F2= 0
   FF= 0
   !
-  SavPhaseZero%iModel=      0
-  SavPhaseZero%nFas=        0
-  SavPhaseZero%tXPole(:,:)= Zero
-  SavPhaseZero%vMole(:)=    Zero
-  SavPhaseZero%vGrt0(:)=    Zero
-  SavPhaseZero%vVol0(:)=    Zero
+  SavModelZero%iModel=      0
+  SavModelZero%nFas=        0
+  SavModelZero%tXPole(:,:)= Zero
+  SavModelZero%vMole(:)=    Zero
+  SavModelZero%vGrt0(:)=    Zero
+  SavModelZero%vVol0(:)=    Zero
   !
   !---------------------------------read path parameters from PATH block
   call Path_ReadMode(NamFInn,PathMod3,Ok,Msg)  !out
@@ -304,7 +310,7 @@ subroutine GEM_Theriak_Path
   allocate(vFasIsPresent(1:nFpur+nMix))  ;  vFasIsPresent=.false.
   !
   allocate(vFasMolMix(nMix))
-  allocate(vSavPhase(nMix))
+  allocate(vSavModel(nMix))
   allocate(vModelConvex(nMix))
   !
   if(allocated(tResult)) deallocate(tResult)
@@ -322,7 +328,7 @@ subroutine GEM_Theriak_Path
   if(nMix>0) then
     !
     vFasMolMix(:)= Zero
-    vSavPhase(:)= SavPhaseZero
+    vSavModel(:)= SavModelZero
     !
     vModelConvex(:)=.false.
     !
@@ -378,9 +384,9 @@ subroutine GEM_Theriak_Path
     tResult(2,     iPath)= Pbar
     tResult(3:nC+2,iPath)= vCpnGEM(1:nC)%Mole
     !
-    !--------------------------------------------------------Theriakk
+    !------------------------------------------------------------THERIAK
     call Theriakk(iError)
-    !-------------------------------------------------------/Theriakk
+    !-----------------------------------------------------------/THERIAK
     !
     !------------------------store results in tables tResult, tResultMix
     if(iError/=0) then
@@ -396,10 +402,10 @@ subroutine GEM_Theriak_Path
       tVolume(1:nFpur,iPath)= vFas(1:nFpur)%VolM3
       if(nMix>0) then
         tResult(nC+nFpur+3:nC+nFpur+nMix+2,iPath)= vFasMolMix(1:nMix)
-        tResultMix(1:nMix,iPath)= vSavPhase(1:nMix)
+        tResultMix(1:nMix,iPath)= vSavModel(1:nMix)
         do i=1,nMix
-          ! print *,vSavPhase(i)%vVol0(1)
-          if(vSavPhase(i)%nFas > 1) call Check_vXMean(i)
+          ! print *,vSavModel(i)%vVol0(1)
+          if(vSavModel(i)%nFas > 1) call Check_vXMean(i)
         enddo
         ! call pause_ !!
       end if
@@ -420,7 +426,7 @@ subroutine GEM_Theriak_Path
   enddo
   !
   !--------------------------------------------------write result tables
-  call GEM_Write_Phases( &
+  call GEM_Path_Write_Phases( &
   & DimPath,       &
   & vFasIsPresent, &
   & vSimplex_Ok,   &
@@ -428,7 +434,7 @@ subroutine GEM_Theriak_Path
   & tVolume,       &
   & tResultMix)
   !
-  if(size(vMixModel)>0) call GEM_Write_Mixtures( &
+  if(size(vMixModel)>0) call GEM_Path_Write_Mixtures( &
   & DimPath, &
   & vFasIsPresent, &
   & vSimplex_Ok,&
@@ -443,7 +449,7 @@ subroutine GEM_Theriak_Path
   deallocate(vFasMolPur)
   deallocate(vFasIsPresent)
   deallocate(vFasMolMix)
-  deallocate(vSavPhase)
+  deallocate(vSavModel)
   deallocate(vModelConvex)
   !
   if(nMix>0) deallocate(tResultMix)
@@ -463,35 +469,33 @@ subroutine Check_vXMean(i)
 !-- for a mixing model with more than one phase in stable assemblage
 !-- compute the Gibbs for the mean composition of the different phases.
 !-- if the Gibbs is not close to zero, then there is unmixing
-!--
+!-----------------------------------------------------------------------
   integer,intent(in):: i
-
+  !---------------------------------------------------------------------
   integer :: J,nP,ff
   real(dp):: G
   real(dp),allocatable:: vX(:)
-
-  J=  vSavPhase(i)%iModel
+  !
+  J=  vSavModel(i)%iModel
   nP= vMixModel(J)%NPole
   allocate(vX(1:nP))
-  vX(:)= Zero
   !
-  do ff=1,vSavPhase(i)%nFas
+  vX(:)= Zero
+  do ff=1,vSavModel(i)%nFas
     vX(:)= vX(1:nP) &
-    &    + vSavPhase(i)%vMole(ff) *vSavPhase(i)%tXPole(ff,1:nP)
+    &    + vSavModel(i)%vMole(ff) *vSavModel(i)%tXPole(ff,1:nP)
   enddo
   vX(:)= vX(:) /sum(vX(:))
   !
   G= MixPhase_Grt( &
   & TdgK,Pbar,    &
-  & nP, &
+  & nP,           &
   & vMixModel(J), &
-  & vSavPhase(i)%vGrt0(1:nP), &
+  & vSavModel(i)%vGrt0(1:nP), &
   & vX(1:nP))
   !
   deallocate(vX)
-
-  !~ print *,"G(vXMean)..",vMixModel(J)%Name, G  ;  pause
-
+  !
   return
 end subroutine Check_vXMean
 
@@ -517,8 +521,8 @@ subroutine Theriakk(iError)
   type(T_Phase),   allocatable:: vFasPur(:)
   type(T_GemPhase),allocatable:: vFas0(:)
   type(T_MixPhase),allocatable:: vMixFas0(:)
-  type(T_SavPhase),allocatable:: vMixFas_Xpole_Init(:)
-  type(T_SavPhase):: SavPhaseZero
+  type(T_SavModel),allocatable:: vMixFas_Xpole_Init(:)
+  type(T_SavModel):: SavModelZero
   !
   ! type(T_MixModel):: MM
   !
@@ -532,12 +536,12 @@ subroutine Theriakk(iError)
   !
   G_Iota= GEM_G_Iota
   !
-  SavPhaseZero%iModel=      0
-  SavPhaseZero%nFas=        0
-  SavPhaseZero%tXPole(:,:)= Zero
-  SavPhaseZero%vMole(:)=    Zero
-  SavPhaseZero%vGrt0(:)=    Zero
-  SavPhaseZero%vVol0(:)=    Zero
+  SavModelZero%iModel=      0
+  SavModelZero%nFas=        0
+  SavModelZero%tXPole(:,:)= Zero
+  SavModelZero%vMole(:)=    Zero
+  SavModelZero%vGrt0(:)=    Zero
+  SavModelZero%vVol0(:)=    Zero
   !
   nC=    size(vCpnGEM)
   nFpur= size(vFas) !== at this point, only pure phases are in vFas ==
@@ -753,9 +757,9 @@ contains
 
     vFasMolPur(:)= Zero
     !
-    vSavPhase(:)= SavPhaseZero
-    do I=1,size(vSavPhase)
-      vSavPhase(I)%iModel= I
+    vSavModel(:)= SavModelZero
+    do I=1,size(vSavModel)
+      vSavModel(I)%iModel= I
     enddo
 
     do K=1,nC
@@ -769,15 +773,15 @@ contains
         !
       else
         !
-        vSavPhase(J)%iModel= J
-        vSavPhase(J)%nFas= vSavPhase(J)%nFas +1
-        vSavPhase(J)%vMole(vSavPhase(J)%nFas)= tSimplex(K,0)
+        vSavModel(J)%iModel= J
+        vSavModel(J)%nFas= vSavModel(J)%nFas +1
+        vSavModel(J)%vMole(vSavModel(J)%nFas)= tSimplex(K,0)
         nP= vMixModel(J)%NPole
         do P=1,nP
-          vSavPhase(J)%tXPole(vSavPhase(J)%nFas,P)= vFas0(I)%vXPole(P)
-          vSavPhase(J)%vGrt0(P)= vFasPur(vMixModel(J)%vIPole(P))%Grt
-          vSavPhase(J)%vVol0(P)= vFasPur(vMixModel(J)%vIPole(P))%VolM3
-          !print *,"StoreResults",vSavPhase(J)%vVol0(P)
+          vSavModel(J)%tXPole(vSavModel(J)%nFas,P)= vFas0(I)%vXPole(P)
+          vSavModel(J)%vGrt0(P)= vFasPur(vMixModel(J)%vIPole(P))%Grt
+          vSavModel(J)%vVol0(P)= vFasPur(vMixModel(J)%vIPole(P))%VolM3
+          !print *,"StoreResults",vSavModel(J)%vVol0(P)
         enddo
         !
       end if
@@ -862,11 +866,11 @@ subroutine GEM_SaveResults(nFpur,Iter,vMixModel)
   
   !--- mixtures --
   vFasMolMix(:)= Zero
-  do I=1,size(vSavPhase)
-    if(vSavPhase(I)%nFas >0) then
+  do I=1,size(vSavModel)
+    if(vSavModel(I)%nFas >0) then
       vFasIsPresent(nFpur +I)= .true.
-      do J=1,vSavPhase(I)%nFas
-        vFasMolMix(I)= vFasMolMix(I) +vSavPhase(I)%vMole(J)
+      do J=1,vSavModel(I)%nFas
+        vFasMolMix(I)= vFasMolMix(I) +vSavModel(I)%vMole(J)
       enddo
     end if
   enddo
@@ -875,16 +879,16 @@ subroutine GEM_SaveResults(nFpur,Iter,vMixModel)
 end subroutine GEM_SaveResults
 
 subroutine GEM_AppendSPLMixtures(nC,nFpur,iPosV,vFas,nF)
-!--
+!-----------------------------------------------------------------------
 !-- to vFas(1:nFpur) (- pure phases),
 !-- append mixture phases that belong to current stable assemblage
 !-- found from last simplex call
-!--
+!-----------------------------------------------------------------------
   integer,         intent(in)   :: nC, nFpur
   integer,         intent(in)   :: IPOSV(:)
   type(T_GemPhase),intent(inout):: vFas(:)
-  integer,         intent(inout):: nF
-  !
+  integer,         intent(out)  :: nF
+  !---------------------------------------------------------------------
   type(T_GemPhase),allocatable:: vFas1(:)
   integer:: I,K
   !
@@ -905,19 +909,19 @@ end subroutine GEM_AppendSPLMixtures
 subroutine GEM_AddMixtures( &
 & nC, G_Iota, vMixModel, vMixFas, &
 & vFas, nFas)
-!--
+!-----------------------------------------------------------------------
 !-- to the current table of G and stoichiometry for simplex calculations,
 !-- append all mixture phases with negative G
 !-- as phases of fixed composition
 !-- (with the composition that makes G minimal, computed in Mixture_Minimize)
-!--
+!-----------------------------------------------------------------------
   integer,         intent(in)   :: nC
   real(dp),        intent(in)   :: G_Iota
   type(T_MixModel),intent(in)   :: vMixModel(:)
   type(T_MixPhase),intent(in)   :: vMixFas(:)
   type(T_GemPhase),intent(inout):: vFas(:)
   integer,         intent(inout):: nFas
-  !
+  !---------------------------------------------------------------------
   type(T_MixModel):: MM
   integer :: iMF,iMdl,iMix,iCp,N
 
@@ -968,11 +972,11 @@ end subroutine Error_Show
 subroutine Gibbs_Change( &
 & nC,nF,IPOSV, &
 & vFas0)
-!--
+!-----------------------------------------------------------------------
 !-- use stable phase assemblage as the new component set
 !-- and recalculate free energies of formation of all species,
 !-- as free enegies of formation from these components
-!--
+!-----------------------------------------------------------------------
   use M_Numeric_Mat,only: LU_Decomp, LU_BakSub
   !---------------------------------------------------------------------
   integer, intent(in):: nC,nF
@@ -1019,11 +1023,12 @@ subroutine Gibbs_Change( &
 end subroutine Gibbs_Change
 
 subroutine MixPhase_XPole_Init(vMixModel,vSavFas)
+  !---------------------------------------------------------------------
   type(T_MixModel),intent(in):: vMixModel(:)
-  type(T_SavPhase),intent(inout):: vSavFas(:)
-  !
+  type(T_SavModel),intent(inout):: vSavFas(:)
+  !---------------------------------------------------------------------
   integer :: I,P,Q,nP
-  
+  !
   do I=1,size(vSavFas)
     !nP= vMixModel(vSavFas(I)%iModel)%nPole
     nP= vMixModel(I)%nPole
@@ -1044,7 +1049,7 @@ subroutine Mixture_Minimize( &
 & vFasPur,vMixModel,  &
 & vMixFas_Xpole_Init, &
 & vMixFas0)
-!--
+!-----------------------------------------------------------------------
 !-- for each mixture phase,
 !-- compute the composition X that minimizes G
 !-- and compute G at X, to see whether it is -0
@@ -1052,20 +1057,19 @@ subroutine Mixture_Minimize( &
 !--
 !-- if there is no phase with negative G,
 !-- then the current phase assemblage is stable
-!--
+!-----------------------------------------------------------------------
   use M_Numeric_Const, only: Ln10
   use M_Safe_Functions,only: FSafe_Exp
-  !~ use M_GEM_Vars,   only: TdgK,Pbar
   !
   use M_Optimsolver_Theriak
   use M_MixModel_Optim
-  !
+  !---------------------------------------------------------------------
   real(dp),        intent(in)   :: TdgK,Pbar
   type(T_Phase),   intent(in)   :: vFasPur(:)
   type(T_MixModel),intent(in)   :: vMixModel(:)
-  type(T_SavPhase),intent(inout):: vMixFas_Xpole_Init(:)
+  type(T_SavModel),intent(inout):: vMixFas_Xpole_Init(:)
   type(T_MixPhase),intent(inout):: vMixFas0(:)
-  !
+  !---------------------------------------------------------------------
   type(T_MixModel):: MM
   real(dp),allocatable:: vX(:),vXmin(:),vMu(:),vMuMin(:)
   real(dp):: G,Gmin
