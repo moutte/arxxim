@@ -220,7 +220,7 @@ subroutine System_Build
   end if
   !
   !! call Basis_Init(vCpn,TdgK,Pbar)
-  ! if(iDebug==1) &
+  !if(iDebug==1) &
   call System_To_File(vEle,vSpc)
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ System_Build"

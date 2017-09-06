@@ -144,7 +144,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   use M_Path
   use M_GEM_Vars
   use M_GEM_Theriak
-  use M_GEM_Path
+  use M_GEM_Pure_Path
   use M_GEM_Build
   use M_DiscretModel_Test
   use M_IO_Menu
@@ -347,19 +347,19 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   case("GEMPATH")
     call Global_Build
     call GEM_Build
-    call GEM_Theriak_Path(.false.)
+    call GEM_Theriak_Path !(.false.)
     call GEM_Vars_Clean
     
   case("SPLTP")
     call Global_Build
     call GEM_Build
-    call GEM_Path("TP")
+    call GEM_Pure_Path("TP")
   
   case("SPLPATH")
     call Global_Build
     call GEM_Build
-    ! call GEM_Path("PATH")
-    call GEM_Theriak_Path(.true.)
+    call GEM_Pure_Path("PATH")
+    ! call GEM_Theriak_Path(.true.)
     call GEM_Vars_Clean
 
   case("DTBEQ36")

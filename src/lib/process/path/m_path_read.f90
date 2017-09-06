@@ -723,7 +723,7 @@ subroutine Path_ReadParam( &
   !
   if(count(vNstep>0)>0) then
     !
-    DimPath= MINVAL(vNstep(:),MASK=vNstep(:)>0)
+    DimPath= MINVAL(vNstep(:),mask=vNstep(:)>0)
     allocate(tPathData(nCp,DimPath))
     tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
     !! print *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)
@@ -1446,7 +1446,7 @@ subroutine Path_ReadParam_new( &
   !
   if(count(vNstep>0)>0) then
     !
-    DimPath= MINVAL(vNstep,MASK=vNstep>0)
+    DimPath= MINVAL(vNstep,mask=vNstep>0)
     allocate(tPathData(nCp,DimPath))
     tPathData(1:nCp,1:DimPath)= tTmp(1:nCp,1:DimPath)
     !! print *,"minval(vNstep,mask=vNstep>0)", minval(vNstep,mask=vNstep>0)

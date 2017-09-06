@@ -288,7 +288,7 @@ subroutine Dynam_ReadRock_(Ok)
   !-----------------------------------------------------/read ROCK block
   !
   !------------------------------- normalize PhiM to sum(VolFract)-1 ---
-  x= sum(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
+  x= sum(vKinFas(:)%Dat%PhiM) !, mask=vKinFas(:)%Dat%cSat /= "MINIMAL")
   if(x>Zero) then
     do I=1,size(vKinFas)
       if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL
@@ -380,7 +380,7 @@ subroutine Dynam_ReadRock(Ok)
   !-----------------------------------------------------/read ROCK block
   !
   !------------------------------- normalize PhiM to sum(VolFract)-1 ---
-  x= sum(vKinFas(:)%Dat%PhiM) !, MASK=vKinFas(:)%Dat%cSat /= "MINIMAL")
+  x= sum(vKinFas(:)%Dat%PhiM) !, mask=vKinFas(:)%Dat%cSat /= "MINIMAL")
   if(x>Zero) then
     do I=1,size(vKinFas)
       if(vKinFas(I)%Dat%cSat /= "M") then           ! M(INIMAL

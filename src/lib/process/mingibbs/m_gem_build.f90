@@ -29,7 +29,7 @@ contains
 subroutine GEM_Build
   !
   use M_T_Element,   only: Element_Index
-  use M_T_Species,   only: T_Species,Species_Stoikio_Calc,Species_Append
+  use M_T_Species,   only: T_Species,Species_Stoikio_Calc
   use M_Dtb_Const,   only: Tref,Pref,T_CK
   !
   use M_Global_Alloc,only: MixModels_Alloc,Phases_Alloc,MixPhases_Alloc
@@ -41,11 +41,10 @@ subroutine GEM_Build
   !
   use M_Global_Vars, only: vEle,vSpcDtb,vSpc,vMixModel,vMixFas,vFas
   use M_Global_Vars, only: vDiscretModel,vDiscretParam
-  use M_Global_Vars, only: tFormula
   !
-  use M_GEM_Vars,    only: TdgK,Pbar,vCpnGEM,tStoikioGEM
+  use M_GEM_Vars, only: TdgK,Pbar,vCpnGEM,tStoikioGEM
   !---------------------------------------------------------------------
-  logical:: Ok,Err
+  logical:: Ok
   integer:: N
   type(T_Species),allocatable:: vSpcTmp(:)
   !---------------------------------------------------------------------
@@ -61,9 +60,7 @@ subroutine GEM_Build
   ! & call Stop_("Element Oxygen not found in vEle")
   !
   !--build vCpnGEM
-  call Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
-  !
-  if(Err) call Stop_("< Found No Components...Stop") !--------------stop
+  call Component_Read(vEle)
   !
   !--rebuild species array vSpc consistent with vCpnGEM
   call Species_Select(size(vEle),vCpnGEM)
@@ -82,7 +79,7 @@ subroutine GEM_Build
   call Species_Stoikio_Calc(vEle,vSpc,Ok)
   !
   !--build MixModel database -> vMixModel
-  call MixModels_Alloc(vSpc, vMixModel)
+  call MixModels_Alloc(vSpc,vMixModel)
   !
   !-------------------------------------------append discretized species
   !--read discretization models, build vDiscretModel
@@ -92,7 +89,8 @@ subroutine GEM_Build
   !
   if(N>0) then
     !
-    call DiscretParam_Alloc(vDiscretModel,  vDiscretParam)
+    call DiscretParam_Alloc(vDiscretModel, vDiscretParam)
+    !-> allocate vDiscretParam
     !
     allocate(vSpcTmp(size(vDiscretParam)))
     !
@@ -100,7 +98,7 @@ subroutine GEM_Build
     & vEle,vSpc,vMixModel,vDiscretModel, &
     & vDiscretParam,vSpcTmp) !-> build vSpcDiscret
     !
-    call Species_Append(vSpcTmp, vSpc) !-> new vSpc !!!
+    call Species_Append(vSpcTmp) !-> new vSpc !!!
     !
     deallocate(vSpcTmp)
     !
@@ -115,10 +113,10 @@ subroutine GEM_Build
   !------------------------------------------/append discretized species
   !
   !--- read phase compositions, build vMixFas
-  call MixPhases_Alloc(vSpc,vMixModel,   vMixFas)
+  call MixPhases_Alloc(vSpc,vMixModel,vMixFas)
   !
   !--- build vFas
-  call Phases_Alloc(vSpc,vMixFas,    vFas)
+  call Phases_Alloc(vSpc,vMixFas,   vFas)
   !
   if(iDebug>2) print *,"TdgC/Pbar=", TdgK-T_CK,Pbar  !;  pause
   !
@@ -127,21 +125,17 @@ subroutine GEM_Build
   & vSpc,vMixModel,vMixFas,vFas)
   !
   !--- compute tFormula
-  call Spl_Tables_Build(vEle,vSpc,vFas)
+  call Spl_Tables_Build
   !
   !--- allocate, compute tStoikioGEM
   if(allocated(tStoikioGEM)) deallocate(tStoikioGEM)
   allocate(tStoikioGEM(size(vFas),size(vCpnGEM)))
   !
-  call Spl_Stoikio_Calc( &
-  & vEle, vFas,          &
-  & tFormula,            &
-  & vCpnGEM,             &
-  & tStoikioGEM)
+  call Spl_Stoikio_Calc(vCpnGEM,tStoikioGEM)
   !---/
   !
   !--- write system stoikiometry
-  if(iDebug>2) call Spl_WriteSystem(vFas,tFormula,vCpnGEM,tStoikioGEM)
+  if(iDebug>2) call Spl_WriteSystem(vCpnGEM,tStoikioGEM)
   !
   if(iDebug>2) write(fTrc,'(A,/)') "</--------------------GEM_Build"
   !
@@ -261,12 +255,40 @@ subroutine Check_Independent(tStoikio,Ok)
   !
 end subroutine Check_Independent
 
+subroutine Species_Append(vSpcAdd)
+!--
+!-- append vSpcAdd to current vSpc
+!-- -> produce a new vSpc
+!--
+  use M_T_Species, only: T_Species
+  !
+  use M_Global_Vars, only: vSpc
+  !
+  type(T_Species),intent(in):: vSpcAdd(:)
+  !
+  type(T_Species),allocatable:: vSpcAll(:)
+  integer:: M, N
+  !
+  M= size(vSpc)
+  N= size(vSpcAdd)
+  !
+  allocate(vSpcAll(M+N))
+  vSpcAll(1   :M )= vSpc(1:M)
+  vSpcAll(M+1:M+N)= vSpcAdd(1:N)
+  !
+  deallocate(vSpc)
+  allocate(vSpc(N+M)) ; vSpc= vSpcAll
+  !
+  deallocate(vSpcAll)
+  !
+end subroutine Species_Append
+  !
 subroutine Simplex_CloseFiles
   if(fSpl1>0) close(fSpl1) ; fSpl1= 0
   if(fSpl2>0) close(fSpl2) ; fSpl2= 0
 end subroutine Simplex_CloseFiles
 
-subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
+subroutine Component_Read(vEle)
 !--
 !-- read components from SYSTEM.GEM block -> build vCpnGEM
 !--
@@ -274,15 +296,13 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
   use M_Files,    only: NamFInn
   use M_Dtb_Const,only: T_CK
   use M_IoTools,  only: GetUnit,LinToWrd,AppendToEnd,WrdToReal,Str_Upper
-  use M_T_Component,only: T_Component
   use M_T_Element,only: T_Element,Formula_Read,Element_Index,Formula_Build
   use M_Dtb_Read_Tools
-  !---------------------------------------------------------------------
-  type(T_Element),              intent(in) :: vEle(:)
-  type(T_Component),allocatable,intent(out):: vCpnGEM(:)
-  real(dp),                     intent(out):: TdgK,Pbar
-  logical,                      intent(out):: Err
-  !---------------------------------------------------------------------
+  !
+  use M_GEM_Vars,only: vCpnGEM,TdgK,Pbar
+  !
+  type(T_Element),intent(in):: vEle(:)
+  !
   character(len=255)    :: L,W
   type(T_Component)     :: Cpn
   logical :: sOk,fOk,CpnOk
@@ -301,7 +321,7 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
   integer:: fFormula
   character(len=2),dimension(:),allocatable:: vElement
   !
-  if(idebug>1) write(fTrc,'(/,A)') "< Component_Read"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Component_Read"
   !
   !CodFormula= "ECFORM"
   fFormula= 0
@@ -319,8 +339,7 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
   !
   if(iDebug>2) print *,"Component_Build"
   !
-  N=   0
-  Err= .false.
+  N=0
   DoFile: do
     !
     read(F,'(A)',iostat=ios) L; if(ios/=0) exit DoFile
@@ -387,7 +406,7 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
         !if(CodFormula=="SCFORM") then
           call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
           if(.not.EcformIsOk) then
-            if(idebug>1) print '(3A)',trim(W)," =ERROR IN FORMULA, SKIPPED !!"
+            if(iDebug>0) print '(3A)',trim(W)," =ERROR IN FORMULA, SKIPPED !!"
             cycle DoBlock
           end if
         !end if
@@ -396,7 +415,7 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
         !
         Cpn%Formula= trim(W)
         !
-        !------------------------------------------------process formula 
+        !----------------------------------------------- process formula 
         !--------------------- if formula is Ok, save component in vC(:) 
         call Formula_Read(Cpn%Formula,vEle,ZSp,nDiv,fOk,vStoik)
         !
@@ -419,10 +438,9 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
               Cpn%Formula= trim(Cpn%Formula)//"OX("//trim(adjustl(Str))//")"
             else
               print *,"ZSp,Stoikio=",ZSp,Ztest
-              if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39)') &
+              if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
               & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-              if(idebug>1) &
-              & print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+              if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
               cycle
             end if
           end if
@@ -431,7 +449,7 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
           !
           Cpn%iMix= 0
           !
-          if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
+          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39,A1,I3)') &
           & "ACCEPT",T_,Cpn%NamCp,T_,Cpn%Formula,T_,N
           if(iDebug>2) print '(3A)',"accepted: ",Cpn%NamCp,Cpn%Formula
           !
@@ -452,24 +470,20 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
         else
           !
           print *,"ZSp,Stoikio=",ZSp,Ztest
-          if(idebug>1) write(fTrc,'(A,A1,A15,A1,A39)') &
+          if(iDebug>0) write(fTrc,'(A,A1,A15,A1,A39)') &
           & "REJECT",T_,Cpn%NamCp,T_,Cpn%Formula
-          if(idebug>1) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
+          if(iDebug>0) print '(3A)',"rejected: ",Cpn%NamCp,Cpn%Formula
           !
         end if
-        !-----------------------------------------------/process formula
+        !-------------------------------------------/ process formula --
         !
-      end do DoBlock
+      enddo DoBlock
+      !
+      if(N==0) call Stop_("< Found No Components...Stop") !===== stop ==
       !
     end select
     !
-  end do DoFile
-  !
-  if(N==0) then
-    Err= .true.
-    return
-    !call Stop_("< Found No Components...Stop") !---------stop
-  end if
+  enddo DoFile
   !
   !! if(iDebug>2) call Pause_
   close(f)
@@ -486,13 +500,13 @@ subroutine Component_Read(vEle,vCpnGEM,TdgK,Pbar,Err)
   allocate(tStoikio(N,nEl))
   do I=1,N
     tStoikio(I,1:nEl)= vCpnGEM(I)%vStoikCp(1:nEl)  !tStoikio(I,:)
-  end do
+  enddo
   call Check_Independent(tStoikio,CpnOk)
   if(.not. CpnOk) call Stop_("Components Not Independent")
   deallocate(tStoikio)
   !-----------------------------------------------/check independency --
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ Component_Read"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Component_Read"
   !
   return
 end subroutine Component_Read
@@ -595,20 +609,20 @@ subroutine Component_Stoikio_Calc(vEle,vCpn,Ok)
       !! Msg= "Stoikiometry problem in species "//trim(vSpc(I)%NamSp)
       return
     end if
-  end do
+  enddo
   !
   !------------------------------------------------------------ trace --
   if(iDebug>2) then
     do i=1,size(vEle)
       write(fTrc,'(A,A1)',advance="no") vEle(i)%NamEl,t_
-    end do
+    enddo
     write(fTrc,*)
     do i=1,size(vCpn)
       do j=1,size(vEle)
         write(fTrc,'(I3,A1)',advance="no") vCpn(i)%vStoikCp(j),t_
-      end do
+      enddo
       write(fTrc,*)
-    end do
+    enddo
   end if
   !-----------------------------------------------------------/ trace --
   if(iDebug>2)  write(fTrc,'(A)') "</ Component_Stoikio_Calc"
@@ -623,134 +637,120 @@ integer function iMaxLoc_I(ARR) !"NR"
   iMaxLoc_I=IMAX(1)
 end function iMaxLoc_I
 
-!old!!-----------------------------------------------------------------------
-!old!!-- retrieve all species consistent with current vEle
-!old!!-- OBSOLETE: replaced by Species_Select
-!old!!-----------------------------------------------------------------------
-!old!subroutine Spl_Species_Alloc(vEle)
-!old!  use M_T_Element,   only: T_Element,Element_Index
-!old!  use M_T_Species,   only: T_Species,Species_Stoikio
-!old!  use M_Global_Vars, only: vSpc !,vSpcDtb
-!old!  use M_Dtb_Calc,    only: DtbSpc_Table_Build
-!old!  !
-!old!  type(T_Element),intent(in):: vEle(:)
-!old!  !
-!old!  type(T_Species),allocatable:: vSpc_(:)
-!old!  integer:: nEl,nSp,ieOx,I,N
-!old!  logical:: fOk
-!old!  !
-!old!  if(idebug>1) write(fTrc,'(/,A)') "< SplSpecies_Alloc"
-!old!  !
-!old!  nSp=  size(vSpc)
-!old!  nEl=  size(vEle)
-!old!  ieOx= Element_Index("OX_",vEle)
-!old!  !
-!old!  allocate(vSpc_(1:nSp))
-!old!  !
-!old!  !--- select species consistent with vEle
-!old!  N=0
-!old!  do I=1,nSp
-!old!    if(vSpc(I)%Typ /= "AQU" .or. trim(vSpc(I)%NamSp)=="H2O") then
-!old!      call Species_Stoikio(vEle,ieOx,vSpc(I),fOk)
-!old!      if(fOk) then
-!old!        N=N+1
-!old!        vSpc_(N)= vSpc(I)
-!old!      end if
-!old!    end if
-!old!  end do
-!old!  !
-!old!  deallocate(vSpc); allocate(vSpc(1:N))
-!old!  vSpc(1:N)=   vSpc_(1:N)
-!old!  deallocate(vSpc_)
-!old!  !
-!old!  !! nSp=  size(vSpc)
-!old!  !! call Warning_("vTPpath must be allocated before Spl_Species_Alloc")
-!old!  !! nTP=  size(vTPpath)
-!old!  !! if(allocated(tGrt)) deallocate(tGrt); allocate(tGrt(1:nSp,1:nTP))
-!old!  !! call DtbSpc_Table_Write(vTPpath,vSpcDtb,vSpc,tGrt)
-!old!  !! !
-!old!  if(idebug>1) then
-!old!    write(fTrc,'(A)') "-> New Species List"
-!old!    do i=1,size(vSpc)
-!old!      write(fTrc,'(I3,1X,A)') I,vSpc(I)%NamSp
-!old!    end do
-!old!  end if
-!old!  !
-!old!  if(idebug>1) write(fTrc,'(A,/)') "</ SplSpecies_Alloc"
-!old!  !
-!old!end subroutine Spl_Species_Alloc
+subroutine Spl_Species_Alloc(vEle)
+!--
+!-- retrieve all species consistent with current vEle
+!-- OBSOLETE: replaced by Species_Select
+!--
+  use M_T_Element,   only: T_Element,Element_Index
+  use M_T_Species,   only: T_Species,Species_Stoikio
+  use M_Global_Vars, only: vSpcDtb,vSpc
+  ! use M_Dtb_Calc,    only: DtbSpc_GrtTable_Build
+  !
+  type(T_Element),intent(in):: vEle(:)
+  !
+  type(T_Species),allocatable:: vSpc_(:)
+  integer:: nEl,nSp,ieOx,I,N
+  logical:: fOk
+  !
+  if(iDebug>0) write(fTrc,'(/,A)') "< SplSpecies_Alloc"
+  !
+  nSp=  size(vSpc)
+  nEl=  size(vEle)
+  ieOx= Element_Index("OX_",vEle)
+  !
+  allocate(vSpc_(1:nSp))
+  !
+  !--- select species consistent with vEle
+  N=0
+  do I=1,nSp
+    if(vSpc(I)%Typ /= "AQU" .or. trim(vSpc(I)%NamSp)=="H2O") then
+      call Species_Stoikio(vEle,ieOx,vSpc(I),fOk)
+      if(fOk) then
+        N=N+1
+        vSpc_(N)= vSpc(I)
+      end if
+    end if
+  enddo
+  !
+  deallocate(vSpc); allocate(vSpc(1:N))
+  vSpc(1:N)=   vSpc_(1:N)
+  deallocate(vSpc_)
+  !
+  ! nSp=  size(vSpc)
+  ! call Warning_("vTPpath must be allocated before Spl_Species_Alloc")
+  ! nTP=  size(vTPpath)
+  ! if(allocated(tGrt)) deallocate(tGrt); allocate(tGrt(1:nSp,1:nTP))
+  ! call DtbSpc_GrtTable_Build(vTPpath,vSpcDtb,vSpc,tGrt)
+  ! !
+  if(iDebug>0) then
+    write(fTrc,'(A)') "-> New Species List"
+    do i=1,size(vSpc)
+      write(fTrc,'(I3,1X,A)') I,vSpc(I)%NamSp
+    enddo
+  end if
+  !
+  if(iDebug>0) write(fTrc,'(A,/)') "</ SplSpecies_Alloc"
+  !
+end subroutine Spl_Species_Alloc
 
-subroutine Spl_Tables_Build(vEle,vSpc,vFas)
+subroutine Spl_Tables_Build
 !--
 !-- build tFormula(1:nFs,1:nEl): table of species stoikios in lines
 !--
-  use M_T_Element,   only: T_Element,Formula_Read
+  use M_T_Element,   only: Formula_Read
   use M_T_Species,   only: T_Species
-  use M_T_Phase,     only: T_Phase
-  use M_Global_Vars, only: tFormula
-  !
-  type(T_Element), intent(in):: vEle(:)
-  type(T_Species), intent(in):: vSpc(:)
-  type(T_Phase),   intent(in):: vFas(:)
+  use M_Global_Vars, only: vEle,vFas,vSpc,tFormula
   !
   integer:: nEl,nFs,I
   integer,dimension(:),allocatable:: vStoik
   !
-  if(idebug>1) write(fTrc,'(/,A)') "< Spl_BuildTables"
+  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_BuildTables"
   !
   nEl=size(vEle)
   nFs=size(vFas)
   !
-  deallocate(tFormula)
-  allocate(tFormula(1:nFs,1:nEl))
+  deallocate(tFormula) ;  allocate(tFormula(1:nFs,1:nEl))
   !
   allocate(vStoik(0:nEl))
   !
   do I=1,nFs
     vStoik(0:nEl)= vSpc(vFas(I)%iSpc)%vStoikio(0:nEl)
     tFormula(I,1:nEl)= vStoik(1:nEl) /real(vStoik(0))
-  end do
+  enddo
   !
   deallocate(vStoik)
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ Spl_BuildTables"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_BuildTables"
 end subroutine Spl_Tables_Build
 
-subroutine Spl_Stoikio_Calc( &
-& vEle, vFas,                &
-& tFormula,                  &
-& vCpn,                      &
-& tStoikio)
+subroutine Spl_Stoikio_Calc(vCpn,tStoikio)
 !--
 !-- Compute tStoikioCpn from tStoikEle
-!-- tStoikio(1:nFs,1:nCp)- stoikio of phases (line) in terms of components (col)
+!-- tStoikioCpn(1:nFs,1:nCp)- stoikio of phases in terms of components
 !--
-  !---------------------------------------------------------------------
-  use M_T_Component, only: T_Component
-  use M_T_Element,   only: T_Element
-  use M_T_Phase,     only: T_Phase
+
+  use M_T_Component,only: T_Component
   use M_T_Element,   only: Formula_Read
-  !
   use M_Numeric_Mat, only: LU_Decomp, LU_BakSub
-  !---------------------------------------------------------------------
-  type(T_Element),  intent(in) :: vEle(:)
-  type(T_Phase),    intent(in) :: vFas(:)
-  real(dp),         intent(in) :: tFormula(:,:)
+  !
+  use M_Global_Vars, only: tFormula,vFas,vEle
+  !
   type(T_Component),intent(in) :: vCpn(:)
   real(dp),         intent(out):: tStoikio(:,:)
-  !---------------------------------------------------------------------
+  !
   real(dp),allocatable:: A(:,:)
   integer, allocatable:: Indx(:)
   real(dp),allocatable:: Y(:)
-  !
+
   ! stoikiometry table of the components in terms of the elements
   real(dp),allocatable:: tStoik(:,:)
   !
   logical :: bSingul
   real(dp):: D
   integer :: I,nEl,nCp,nFs
-  !---------------------------------------------------------------------
-  if(idebug>1) write(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
+  !
+  if(iDebug>0) write(fTrc,'(/,A)') "< Spl_Stoikio_Calc"
   !
   nFs=size(vFas)
   nCp=size(vCpn)
@@ -759,10 +759,10 @@ subroutine Spl_Stoikio_Calc( &
   allocate(tStoik(nCp,nEl))
   do i=1,nCp
     tStoik(i,1:nEl)= vCpn(i)%vStoikCp(1:nEl) /real(vCpn(i)%vStoikCp(0))
-  end do
+  enddo
   !
   allocate(A(1:nCp,1:nCp))
-  A(1:nCp,1:nCp)= transpose(tStoik(1:nCp,2:nEl))
+  A(1:nCp,1:nCp)= TRANSPOSE(tStoik(1:nCp,2:nEl))
   ! column_1=Oxygen, -> already taken in account by Spl_ReadFormula
   ! -> columns 2:nEl of ElementFormula Matrix gives ElementStoikio of components 1:nCp
   !
@@ -777,7 +777,7 @@ subroutine Spl_Stoikio_Calc( &
     Y= tFormula(I,2:nEl)
     call LU_BakSub(A,Indx,Y)
     tStoikio(I,1:nCp)=Y
-  end do
+  enddo
   !
   deallocate(A)
   deallocate(Indx)
@@ -787,7 +787,7 @@ subroutine Spl_Stoikio_Calc( &
   !
   deallocate(tStoik)
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ Spl_Stoikio_Calc"
   !
 contains
 
@@ -796,14 +796,14 @@ subroutine Spl_Stoikio_Show
 !-- write stoikio on stokio "trace file"
 !--
   use M_IoTools,only: GetUnit
-  use M_Files,  only: DirOut !,NamFInn
+  use M_Files,  only: DirOut,NamFInn
   !
   integer:: I,iEl
   integer:: FF
   !
-  if(idebug>1) write(fTrc,'(/,A)') "< ShowStoikio"
+  if(iDebug>0) write(fTrc,'(/,A)') "< ShowStoikio"
   !
-  if(idebug>1) write(fTrc,'(A)') &
+  if(iDebug>0) write(fTrc,'(A)') &
   & "Spl_Stoikio_Show -> "//trim(DirOut)//"_spl_stoikio.log"
   !
   call GetUnit(FF)
@@ -814,20 +814,20 @@ subroutine Spl_Stoikio_Show
   write(FF,'(/,A,/)') "Components in terms of elements"
   do iEl=1,nEl
     write(FF,'(A1,A2,A1)',advance="no") " ",vEle(iEl)%NamEl,T_
-  end do
+  enddo
   write(FF,*)
   do I=1,nCp
-    do iEl=1,nEl; write(FF,'(F7.2,A1)',advance="no") tStoik(I,iEl),T_; end do
+    do iEl=1,nEl; write(FF,'(F7.2,A1)',advance="no") tStoik(I,iEl),T_; enddo
     write(FF,'(A,A1,F15.3)') trim(vCpn(I)%NamCp),T_,vCpn(I)%Mole
-  end do
+  enddo
   !
   write(FF,'(/,A,/)') "Phases in terms of elements"
   do I=1,nFs
     do iEl=1,nEl
        write(FF,'(F7.3,A1)',advance="no") tFormula(I,iEl),T_
-    end do
+    enddo
     write(FF,'(A,A1,F15.3)') trim(vFas(I)%NamFs),T_,vFas(I)%Grt
-  end do
+  enddo
   !
   close(FF)
   !
@@ -839,19 +839,19 @@ subroutine Spl_Stoikio_Show
   !
   do iEl=1,nCp
     write(FF,'(A,A1)',advance="no") trim(vCpn(iEl)%NamCp),T_
-  end do
+  enddo
   write(FF,*)
   
   do I=1,nFs
     do iEl=1,nCp
       write(FF,'(F7.3,A1)',advance="no") tStoikio(I,iEl),T_
-    end do
+    enddo
     write(FF,'(A,A1,F15.3)') trim(vFas(I)%NamFs),T_,vFas(I)%Grt
-  end do
+  enddo
   !
   close(FF)
   !
-  if(idebug>1) write(fTrc,'(A,/)') "</ ShowStoikio"
+  if(iDebug>0) write(fTrc,'(A,/)') "</ ShowStoikio"
 end subroutine Spl_Stoikio_Show
 
 end subroutine Spl_Stoikio_Calc
@@ -888,7 +888,7 @@ subroutine Table_Transform(tInput,tTransform,tOutput)
     vY= tInput(:,I)
     call LU_BakSub(tTransform,vIndx,vY)
     tOutput(:,I)= vY(:)
-  end do
+  enddo
   !
   deallocate(vY,vIndx)
   !
@@ -902,16 +902,16 @@ subroutine WriteRMat(f,Mat) !,N1,N2,M1,M2)
   !
   do I=1,size(Mat,1)
     do J=1,size(Mat,2)
-      write(f,'(F7.1, A1)',advance="no") Mat(I,J), T_
-    end do
+      write(f,'( F7.1, A1)',advance="no") Mat(I,J), T_
+    enddo
     write(f,*)
-  end do
+  enddo
   write(f,*)
   !
 end subroutine WriteRMat
 
 subroutine WriteMat_I(f,Mat)
-  integer,intent(in)::f !=File Index
+  integer, intent(in)::f !=File Index
   integer,intent(in)::Mat(:,:)
   !
   integer::I,J
@@ -919,29 +919,23 @@ subroutine WriteMat_I(f,Mat)
   do I=1,size(Mat,1)
     do J=1,size(Mat,2)
       write(f,'(I3, A1)',advance="no") Mat(I,J), T_
-    end do
+    enddo
     write(f,*)
-  end do
+  enddo
   write(f,*)
   !
 end subroutine WriteMat_I
 
-subroutine Spl_WriteSystem( &
-& vFas,                     &
-& tFormula,                 &
-& vCpn,tStoikio)
+subroutine Spl_WriteSystem(vCpn,tStoikio)
 !--
 !-- write system stoikiometry
 !--
   use M_IoTools,    only: GetUnit
-  use M_Files,      only: DirOut !,NamFInn
+  use M_Files,      only: DirOut,NamFInn
   use M_T_Component,only: T_Component
-  use M_T_Phase,    only: T_Phase
   !
-  ! use M_Global_Vars,only: tFormula,vFas
+  use M_Global_Vars,only: tFormula,vFas
   !
-  type(T_Phase),    intent(in):: vFas(:)
-  real(dp),         intent(in):: tFormula(:,:)
   type(T_Component),intent(in):: vCpn(:)
   real(dp),         intent(in):: tStoikio(:,:)
 
@@ -961,25 +955,25 @@ subroutine Spl_WriteSystem( &
   write(FF,'(A,A1)',advance="no") "_", T_
   do iCpn=1,nCp
     write(FF,'(A,A1)',advance="no") trim(vCpn(iCpn)%NamCp), T_
-  end do
+  enddo
   write(FF,'(A)') "GIBBS"
 
   write(FF,'(A,A1)',advance="no") "MOLES", T_
   do iCpn=1,nCp
     write(FF,'(G12.3,A1)',advance="no") vCpn(iCpn)%Mole, T_
-  end do
+  enddo
   write(FF,'(A)') "0.000"
 
   do iFs=1,nFs
     write(FF,'(A,A1)',advance="no") trim(vFas(iFs)%NamFs), T_
     do iCpn=1,nCp
       write(FF,'(F7.2,A1)',advance="no") tStoikio(iFs,iCpn), T_
-    end do
+    enddo
     X= vFas(iFs)%Grt
     if(tFormula(iFs,1)/=0) X= vFas(iFs)%Grt /tFormula(iFs,1)
     ! write(FF,'(2F15.3)') vFas(iFs)%Grt,X
     write(FF,'(2F15.3)') vFas(iFs)%Grt
-  end do
+  enddo
 
   write(fTrc,'(/,A,/)') "</ WriteSystem"
 

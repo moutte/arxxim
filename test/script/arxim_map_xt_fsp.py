@@ -5,15 +5,17 @@ import pylab as plt
 sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
 
-#linux
-sExe= "arx-win"
-sExe= os.path.join("..","..","mybin_debug",sExe)
+sExe= "arx_o3"
+sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arxxim"
-sExe= "arx-bis"
+sExe= "arx_debug"
+sExe= "arx_optim"
 sExe= os.path.join("..","bin",sExe)
 
-sDebug= "3"
+sExe= "arx_optim"
+sExe= os.path.join("..","..","arx-git","bin",sExe)
+
+sDebug= "1"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT

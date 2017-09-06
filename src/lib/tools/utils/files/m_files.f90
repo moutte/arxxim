@@ -46,7 +46,7 @@ contains
     !===================================================================
     ! Print the Input FileName 
     !===================================================================
-    use M_Trace,  only: fHtm
+    use M_Trace,  only: fHtm, iDebug
     !--
     ! write(*,'(A)') "Arxim Script File : "// trim(NamFIn0)
     call Files_Index_InputFile(fHtm, NamFIn0)

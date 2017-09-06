@@ -13,7 +13,7 @@ sExe= os.path.join("..","bin",sExe)
 sExe= "arx-basis"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx-win"
+sExe= "arx-git"
 sExe= os.path.join("..","..","arx-win","bin",sExe)
 
 sDebug= "1"

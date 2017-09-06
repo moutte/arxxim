@@ -164,7 +164,8 @@ subroutine Phases_Alloc(vSpc,vMixFas,    vFas)
   !& + size(vMixFas)
   !
   if(allocated(vFas)) deallocate(vFas)
-  allocate(vFas(1:N)); vFas(:)=Phase_Zero
+  allocate(vFas(1:N))
+  vFas(:)=Phase_Zero
   !
   N=0
   !

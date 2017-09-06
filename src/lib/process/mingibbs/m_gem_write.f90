@@ -14,7 +14,6 @@ module M_GEM_Write
 contains
 
 subroutine GEM_Write_Phases( &
-& OnlyPur, &
 & DimPath, &
 & vFasIsPresent, &
 & vSimplex_Ok, &
@@ -33,7 +32,6 @@ subroutine GEM_Write_Phases( &
   use M_Global_Vars,only: vSpc,vFas,vMixModel
   use M_GEM_Vars,   only: vCpnGEM
   !---------------------------------------------------------------------
-  logical,       intent(in):: OnlyPur
   integer,       intent(in):: DimPath
   logical,       intent(in):: vFasIsPresent(:)
   logical,       intent(in):: vSimplex_Ok(DimPath)
@@ -54,12 +52,7 @@ subroutine GEM_Write_Phases( &
   nC= size(vCpnGEM)
   nF= size(vFasIsPresent)
   nFpur= size(vFas)
-  if(OnlyPur) then
-    nFmix= 0
-    nF= nFpur
-  else
-    nFmix= size(vMixModel)
-  end if
+  nFmix= size(vMixModel)
   !
   call GetUnit(fMol)
   open(fMol,file=trim(DirOut)//"_phase_mole.restab")

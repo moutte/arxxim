@@ -148,6 +148,7 @@
 ../src/lib/process/equil/m_equil_1.f90
 ../src/lib/process/equil/m_clean_jac.f90
 
+../src/lib/process/mingibbs/m_simplex_vars.f90
 ../src/lib/process/mingibbs/m_simplex_calc.f90
 ../src/lib/process/mingibbs/m_gem_build.f90
 ../src/lib/process/mingibbs/m_gem_write.f90

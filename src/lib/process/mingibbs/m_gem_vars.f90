@@ -15,7 +15,7 @@ module M_GEM_Vars
   public:: TdgK,Pbar
   public:: T_SavPhase
   !
-  !-------------------------------------------types for GEM computations
+  !--types for GEM computations
   ! T_SavPhase is designed to contain
   ! the different compositions that may be active
   ! for a same mixing model:
@@ -31,14 +31,13 @@ module M_GEM_Vars
     real(dp):: vGrt0(1:MaxPole)            ! Gibbs/RT of each end member
     real(dp):: vVol0(1:MaxPole)            ! Molar Volume of each end member
   end type T_SavPhase
-  !--/
-  !--------------------------------------------vars for GEM computations
+  !
+  !-- vars for GEM computations
   type(T_SavPhase):: SavPhaseZero
   type(T_Component),allocatable:: vCpnGEM(:)
   real(dp),         allocatable:: tStoikioGEM(:,:)
   real(dp):: TdgK,Pbar
-  !--/
-  
+
 contains
 
 subroutine GEM_Vars_Init

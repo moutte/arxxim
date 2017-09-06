@@ -1,9 +1,9 @@
 module M_Dynam_Calc
   use M_Kinds
   use M_Trace,only: iDebug,fTrc,T_
+  use M_Trace,only: DebugCoores
   use M_Numeric_Const, only: Ln10
   use M_IOTools
-  use M_Trace, only: DebugCoores
   !
   !! use M_Stockvar_Kinxim,only: LSTOCK,SET_STOCKVAR
   !

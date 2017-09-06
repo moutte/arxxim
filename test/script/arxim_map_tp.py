@@ -6,15 +6,15 @@ sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
 
 #linux
-sExe= "arxxim"
-sExe= "arx-bis"
-sExe= os.path.join("..","bin",sExe)
-
 sExe= "arx_o3"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx-win"
-sExe= os.path.join("..","..","arx-win","bin",sExe)
+sExe= "arx_debug"
+sExe= "arx_optim"
+sExe= os.path.join("..","bin",sExe)
+
+sExe= "arx_optim"
+sExe= os.path.join("..","..","arx-git","bin",sExe)
 
 sDebug= "2"
 sCmd=  "GEM"

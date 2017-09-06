@@ -714,8 +714,8 @@ subroutine Dynam_OneStep_GammaUpd( &
   & vTooLow,OsmoSv)
   !
   N= size(vMole)
-  Z_Plus= sum(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z >0)) /vMole(isW)
-  Z_Minus=sum(vMole(1:N)*vSpc(1:N)%Z, MASK=(vSpc(1:N)%Z <0)) /vMole(isW)
+  Z_Plus= sum(vMole(1:N)*vSpc(1:N)%Z, mask=(vSpc(1:N)%Z >0)) /vMole(isW)
+  Z_Minus=sum(vMole(1:N)*vSpc(1:N)%Z, mask=(vSpc(1:N)%Z <0)) /vMole(isW)
   !write(16,'(2G15.6)') Z_Plus,Z_Minus
   !
   ! pH_=-vLAct(isH_)/Ln10

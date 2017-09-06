@@ -143,8 +143,8 @@ subroutine Equil_Write_Detail(cSelec,TdgK,Pbar,vCpn)
   allocate(vPrm(nAq))
   allocate(vMolal(nAq))
   !
-  Z_Plus= sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z >0))
-  Z_Minus=sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z <0))
+  Z_Plus= sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, mask=(vSpc(1:nAq)%Z >0))
+  Z_Minus=sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, mask=(vSpc(1:nAq)%Z <0))
   !
   call Solmodel_CalcMolal(Solmodel,vSpc,vSpcDat,vMolal,IonStr)
   !
@@ -651,8 +651,8 @@ subroutine Equil_Write_ShoDetail(cSelec,TdgK,Pbar,vCpn,vSpcDat)
   nFs= size(vFas)
   nFs= count(vFas(:)%iSpc>0)
   !
-  Z_Plus= sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z >0))
-  Z_Minus=sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, MASK=(vSpc(1:nAq)%Z <0))
+  Z_Plus= sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, mask=(vSpc(1:nAq)%Z >0))
+  Z_Minus=sum(vSpcDat(1:nAq)%Mole*vSpc(1:nAq)%Z, mask=(vSpc(1:nAq)%Z <0))
   !
   isW= SolModel%iSolvent
   call Solmodel_CalcMolal(SolModel,vSpc,vSpcDat,vMolal,IonStr)

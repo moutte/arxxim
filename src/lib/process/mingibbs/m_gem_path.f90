@@ -1,6 +1,4 @@
-module M_GEM_Path
-!-- series of equilibrium calculations on pure phases using simplex method
-!-- under variable T,P conditions, or under variable bulk composition
+module M_GEM_Pure_Path
   !
   use M_Kinds
   use M_Trace,only: iDebug,fTrc,T_,Stop_,Pause_
@@ -9,8 +7,9 @@ module M_GEM_Path
   !
   private
   !
-  public:: GEM_Path
-  ! series of equilibrium calculations ON PURE PHASES using simplex method
+  public:: GEM_Pure_Path
+  !-- series of equilibrium calculations ON pure PHASES using simplex method
+  !-- under variable T,P conditions, or under variable bulk composition
   !
   real(dp),allocatable,public:: tSimplexResult(:,:)
   logical, allocatable,public:: vSimplex_Ok(:)
@@ -18,7 +17,7 @@ module M_GEM_Path
   !
 contains
 
-subroutine GEM_Path(Cod)
+subroutine GEM_Pure_Path(Cod)
 !--
 !-- series of equilibrium calculations on pure phases
 !-- using simplex method
@@ -26,7 +25,6 @@ subroutine GEM_Path(Cod)
 !-- or under variable bulk composition
 !--
   use M_IoTools,     only: OutStrVec
-  use M_Files,       only: NamFInn
   use M_Dtb_Const,   only: T_CK, R_JK
   use M_Global_Tools,only: Global_TP_Update
   use M_TPcond_Read, only: TPpath_Read
@@ -35,7 +33,11 @@ subroutine GEM_Path(Cod)
   !
   use M_GEM_Build,only: Simplex_CloseFiles
   use M_Simplex_Calc, only: Simplex_Calc
+  use M_Simplex_Vars, only: Simplex_Vars_Alloc,Simplex_Vars_Clean
   !
+  use M_Simplex_Vars, only: tSimplex
+  !
+  use M_Files,       only: NamFInn
   use M_Global_Vars, only: vFas,vSpcDtb,vSpc,vMixModel
   use M_Global_Vars, only: vDiscretModel,vDiscretParam,vMixFas
   !
@@ -51,22 +53,18 @@ subroutine GEM_Path(Cod)
   character(len=3) :: PathMod3
   character(len=80):: Msg
   !
-  real(dp),allocatable:: tSimplex(:,:)
-  integer, allocatable:: IZROV(:),IPOSV(:)
+  ! real(dp),allocatable:: tSimplexResult(:,:)
+  ! logical, allocatable:: vSimplex_Ok(:)
+  ! logical, allocatable:: vFasIsPresent(:)
+  ! 
+  ! real(dp):: Delta
   !---------------------------------------------------------------------
   Ok= .true.
   
   nC= size(vCpnGEM)
   nF= size(vFas)
   
-  !! call Simplex_Vars_Alloc(nC,nF)
-  if(allocated(tSimplex))  deallocate(tSimplex)
-  if(allocated(IZROV))     deallocate(IZROV)
-  if(allocated(IPOSV))     deallocate(IPOSV)
-  !
-  allocate(tSimplex(0:nC+1,0:nF))  ;  tSimplex=Zero
-  allocate(IPOSV(1:nC))            ;  IPOSV= 0
-  allocate(IZROV(1:nF))            ;  IZROV= 0
+  call Simplex_Vars_Alloc(nC,nF)
   
   ! if(iDebug>2) then
   ! print *,'done Simplex_Vars_Alloc' !  ;  call pause_
@@ -76,7 +74,7 @@ subroutine GEM_Path(Cod)
   ! row 0 =    Gibbs energy of phases 1:nF at T,P
   ! column 0 = bulk compos'n
   ! main =     stoikiometry matrix
-  tSimplex(1:nC,1:nF)= -transpose(tStoikioGEM(1:nF,1:nC)) !stoikio
+  tSimplex(1:nC,1:nF)= -TRANSPOSE(tStoikioGEM(1:nF,1:nC)) !stoikio
   tSimplex(0,   1:nF)= -vFas(1:nF)%Grt  !Gibbs energy
   tSimplex(1:nC,0   )=  vCpnGEM(1:nC)%Mole !bulk compos'n
   
@@ -111,9 +109,9 @@ subroutine GEM_Path(Cod)
     end if
     !
     call Path_ReadParam_new( &
-    & NamFInn,   &
-    & PathMod3,  &
-    & vCpnGEM,   &
+    & NamFInn,  &
+    & PathMod3, &
+    & vCpnGEM, &
     & TdgK,Pbar, &
     & Ok,Msg)
     !
@@ -126,9 +124,9 @@ subroutine GEM_Path(Cod)
     if(allocated(tSimplexResult)) deallocate(tSimplexResult)
     allocate(tSimplexResult(1:nC+nF+2,1:dimPath)); tSimplexResult=Zero
     !
-    !! call Global_TP_Update( &
-    !! & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
-    !! & vSpc,vMixModel,vMixFas,vFas)
+    !~ call Global_TP_Update( &
+    !~ & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, &
+    !~ & vSpc,vMixModel,vMixFas,vFas)
     !
     do i=1,dimPath
       !
@@ -144,12 +142,8 @@ subroutine GEM_Path(Cod)
       & vSpc,vMixModel,vMixFas,vFas)
       !
       do J=1,size(vSpc)
-        write(31,'(A,A1,2(F7.1,A1),2(G15.7,A1))') &
-        & trim(vSpc(J)%NamSp),T_, &
-        & TdgK-T_CK,          T_, &
-        & Pbar,               T_, &
-        & vSpc(J)%G0rt,       T_, &
-        & vSpc(J)%v0,         T_ 
+        write(31,'(A,2F7.1,G15.7)') &
+        & trim(vSpc(J)%NamSp),TdgK-T_CK,Pbar,vSpc(J)%G0rt*R_JK*TdgK
       end do
       !----------------------------------------------------------------/
       !
@@ -158,37 +152,34 @@ subroutine GEM_Path(Cod)
         if(vLPath(J)) then
           vCpnGEM(J)%Mole= tPathData(J,I)
         end if
-      end do
+      enddo
       !---/system composition --
       !
       !--------------------------------------------rebuild tSimplex(:,:)
       ! main = stoikiometry matrix
-      tSimplex(1:nC,1:nF)= -transpose(tStoikioGEM(1:nF,1:nC))
+      tSimplex(1:nC,1:nF)= -TRANSPOSE(tStoikioGEM(1:nF,1:nC))
       ! first row= Gibbs energy of phases 1:nF at 'point' iTP
       tSimplex(0,1:nF)= -vFas(1:nF)%Grt
       ! first column= bulk compos'n
       tSimplex(1:nC,0)=  vCpnGEM(1:nC)%Mole
       !----------------------------------------------------------------/
       
-      if(iDebug==2) print *,"Simplex_Run_Step=",i
+      if(iDebug==1) print *,"Simplex_Run_Step=",i
       if(iDebug>2) then
       print *,'call Simplex_Run'  ;  call pause_
       end if
       
       !--------------------------------------------------------------run
       call Simplex_Run( &
-      & i,              &
-      & nC,nF,          &
-      & TdgK,Pbar,      &
-      & vFas,           &
-      & vCpnGEM,        &
-      & tStoikioGEM,    &
-      & tSimplex,       &
-      & IZROV,IPOSV,    &
+      & i,TdgK,Pbar,vCpnGEM,tStoikioGEM, &
       & vSimplex_Ok(i))
+      !old! call Simplex_Run( &
+      !old! & i,TdgK,Pbar, &
+      !old! & vFasIsPresent,tSimplexResult, &
+      !old! & vSimplex_Ok(i))
       !----------------------------------------------------------------/
       !
-    end do
+    enddo
   !-----------------------------------------------------------/case PATH
   !
   case("TP")
@@ -229,13 +220,13 @@ subroutine GEM_Path(Cod)
       !
       !--------------------------------------------rebuild tSimplex(:,:)
       !-------------------------------------- main - stoikiometry matrix
-      tSimplex(1:nC,1:nF)= -transpose(tStoikioGEM(1:nF,1:nC))
+      tSimplex(1:nC,1:nF)= -TRANSPOSE(tStoikioGEM(1:nF,1:nC))
       !------------------------------------- first column- bulk compos'n
       tSimplex(1:nC,0)=  vCpnGEM(1:nC)%Mole
       !----------- first row- Gibbs energy of phases 1:nF at 'point' iTP
       tSimplex(0,1:nF)= -vFas(1:nF)%Grt
       !
-      if(iDebug==2) print *,"Simplex_Run_Step=",i
+      if(iDebug==1) print *,"Simplex_Run_Step=",i
       if(iDebug==4) then
         write(fTrc,'(I3,A1,2(G15.6,A1))',advance="NO") &
         & I,T_, TdgK-T_CK,T_, Pbar,T_
@@ -245,14 +236,7 @@ subroutine GEM_Path(Cod)
       !
       !--------------------------------------------------------------run
       call Simplex_Run( &
-      & i,              &
-      & nC,nF,          &
-      & TdgK,Pbar,      &
-      & vFas,           &
-      & vCpnGEM,        &
-      & tStoikioGEM,    &
-      & tSimplex,       &
-      & IZROV,IPOSV,    &
+      & i,TdgK,Pbar,vCpnGEM,tStoikioGEM, &
       & vSimplex_Ok(i))
       !old! call Simplex_Run( &
       !old! & i,TdgK,Pbar, &
@@ -260,7 +244,7 @@ subroutine GEM_Path(Cod)
       !old! & vSimplex_Ok(i))
       !-------------------------------------------------------------/run
       !
-    end do
+    enddo
     !
     deallocate(vTPpath)
   !-------------------------------------------------------------/case TP
@@ -278,67 +262,50 @@ subroutine GEM_Path(Cod)
   !
   if(allocated(vTPpath)) deallocate(vTPpath)
   !
-  !call Simplex_Vars_Clean
-  if(allocated(tSimplex))  deallocate(tSimplex)
-  if(allocated(IZROV))     deallocate(IZROV)
-  if(allocated(IPOSV))     deallocate(IPOSV)
-  !
+  call Simplex_Vars_Clean
   call Simplex_CloseFiles
   !
   call Path_Vars_Clean
   !
 contains
 
-  subroutine Trace_1
-    write(fTrc,'(/,A)') "SPL2"
-    write(fTrc,'(3(A,A1))',advance="NO") "Count",T_,"TdgC",T_,"Pbar",T_
-    do I=1,size(vFas)
-      write(fTrc,'(A15,A1)',advance="NO") vFas(I)%NamFs,T_
-    end do
-    write(fTrc,*)
-    do I=1,size(vFas) !! check phase / species matching ...!!
-      write(fTrc,'(A15,A1)',advance="NO") vSpc(vFas(I)%iSpc)%NamSp,T_
-    end do
-    write(fTrc,*)
-  end subroutine Trace_1
+subroutine Trace_1
 
-end subroutine GEM_Path
+  write(fTrc,'(/,A)') "SPL2"
+  write(fTrc,'(3(A,A1))',advance="NO") "Count",T_,"TdgC",T_,"Pbar",T_
+  do I=1,size(vFas)
+    write(fTrc,'(A15,A1)',advance="NO") vFas(I)%NamFs,T_
+  enddo
+  write(fTrc,*)
+
+  do I=1,size(vFas) !! check phase / species matching ...!!
+    write(fTrc,'(A15,A1)',advance="NO") vSpc(vFas(I)%iSpc)%NamSp,T_
+  enddo
+  write(fTrc,*)
+
+end subroutine Trace_1
+
+end subroutine GEM_Pure_Path
 
 subroutine Simplex_Run( &
-& iCount,               &
-& nC,nF,                &
-& TdgK,Pbar,            &
-& vFas,                 &
-& vCpn,                 &
-& tStoikioCpn,          &
-& tSimplex,             &
-& IZROV,IPOSV,          &
-& Ok)
+& iCount,TdgK,Pbar,vCpn,&
+& tStoikio,Ok)
 
-  use M_T_Phase,     only: T_Phase
   use M_T_Component, only: T_Component
+  use M_Simplex_Vars,only: tSimplex,IPOSV,iZRov
   use M_Simplex_Calc,only: Simplex_Calc
-  !---------------------------------------------------------------------
+  !
   integer,          intent(in) :: iCount
-  integer,          intent(in) :: nC,nF
   real(dp),         intent(in) :: TdgK,Pbar
-  type(T_Phase),    intent(in) :: vFas(:)
-  type(T_Component),intent(in) :: vCpn(nC)
-  real(dp),         intent(in) :: tStoikioCpn(nF,nC)
-  real(dp),         intent(inout) :: tSimplex(0:nC+1,0:nF)
-  integer,          intent(inout) :: IZROV(1:nF)
-  integer,          intent(inout) :: IPOSV(1:nC)
+  type(T_Component),intent(in) :: vCpn(:)
+  real(dp),         intent(in) :: tStoikio(:,:)
   logical,          intent(out):: Ok
-  !---------------------------------------------------------------------
-  integer :: iError
-  !---------------------------------------------------------------------
-  
-  !! call Simplex_Calc(iError) ! &
-  call Simplex_Calc( &
-  & nC,nF,           &
-  & tSimplex,        &
-  & IZROV,IPOSV,     &
-  & iError) !!,n1,n2)
+  !
+  integer:: iError !,n1,n2
+
+  call Simplex_Calc(iError) ! &
+  !! & tSimplex,IZROV,IPOSV,  &
+  !! & iError,n1,n2)
   !
   Ok= iError==0
 
@@ -346,22 +313,13 @@ subroutine Simplex_Run( &
 
   case(0)
 
-    ! call Simplex_WriteResult(TdgK,Pbar,vCpn,tStoikio)
-    
-    call Simplex_WriteResult( &
-    & TdgK,Pbar,              &
-    & nC,nF,                  &
-    & vCpn,                   &
-    & tStoikioCpn,            &
-    & tSimplex,iPosV,iZRov)
-    ! & vFasIsPresent)
+    call Simplex_WriteResult(TdgK,Pbar,vCpn,tStoikio)
+    call Simplex_StoreResult(iCount,vCpn(:)%Mole,TdgK,Pbar)
 
-    call Simplex_StoreResult( &
-    & iCount,                       &
-    & TdgK,Pbar,                    &
-    & size(vCpn),                   &
-    & vCpn(:)%Mole,                 &
-    & IPOSV,tSimplex(:,0))
+    ! call Simplex_WriteResult( &
+    ! & TdgK,Pbar, &
+    ! & tSimplex,iPosV,iZRov, &
+    ! & vFasIsPresent)
 
     ! ! save results in table tSimplexResult
     ! call Simplex_StoreResult( &
@@ -369,43 +327,41 @@ subroutine Simplex_Run( &
     ! & IPOSV,tSimplex,   &
     ! & vFasIsPresent,tSimplexResult)
 
-    if(iDebug>2) call Simplex_Print(vFas,size(vCpn),tSimplex(:,0),IPOSV)
+    if(iDebug>2) call Simplex_Print(size(vCpn))
 
   case(1)
 
     write(fTrc,'(A)') "Unbounded Objective Function"
-    if(idebug>1) &
+    if(iDebug>0) &
     & print *,"SIMPLEX, Error: Unbounded Objective Function"
 
   case(-1)
 
     write(fTrc,'(A)') "No Solutions Satisfy Constraints Given"
-    if(idebug>1) &
+    if(iDebug>0) &
     & print *,"SIMPLEX, Error: No Solutions Satisfy Constraints Given"
 
   case(-2)
 
     write(fTrc,'(A)') "BAD INPUT TABLEAU IN SIMPLX"
-    if(idebug>1) &
+    if(iDebug>0) &
     & print *,"SIMPLEX, Error: BAD INPUT TABLEAU IN SIMPLX"
 
   end select
 
 end subroutine Simplex_Run
 
-subroutine Simplex_Print(vFas,nC,tSimplex_0,IPOSV)
-  use M_T_Phase,     only: T_Phase
+subroutine Simplex_Print(nC)
+  use M_Simplex_Vars,only: IPOSV,tSimplex
+  use M_Global_Vars, only: vFas
   !
-  type(T_Phase),intent(in):: vFas(:)
-  integer,      intent(in):: nC
-  real(dp),     intent(in):: tSimplex_0(:)
-  integer,      intent(in):: IPOSV(:)
+  integer,intent(in):: nC
   !
   integer:: i
   !
   do i=1,nC
-    print '(G15.6,2X,A)',tSimplex_0(i),trim(vFas(IPOSV(i))%NamFs)
-  end do
+    print '(G15.6,2X,A)',tSimplex(i,0),trim(vFas(IPOSV(i))%NamFs)
+  enddo
   print *,""
   !
 end subroutine Simplex_Print
@@ -451,14 +407,14 @@ subroutine WriteSysComp(DimPath,vCpn)
         if(iDis/=0) &
         & vDisIsPresent(vDiscretParam(iDis)%iModel)= .true.
       end if
-    end do
+    enddo
     !
     if(count(vDisIsPresent(:))>0) then
       ! N=0
       ! do J=1,size(vDiscretModel)
       !   if(vDisIsPresent(J)) &
       !   & N= N +vMixModel(vDiscretModel(J)%iMix)%NPole
-      ! end do
+      ! enddo
       !print *,"dimension N=", N   ;  pause
       allocate(tDisParam(DimPath,3*size(vDiscretModel),3)) !MaxPole))
       tDisParam(:,:,:)= 0
@@ -469,14 +425,14 @@ subroutine WriteSysComp(DimPath,vCpn)
   write(F,'(3(A,A1))',advance="no") "count",T_, "TdgC",T_, "Pbar",T_
   do iFs=1,nC
     write(F,'(A,A1)',advance="no") trim(vCpn(iFs)%NamCp)//"_cpn", T_
-  end do
+  enddo
   ! do iFs=1,nC
   !   write(F,'(A,A1)',advance="no") trim(vCpn(iFs)%NamCp)//"_frac", T_
-  ! end do
+  ! enddo
   do iFs=1,nF
     if(vFasIsPresent(iFs)) &
     & write(F,'(A,A1)',advance="no") trim(vFas(iFs)%NamFs), T_
-  end do
+  enddo
   write(F,*)
   !----------------------------------------------------------/title line
   !
@@ -496,13 +452,13 @@ subroutine WriteSysComp(DimPath,vCpn)
       !--- mole numbers of components
       do iFs=1,nC
         write(F,'(G15.6,A1)',advance="no") tSimplexResult(iFs,iPath),T_
-      end do
+      enddo
       !---/mole numbers of components
 
-      !! Sum_=sum(tSimplexResult(1:nC,iPath))
-      !! do iFs=1,nC
-        !! write(F,'(G15.6,A1)',advance="no") tSimplexResult(iFs,iPath)/Sum_,T_
-      !! end do
+      !~ Sum_=SUM(tSimplexResult(1:nC,iPath))
+      !~ do iFs=1,nC
+        !~ write(F,'(G15.6,A1)',advance="no") tSimplexResult(iFs,iPath)/Sum_,T_
+      !~ enddo
 
       do iFs=1,nF
 
@@ -535,12 +491,12 @@ subroutine WriteSysComp(DimPath,vCpn)
 
         end if
 
-      end do
+      enddo
       write(F,*)
 
     end if
 
-  end do
+  enddo
   !
   write(F,'(A1)') "_"
   !
@@ -554,10 +510,10 @@ subroutine WriteSysComp(DimPath,vCpn)
       do J=1,size(tDisParam,2)
         do K=1,3
           write(F,'(I3,1X)',advance="NO") tDisParam(I,J,K)
-        end do
-      end do
+        enddo
+      enddo
       write(F,*)
-    end do
+    enddo
     deallocate(tDisParam)
     close(F)
   end if
@@ -568,26 +524,19 @@ subroutine WriteSysComp(DimPath,vCpn)
   !
 end subroutine WriteSysComp
 
-subroutine Simplex_StoreResult( &
-& iCount,                       &
-& TdgK,Pbar,                    &
-& nC,                           &
-& vMolCpn,                      &
-& IPOSV,tSimplex_0)
+subroutine Simplex_StoreResult(iCount,vMolCpn,TdgK,Pbar)
 !--
 !-- save results in table tSimplexResult
 !--
-  !! use M_Simplex_Vars,only: IPOSV,tSimplex
+  use M_Simplex_Vars,only: IPOSV,tSimplex
   !
   integer, intent(in):: iCount
+  real(dp),intent(in):: vMolCpn(:)
   real(dp),intent(in):: TdgK,Pbar
-  integer, intent(in):: nC
-  real(dp),intent(in):: vMolCpn(1:nC)
-  integer, intent(in):: IPOSV(1:nC)
-  real(dp),intent(in):: tSimplex_0(0:nC+1)
   !
-  integer::iC,iFs,N
+  integer::iC,nC,iFs,N
   !
+  nC= size(vMolCpn)
   N= size(tSimplexResult,1)
   !
   tSimplexResult(1:nC,iCount)= vMolCpn(1:nC)
@@ -595,21 +544,15 @@ subroutine Simplex_StoreResult( &
   do iC=1,nC
     iFs= IPOSV(iC)
     vFasIsPresent(iFs)= .true.
-    tSimplexResult(nC+iFs,iCount)= tSimplex_0(iC) !! tSimplex(iC,0)
-  end do
+    tSimplexResult(nC+iFs,iCount)= tSimplex(iC,0)
+  enddo
   !
   tSimplexResult(N-1,iCount)= TdgK
   tSimplexResult(N,  iCount)= Pbar
   !
 end subroutine Simplex_StoreResult
 
-subroutine Simplex_WriteResult( &
-& TdgK,Pbar,                    &
-& nCpn,nFs,                     &
-& vCpn,                         &
-& tStoikioCpn,                  &
-& tSimplex,                     &
-& IZROV,IPOSV)
+subroutine Simplex_WriteResult(TdgK,Pbar,vCpn,tStoikioCpn)
 !--
 !-- write system, results, ...
 !-- to files xxx_check1.log and xxx_check2.log
@@ -620,23 +563,20 @@ subroutine Simplex_WriteResult( &
   use M_T_Component,only: T_Component
   !
   use M_Global_Vars, only: vFas
+  use M_Simplex_Vars,only: iZRov,tSimplex,iPosV
   use M_GEM_Build,only: fSpl1,fSpl2
   !
-  real(dp),          intent(in):: TdgK,Pbar
-  integer,           intent(in):: nCpn,nFs
-  type(T_Component), intent(in):: vCpn(nCpn)
-  real(dp),          intent(in):: tStoikioCpn(nFs,nCpn)
-  real(dp),          intent(in):: tSimplex(0:nCpn+1,0:nFs)
-  integer,           intent(in):: IZROV(1:nFs)
-  integer,           intent(in):: IPOSV(1:nCpn)
+  real(dp),         intent(in):: TdgK,Pbar
+  type(T_Component),intent(in):: vCpn(:)
+  real(dp),         intent(in):: tStoikioCpn(:,:)
   !
   integer,parameter:: maxOut1=100
-  integer :: iCpn,iFas,I
+  integer :: nCpn,nFs,iCpn,iFas,I
   real(dp):: X
   ! character(len=30):: sFormat
   !
-  ! nCpn= size(vCpn)
-  ! nFs=  size(vFas)
+  nCpn= size(vCpn)
+  nFs=  size(vFas)
   !
   if(fSpl2==0) then
     call GetUnit(fSpl2)
@@ -664,7 +604,7 @@ subroutine Simplex_WriteResult( &
     ! do iFas=1,nFs
     !   if(izrov(iFas)<=nFs) &
     !   & write(fSpl1,'(A,A1)',advance="no") trim(vFas(IZROV(iFas))%NamFs),T_
-    ! end do
+    ! enddo
     ! write(fSpl1,*)
     !
     write(fSpl1,'(2(A,A1))',advance="no")   "_",T_,"_",T_
@@ -675,7 +615,7 @@ subroutine Simplex_WriteResult( &
     do iFas=1,nFs
       if(izrov(iFas)<=nFs) &
       & write(fSpl1,'(G15.6,A1)',advance="no") tSimplex(0,iFas),T_
-    end do
+    enddo
     write(fSpl1,*)
     !
     do iCpn=1,nCpn
@@ -689,9 +629,9 @@ subroutine Simplex_WriteResult( &
       do iFas=1,nFs
         if (izrov(iFas)<=nFs) &
         & write(fSpl1,'(G15.6,A1)',advance="no") tSimplex(iCpn,iFas),T_
-      end do !iFas
+      enddo !iFas
       write(fSpl1,*)
-    end do !iCpn
+    enddo !iCpn
     write(fSpl1,*)
     !
   end if
@@ -704,19 +644,19 @@ subroutine Simplex_WriteResult( &
   write(fSpl2,'(A,A1)',advance="no") "vNamCpn",T_
   do iCpn=1,nCpn
     write(fSpl2,'(A,A1)',  advance="no") trim(vCpn(iCpn)%NamCp), T_
-  end do
+  enddo
   write(fSpl2,*)
   !
   write(fSpl2,'(A,A1)',advance="no") "vMolCpn",T_
   do iCpn=1,nCpn
     write(fSpl2,'(G15.6,A1)',advance="no") vCpn(iCpn)%Mole, T_
-  end do
+  enddo
   write(fSpl2,*)
   !
   write(fSpl2,'(A,A1)',  advance="no") "_",T_
   do iCpn=1,nCpn
     write(fSpl2,'(A,A1)',  advance="no") trim(vCpn(iCpn)%NamCp), T_
-  end do
+  enddo
   write(fSpl2,*)
   !---------------------------------------------------/Write Composition
 
@@ -746,10 +686,10 @@ subroutine Simplex_WriteResult( &
       else
         write(fSpl2,'(A,A1)',advance="no") "0",T_
       end if
-    end do
+    enddo
     write(fSpl2,*)
 
-  end do
+  enddo
   !
   write(fSpl2,'(A)') "___"
   !
@@ -758,14 +698,14 @@ subroutine Simplex_WriteResult( &
     !X=Zero
     !do iCpn=1,nCpn
     !  X=X + tSimplex(iCpn,0)*tStoikioCpn(IPOSV(iCpn),I)
-    !end do
-    X=sum(tSimplex(1:nCpn,0)*tStoikioCpn(IPOSV(1:nCpn),I))
+    !enddo
+    X=SUM(tSimplex(1:nCpn,0)*tStoikioCpn(IPOSV(1:nCpn),I))
     write(fSpl2,'(G15.6,A1)',advance="no") X, T_
-  end do
+  enddo
   write(fSpl2,*)
   !--------------------------------------------------/Check Mass Balance
   !
   return
 end subroutine Simplex_WriteResult
 
-end module M_GEM_Path
+end module M_GEM_Pure_Path

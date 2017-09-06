@@ -27,10 +27,10 @@ module M_Trace
   integer,public:: fTrc=   0
   integer,public:: fHtm=   0
   integer,public:: fError= 0
-  logical,public:: DebugCoores=.false.
 
   logical,public:: LInfo= .false.
   logical,public:: LWarning= .false.
+  logical,public:: DebugCoores=.false.
 
   !// public functionS
   public:: Trace_Init
