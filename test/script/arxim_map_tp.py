@@ -1,17 +1,22 @@
 import os, glob, sys
 import pylab as plt
 
-sExe= "arxim.exe"    #windows
-sExe= "arxxim"        #linux
-sExe= "arxim"        #linux
-sExe= os.path.join("..","bin",sExe)
-sExe= "arx-win"
-sExe= os.path.join("..","..","mybin_debug",sExe)
-sExe= "arx_bis"
-sExe= "arxxim"
+#windows
+sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
 
-sDebug= "1"
+#linux
+sExe= "arxxim"
+sExe= "arx-bis"
+sExe= os.path.join("..","bin",sExe)
+
+sExe= "arx-basis"
+sExe= os.path.join("..","..","arx-basis","bin",sExe)
+
+sExe= "arx-win"
+sExe= os.path.join("..","..","arx-win","bin",sExe)
+
+sDebug= "2"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
@@ -23,7 +28,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user defined
-fInn= "inn/map3b_tp.inn"
+fInn= "inn/map3c_tp.inn"
 
 Xlis= ["TDGC"]  # must be uppercase ...
 Ylis= ["PBAR"]  # must be uppercase ...
@@ -421,7 +426,7 @@ for i,paragen in enumerate(lis_paragen):
   newp= ""
   for w in ww:
     if not w in phase_Partout:
-      if len(w)>3: w=w[0:3]
+      if len(w)>7: w=w[0:7]
       newp= newp + w + '='
   lis_paragen[i]= newp 
 #--print simplified paragesis

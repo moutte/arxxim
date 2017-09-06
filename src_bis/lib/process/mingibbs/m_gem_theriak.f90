@@ -1044,7 +1044,6 @@ subroutine Mixture_Minimize( &
 !--
   use M_Numeric_Const, only: Ln10
   use M_Safe_Functions,only: FSafe_Exp
-  !~ use M_GEM_Vars,   only: TdgK,Pbar
   !
   use M_Optimsolver_Theriak
   use M_MixModel_Optim
@@ -1070,6 +1069,9 @@ subroutine Mixture_Minimize( &
   DeltaInit= 0.05D0
   !
   do I=1,size(vMixFas0)
+    !
+    if(iDebug>2) write(fTrc,'(A)') trim(vMixFas0(I)%Name)
+    if(iDebug>2) call flush(fTrc)
     !
     MM= vMixModel(vMixFas0(I)%iModel)
     N= MM%NPole

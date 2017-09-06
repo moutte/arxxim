@@ -1211,7 +1211,8 @@ subroutine DtbMinThr_Write
   !
   close(f)
   !
-  call Warning_("Data written to "//trim(DirDtbOut)//"_min_thr.restab")
+  ! call Warning_("Data written to "//trim(DirDtbOut)//"_min_thr.restab")
+  print *,"Data written to "//trim(DirDtbOut)//"_min_thr.restab"
   !
   if(iDebug>0) write(fTrc,'(A,/)') "</ DtbMinThr_Write"
 end subroutine DtbMinThr_Write

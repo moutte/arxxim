@@ -46,10 +46,9 @@ subroutine Optimsolver_Theriak( & !
   logical, intent(out)  :: Converged
   integer, intent(out)  :: Iter,nCallG
   !---------------------------------------------------------------------
-  real(dp),allocatable:: vXlast1(:), vXlast2(:) ! former composition points
-  real(dp),allocatable:: vV(:),vVSteep(:)
-  real(dp),allocatable:: vXDif(:)
-  !real(dp),allocatable:: vMu(:) !
+  real(dp):: vXlast1(size(vX)), vXlast2(size(vX))
+  != former composition points
+  real(dp):: vV(size(vX)),vVSteep(size(vX)),vXDif(size(vX))
   real(dp):: Gsav,DeltaG
   real(dp):: MuTilde,Slope
   real(dp):: Delta
@@ -74,13 +73,6 @@ subroutine Optimsolver_Theriak( & !
   Delta= DeltaInit
   !
   N= size(vX)
-  !
-  allocate(vXlast1(N))
-  allocate(vXlast2(N))
-  allocate(vVSteep(N))
-  allocate(vV(N))
-  allocate(vXDif(N))
-  !allocate(vMu(N))
   !
   vXlast1(:)= vX(:)
   vXlast2(:)= vX(:)
@@ -151,13 +143,6 @@ subroutine Optimsolver_Theriak( & !
   !print '(A,2F7.3)',"vXlast2",vXlast2(1),vXlast2(2)
   !print '(A,2F7.3)',"vXlast1",vXlast1(1),vXlast1(2)
   !print '(A,2F7.3)',"vX      ",vX(1),      vX(2)
-  !
-  deallocate(vXlast1)
-  deallocate(vXlast2)
-  deallocate(vVSteep)
-  deallocate(vV)
-  deallocate(vXDif)
-  !deallocate(vMu)
   !
   if(iDebug>2) write(fTrc,'(A,/)') "</ Optimsolver_Theriak"
   

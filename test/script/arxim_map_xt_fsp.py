@@ -10,10 +10,10 @@ sExe= "arx-win"
 sExe= os.path.join("..","..","mybin_debug",sExe)
 
 sExe= "arxxim"
-sExe= "arx_bis"
+sExe= "arx-bis"
 sExe= os.path.join("..","bin",sExe)
 
-sDebug= "2"
+sDebug= "3"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT

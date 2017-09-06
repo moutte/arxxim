@@ -234,6 +234,10 @@ subroutine Species_Zero(S)
 end subroutine Species_Zero
 
 subroutine Species_Stoikio_Calc(vEle,vSpc,Ok)
+!--
+!-- build stoichiometry vectors of species according to element base vEle
+!-- stoichiometry saved as vSpc(:)%vStoikio
+!--
   use M_T_Element,  only: T_Element,Element_Index
   !
   type(T_Element), intent(in)   :: vEle(:)
@@ -266,7 +270,7 @@ end subroutine Species_Stoikio_Calc
 subroutine Species_Stoikio(vEle,ieOx,S,fOk)
 !--
 !-- build stoichiometry vector of species S according to element base vEle
-!-- NEW: stoichiometry saved as S%vStoikio
+!-- NEW: stoichiometry saved as S%vStoikio(0:nEl+1),S%Div,S%Z
 !--
   use M_T_Element,only: T_Element,Formula_Read
   !

@@ -34,7 +34,7 @@ subroutine GEM_Write_Phases( &
   integer,       intent(in):: DimPath
   logical,       intent(in):: vFasIsPresent(:)
   logical,       intent(in):: vSimplex_Ok(DimPath)
-  real(dp),      intent(in) :: tResult(:,:)
+  real(dp),      intent(in):: tResult(:,:)
   type(T_SavPhase),intent(in):: tResultMix(:,:)
   !---------------------------------------------------------------------
   integer :: iPath,iFs,I,J,K

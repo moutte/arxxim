@@ -27,6 +27,9 @@ module M_GEM_Build
 contains
 
 subroutine GEM_Build
+!--
+!-- comes after Global_Build
+!-- 
   !
   use M_T_Element,   only: Element_Index
   use M_T_Species,   only: T_Species,Species_Stoikio_Calc
