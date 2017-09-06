@@ -1,8 +1,6 @@
 *.[oa]
 *#
 bin/*.mod
-bin/arx-bis
-bin/arxxim
 test/out/
 !test/out/000
 test/*
