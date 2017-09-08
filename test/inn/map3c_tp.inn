@@ -34,12 +34,13 @@ ELEMENTS
   Na 0.022990   1  1  51.46 
 END ELEMENTS
 
-!INCLUDE dtb\thr_twq_dec06_min.dtb !-> database for min'species
-!INCLUDE dtb\hsvthr_twq_dec06_min.dtb
 INCLUDE dtb\hsvthr_thcalc_db55_min.tab
-!INCLUDE dtb\hsvhkf_slop07_aqu.dtb
 
-SPECIES MIN.THR
+!INCLUDE dtb\thr_twq_dec06_min.dtb !-> database for min'species
+!INCLUDE dtb\hsvhkf_slop07_aqu.dtb
+!INCLUDE dtb\hsvthr_twq_dec06_min.dtb
+
+!SPECIES MIN.THR
 CODE TWQDEC06
 GAS
  H2O_RK H(2)O(1)
@@ -51,8 +52,12 @@ GAS
  & C1         93.00000      -1340.900     123800.000             0.        0.00000
  & C2          6336.20      -0.002876     0.00000000          0.000        0.00000
 END
-END SPECIES
+!END SPECIES
 
+SPECIES HSV.THR
+TYPE NAME   SCFORM  SOURCE  FORMAT   PARAMETERS
+GAS  WATER  H2O     haar    THERIAK  SPECIAL H2O_HGK
+END
 
 MIXTURE.MODEL BIOTITE_HPWEB
   MODEL SPECIAL

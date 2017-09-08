@@ -229,7 +229,7 @@ for iY,y in enumerate(Yser):
   for iX,x in enumerate(Xser):
     print x,y
     #
-    include_modify(Xlis,x) #-----------------modify the include file for x
+    include_modify(Xlis,x) #---------------modify the include file for x
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
     #
     #--------------------------------------------------done on first run
@@ -442,8 +442,6 @@ print "TIME=", END - START
 
 #sys.exit()
 #-------------------------------------------------------------//refining
-
-
 
 #-----------------------------------------------file name for the figure
 head,tail= os.path.split(fInn)

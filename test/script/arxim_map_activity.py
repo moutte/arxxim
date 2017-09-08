@@ -88,13 +88,13 @@ for i,line in enumerate(lines):
       Yindex= i
       for j in range(iValue):
         Yhead= Yhead + ww[j] + "  "
-if 1:
+if 0:
   print Xindex, Xhead
   print Yindex, Yhead
   raw_input()
 Xlis= Xindex, Xhead
 Ylis= Yindex, Yhead
-#--
+#--//
 
 sArximCommand= sExe,fInn,sDebug,sCmd
 fResult= "tmp_gem.tab"

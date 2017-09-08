@@ -12,7 +12,7 @@ sExe= "arx_debug"
 sExe= "arx_optim"
 sExe= os.path.join("..","bin",sExe)
 
-sExe= "arx_optim"
+sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
 
 sDebug= "1"
@@ -28,6 +28,8 @@ if os.path.isfile("error.log"): os.remove("error.log")
 
 #-----------------------------------------------------------user-defined
 fInn= "tmp/f1e_gem_fsp1.inn"
+
+mixture_names=[]
 
 Xlis= ["OR_","AB_"]         # must be uppercase ...
 Ylis= ["TDGC","PBAR"]       # must be uppercase ...
@@ -122,6 +124,19 @@ fResult= "tmp_gem.tab"
 #fLog= open("log",'w',0)
 fParagen= open("paragen.txt",'w',0)
 
+#-----------------------------------------------------read_mixture_names
+def read_mixture_names():
+  with open("tmp_mixmodels_names.tab") as f:
+    s= f.readline()
+  s_names= s.split()
+  return s_names
+#--//
+def save_mixture_moles(x,y):
+  with open("tmp_mixmodels_moles.tab") as f:
+    s= f.readline()
+  #fMixtur.write(s)
+  tMixtur.append((x,y,s))
+ 
 #------------------------------------------------initialize the x,y grid
 Xdim= int(round(abs(Xmax-Xmin)/Xdelta))+1
 Xser= plt.linspace(Xmin,Xmax,num=Xdim)
@@ -244,6 +259,8 @@ tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
 lis_paragen=[]
 
+tMixtur= [] #table of mixture compositions
+
 #--for refining:
 lis_reac=  []
 lis_xy_x=  []
@@ -261,6 +278,12 @@ for iY,y in enumerate(Yser):
     include_modify(Xlis,Xfunc,x) #---------modify the include file for x
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
+      #
+      if iY==0 and iX==0:
+        mixture_names= read_mixture_names()
+        for s in mixture_names: print s
+        raw_input()
+      save_mixture_moles(x,y)
       paragen= arxim_result(fResult) #-----------------read arxim result
       if not paragen in lis_paragen:
         print paragen
@@ -312,6 +335,7 @@ for iY in range(Ydim):
         if not s in lis_reac: lis_reac.append(s)
         val= s,x,y
         lis_xy_x.append(val)
+        save_mixture_moles(x,y)
       else:
         if F>0:
         #-there is a paragen' Fm on [x0,x1] that is different from F0 & F1
@@ -326,10 +350,11 @@ for iY in range(Ydim):
             if not s in lis_reac: lis_reac.append(s)
             val= s,x,y
             lis_xy_x.append(val)
+            save_mixture_moles(x,y)
           else:
             val= iX,iY
             lis_false_x.append(val)
-          #----------------------second stage refinement between xm and x1
+          #--------------------second stage refinement between xm and x1
           x,F,OK= refine_xy(Xlis,Xfunc,Fm,F1,xm,x1,Xtol)
           if OK:
             if F1>Fm: s= str(Fm)+'='+str(F1)
@@ -337,6 +362,7 @@ for iY in range(Ydim):
             if not s in lis_reac: lis_reac.append(s)
             val= s,x,y
             lis_xy_x.append(val)
+            save_mixture_moles(x,y)
           else:
             val= iX,iY
             lis_false_x.append(val)
@@ -361,6 +387,7 @@ for iX in range(Xdim):
         if not s in lis_reac: lis_reac.append(s)
         val= s,x,y
         lis_xy_y.append(val)
+        save_mixture_moles(x,y)
       else:
         if F>0:
         #-there is a paragen' Fm on [y0,y1] that is different from F0 & F1
@@ -375,6 +402,7 @@ for iX in range(Xdim):
             if not s in lis_reac: lis_reac.append(s)
             val= s,x,y
             lis_xy_y.append(val)
+            save_mixture_moles(x,y)
           else:
             val= iX,iY
             lis_false_y.append(val)
@@ -386,6 +414,7 @@ for iX in range(Xdim):
             if not s in lis_reac: lis_reac.append(s)
             val= s,x,y
             lis_xy_y.append(val)
+            save_mixture_moles(x,y)
           else:
             val= iX,iY
             lis_false_y.append(val)
@@ -453,6 +482,28 @@ print "(SIMPLIFIED) PARAGENESIS="
 for i,paragen in enumerate(lis_paragen):
   print i, paragen
 #---------------------------------------//processing the paragenese list
+
+#---------------------------------------------------mixture compositions
+dim= len(s)
+tMix= []
+for x,y,s in tMixtur:
+  v=[]
+  for s in s.split():
+    v.append(float(s))
+  tMix.append((x,y,v))
+tMix= sorted(tMix,key=lambda x: y)
+f= open("mixture.tab",'w',0)
+for s in mixture_names:
+  f.write("%s\t" % s)
+f.write('\n')
+for x,y,mix in tMix:
+  f.write("%.4g\t%.4g\t" % (x,y))
+  for m in mix:
+     f.write("%.4g\t" % (m))
+  f.write('\n')
+f.close()
+  
+#-------------------------------------------------//mixture compositions
 
 #-----------------------------------------------file name for the figure
 head,tail= os.path.split(fInn)

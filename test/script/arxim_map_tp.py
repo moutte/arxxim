@@ -17,7 +17,7 @@ sExe= "arx_optim"
 sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
 
-sDebug= "2"
+sDebug= "1"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
