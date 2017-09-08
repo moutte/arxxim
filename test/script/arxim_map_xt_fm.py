@@ -6,17 +6,17 @@ sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
 
 #linux
-sExe= "arxxim"
-sExe= "arx-bis"
+sExe= "arx_debug"
+sExe= "arx_optim"
 sExe= os.path.join("..","bin",sExe)
 
-sExe= "arx-basis"
+sExe= "a.out"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx-git"
-sExe= os.path.join("..","..","arx-win","bin",sExe)
+sExe= "a.out"
+sExe= os.path.join("..","..","arx-git","bin",sExe)
 
-sDebug= "1"
+sDebug= "3"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
@@ -28,7 +28,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "tmp/map3b_tp.inn"
+fInn= "inn/map3d_tp.inn"
 Xlis= ["FeO","MGO"]
 Ylis= ["TDGC","PBAR"]
 Xlabel= "FM"
