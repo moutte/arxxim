@@ -778,10 +778,12 @@ contains
         vSavModel(J)%vMole(vSavModel(J)%nFas)= tSimplex(K,0)
         nP= vMixModel(J)%NPole
         do P=1,nP
+          if(vMixModel(J)%vIPole(P)>0) then !!JM-2017-09
           vSavModel(J)%tXPole(vSavModel(J)%nFas,P)= vFas0(I)%vXPole(P)
           vSavModel(J)%vGrt0(P)= vFasPur(vMixModel(J)%vIPole(P))%Grt
           vSavModel(J)%vVol0(P)= vFasPur(vMixModel(J)%vIPole(P))%VolM3
           !print *,"StoreResults",vSavModel(J)%vVol0(P)
+          end if
         enddo
         !
       end if
@@ -798,7 +800,8 @@ contains
           & tSimplex(K,0),       T_
           J= vFas0(I)%iModel
           do P=1,vMixModel(J)%NPole
-            write(93,'(G15.6,A1)',advance="NO") vFas0(I)%vXPole(P),T_
+            if(vMixModel(J)%vIPole(P)>0) & !!JM-2017-09
+            & write(93,'(G15.6,A1)',advance="NO") vFas0(I)%vXPole(P),T_
           enddo
         end if
       enddo
@@ -944,7 +947,8 @@ subroutine GEM_AddMixtures( &
       do iCp=1,nC ! stoichiometry of mixture vs components
         vFas(iMF)%vStoik(iCp)= &
         & sum( vFas(MM%vIPole(1:N))%vStoik(iCp) &
-        &    * vMixFas(iMix)%vXPole(1:N) )
+        &    * vMixFas(iMix)%vXPole(1:N),       &
+        &    mask= MM%vIPole(1:N)>0 ) !!JM-2017-09
       enddo
       !
       if(iDebug>2) print *,"ADDED= ",trim(vFas(iMF)%NamFs)
@@ -1116,8 +1120,17 @@ subroutine Mixture_Minimize( &
       call MixModel_Optim_SetParams(TdgK,Pbar,MM)
       allocate(Mixmodel_Optim_vMu0rt(N))
       allocate(Mixmodel_Optim_vLPole(N))
-      Mixmodel_Optim_vMu0rt(1:N)= vFasPur(MM%vIPole(1:N))%Grt
-      Mixmodel_Optim_vLPole(1:N)= .true.
+      do J=1,N !!JM-2017-09
+        if(MM%vIPole(J)>0) then
+          Mixmodel_Optim_vMu0rt(J)= vFasPur(MM%vIPole(J))%Grt
+          Mixmodel_Optim_vLPole(J)= .true.
+        else
+          Mixmodel_Optim_vMu0rt(J)= zero
+          Mixmodel_Optim_vLPole(J)= .false.
+        end if
+      end do
+      !Mixmodel_Optim_vMu0rt(1:N)= vFasPur(MM%vIPole(1:N))%Grt
+      !Mixmodel_Optim_vLPole(1:N)= .true.
       !
       allocate(vX(N))
       allocate(vMu(N))
@@ -1170,15 +1183,22 @@ subroutine Mixture_Minimize( &
     !
     if(iDebug>2) write(91,'(A)') "================================="
     !
-    vMixFas0(i)%vLPole(1:N)= .true.
+    vMixFas0(i)%vLPole(1:N)= MM%vIPole(1:N)>0 !!JM-2017-09
     vMixFas0(i)%vXPole(1:N)= vXmin(1:N)
     vMixFas0(i)%Grt= Gmin
-    vMixFas0(i)%vLnAct(1:N)= vMuMin(1:N) -vFasPur(MM%vIPole(1:N))%Grt
+    do J=1,N !!JM-2017-09
+      ! if(MM%vIPole(J)>0) then
+      if(vMixFas0(i)%vLPole(J)) then
+        vMixFas0(i)%vLnAct(J)= vMuMin(J) &
+        &                    - vFasPur(MM%vIPole(J))%Grt
+      end if
+    end do
+    !vMixFas0(i)%vLnAct(1:N)= vMuMin(1:N) -vFasPur(MM%vIPole(1:N))%Grt
     !
     deallocate(vXmin)
     deallocate(vMuMin)
     !
-  enddo
+  end do
   
   !------------------------------------------------------------log files
   if(F1>0) then
@@ -1188,13 +1208,14 @@ subroutine Mixture_Minimize( &
       MM= vMixModel(I)
       write(F1,'(2A)') "MODEL= ",MM%Name
       do K=1,MM%NPole
-        write(F1,'(A,1X,G15.6)') &
+        if(MM%vIPole(K)>0) & !!JM-2017-09
+        & write(F1,'(A,1X,G15.6)') &
         & MM%vNamPole(K),        &
         & vMixFas0(I)%vXPole(K)
-      enddo
+      end do
       write(F1,'(A15,G15.6)') "G Mimim= ",vMixFas0(I)%Grt/Ln10
       write(F1,*)
-    enddo
+    end do
     write(F1,*)
   end if
   !
@@ -1205,8 +1226,9 @@ subroutine Mixture_Minimize( &
       !
       write(F2,'(A,A1)',advance="NO") MM%Name,T_
       do K=1,MM%NPole
-        write(F2,'(G15.6,A1)',advance="NO") vMixFas0(I)%vXPole(K),T_
-      enddo
+        if(MM%vIPole(K)>0) & !!JM-2017-09
+        & write(F2,'(G15.6,A1)',advance="NO") vMixFas0(I)%vXPole(K),T_
+      end do
       !do K=1,MM%NPole
       !  write(F2,'(G15.6,A1)',advance="NO") vFasPur(MM%vIPole(K))%Grt,T_
       !enddo

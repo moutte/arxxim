@@ -34,7 +34,7 @@ mixture_names=[]
 Xlis= ["OR_","AB_"]         # must be uppercase ...
 Ylis= ["TDGC","PBAR"]       # must be uppercase ...
 Xlabel= "AB"
-Ylabel= "T /DGC"
+Ylabel= "T/DGC"
 
 Xmin,Xmax,Xdelta,Xtol=  2.,  98., 4.,  1.
 Ymin,Ymax,Ydelta,Ytol=  400.,   700.,  20.,   5.
@@ -493,13 +493,12 @@ for x,y,s in tMixtur:
   tMix.append((x,y,v))
 tMix= sorted(tMix,key=lambda x: y)
 f= open("mixture.tab",'w',0)
-for s in mixture_names:
-  f.write("%s\t" % s)
+f.write("%s\t%s\t" % (Xlabel,Ylabel))
+for s in mixture_names: f.write("%s\t" % s)
 f.write('\n')
 for x,y,mix in tMix:
   f.write("%.4g\t%.4g\t" % (x,y))
-  for m in mix:
-     f.write("%.4g\t" % (m))
+  for m in mix: f.write("%.4g\t" % (m))
   f.write('\n')
 f.close()
   

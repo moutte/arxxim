@@ -222,7 +222,8 @@ subroutine GEM_Single_Write_Mixtures_Title
     do I=1,nPP
       write(F,'(A,A1)',advance="NO") trim(MM%Name),T_
       do P=1,nP
-        write(F,'(A,A1)',advance="NO") &
+        if(MM%vIPole(P)>0) & !!JM-2017-09
+        & write(F,'(A,A1)',advance="NO") &
         & trim(vSpc(MM%vIPole(P))%NamSp),T_
       end do
     end do
@@ -266,7 +267,8 @@ subroutine GEM_Single_Write_Mixtures_Moles(vSavModel)
     do I=1,nPP
       write(F,'(G15.6,A1)',advance="NO") Fas0%vMole(I),T_
       do P=1,nP
-        write(F,'(F7.3,A1)',advance="NO") &
+        if(MM%vIPole(P)>0) & !!JM-2017-09
+        & write(F,'(F7.3,A1)',advance="NO") &
         & Fas0%tXPole(I,P),T_
       end do
     end do
