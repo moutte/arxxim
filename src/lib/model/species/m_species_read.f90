@@ -229,7 +229,7 @@ subroutine Species_Read_AquSize(vSpc)
 
     select case(W)
     !
-    case("SPECIES.size")
+    case("SPECIES.SIZE")
 
       DoBlock: do
 
@@ -239,7 +239,7 @@ subroutine Species_Read_AquSize(vSpc)
         if(W(1:1)=='!') cycle DoBlock !skip comment lines
 
         select case(W)
-          case("END","ENDSPECIES.size")
+          case("END","ENDSPECIES.SIZE")
             exit DoFile
         end select
 

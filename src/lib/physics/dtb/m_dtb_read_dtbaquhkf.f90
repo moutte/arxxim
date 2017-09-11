@@ -141,9 +141,9 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   !
   !--- scan default field list
   if (FilCode(1:5)=="OBIGT") then
-    L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP parameterS"
+    L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP PARAMETERS"
   else ! case of SLOP98.DAT
-    L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
+    L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
   end if
   !
   if(iDebug==4) print *,"< Default values"
@@ -213,9 +213,9 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       !
       ! if FilCode changes, must re-initialize vifield ...!
       if (FilCode(1:5)=="OBIGT") then
-        L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP parameterS"
+        L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP PARAMETERS"
       else ! case of SLOP98.DAT
-        L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
+        L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
       end if
       call FieldList_Read(L,vStrField,vifield)
       !
@@ -439,6 +439,8 @@ subroutine FieldList_Read( &
 & L,         &
 & vStrField, &
 & vifield)
+!-- check that the essential fields are present in the field list:
+!-- NAME, ECFORM/SCFORM, PARAMETERS 
   use M_IoTools
   !
   character(len=*),intent(inout):: L

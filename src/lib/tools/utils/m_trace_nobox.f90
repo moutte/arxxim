@@ -18,10 +18,10 @@ module M_Trace
   character(len=9),  parameter :: Default_ErrorFileName =  "error.log"
 
   !// public data
-  character,parameter,public:: T_         = Achar(9)
-  character,parameter,public:: TAB_       = Achar(9)
-  character,parameter,public:: SLASH_     = Achar(47)
-  character,parameter,public:: BACKSLASH_ = Achar(92)
+  character,parameter,public:: T_         = achar(9)
+  character,parameter,public:: TAB_       = achar(9)
+  character,parameter,public:: SLASH_     = achar(47)
+  character,parameter,public:: BACKSLASH_ = achar(92)
 
   integer,public:: iDebug= -1
   integer,public:: fTrc=   0

@@ -144,7 +144,7 @@ contains
     !-------------------------------------
     use M_IOTools, only : GetUnit
     implicit none
-    character,parameter::SLASH_= Achar(47)
+    character,parameter::SLASH_= achar(47)
     !---
     logical :: Ok
     !---
@@ -174,7 +174,7 @@ contains
     !-------------------------------------
     use M_IOTools, only : GetUnit
     implicit none
-    character,parameter::BACKSLASH_= Achar(92)
+    character,parameter::BACKSLASH_= achar(92)
     !---
     logical :: Ok
     !---

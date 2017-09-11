@@ -15,6 +15,7 @@ module M_T_DtbLogKAnl
     
     character(len=15):: Num !
     character(len=23):: Name
+    character(len=5) :: Abbr
     character(len=71):: Formula
     !character(len=6) :: Fitting
     character(len=3) :: Typ       ! AQU:MIN:GAS

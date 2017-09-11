@@ -456,7 +456,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
-  L= "TYPE NAME ECFORM SKIP SOURCE SKIP parameterS"
+  L= "TYPE NAME ECFORM SKIP SOURCE SKIP PARAMETERS"
   !
   !if(iDebug==4) print *,"< Default values"
   call FieldList_Read(L,vStrField,vifield)

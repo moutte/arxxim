@@ -18,6 +18,7 @@ module M_T_DtbMinThr
   type:: T_DtbMinThr
     character(len=15):: Num
     character(len=23):: Name
+    character(len=5) :: Abbr
     character(len=71):: Formula
     character(len=3) :: Typ ! MIN,GAS
     character(len=15):: Special
