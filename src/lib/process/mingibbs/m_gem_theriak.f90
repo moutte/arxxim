@@ -87,7 +87,7 @@ subroutine GEM_Theriak_Single
   integer:: iError
   integer:: I,nC,nFpur,nMix
   integer :: fo !!JM!!216-10
-  real(dp):: x
+  real(dp):: x, G_Mixture 
   !---------------------------------------------------------------------
   !
   if(iDebug>0) write(fTrc,'(/,A)') "< GEM_Theriak_Single"
@@ -150,6 +150,14 @@ subroutine GEM_Theriak_Single
   call Theriakk(iError)
   !-------------------------------------------------------------/THERIAK
   !
+  if(iError==0) then
+    if(nMix>0) then
+      do i=1,nMix
+        if(vSavModel(i)%nFas > 1) call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
+      enddo
+      ! call pause_ !!
+    end if
+  end if
   !if(iError/=0) then
   !  call Error_Show(iError)
   !else
@@ -165,7 +173,7 @@ subroutine GEM_Theriak_Single
   !  end if
   !end if
 
-  !modif-----------------------------------------------------JM--2016-10
+  !modif----------------------------------------------------!!JM-2016-10
   call GetUnit(fo)
   ! open(fo,file=trim(DirOut)//"_gem.out")
   open(fo,file="tmp_gem.tab")
@@ -198,11 +206,12 @@ subroutine GEM_Theriak_Single
     end do
   end if
   close(fo)
+  !
   if(iError==0) then
     call GEM_Single_Write_Mixtures_Title
     call GEM_Single_Write_Mixtures_Moles(vSavModel)
   end if
-  !---------------------------------------------------------/JM--2016-10
+  !--------------------------------------------------------//JM-2016-10
 
   if(F1>0) close(F1)
   if(F2>0) close(F2)
@@ -255,6 +264,7 @@ subroutine GEM_Theriak_Path
   integer :: iError
   integer :: nC,nFpur,nMix
   real(dp):: TdgK0,Pbar0
+  real(dp):: G_Mixture
   !
   logical :: Ok
   character(len=3) :: PathMod3
@@ -403,9 +413,11 @@ subroutine GEM_Theriak_Path
       if(nMix>0) then
         tResult(nC+nFpur+3:nC+nFpur+nMix+2,iPath)= vFasMolMix(1:nMix)
         tResultMix(1:nMix,iPath)= vSavModel(1:nMix)
+      end if
+      if(nMix>0) then
         do i=1,nMix
           ! print *,vSavModel(i)%vVol0(1)
-          if(vSavModel(i)%nFas > 1) call Check_vXMean(i)
+          if(vSavModel(i)%nFas > 1) call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
         enddo
         ! call pause_ !!
       end if
@@ -462,18 +474,23 @@ subroutine GEM_Theriak_Path
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ GEM_Theriak_Path"
   !
-contains
+! contains
 
-subroutine Check_vXMean(i)
-!--
+end subroutine GEM_Theriak_Path
+
+subroutine Check_vXMean(i,TdgK,Pbar,   G)
+!-----------------------------------------------------------------------
 !-- for a mixing model with more than one phase in stable assemblage
 !-- compute the Gibbs for the mean composition of the different phases.
 !-- if the Gibbs is not close to zero, then there is unmixing
 !-----------------------------------------------------------------------
-  integer,intent(in):: i
+  use M_Global_Vars, only: vMixModel
+  !
+  integer, intent(in) :: i
+  real(dp),intent(in) :: TdgK,Pbar 
+  real(dp),intent(out):: G
   !---------------------------------------------------------------------
   integer :: J,nP,ff
-  real(dp):: G
   real(dp),allocatable:: vX(:)
   !
   J=  vSavModel(i)%iModel
@@ -498,8 +515,6 @@ subroutine Check_vXMean(i)
   !
   return
 end subroutine Check_vXMean
-
-end subroutine GEM_Theriak_Path
 
 subroutine Theriakk(iError)
 !--
@@ -964,12 +979,9 @@ end subroutine GEM_AddMixtures
 subroutine Error_Show(iErr)
   integer,intent(in):: iErr
   select case(iErr)
-    case(1)
-      write(*,'(A)') "Unbounded Objective Function"
-    case(-1)
-      write(*,'(A)') "No Solutions Satisfy Constraints Given"
-    case(2)
-      write(*,'(A)') "Max Iteration Reached !!!"
+  case(1)  ;  write(*,'(A)') "Unbounded Objective Function"
+  case(-1) ;  write(*,'(A)') "No Solutions Satisfy Constraints Given"
+  case(2)  ;  write(*,'(A)') "Max Iteration Reached !!!"
   end select
 end subroutine Error_Show
 

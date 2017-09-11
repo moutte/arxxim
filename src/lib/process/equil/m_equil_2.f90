@@ -448,7 +448,7 @@ subroutine Equil_Eq2(NoMixture,iErr,cTest)
   !!   if(vEquFas(I)%iMix>0) vFasMole(vEquFas(I)%iMix+nPur)= vEquFas(I)%Mole
   !! end do
 
-  if(nMix>0) call Check_vXMean
+  if(nMix>0) call Check_vXMean_Eq
 
   call EquFas_Clean
 
@@ -468,7 +468,7 @@ subroutine Equil_Eq2(NoMixture,iErr,cTest)
   !
 contains
 
-subroutine Check_vXMean
+subroutine Check_vXMean_Eq
 !--
 !-- for each mixing model with nFas>1
 !-- compute the free energy of the mixture
@@ -605,14 +605,14 @@ subroutine Check_vXMean
   deallocate(vTabPhase)
 
   return
-end subroutine Check_vXMean
+end subroutine Check_vXMean_Eq
 
 subroutine EquFas_Remove(N,M)
   integer,intent(in)   :: N
   integer,intent(inout):: M
-
+  !
   integer:: I,J
-
+  !
   vEquFas0(:)= vEquFas(:)
   J= 0
   do I=1,M
@@ -622,7 +622,7 @@ subroutine EquFas_Remove(N,M)
     end if
   end do
   M= J
-
+  !
   return
 end subroutine EquFas_Remove
 
