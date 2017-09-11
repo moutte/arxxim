@@ -21,6 +21,7 @@ sExe= "arx_optim"
 sExe= os.path.join("..","bin",sExe)
 
 sExe= "arx_optim"
+sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
 
 sDebug= "1"

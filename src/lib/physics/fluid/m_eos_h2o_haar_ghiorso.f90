@@ -80,11 +80,11 @@ subroutine CalcGH2O_Haar_Ghiorso_Detail( &
 !-- IT WAS TRANSLATED INTO FORTRAN BY LARRY MASTIN, JUNE 1998,
 !-- AND doNATED TO THE UNIVERSITY OF NEW HAMPSHIRE CONDUIT MODELING WORKSHOP WEB PAGE DECEMBER, 2002.
 !-- 
-!-- INPUT parameterS:
+!-- INPUT PARAMETERS:
 !--   TdgK temperature, Kelvin
 !--   Pbar pressure, bar
 !-- 
-!-- OUTPUT parameterS:
+!-- OUTPUT PARAMETERS:
 !--   cp       specific heat at constant pressure (J/kg K)
 !--   cv       specific heat at constant volume (J/kg K)
 !--   gH2O     Gibbs free energy (J/kg)
@@ -283,13 +283,13 @@ subroutine CalcGH2O_Haar_Ghiorso_Detail( &
     end if
   end if
   !
-  !CALCULATE SPECifIC VOLUME
+  !CALCULATE SPECIFIC VOLUME
   !
   if (vol<=Zero) then  ;  rhn=  1.9
   else                 ;  rhn=  (One/vol)*18.0152
   end if
   !
-  !CALCULATE parameterS THAT GO INTO BASE function:
+  !CALCULATE PARAMETERS THAT GO INTO BASE function:
   !
   dp_=  9.99e+10
   dr_=  9.99e+10

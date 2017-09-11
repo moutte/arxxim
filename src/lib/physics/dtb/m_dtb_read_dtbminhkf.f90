@@ -162,13 +162,13 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+  &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
   !! if (FilCode(1:5)=="OBIGT") then
-    !! L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
+    !! L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP PARAMETERS"
   !! else ! case of SLOP98.DAT
-    !! L= "SOURCE NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
+    !! L= "SOURCE NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
   !! end if
   !! !
   !! !if(iDebug==4) print *,"< Default values"
@@ -260,9 +260,9 @@ subroutine DtbMinHKF_Read(F,vEle,N)
     !old!   !
     !old!   ! if FilCode changes, must re-initialize vifield ...!
     !old!   if (FilCode(1:5)=="OBIGT") then
-    !old!     L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP parameterS"
+    !old!     L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP PARAMETERS"
     !old!   else ! case of SLOP98.DAT
-    !old!     L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP parameterS"
+    !old!     L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
     !old!   end if
     !old!   call FieldList_Read(L,vStrField,vifield)
     !old!   !
@@ -286,7 +286,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
       !vStrField(1:nField)= &
       !!!!!"____________","____________","____________","____________","____________",
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-      !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+      !&   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
       !
       call LinToWrd(L,W,EoL,"NO")
       !
@@ -597,7 +597,7 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
         !
         if (FilCode(1:5)=="OBIGT") then
           !
-          !L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP parameterS"
+          !L= "SOURCE NAME SKIP SCFORM SKIP SKIP SKIP SKIP PARAMETERS"
           CodFormula="SCFORM"
           !
           call LinToWrd(L,W,EoL); M%Name=trim(W) !if(idebug>1) write(fTrc,"(A)") M%Name
@@ -624,7 +624,7 @@ subroutine DtbMinHKF_Read_Old(F,vEle,N)
           !
         else ! default FilCode is SLOP98
           !
-          !L= "SOURCE SKIP NAME SKIP ECFORM SKIP SKIP parameterS"
+          !L= "SOURCE SKIP NAME SKIP ECFORM SKIP SKIP PARAMETERS"
           !
           call LinToWrd(L,W,EoL) !skip abredged name ; M%Abbr=trim(W)
           call LinToWrd(L,W,EoL) ; M%Name=trim(W)
@@ -767,7 +767,7 @@ subroutine FieldList_Read( &
   !call pause_
   !
   ! (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  !   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+  !   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   if(vifield(10)==0) & ! for "PARAMETERS"
   call Stop_( &

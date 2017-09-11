@@ -13,7 +13,7 @@ module M_Trace
   !
   private
   !
-  !// parameterS
+  !// parameters
   character(len=20), parameter :: Default_TraceFileName =  "debug_all.log"
   character(len=9),  parameter :: Default_ErrorFileName =  "error.log"
 

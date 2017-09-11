@@ -9,13 +9,14 @@ sExe= os.path.join("..","bin",sExe)
 sExe= "arx_o3"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx_debug"
-sExe= "arx_optim"
-sExe= os.path.join("..","bin",sExe)
-
 sExe= "arx_optim"
 sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
+
+sExe= "arx_debug"
+sExe= "arx_optim"
+sExe= "a.out"
+sExe= os.path.join("..","bin",sExe)
 
 sDebug= "1"
 sCmd=  "GEM"
@@ -482,6 +483,7 @@ for i,points in enumerate(lines):
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= lis_paragen[i].replace('=','\n')
+  textstr= str(i)
   fig.text(x,y,
     textstr,
     verticalalignment='center',

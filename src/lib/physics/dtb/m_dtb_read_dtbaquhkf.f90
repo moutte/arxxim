@@ -137,11 +137,11 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+  &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
   if (FilCode(1:5)=="OBIGT") then
-    L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP PARAMETERS"
+    L= "INDEX NAME SKIP SCFORM TYPE SKIP SKIP SKIP PARAMETERS"
   else ! case of SLOP98.DAT
     L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
   end if
@@ -224,7 +224,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     case("FORMULA")
       call LinToWrd(L,W,EoL)
       CodFormula= trim(W)
-
+      !
       if(CodFormula=="SCFORM") then
         if(vifield(4)==0) then
           vifield(4)= vifield(5)
@@ -236,7 +236,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
           write(fFormula,'(A,/)') "resuts of formula conversion"
         end if
       end if
-
+      !
       cycle DoFile !-----------------------------------------------cycle
     !--------------------------------------------------/ for old formats
     case default
@@ -249,6 +249,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !
     M%Num=     "0"
     M%Name=    "0"
+    M%Abbr=    "0"
     M%Formula= "0"
     !-------------------------------------------------- scan a data line
     do I= 1,vifield(10)-1
@@ -257,7 +258,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       call LinToWrd(L,W,EoL,"NO")
       !
       ! (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-      !   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+      !   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
       !
       if(I==vifield(2)) then  ! INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
@@ -354,21 +355,21 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     if (FilCode(1:5)=="OBIGT") then
       ! in OBIGT database, Cp and V are tabulated fot aqu'species
       ! but not used as input parameters -> vX(4:5) ignored
-
-      M%G0R=vX(1);   M%H0R=vX(2); M%S0_= vX(3)
+      !
+      M%G0R=vX(1);   M%H0R=vX(2);  M%S0_= vX(3)
       M%A1= vX(6);   M%A2= vX(7);  M%A3=  vX(8); M%A4=vX(9);
       M%C1= vX(10);  M%C2= vX(11)
       M%wref=vX(12)
       M%Chg= INT(vX(13))
-
+      !
     else
-
+      !
       M%G0R=vX(1);  M%H0R=vX(2); M%S0_= vX(3)
       M%A1= vX(4);  M%A2= vX(5); M%A3=  vX(6); M%A4=vX(7);
       M%C1= vX(8);  M%C2= vX(9)
       M%wref= vX(10)
       M%Chg=  INT(vX(11))
-
+      !
     end if
     !
     M%A1=    M%A1*1.0D-1

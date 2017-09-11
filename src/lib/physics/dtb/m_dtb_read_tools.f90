@@ -8,10 +8,70 @@ module M_Dtb_Read_Tools
   !
   public:: DtbRead_Build_vElement
   public:: DtbRead_Build_ExtendedFormula
+  public:: FieldList_Read
   !
 contains
 
+subroutine FieldList_Read( &
+& L,         &
+& vStrField, &
+& vifield)
+!-- check that the essential fields are present in the field list:
+!-- NAME, ECFORM/SCFORM, PARAMETERS 
+  use M_Trace,   only: iDebug, Stop_
+  use M_IoTools, only: LinToWrd
+  !
+  character(len=*),intent(inout):: L
+  character(len=12),intent(in):: vStrField(:)
+  integer,intent(out):: vifield(:)
+  !
+  character(len=80):: W
+  logical:: EoL
+  integer:: I,J
+  !
+  vifield(:)= 0
+  I=0
+  do
+    call LinToWrd(L,W,EoL)
+    I=I+1
+    do J=1,size(vStrField)
+      if( trim(W)==trim(vStrField(J)) ) then
+        vifield(J)= I
+        exit
+      end if
+    end do
+    if(EoL) exit
+  end do
+
+  if(iDebug==4) then
+    do I=1,size(vStrField)
+      print *,vifield(I),trim(vStrField(I))
+    end do
+  end if
+  !pause_
+  !
+  if(vifield(10)==0) & ! for "PARAMETERS"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
+
+  if(vifield(3)==0) & ! for "NAME"
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
+
+  if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
+  !
+  !print *,vifield(1),vifield(2),vifield(3),vifield(4),vifield(5),vifield(9),vifield(10)
+  !pause_
+end subroutine FieldList_Read
+
 subroutine DtbRead_Build_vElement(vEle,vElement)
+!--
+!-- transform uppercase element name to case-sensitive element name,
+!-- e.g. MG to Mg, CO to Co, etc.
+!-- necessary for scanning SCFORM formulas for stoichiometry retrieve
+!--
   use M_IOTools,only: cUpper,cLower
   use M_T_Element,only: T_Element
   !

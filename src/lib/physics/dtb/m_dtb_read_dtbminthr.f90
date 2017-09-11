@@ -453,7 +453,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+  &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
   L= "TYPE NAME ECFORM SKIP SOURCE SKIP PARAMETERS"
@@ -536,7 +536,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       !vStrField(1:nField)= &
       !!!!!"____________","____________","____________","____________","____________",
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-      !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
+      !&   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
       !
       call LinToWrd(L,W,EoL,"NO")
       !
@@ -575,7 +575,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       end if
 
     end do
-    !------------------------ scan the data line (left to parameterS) --
+    !------------------------ scan the data line (left to PARAMETERS) --
     !
     !--------------------------------------------------- read formula --
     call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)

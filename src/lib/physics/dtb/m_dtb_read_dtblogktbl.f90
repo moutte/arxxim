@@ -143,7 +143,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
+  &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
   &   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
   L= "TYPE INDEX NAME ECFORM SIZE PARAMETERS" != default field list
@@ -246,7 +246,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
       !
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
       !&   "SIZE        ","VOLUME      ","DENSITY     ","FITTING     ","PARAMETERS  ", &
-      !&   "SKIP        ","SOURCE      "/)
+      !&   "ABBREV      ","SOURCE      "/)
       !
       if(I==vifield(1)) then  ! type
         !
@@ -413,7 +413,7 @@ subroutine FieldList_Read( &
   !call pause_
   !
   !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
+  !&   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
   !&   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
   if(vifield(10)==0) & ! for "PARAMETERS"

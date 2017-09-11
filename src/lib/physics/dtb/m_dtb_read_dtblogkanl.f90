@@ -114,7 +114,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   !---/ for header processing --
   !
   !! character(len=512):: FieldList_Default= &
-  !! & "TYPE SOURCE NAME SCFORM size parameterS"
+  !! & "TYPE SOURCE NAME SCFORM SIZE PARAMETERS"
   !
   integer,dimension(:),allocatable::vStoik !for Formula_Read
   !
@@ -145,7 +145,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   vStrField(1:nField)= &
   !!!!"____________","____________","____________","____________","____________",
   & (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-  &   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
+  &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
   &   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
   L= "TYPE INDEX NAME SCFORM SIZE PARAMETERS" != default field list
@@ -267,7 +267,7 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
       !vStrField(1:12)= &
       !!!!!"____________","____________","____________","____________","____________",
       !& (/"TYPE        ","INDEX       ","NAME        ","SCFORM      ","ECFORM      ", &
-      !&   "SKIP        ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
+      !&   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  ", &
       !&   "SIZE        ","VOLUME      ","DENSITY     "/)
       !
       if(I==vifield(1)) then  !type
