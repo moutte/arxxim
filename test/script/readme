@@ -1,20 +1,28 @@
 python scripts for arxim
 
-arxim_map_activity.py
-  equilibrium assemblages as a function of the activities of two independent species
-  
+= arxim_map_activity.py
+equilibrium assemblages as a function of the activities of two independent species
 
-arxim_map_dominant.py
+= arxim_map_dominant.py
+for a system with a given total amount of element X, map the domination domains of the different X-bearing species in solution. The mapping on a given grid is done first, then the limits between domains are refined. 
 
-arxim_map_dominant_2.py
+= arxim_map_dominant_2.py
+same as arxim_map_dominant.py, with the refining called within the mapping routine
 
-arxim_map_tp.py
+= arxim_map_tp.py
+equilibrium assemblages as a function of T and P
 
-arxim_map_tp_0.py
+= arxim_map_tp_0.py
+same as arxim_map_tp.py, specifically for Al2SiO5 system, computing G's using MyThermo instead of arxim
 
-arxim_map_tp_2.py
+= arxim_map_xt_fm.py
+example of X,T diagram with X=Fe/(Fe+Mg) and the possibility to chage P along T
 
-MyLib.py
-MyLibTk.py
-MyThermo.py
-path_XY_plot.py
+= arxim_map_xt_fsp.py
+example of X,T diagram for feldspar solid solution with X=Or/(Or+Ab) and the possibility to change P along T
+
+= MyLib.py
+= MyLibTk.py
+= MyThermo.py
+
+= path_XY_plot.py

@@ -8,9 +8,16 @@ def mynum(s):
   except exceptions.ValueError:
     return 0.
     
-sExe= "arxim.exe"    #windows
-sExe= "arxim"        #linux
+#windows
+sExe= "arxim.exe"
 sExe= os.path.join("..","bin",sExe)
+
+#linux
+sExe= "arx_debug"
+sExe= "arx_optim"
+sExe= "a.out"
+sExe= os.path.join("..","bin",sExe)
+
 sDebug= "1"
 sCmd= "SPC"
 
@@ -24,26 +31,20 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #sys.exit()  
 #---------------------------------------------------/cleaning tmp_ files
 
-#------------------------------------------------------------input files
+#-----------------------------------------------------------user-defined
 fInn= "inn/map1a_fe_ox.inn"
+Selection="FE"
 
 Xlis= ["H"]
 Ylis= ["OX"]
 
 Xlabel= "pH"
-Ylabel= "-log(f_O2(g))"
+Ylabel= "colog(f_O2(g))"
 
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 2., 0.02
-Ymin,Ymax,Ydelta,Ytol=  4., 40., 2., 0.1
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
+Ymin,Ymax,Ydelta,Ytol= 40.,  4., 2., 0.1
 
-#----------------------------------------------------------//input files
-
-head,tail= os.path.split(fInn)
-if '.' in tail:
-  figName= tail.split('.')[0]
-else:
-  figName= tail
+#---------------------------------------------------------//user-defined
 
 iKeyword= 0
 iValue=   3
@@ -77,10 +78,10 @@ DEBUG= False
 
 
 #------------------------------------------------initialize the x,y grid
-Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
+Xdim= int(round(abs(Xmax-Xmin)/Xdelta))+1
 Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
-Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
+Ydim= int(round(abs(Ymax-Ymin)/Ydelta))+1
 Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if False:
@@ -208,7 +209,6 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
 tab_spc=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
-first= True
 
 #--vars for refining function
 lis_limits=  []
@@ -228,7 +228,7 @@ for iY,y in enumerate(Yser):
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
     #
     #-------------------------------------------------for first run only
-    if first:
+    if (iX,iY)==(0,0):
       with open("tmp_species.tab") as f:
         spc_names= f.readline().split()
         spc_types= f.readline().split()
@@ -243,7 +243,6 @@ for iY,y in enumerate(Yser):
       for (i,name) in enumerate(spc_names):
         if spc_include[i]: print spc_names[i]
       if DEBUG: raw_input()
-      first= False
     #-----------------------------------------------//for first run only
     #
     if OK:
@@ -426,6 +425,8 @@ plt.rcParams.update({'font.size': 12})
 
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
+symbols=['b','g','r','c','m','y']
+len_symb= len(symbols)
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
 
@@ -438,7 +439,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i], linestyle='-', linewidth=1.0)
+  fig.plot(vx, vy, symbols[i%len_symb], linestyle='-', linewidth=2.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid

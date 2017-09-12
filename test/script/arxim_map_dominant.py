@@ -16,13 +16,14 @@ sExe= os.path.join("..","bin",sExe)
 sExe= "arx_optim"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx_debug"
-sExe= "arx_optim"
-sExe= os.path.join("..","bin",sExe)
-
 sExe= "arx_optim"
 sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
+
+sExe= "arx_debug"
+sExe= "arx_optim"
+sExe= "a.out"
+sExe= os.path.join("..","bin",sExe)
 
 sDebug= "1"
 sCmd= "SPC"
@@ -38,18 +39,16 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map1a_fe_ox.inn"
-#Elements=["FE"]
-Selection="FE"
-
 fInn= "inn/map1b_cr_ox.inn"
 #Elements=["CR"]
 Selection="CR"
 
+fInn= "inn/map1a_fe_ox.inn"
+#Elements=["FE"]
+Selection="FE"
+
 Xlis= ["H"]
 Ylis= ["OX"]
-Xmin,Xmax,Xdelta,Xtol=  1., 13., 4., 0.02
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 4., 0.1
 
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 1., 0.02
 Ymin,Ymax,Ydelta,Ytol= 40.,  4., 1., 0.01
@@ -89,10 +88,10 @@ lis_spc=[]
 
 
 #------------------------------------------------initialize the x,y grid
-Xdim= int(abs(Xmax-Xmin)/Xdelta)+1
+Xdim= int(round(abs(Xmax-Xmin)/Xdelta))+1
 Xser= plt.linspace(Xmin,Xmax,num=Xdim)
 
-Ydim= int(abs(Ymax-Ymin)/Ydelta)+1
+Ydim= int(round(abs(Ymax-Ymin)/Ydelta))+1
 Yser= plt.linspace(Ymin,Ymax,num=Ydim)
 
 if 0:
@@ -220,7 +219,6 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
 tab_spc=plt.zeros((Xdim,Ydim),'int')
 tab_y=plt.zeros((Xdim,Ydim),'float')
 tab_x=plt.zeros((Xdim,Ydim),'float')
-first= True
 
 START= time.time()
 #-----------------------------------------------------------------y-loop
@@ -234,7 +232,7 @@ for iY,y in enumerate(Yser):
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
     #
     #--------------------------------------------------done on first run
-    if first:
+    if (iX,iY)==(0,0):
       with open("tmp_species.tab") as f:
         spc_names= f.readline().split()
         spc_types= f.readline().split()
@@ -249,7 +247,6 @@ for iY,y in enumerate(Yser):
       for (i,name) in enumerate(spc_names):
         if spc_include[i]: print spc_names[i]
       if DEBUG: raw_input()
-      first= False
     #------------------------------------------------//done on first run
     #
     if OK:
@@ -467,6 +464,7 @@ plt.rcParams.update({'font.size': 12})
 fig= plt.subplot(1,1,1)
 symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']
 symbols=['b','g','r','c','m','y']
+len_symb= len(symbols)
 fig.grid(color='r', linestyle='-', linewidth=0.1)
 fig.grid(True)
 
@@ -479,7 +477,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=2.0)
+  fig.plot(vx, vy, symbols[i%len_symb], linestyle='-', linewidth=2.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
