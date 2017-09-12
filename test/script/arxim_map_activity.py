@@ -30,8 +30,8 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map2b_activ.inn"
 fInn= "inn/map2a_activ.inn"
+fInn= "inn/map2b_activ.inn"
 
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]

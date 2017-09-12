@@ -9,6 +9,7 @@ os.chdir("../")
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("tmp/f1e*.inn")
 files= glob.glob("inn/map3d_tp.inn")
+files= glob.glob("tmp/map2a*.inn")
 files.sort()
 for f in files: print f
 #raw_input()
@@ -23,10 +24,7 @@ sExe= os.path.join("..","bin",sExe)
 sExe= "arx-basis"
 sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "arx-win"
-sExe= os.path.join("..","..","arx-win","bin",sExe)
-
-sExe= "arx_optim"
+sExe= "a.out"
 sExe= os.path.join("..","bin",sExe)
 
 Debug= "3"

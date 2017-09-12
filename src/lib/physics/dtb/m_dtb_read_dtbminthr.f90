@@ -460,6 +460,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   !
   !if(iDebug==4) print *,"< Default values"
   call FieldList_Read(L,vStrField,vifield)
+  call FieldList_Check(1,vStrField,vifield) !"TYPE"
   !if(iDebug==4) print *,"</ Default values"
   !---/ scan default field list
   !
@@ -496,6 +497,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       L= trim(W)//" "//trim(L)
       !if(iDebug==4) print *,"< values from file"
       call FieldList_Read(L,vStrField,vifield)
+      call FieldList_Check(1,vStrField,vifield) !"TYPE"
       !if(iDebug==4) print *,"</ values from file"
 
       if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
@@ -730,59 +732,6 @@ contains
   end subroutine Save_Record
 
 end subroutine DtbMinThr_Read_Line
-
-subroutine FieldList_Read( &
-& L,          &
-& vStrField, &
-& vifield)
-  use M_IoTools
-  !
-  character(len=*),intent(inout):: L
-  character(len=12),intent(in):: vStrField(:)
-  integer,intent(out):: vifield(:)
-  !
-  character(len=80):: W
-  logical:: EoL
-  integer:: I,J
-  !
-  vifield(:)= 0
-  I=0
-  do
-    call LinToWrd(L,W,EoL)
-    I=I+1
-    do J=1,size(vStrField)
-      if( trim(W)==trim(vStrField(J)) ) then
-        vifield(J)= I
-        exit
-      end if
-    end do
-    if(EoL) exit
-  end do
-
-  !old! if(iDebug==4) then
-  !old!   do I=1,size(vStrField)
-  !old!     print *,vifield(I),trim(vStrField(I))
-  !old!   end do
-  !old! end if
-  !pause
-  !
-  if(vifield(10)==0) & ! for "PARAMETERS"
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
-
-  if(vifield(1)==0) & ! for "TYPE"  !!MIN/GAS/AQU
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(1)))
-
-  if(vifield(3)==0) & ! for "NAME"
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
-
-  if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
-  !
-end subroutine FieldList_Read
 
 subroutine ReadRVals5(Line,x1,x2,x3,x4,x5)
   use M_IOTools,only: LinToWrd,WrdToReal

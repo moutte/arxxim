@@ -16,7 +16,7 @@ sExe= os.path.join("..","..","arx-basis","bin",sExe)
 sExe= "a.out"
 sExe= os.path.join("..","..","arx-git","bin",sExe)
 
-sDebug= "3"
+sDebug= "1"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
@@ -28,7 +28,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map3d_tp.inn"
+fInn= "inn/map3b_tp.inn"
 Xlis= ["FeO","MGO"]
 Ylis= ["TDGC","PBAR"]
 Xlabel= "FM"
@@ -471,8 +471,9 @@ plt.rcParams['figure.figsize']= 8.,8.   #ratio 4/4
 plt.rcParams.update({'font.size': 9})
 
 fig= plt.subplot(1,1,1)
-symbols=['b','g','r','c','m','y']
 symbols=['bo','go','ro','cs','mD','yd']
+symbols=['b','g','r','c','m','y']
+len_symb= len(symbols)
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)
   
@@ -485,12 +486,12 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  j= i%6
-  fig.plot(vx, vy, symbols[j], linestyle='-', linewidth=2.0)
+  fig.plot(vx, vy, symbols[i%len_symb], linestyle='-', linewidth=2.0)
 
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= lis_paragen[i].replace('=','\n')
+  textstr= str(i)
   fig.text(x,y,
     textstr,
     verticalalignment='center',

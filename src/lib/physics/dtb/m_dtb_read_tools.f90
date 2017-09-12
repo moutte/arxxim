@@ -9,6 +9,7 @@ module M_Dtb_Read_Tools
   public:: DtbRead_Build_vElement
   public:: DtbRead_Build_ExtendedFormula
   public:: FieldList_Read
+  public:: FieldList_Check
   !
 contains
 
@@ -42,29 +43,41 @@ subroutine FieldList_Read( &
     end do
     if(EoL) exit
   end do
-
+  !
   if(iDebug==4) then
     do I=1,size(vStrField)
       print *,vifield(I),trim(vStrField(I))
     end do
   end if
-  !pause_
   !
   if(vifield(10)==0) & ! for "PARAMETERS"
   call Stop_( &
   & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
-
+  !
   if(vifield(3)==0) & ! for "NAME"
   call Stop_( &
   & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
-
+  !
   if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
   call Stop_( &
   & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
   !
-  !print *,vifield(1),vifield(2),vifield(3),vifield(4),vifield(5),vifield(9),vifield(10)
-  !pause_
 end subroutine FieldList_Read
+
+subroutine FieldList_Check(i,vStrField,vifield)
+!-- check that the essential fields are present in the field list:
+!-- NAME, ECFORM/SCFORM, PARAMETERS 
+  use M_Trace,   only: Stop_
+  !
+  integer,intent(in):: i
+  character(len=12),intent(in):: vStrField(:)
+  integer,intent(in):: vifield(:)
+  !
+  if(vifield(i)==0) &
+  call Stop_( &
+  & "in FieldList_Read: keyword not found for "//trim(vStrField(i)))
+  !
+end subroutine FieldList_Check
 
 subroutine DtbRead_Build_vElement(vEle,vElement)
 !--

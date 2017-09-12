@@ -423,60 +423,6 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
   !
 end subroutine DtbLogKAnl_Read
 
-subroutine FieldList_Read( &
-& L,          &
-& vStrField, &
-& vifield)
-  
-  use M_IoTools
-  
-  !---------------------------------------------------------------------
-  character(len=*),intent(inout):: L
-  character(len=12),intent(in):: vStrField(:)
-  integer,intent(out):: vifield(:)
-  !---------------------------------------------------------------------
-  character(len=80):: W
-  logical:: EoL
-  integer:: I,J
-  !---------------------------------------------------------------------
-  
-  vifield(:)= 0
-  I=0
-  do
-    call LinToWrd(L,W,EoL)
-    I=I+1
-    do J=1,size(vStrField)
-      if( trim(W)==trim(vStrField(J)) ) then
-        vifield(J)= I
-        exit
-      end if
-    end do
-    if(EoL) exit
-  end do
-
-  if(iDebug==4) then
-    do I=1,size(vStrField)
-      print *,vifield(I),trim(vStrField(I))
-    end do
-  end if
-  !call pause_
-  !
-  if(vifield(10)==0) & ! for "PARAMETERS"
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(10)))
-
-  if(vifield(3)==0) & ! for "NAME"
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(3)))
-
-  if(vifield(4)==0 .and. vifield(5)==0) & ! for ECFORM/SCFORM
-  call Stop_( &
-  & "in FieldList_Read: keyword not found for "//trim(vStrField(4))//"_"//trim(vStrField(5)))
-  !
-  !print *,vifield(1),vifield(2),vifield(3),vifield(4),vifield(5),vifield(9),vifield(10)
-  !call pause_
-end subroutine FieldList_Read
-
 subroutine Test(ff,M)
   use M_T_Species
   use M_Numeric_Const,only: Ln10
