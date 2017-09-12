@@ -4,4 +4,6 @@ bin/*.mod
 test/out/
 !test/out/000
 test/*
+src/tmp*
+
 
