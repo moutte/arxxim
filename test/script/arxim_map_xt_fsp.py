@@ -1,25 +1,25 @@
 import os, glob, sys
 import pylab as plt
 
+#-------------------------------------------------------------------INIT
+os.chdir("../")
+
+if sys.platform.startswith("win"):
 #windows
-sExe= "arxim.exe"
-sExe= os.path.join("..","bin",sExe)
+  sExe= "arxim.exe"
+  sExe= os.path.join("..","bin",sExe)
 
-sExe= "arx_o3"
-sExe= os.path.join("..","..","arx-basis","bin",sExe)
-
-sExe= "arx_debug"
-sExe= "arx_optim"
-sExe= os.path.join("..","bin",sExe)
-
-sExe= "a.out"
-sExe= os.path.join("..","..","arx-git","bin",sExe)
+if sys.platform.startswith("linux"):
+#linux
+  sExe= "a.out"
+  sExe= os.path.join("..","..","arx-git","bin",sExe)
+  
+  sExe= "a.out"
+  sExe= os.path.join("..","bin",sExe)
 
 sDebug= "1"
 sCmd=  "GEM"
 
-#-------------------------------------------------------------------INIT
-os.chdir("../")
 #----------------------------------------------------cleaning tmp_ files
 for l in glob.glob("tmp_*"): os.remove(l)
 if os.path.isfile("error.log"): os.remove("error.log")

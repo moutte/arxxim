@@ -3,14 +3,27 @@ import os, glob, sys
 import pylab as plt
 import numpy as np
 
-sExe= "arxim.exe"    #windows
-sExe= "arxim"        #linux
-sExe= os.path.join("..","bin",sExe)
+#-------------------------------------------------------------------INIT
+os.chdir("../")
+
+if sys.platform.startswith("win"):
+#windows
+  sExe= "arxim.exe"
+  sExe= os.path.join("..","bin",sExe)
+
+if sys.platform.startswith("linux"):
+#linux
+  sExe= "a.out"
+  sExe= os.path.join("..","..","arx-git","bin",sExe)
+  
+  sExe= "arx_debug"
+  sExe= "arx_optim"
+  sExe= "a.out"
+  sExe= os.path.join("..","bin",sExe)
+
 sDebug= "1"
 sCmd=  "GEM"
 
-#-------------------------------------------------------------------INIT
-os.chdir("../")
 #----------------------------------------------------cleaning tmp_ files
 for l in glob.glob("tmp_*"): os.remove(l)
 if os.path.isfile("error.log"): os.remove("error.log")
