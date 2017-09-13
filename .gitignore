@@ -7,4 +7,5 @@ src/tmp*
 test/tmp/*
 bin/a.out
 test/*.*
+valid/*
 
