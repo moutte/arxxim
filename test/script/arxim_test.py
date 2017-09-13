@@ -2,6 +2,14 @@
 
 import glob #for listing files, Langtangen, p118
 import os
+import sys
+
+s=sys.platform
+print s
+if sys.platform.startswith("linux"):
+  print "linux"
+sys.exit()
+
 
 os.chdir("../")
 #print "DIR=", os.getcwd()
@@ -16,16 +24,18 @@ for f in files: print f
 #---------------------------------------------------------------------//
 
 #---------------------------------------------------------------EXE FILE
+if sys.platform.startswith("win"):
 #windows
-sExe= "arxim.exe"
-sExe= os.path.join("..","bin",sExe)
+  sExe= "arxim.exe"
+  sExe= os.path.join("..","bin",sExe)
 
+if sys.platform.startswith("linux"):
 #linux
-sExe= "arx-basis"
-sExe= os.path.join("..","..","arx-basis","bin",sExe)
+  sExe= "arx-basis"
+  sExe= os.path.join("..","..","arx-basis","bin",sExe)
 
-sExe= "a.out"
-sExe= os.path.join("..","bin",sExe)
+  sExe= "a.out"
+  sExe= os.path.join("..","bin",sExe)
 
 Debug= "3"
 #---------------------------------------------------------------------//
