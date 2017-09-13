@@ -4,24 +4,8 @@ import glob #for listing files, Langtangen, p118
 import os
 import sys
 
-s=sys.platform
-print s
-if sys.platform.startswith("linux"):
-  print "linux"
-sys.exit()
-
-
 os.chdir("../")
 #print "DIR=", os.getcwd()
-
-#----------------------------------------------------------INPUT FILE(S)
-files= glob.glob("tmp/f1e*.inn")
-files= glob.glob("inn/map3d_tp.inn")
-files= glob.glob("tmp/map2a*.inn")
-files.sort()
-for f in files: print f
-#raw_input()
-#---------------------------------------------------------------------//
 
 #---------------------------------------------------------------EXE FILE
 if sys.platform.startswith("win"):
@@ -38,6 +22,15 @@ if sys.platform.startswith("linux"):
   sExe= os.path.join("..","bin",sExe)
 
 Debug= "3"
+#---------------------------------------------------------------------//
+
+#----------------------------------------------------------INPUT FILE(S)
+files= glob.glob("tmp/f1e*.inn")
+files= glob.glob("inn/map3d_tp.inn")
+files= glob.glob("tmp/map2a*.inn")
+files.sort()
+for f in files: print f
+#raw_input()
 #---------------------------------------------------------------------//
 
 i0= 0
