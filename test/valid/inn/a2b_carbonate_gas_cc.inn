@@ -7,7 +7,7 @@ END
 
 CONDITIONS
   TITLE  carbonate system, calcite-saturation + fixed activity CO2
-  OUTPUT out\a2_carb_gas_cc
+  OUTPUT out\a2b
   DEBUG  3
 END CONDITIONS
 

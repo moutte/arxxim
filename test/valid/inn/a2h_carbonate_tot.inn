@@ -5,7 +5,7 @@ TEST
 END
 CONDITIONS
   TITLE  carbonate system, pH against tot Carbonate
-  OUTPUT out\a2_carb_tot
+  OUTPUT out\a2h
   DEBUG 3
 END CONDITIONS
 SYSTEM

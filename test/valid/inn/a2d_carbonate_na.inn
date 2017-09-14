@@ -6,7 +6,7 @@ END
 
 CONDITIONS
   TITLE  carbonate system, pH-change by adding NaOH
-  OUTPUT out\a2_carb_na
+  OUTPUT out\a2d
   DEBUG 3
 END CONDITIONS
 

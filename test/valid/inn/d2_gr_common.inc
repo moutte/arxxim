@@ -1,7 +1,7 @@
 !in_gr_common
 
 include dtb/elements.dtb
-INCLUDE dtb\logk_eq36_hkf.dtb
+include dtb/logk_eq36_hkf.dtb
 include dtb/kinetics_usgs.dtb
 
 SYSTEM

@@ -5,7 +5,7 @@ TEST
 END
 CONDITIONS
   TITLE  carbonate system, fluid mixing
-  OUTPUT out\a2_carb_mix
+  OUTPUT out\a2c
   DEBUG 3
 END CONDITIONS
 SYSTEM !calcite-saturated, under low pCO2
@@ -20,11 +20,10 @@ PATH MIX
    CA MOBILE CALCITE 0.00
   END SYSTEM.MIX
 END PATH
-
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
-
 SOLVENT
   MODEL DAV_1
 END
+END INPUT
 

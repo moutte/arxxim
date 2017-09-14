@@ -5,7 +5,7 @@ END TEST
 
 CONDITIONS
   TITLE   Soler_Lasaga_1998, supergene alteration on qtz-fsp-mus, rain 10cm/year
-  OUTPUT  out\d2_gr_10
+  OUTPUT  out\d2b
   DEBUG   3
 ENDCONDITIONS
  
