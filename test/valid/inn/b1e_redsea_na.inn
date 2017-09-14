@@ -1,0 +1,37 @@
+TEST
+  COMPUTE SPC
+  COMPUTE EQU
+  COMPUTE Q
+END TEST
+CONDITIONS
+  TITLE  Red Sea brine, Bethke, p96
+  OUTPUT out\b3_redsea_a
+  TP.POINT  3
+  DEBUG  3
+END CONDITIONS
+
+SYSTEM
+  NA  GRAM  NA+    92.600
+  K   GRAM  K+      1.870  
+  MG  GRAM  MG+2    0.764  
+  CA  GRAM  CA+2    5.150  
+  CL  GRAM  CL-   156.030
+  S   GRAM  SO4-2   0.840  
+  C   GRAM  HCO3-   0.140  
+  CU  GRAM  CU+     0.26E-3
+  F   GRAM  F-      5.00E-3
+  FE  GRAM  FE+2   81.0E-3
+  PB  GRAM  PB+2    0.63E-3
+  ZN  GRAM  ZN+2    5.40E-3
+  H   MOBILE H+     5.6
+  BA  MOBILE BARITE
+  OX  MOBILE SPHALERITE
+END SYSTEM
+  BA  GRAM  BA+2   0.90E-3    
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\logk_eq36_hkf.dtb
+
+SOLVENT
+  MODEL DH2 !DAV_1
+END

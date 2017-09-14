@@ -1,0 +1,35 @@
+TEST
+  COMPUTE SPC
+  COMPUTE SPCPATH
+  COMPUTE Q
+END
+CONDITIONS
+  TITLE  carbonate system, Bethke p188
+  OUTPUT out\a2e
+  DEBUG  3
+END CONDITIONS
+
+/*
+  start with alkalineNaCl solution,
+  with small amount of carbonate,
+  and add 300 millimole HCl
+*/
+
+SYSTEM
+ TDGC 25.
+ H  PK    H+    12.0
+ C  MOLE  HCO3- 0.001
+ NA BALANCE NA+
+ CL MOLE  CL-   0.200
+END SYSTEM
+
+PATH ADD !titration path
+  H(1)CL(1) INITIAL 0.005 FINAL 0.300 DELTA 0.005 
+END PATH
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\hsvhkf_aqu.dtb
+
+SOLVENT
+  MODEL DAV_1
+END

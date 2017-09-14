@@ -1,0 +1,34 @@
+TEST
+  COMPUTE SPC
+  COMPUTE SPCPATH
+  COMPUTE Q
+END
+CONDITIONS
+  TITLE  carbonate system, Sillen diagram
+  OUTPUT out\a2g
+  DEBUG  3
+END CONDITIONS
+
+SYSTEM
+ TDGC 25.
+ C INERT CO2(AQ) 0.1
+ H MOBILE H+     7.00
+END SYSTEM
+
+PATH CHANGE
+  H initial 0.00 final 14.0 delta 0.5
+END
+
+TP.TABLE
+TdgC  0.01  25   50   75   100  125  150  175  200  225  250  275  300  325  350
+Pbar  1.0   1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  
+END TP.TABLE
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\hsvhkf_aqu.dtb
+
+SOLVENT
+  MODEL DAV_1
+END
+
+

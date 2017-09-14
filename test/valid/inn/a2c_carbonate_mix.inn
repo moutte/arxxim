@@ -1,0 +1,30 @@
+TEST
+  COMPUTE SPC
+  COMPUTE SPCPATH
+  COMPUTE Q
+END
+CONDITIONS
+  TITLE  carbonate system, fluid mixing
+  OUTPUT out\a2_carb_mix
+  DEBUG 3
+END CONDITIONS
+SYSTEM !calcite-saturated, under low pCO2
+ TDGC 25.
+ C  MOBILE CO2(G)  3.5
+ CA MOBILE CALCITE 0.00
+END SYSTEM
+PATH MIX
+  SYSTEM.MIX !calcite-saturated, under higher pCO2
+   TDGC 25.
+   C  MOBILE CO2(G)  1.0
+   CA MOBILE CALCITE 0.00
+  END SYSTEM.MIX
+END PATH
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\logk_eq36_hkf.dtb
+
+SOLVENT
+  MODEL DAV_1
+END
+

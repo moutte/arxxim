@@ -1,0 +1,14 @@
+O__	CL_	C__	NA_	H__	Chg	_____species	STATUS	
+   1.00	   0.00	   0.00	   0.00	   2.00	  0	         H2O	INT_PRIMARY
+   2.00	   0.00	   1.00	   0.00	   0.00	  0	     CO2(AQ)	INT_AQUEOUS
+   3.00	   0.00	   1.00	   0.00	   0.00	 -2	       CO3-2	INT_AQUEOUS
+   0.00	   1.00	   0.00	   0.00	   0.00	 -1	         CL-	INT_PRIMARY
+   0.00	   0.00	   0.00	   0.00	   1.00	  1	          H+	INT_PRIMARY
+   3.00	   0.00	   1.00	   0.00	   1.00	 -1	       HCO3-	INT_PRIMARY
+   0.00	   0.00	   0.00	   1.00	   0.00	  1	         NA+	INT_PRIMARY
+   0.00	   1.00	   0.00	   1.00	   0.00	  0	    NACL(AQ)	INT_AQUEOUS
+   1.00	   0.00	   0.00	   1.00	   1.00	  0	    NAOH(AQ)	INT_AQUEOUS
+   1.00	   0.00	   0.00	   0.00	   1.00	 -1	         OH-	INT_AQUEOUS
+   0.00	   1.00	   0.00	   0.00	   1.00	  0	     HCL(AQ)	INT_AQUEOUS
+   0.00	   1.00	   0.00	   1.00	   0.00	  0	      HALITE	INT_MINERAL
+   1.00	   0.00	   0.00	   2.00	   0.00	  0	SODIUM-OXIDE	INT_MINERAL

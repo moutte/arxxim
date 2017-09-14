@@ -1,0 +1,26 @@
+TEST
+  COMPUTE SPCPATH
+  COMPUTE Q
+END TEST
+CONDITIONS
+  TITLE     boehmite solubility, variable Chlorinity
+  OUTPUT    out\a3_boehmite_cl
+  DEBUG     3
+END CONDITIONS
+
+SYSTEM
+  TDGC 200.
+  AL MOBILE BOEHMITE
+  CL INERT  CL-
+END SYSTEM
+
+PATH CHANGE
+  CL INITIAL 1.D-6 FINAL 3.0 RATIO 1.5
+END
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\eq36_hkf.dtb
+
+SOLVENT
+  MODEL DH1 !DAV_1
+END

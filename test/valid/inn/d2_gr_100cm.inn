@@ -1,0 +1,19 @@
+TEST
+  COMPUTE DYN
+  COMPUTE Q
+END TEST
+
+CONDITIONS
+  TITLE   Soler_Lasaga_1998, supergene alteration on qtz-fsp-mus, rain 1cm/year 
+  OUTPUT  out\d2_gr_100
+  DEBUG   1
+END CONDITIONS
+
+INCLUDE inn\d2_gr_common.inc
+
+DYNAMIC
+  UDARCY   1.0
+  TFIN     0.450E6
+END DYNAMIC
+
+

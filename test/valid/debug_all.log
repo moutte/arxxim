@@ -1,0 +1,761 @@
+
+< Test_ReadInput
+
+  SPC       
+  DYN       
+  Q         
+
+</ Test_ReadInput
+
+
+< Global_Build
+
+< Elements_Alloc_forDtb
+< Elements_BuildLnk
+ACT
+HE_
+NE_
+AR_
+KR_
+XE_
+AU_
+AG_
+LI_
+NA_
+K__
+MG_
+CA_
+SR_
+BA_
+FE_
+MN_
+P__
+AL_
+SI_
+TI_
+B__
+CR_
+NI_
+CU_
+CD_
+PB_
+MO_
+ZN_
+AS_
+U__
+S__
+CL_
+F__
+BR_
+I__
+N__
+C__
+E__
+nEle= 42
+</ Elements_BuildLnk
+</ Elements_Alloc_forDtb
+
+
+< Elements_Read_Redox
+
+oxydation states, default values:
+
+O__	 -2
+H__	  1
+OX_	  1
+ACT	  1
+HE_	  0
+NE_	  0
+AR_	  0
+KR_	  0
+XE_	  0
+AU_	  1
+AG_	  1
+LI_	  1
+NA_	  1
+K__	  1
+MG_	  2
+CA_	  2
+SR_	  2
+BA_	  2
+FE_	  0
+MN_	  2
+P__	  5
+AL_	  3
+SI_	  4
+TI_	  4
+B__	  4
+CR_	  0
+NI_	  2
+CU_	  0
+CD_	  2
+PB_	  2
+MO_	  6
+ZN_	  2
+AS_	  0
+U__	  0
+S__	  0
+CL_	  0
+F__	 -1
+BR_	 -1
+I__	 -1
+N__	  0
+C__	  0
+E__	  1
+
+</ Elements_Read_Redox
+
+
+< Dtb_Read_Species
+
+< DtbLogK_TPCond_Read
+  1 T=0.01_P=1.013 
+  2 T=25_P=1.013   
+  3 T=60_P=1.013   
+  4 T=100_P=1.013  
+  5 T=150_P=4.757  
+  6 T=200_P=15.537 
+  7 T=250_P=39.736 
+  8 T=300_P=85.838 
+TDGC	 DIM=   8  8
+PBAR	 DIM=   8  8
+</ DtbLogK_TPCond_Read
+
+
+< DtbLogKTbl_Read
+< DtbLogKTbl_Read
+
+
+< DtbLogKTbl_Read
+< DtbLogKTbl_Read
+
+
+< DtbLogKTbl_Read
+< DtbLogKTbl_Read
+
+</ Dtb_Read_Species
+
+
+< Species_Read_Excluded
+</ Species_Read_Excluded
+
+< Restrict database to species consistent with element list and redox state
+
+< Species_Read_AquSize
+aqu'size parameters
+
+AL+3                   	   3.42
+ALO+                   	   1.11
+ALOH+2                 	   2.37
+ALOO-                  	   1.38
+BF4-                   	   3.78
+BO2-                   	   1.36
+BAHCO3+                	   4.36
+BA+2                   	   3.22
+BACL+                  	   2.28
+BAF+                   	   1.65
+BAOH+                  	   2.46
+BR-                    	   1.96
+BR3-                   	   5.35
+BRO-                   	   1.76
+BRO3-                  	   3.29
+BRO4-                  	   4.49
+CAOH+                  	   1.68
+CN-                    	   2.21
+CO3-2                  	   2.87
+HCO3-                  	   2.26
+CAHCO3+                	   1.96
+CA+2                   	   2.87
+CACL+                  	   1.62
+CAF+                   	   1.35
+CD+2                   	   2.85
+CDOH+                  	   1.46
+HCDO2-                 	   1.32
+CDO2-2                 	   2.72
+CL-                    	   1.81
+CLO-                   	   1.77
+CLO2-                  	   2.29
+CLO3-                  	   3.30
+CLO4-                  	   3.85
+CR2O7-2                	   6.36
+CRO4-2                 	   3.45
+CU+                    	   1.76
+CU+2                   	   2.60
+CUOH+                  	   1.40
+CUOOH-                 	   2.59
+CUO2-2                 	   2.67
+F-                     	   1.33
+FE+2                   	   2.64
+FE+3                   	   3.56
+FECL+                  	   1.34
+FEOH+2                 	   2.64
+FEOH+                  	   1.34
+FEO+                   	   1.32
+FEOOH-                 	   1.26
+FEO2-                  	   1.79
+H+                     	   9.00
+H2ASO3-                	   2.40
+H2ASO4-                	   2.49
+H2P2O7-2               	   4.30
+H2PO4-                 	   2.18
+H3P2O7-                	   5.22
+HASO4-2                	   3.10
+HCRO4-                 	   4.32
+HF2-                   	   2.20
+HO2-                   	   1.65
+HPO4-2                 	   2.94
+HS-                    	   1.84
+HSO3-                  	   2.84
+HSO4-                  	   2.61
+HSO5-                  	   5.15
+HSIO3-                 	   1.64
+I-                     	   2.20
+I3-                    	   7.41
+IO-                    	   1.49
+IO3-                   	   2.51
+IO4-                   	   5.77
+K+                     	   2.27
+KSO4-                  	   2.96
+LI+                    	   1.62
+MGHCO3+                	   1.46
+MG+2                   	   2.54
+MGCL+                  	   1.20
+MGF+                   	   1.10
+MGOH+                  	   1.20
+MN+2                   	   2.68
+MN+3                   	   3.46
+MNCL+                  	   1.83
+MNOH+                  	   1.53
+HMNO2-                 	   1.35
+MNO2-2                 	   2.81
+MNO4-                  	   4.30
+MNO4-2                 	   3.49
+NH4+                   	   2.41
+NO2-                   	   2.57
+NO3-                   	   2.97
+NA+                    	   1.91
+NI+2                   	   2.57
+NICL+                  	   1.23
+NIOH+                  	   1.22
+HNIO2-                 	   1.02
+NIO2-2                 	   2.44
+OH-                    	   1.40
+PO4-3                  	   3.74
+PB+2                   	   3.08
+PBCL+                  	   2.49
+PBCL3-                 	   8.43
+PBCL4-2                	   5.85
+PBOH+                  	   1.34
+HPBO2-                 	   2.03
+S2-2                   	   3.27
+S2O3-2                 	   3.51
+HS2O3-                 	   2.64
+S2O4-2                 	   3.69
+HS2O4-                 	   3.09
+S2O5-2                 	   3.78
+S2O6-2                 	   3.95
+S2O8-2                 	   5.31
+S3-2                   	   3.50
+S3O6-2                 	   4.06
+S4-2                   	   3.77
+S4O6-2                 	   5.52
+S5-2                   	   4.08
+S5O6-2                 	   4.34
+SO3-2                  	   2.96
+SO4-2                  	   3.21
+SIF6-2                 	   3.92
+SRHCO3+                	   3.22
+SR+2                   	   3.00
+SRCL+                  	   1.80
+SRF+                   	   1.40
+SROH+                  	   1.91
+U+3                    	   3.84
+U+4                    	   4.55
+UO2+                   	   1.41
+UO2+2                  	   2.67
+ZN+2                   	   2.62
+ZNCL+                  	   2.24
+ZNCL3-                 	   2.33
+ZNOH+                  	   1.92
+HZNO2-                 	   1.25
+ZNO2-2                 	   2.42
+U(OH)+2                	   3.14
+UO+                    	   2.01
+U(OH)+3                	   3.81
+UO+2                   	   2.51
+HUO2+                  	   1.31
+HUO3-                  	   0.97
+UO3-                   	   1.20
+UO2OH+                 	   1.61
+HUO4-                  	   1.19
+UO4-2                  	   2.61
+OCN-                   	   2.36
+SCN-                   	   2.92
+HN2O2-                 	   2.89
+N2O2-2                 	   3.26
+N2H5+                  	   3.05
+N2H6+2                 	   3.75
+H2PO2-                 	   2.29
+H2PO3-                 	   2.72
+HPO3-2                 	   3.20
+P2O7-4                 	   5.59
+HP2O7-3                	   4.93
+ASO4-3                 	   3.95
+ASO2-                  	   1.76
+CR+2                   	   2.65
+CR+3                   	   3.43
+CROH+2                 	   2.34
+CRO+                   	   1.12
+CRO2-                  	   1.39
+NASO4-                 	   2.36
+FECL+2                 	   2.39
+CUCL2-                 	   2.43
+CUCL3-2                	   3.73
+CUCL+                  	   1.40
+CUCL3-                 	   1.48
+CUCL4-2                	   2.75
+CDCL+                  	   1.54
+CDCL3-                 	   1.79
+CDCL4-2                	   3.12
+MNF+                   	   1.29
+FEF+                   	   1.18
+FEF+2                  	   2.63
+NIF+                   	   1.11
+CUF+                   	   1.21
+ZNF+                   	   1.17
+CDF+                   	   1.29
+BAF+                   	   1.67
+PBF+                   	   1.72
+PB(HS)3-               	  28.00
+MGHSIO3+               	   1.14
+CAHSIO3+               	   1.48
+</ Species_Read_AquSize
+
+
+<-----------------MixModel_BuildLnk
+<----------------/MixModel_BuildLnk
+
+
+< MixPhases_Alloc
+
+< MixPhase_BuildLnk
+</ MixPhase_BuildLnk
+
+</ MixPhases_Alloc
+
+
+< Condition_Read
+</ Condition_Read
+
+
+< Species_Write_AquSize
+</ Species_Write_AquSize
+
+</ Global_Build
+
+
+< System_Build
+
+< Components_Alloc
+
+< Read_Input_System
+INERT  	SI_	SIO2(AQ)               	   0.100000E-11	    0.00000    	
+INERT  	NA_	NA+                    	   0.100000E-11	    0.00000    	
+INERT  	K__	K+                     	   0.100000E-11	    0.00000    	
+INERT  	AL_	AL+3                   	   0.100000E-11	    0.00000    	
+MOBILE 	H__	H+                     	   0.100000E-11	   -9.90112    	
+BALANCE	CL_	CL-                    	   0.100000E-11	   -9.90112    	
+=========================================================================
+INERT  	O__	H2O                    	    55.5093    	    0.00000    	
+INERT  	NA_	NA+                    	   0.100000E-11	    0.00000    	
+INERT  	K__	K+                     	   0.100000E-11	    0.00000    	
+INERT  	AL_	AL+3                   	   0.100000E-11	    0.00000    	
+MOBILE 	H__	H+                     	    111.019    	   -9.90112    	
+BALANCE	CL_	CL-                    	   0.100000E-11	   -9.90112    	
+INERT  	SI_	SIO2(AQ)               	   0.100000E-11	    0.00000    	
+LISTELEM= SI_NA_K__AL_H__CL_O__
+</ ReadInput_System
+
+O__                    
+NA_                    
+K__                    
+AL_                    
+H__                    
+CL_                    
+SI_                    
+</ Components_Alloc
+
+O__                    INERT      55.5093         0.00000    
+NA_                    INERT     0.100000E-11     0.00000    
+K__                    INERT     0.100000E-11     0.00000    
+AL_                    INERT     0.100000E-11     0.00000    
+H__                    MOBILE     111.019        -9.90112    
+CL_                    BALANCE   0.100000E-11    -9.90112    
+SI_                    INERT     0.100000E-11     0.00000    
+
+< Species_Alloc
+
+
+< Redox_Calc
+ -1  1 -> Default Valency of CL_= -1
+</ Redox_Calc
+
+< Restrict database to species consistent with element list and redox state
+ACCEPT	H2O            	O(1)H(2)                               	  0  1
+ACCEPT	AL+3           	AL(1)+(3)                              	  3  2
+ACCEPT	ALO+           	AL(1)O(1)+(1)                          	  1  3
+ACCEPT	ALOH+2         	AL(1)O(1)H(1)+(2)                      	  2  4
+ACCEPT	ALOOH(AQ)      	H(1)AL(1)O(2)+(0)                      	  0  5
+ACCEPT	ALOO-          	AL(1)O(2)-(1)                          	 -1  6
+ACCEPT	CL-            	CL(1)-(1)                              	 -1  7
+ACCEPT	H+             	H(1)+(1)                               	  1  8
+ACCEPT	HSIO3-         	H(1)SI(1)O(3)-(1)                      	 -1  9
+ACCEPT	K+             	K(1)+(1)                               	  1 10
+ACCEPT	KCL(AQ)        	K(1)CL(1)+(0)                          	  0 11
+ACCEPT	KOH(AQ)        	K(1)O(1)H(1)+(0)                       	  0 12
+ACCEPT	NA+            	NA(1)+(1)                              	  1 13
+ACCEPT	NACL(AQ)       	NA(1)CL(1)+(0)                         	  0 14
+ACCEPT	NAHSIO3(AQ)    	NA(1)H(1)SI(1)O(3)+(0)                 	  0 15
+ACCEPT	NAOH(AQ)       	NA(1)O(1)H(1)+(0)                      	  0 16
+ACCEPT	OH-            	O(1)H(1)-(1)                           	 -1 17
+ACCEPT	SIO2(AQ)       	SI(1)O(2)+(0)                          	  0 18
+ACCEPT	HCL(AQ)        	H(1)CL(1)                              	  0 19
+ACCEPT	H2O(G)         	H(2)O(1)                               	  0 20
+ACCEPT	ALBITE-LOW     	NA(1)AL(1)SI(3)O(8)                    	  0 21
+ACCEPT	AMORPHOUS-SILIC	SI(1)O(2)                              	  0 22
+ACCEPT	ANALCIME       	NA(1)AL(1)SI(2)O(7)H(2)                	  0 23
+ACCEPT	ANALCIME-DEHYDR	NA(1)AL(1)SI(2)O(6)                    	  0 24
+ACCEPT	ANDALUSITE     	AL(2)SI(1)O(5)                         	  0 25
+ACCEPT	BOEHMITE       	AL(1)O(2)H(1)                          	  0 26
+ACCEPT	CHALCEDONY     	SI(1)O(2)                              	  0 27
+ACCEPT	CORUNDUM       	AL(2)O(3)                              	  0 28
+ACCEPT	CRISTOBALITE-AL	SI(1)O(2)                              	  0 29
+ACCEPT	CRISTOBALITE-BE	SI(1)O(2)                              	  0 30
+ACCEPT	CRISTOBALITE   	SI(1)O(2)                              	  0 31
+ACCEPT	DIASPORE       	AL(1)O(2)H(1)                          	  0 32
+ACCEPT	GIBBSITE       	AL(1)O(3)H(3)                          	  0 33
+ACCEPT	HALITE         	NA(1)CL(1)                             	  0 34
+ACCEPT	JADEITE        	NA(1)AL(1)SI(2)O(6)                    	  0 35
+ACCEPT	KAOLINITE      	AL(2)SI(2)O(9)H(4)                     	  0 36
+ACCEPT	K-FELDSPAR     	K(1)AL(1)SI(3)O(8)                     	  0 37
+ACCEPT	KYANITE        	AL(2)SI(1)O(5)                         	  0 38
+ACCEPT	MICROCLINE     	K(1)AL(1)SI(3)O(8)                     	  0 39
+ACCEPT	MUSCOVITE      	K(1)AL(3)SI(3)O(12)H(2)                	  0 40
+ACCEPT	NEPHELINE      	NA(1)AL(1)SI(1)O(4)                    	  0 41
+ACCEPT	PARAGONITE     	NA(1)AL(3)SI(3)O(12)H(2)               	  0 42
+ACCEPT	POTASSIUM-OXIDE	K(2)O(1)                               	  0 43
+ACCEPT	PYROPHYLLITE   	AL(2)SI(4)O(12)H(2)                    	  0 44
+ACCEPT	QUARTZ-A       	SI(1)O(2)                              	  0 45
+ACCEPT	SANIDINE       	K(1)AL(1)SI(3)O(8)                     	  0 46
+ACCEPT	SILLIMANITE    	AL(2)SI(1)O(5)                         	  0 47
+ACCEPT	SODIUM-OXIDE   	NA(2)O(1)                              	  0 48
+ACCEPT	SYLVITE        	K(1)CL(1)                              	  0 49
+ACCEPT	ALBITE-HIGH    	NA(1)AL(1)SI(3)O(8)                    	  0 50
+ACCEPT	COESITE        	SI(1)O(2)                              	  0 51
+ACCEPT	KALSILITE      	K(1)AL(1)SI(1)O(4)                     	  0 52
+</ Restrict database
+
+
+Species_Alloc_forSystem, Element/ Component/ Status/ iSpc
+
+O__H2O                    INERT  
+NA_NA+                    INERT  
+K__K+                     INERT  
+AL_AL+3                   INERT  
+H__H+                     MOBILE 
+CL_CL-                    BALANCE
+SI_SIO2(AQ)               INERT  
+
+Species list, final
+
+      1	H2O                    	AQU
+      2	AL+3                   	AQU
+      3	ALO+                   	AQU
+      4	ALOH+2                 	AQU
+      5	ALOOH(AQ)              	AQU
+      6	ALOO-                  	AQU
+      7	CL-                    	AQU
+      8	H+                     	AQU
+      9	HSIO3-                 	AQU
+     10	K+                     	AQU
+     11	KCL(AQ)                	AQU
+     12	KOH(AQ)                	AQU
+     13	NA+                    	AQU
+     14	NACL(AQ)               	AQU
+     15	NAHSIO3(AQ)            	AQU
+     16	NAOH(AQ)               	AQU
+     17	OH-                    	AQU
+     18	SIO2(AQ)               	AQU
+     19	HCL(AQ)                	AQU
+     20	ALBITE-LOW             	MIN
+     21	AMORPHOUS-SILICA       	MIN
+     22	ANALCIME               	MIN
+     23	ANALCIME-DEHYDR        	MIN
+     24	ANDALUSITE             	MIN
+     25	BOEHMITE               	MIN
+     26	CHALCEDONY             	MIN
+     27	CORUNDUM               	MIN
+     28	CRISTOBALITE-ALPHA     	MIN
+     29	CRISTOBALITE-BETA      	MIN
+     30	CRISTOBALITE           	MIN
+     31	DIASPORE               	MIN
+     32	GIBBSITE               	MIN
+     33	HALITE                 	MIN
+     34	JADEITE                	MIN
+     35	KAOLINITE              	MIN
+     36	K-FELDSPAR             	MIN
+     37	KYANITE                	MIN
+     38	MICROCLINE             	MIN
+     39	MUSCOVITE              	MIN
+     40	NEPHELINE              	MIN
+     41	PARAGONITE             	MIN
+     42	POTASSIUM-OXIDE        	MIN
+     43	PYROPHYLLITE           	MIN
+     44	QUARTZ-A               	MIN
+     45	SANIDINE               	MIN
+     46	SILLIMANITE            	MIN
+     47	SODIUM-OXIDE           	MIN
+     48	SYLVITE                	MIN
+     49	ALBITE-HIGH            	MIN
+     50	COESITE                	MIN
+     51	KALSILITE              	MIN
+     52	H2O(G)                 	GAS
+
+</ Species_Alloc
+
+
+<-----------------MixModel_BuildLnk
+<----------------/MixModel_BuildLnk
+
+
+< DiscretModel_Read
+
+< DiscretModel_ReadFile
+</ DiscretModel_ReadFile
+
+</ DiscretModel_Read
+
+
+< FormulaTable_Calc
+
+
+</ FormulaTable_Calc
+
+
+< MixPhases_Alloc
+
+< MixPhase_BuildLnk
+</ MixPhase_BuildLnk
+
+</ MixPhases_Alloc
+
+
+< MixPhases_CheckFound
+
+  1 >> ELE=O__ >> SPC=H2O                     >> PHASE=Z
+  2 >> ELE=NA_ >> SPC=NA+                     >> PHASE=Z
+  3 >> ELE=K__ >> SPC=K+                      >> PHASE=Z
+  4 >> ELE=AL_ >> SPC=AL+3                    >> PHASE=Z
+  5 >> ELE=H__ >> SPC=H+                      >> PHASE=Z
+  6 >> ELE=CL_ >> SPC=CL-                     >> PHASE=Z
+  7 >> ELE=SI_ >> SPC=SIO2(AQ)                >> PHASE=Z
+
+</ MixPhases_CheckFound
+
+
+< Solmodel_Solvent_Read
+</ Solmodel_Solvent_Read
+
+
+< SolModel_TP_Update
+
+Rho=    0.997062    
+Eps=     78.2452    
+dhA=    0.511381    
+dhB=    0.328784    
+Bdot=   0.328784    
+
+</ SolModel_TP_Update
+
+
+< SolModel_Spc_Init
+</ SolModel_Spc_Init
+
+
+< SolModel_TP_Update
+
+Rho=    0.997062    
+Eps=     78.2452    
+dhA=    0.511381    
+dhB=    0.328784    
+Bdot=   0.328784    
+
+</ SolModel_TP_Update
+
+</ System_Build
+
+
+< Equil_Calc
+
+< Basis_Build
+
+< Basis_Dimensions
+nCp=   7/ nCi=   6/ nAx=   1/ nAs=  12/ nMx=   0/ nMs=  33/ nMn=  33
+</ Basis_Dimensions
+
+
+< Basis_Alloc
+</ Basis_Alloc
+
+
+< Basis_SpcTypes_Build
+</ Basis_SpcTypes_Build
+
+
+< Basis_Cpn_Order
+Components->Species
+Cpn  1	H2O
+Cpn  2	NA+
+Cpn  3	K+
+Cpn  4	AL+3
+Cpn  5	H+
+Cpn  6	CL-
+Cpn  7	SIO2(AQ)
+
+Components, Re-Ordered
+
+iCp,Cpn%Statut,vSpc(Cpn%iSpc)%NamSp,vCpn(iCp)%Mole,Cpn%LnAct/Ln10
+
+  1	INERT  	H2O                    	    55.5093    	    0.00000    	
+  2	INERT  	NA+                    	   0.100000E-11	    0.00000    	
+  3	INERT  	K+                     	   0.100000E-11	    0.00000    	
+  4	INERT  	AL+3                   	   0.100000E-11	    0.00000    	
+  5	BALANCE	CL-                    	   0.100000E-11	   -4.30000    	
+  6	INERT  	SIO2(AQ)               	   0.100000E-11	    0.00000    	
+  7	MOBILE 	H+                     	    111.019    	   -4.30000    	
+</ Basis_Cpn_Order
+
+
+< Basis_SpcOrdPrm_Build
+</ Basis_SpcOrdPrm_Build
+
+
+<----------------Basis_AlfaNu_Build
+
+< AlfaTable_Build
+</ AlfaTable_Build
+
+
+< AlfaTable_Extract
+</ AlfaTable_Extract
+
+
+< NuTable_Build
+</ NuTable_Build
+
+</---------------Basis_AlfaNu_Build
+
+</ Basis_Build
+
+
+< TPpath_Read
+TDGC	 DIM=   8  8
+PBAR	 DIM=   8  8
+   0.100E-01     1.01    
+    25.0         1.01    
+    60.0         1.01    
+    100.         1.01    
+    150.         4.76    
+    200.         15.5    
+    250.         39.7    
+    300.         85.8    
+</ TPpath_Read
+
+
+< SolModel_TP_Update
+
+Rho=    0.999829    
+Eps=     87.4891    
+dhA=    0.493888    
+dhB=    0.325291    
+Bdot=   0.325291    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.997062    
+Eps=     78.2452    
+dhA=    0.511381    
+dhB=    0.328784    
+Bdot=   0.328784    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.983200    
+Eps=     66.6775    
+dhA=    0.546530    
+dhB=    0.334585    
+Bdot=   0.334585    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.958393    
+Eps=     55.4924    
+dhA=    0.599541    
+dhB=    0.342144    
+Bdot=   0.342144    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.917058    
+Eps=     44.1021    
+dhA=    0.685474    
+dhB=    0.352547    
+Bdot=   0.352547    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.864743    
+Eps=     34.9094    
+dhA=    0.799382    
+dhB=    0.363889    
+Bdot=   0.363889    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.799072    
+Eps=     27.2326    
+dhA=    0.959273    
+dhB=    0.376644    
+Bdot=   0.376644    
+
+</ SolModel_TP_Update
+
+
+< SolModel_TP_Update
+
+Rho=    0.712409    
+Eps=     20.4084    
+dhA=     1.21751    
+dhB=    0.392484    
+Bdot=   0.392484    
+
+</ SolModel_TP_Update
+

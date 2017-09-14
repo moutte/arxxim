@@ -1,0 +1,37 @@
+TEST
+  COMPUTE SPC
+  COMPUTE SPCTP
+  compute spcpath
+  COMPUTE Q
+END
+
+CONDITIONS
+  TITLE  carbonate system, calcite-saturation + fixed activity CO2
+  OUTPUT out\a2_carb_gas_cc
+  DEBUG  3
+END CONDITIONS
+
+SYSTEM
+ TDGC 25.
+ PBAR 1.013
+ C  MOBILE CO2(G) 3.000
+ CA BUFFER CALCITE 0.00
+END SYSTEM
+
+path change
+  C initial 6 final 0 delta 0.2
+end
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\hsvhkf_aqu.dtb
+INCLUDE dtb\hsvhkf_gas.dtb
+INCLUDE dtb\hsvhkf_min.dtb
+
+SOLVENT
+  MODEL DAV_1
+END
+
+TP.TABLE
+TdgC	0.01	5	10	15	20	25	30	35	40	45	50	55	60	65	70	75	80	85	90	95	100
+Pbar	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013	1.013
+END TP.TABLE

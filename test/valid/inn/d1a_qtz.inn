@@ -1,0 +1,44 @@
+/*
+  reaction, qtz-cristobalite, closed
+  water initially qtz-saturated water, reacting with qtz-cristobalite assemblage
+*/
+
+TEST
+  COMPUTE SPC
+  COMPUTE DYN
+  COMPUTE Q
+END
+
+CONDITIONS
+  TITLE reaction, qtz-cristobalite, closed
+  OUTPUT out\d1_qtz_a
+  DEBUG 3
+END CONDITIONS
+
+SYSTEM
+ CL INERT  CL-      0.1000
+ NA INERT  NA+      0.10000
+ SI MOBILE QUARTZ-A 0.0000
+END SYSTEM
+
+INCLUDE  dtb\elements.dtb
+INCLUDE  dtb\eq36_hkf.dtb
+INCLUDE  dtb\kinetics_usgs.dtb
+
+SOLVENT
+  MODEL DAV_1
+END
+
+DYNAMIC
+ DX       1.0 !length of box
+ UDARCY   0.0 !0.001 !1.0D0 !flux rate, metre/tunit
+ VOLUME   FREE
+ POROSITY 0.500  !0.1 !
+ TUNIT    YEAR
+ TFIN     6000
+END DYNAMIC
+
+DYNAMIC.ROCK
+  QUARTZ       RADIUS 1.0E-6 VOLUME 1.00 SPECIES QUARTZ-A
+  CRISTOBALITE RADIUS 1.0E-6 VOLUME 1.00 SPECIES CRISTOBALITE-ALPHA
+END DYNAMIC.ROCK

@@ -1,0 +1,25 @@
+TEST
+  COMPUTE SPC
+  COMPUTE DYN
+  COMPUTE Q
+END TEST
+
+CONDITIONS
+  TITLE   Soler_Lasaga_1998, supergene alteration on qtz-fsp-mus, rain 1cm/year 
+  OUTPUT  out\d2_gr_1
+  DEBUG   3
+ENDCONDITIONS
+
+INCLUDE inn\d2_gr_common.inc
+
+DYNAMIC.NUMERIC
+  !AQUEOUS MOLE
+  !DIRECT YES
+  !JACOBIAN NUMERIC
+END
+
+DYNAMIC
+  UDARCY   0.010
+  TFIN     1E8
+ENDDYNAMIC
+
