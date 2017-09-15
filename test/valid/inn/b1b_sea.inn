@@ -6,7 +6,7 @@ END TEST
 
 CONDITIONS
   TITLE  model seawater composition, with redox, with DAV_1
-  OUTPUT out\b1_sea_b
+  OUTPUT out\b1b
   DEBUG  3
   TP.POINT  2
 END CONDITIONS
@@ -52,7 +52,7 @@ END PATH
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
+
 SOLVENT
   MODEL DAV_1
 END
-END INPUT

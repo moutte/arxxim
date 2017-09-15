@@ -7,18 +7,19 @@ os.chdir("../valid/")
 #print "DIR=", os.getcwd()
 
 #---------------------------------------------------------------EXE FILE
-#windows
-if sys.platform.startswith("win"): sExe= "arxim.exe"
-#linux
-if sys.platform.startswith("linux"): sExe= "arx_optim"
-
+if sys.platform.startswith("win"): sExe= "arxim.exe"   #windows
+if sys.platform.startswith("linux"): sExe= "a.out" #linux
 sExe= os.path.join("..","..","bin",sExe)
 
-Debug= "3"
+sExe= "../../../arx-basis/bin/a.out"
+sExe= "../../../mybin_debug/arx-ifp"
+
+
+Debug= "2"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob("inn/d2*.inn")
+files= glob.glob("inn/b1b*.inn")
 files.sort()
 for f in files: print f
 #raw_input()
