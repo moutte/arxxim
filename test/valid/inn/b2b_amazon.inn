@@ -1,20 +1,19 @@
 TEST
   COMPUTE SPC
-  COMPUTE EQU
   COMPUTE Q
 END TEST
 
 CONDITIONS
   TITLE  Amazon river, water composition, Bethke, p91
-  OUTPUT out\b2_amazon_a
-  TP.POINT  2
+  OUTPUT out\b2b
   DEBUG 0
 END CONDITIONS
 
 SYSTEM
+  TDGC 25.
+  AL  MOBILE KAOLINITE
+  FE  MOBILE HEMATITE
   SI  GRAM  SIO2(AQ) 7.00D-3 
-  AL  GRAM  AL+3     0.07D-3 
-  FE  GRAM  FE+2     0.06D-3 
   CA  GRAM  CA+2     4.30D-3 
   MG  GRAM  MG+2     1.10D-3 
   NA  GRAM  NA+      1.80D-3 
@@ -22,7 +21,6 @@ SYSTEM
   S   GRAM  SO4-2    3.00D-3 
   CL  GRAM  CL-      1.90D-3 
   OX  GRAM  O2(AQ)   5.80D-3 
-  !H   MOBILE H+       6.5  
 END SYSTEM
 
 INCLUDE dtb\elements.dtb

@@ -556,12 +556,25 @@ subroutine Equil_Read_FromFile(vSpcDat,OK)
   !---------------------------------------------------------------------
   real(dp):: v(size(vSpcDat))
   !
+  OK= .false.
   call Read_FromFile("tmp_species_mole.dat",size(vSpcDat),v,OK)
-  if(OK) vSpcDat(:)%Mole= v(:)
+  if(OK) then
+    vSpcDat(:)%Mole= v(:)
+  else
+    return
+  end if
   call Read_FromFile("tmp_species_lact.dat",size(vSpcDat),v,OK)
-  if(OK) vSpcDat(:)%LAct= v(:)
+  if(OK) then
+    vSpcDat(:)%LAct= v(:)
+  else
+    return
+  end if
   call Read_FromFile("tmp_species_lgam.dat",size(vSpcDat),v,OK)
-  if(OK) vSpcDat(:)%LGam= v(:)
+  if(OK) then
+    vSpcDat(:)%LGam= v(:)
+  else
+    return
+  end if
   !
   return
 end subroutine  Equil_Read_FromFile

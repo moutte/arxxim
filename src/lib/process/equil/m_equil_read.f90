@@ -120,13 +120,12 @@ subroutine Equil_Read_YesList(nFas,vFas,vYesList)
   !! vYesList(1)=.false. !-> ??? to exclude species H2O as phase ???
   !
   !------------------------------------------------------------ trace --
-  if(iDebug>1) then
+  if(iDebug==4) then
     print '(/,A)',"< -- List of Phases --"
     do I=1,nFas
       if(vYesList(I)) print '(A)',vFas(I)%NamFs
     end do
     print '(A,/)',"</-- List of Phases --"
-    if(iDebug==4) call Pause_
   end if
   !
   if(idebug>1) then

@@ -118,7 +118,7 @@ subroutine Equil_Eq2(NoMixture,iErr,cTest)
   nFs= nPur +nMix !+ nSol
 
   !! DEBUGG !!
-  if(iDebug>1) then
+  if(iDebug>2) then
     write(6,'(A)') "==Equil_Eq2=="
     print *,"nPur=",nPur
     do J=1,size(vFas)

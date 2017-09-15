@@ -5,12 +5,13 @@ TEST
 END TEST
 CONDITIONS
   TITLE  Red Sea brine, Bethke, p96
-  OUTPUT out\b3_redsea_a
+  OUTPUT out\b3a
   TP.POINT  3
   DEBUG  3
 END CONDITIONS
 
 SYSTEM
+  TDGC 60.
   NA  GRAM  NA+    92.600
   K   GRAM  K+      1.870  
   MG  GRAM  MG+2    0.764  
@@ -33,5 +34,5 @@ INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
 
 SOLVENT
-  MODEL DH2 !DAV_1
+  MODEL DAV_1
 END

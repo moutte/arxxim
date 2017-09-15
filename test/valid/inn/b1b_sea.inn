@@ -1,17 +1,18 @@
 TEST
   COMPUTE SPC
-  COMPUTE EQU
+  COMPUTE EQ1
   COMPUTE Q
-END TEST
+END
 
 CONDITIONS
   TITLE  model seawater composition, with redox, with DAV_1
-  OUTPUT out\b1b
+  OUTPUT out\b1j
   DEBUG  3
-  TP.POINT  2
-END CONDITIONS
+END
 
 SYSTEM
+  
+  TDGC     25.
   CL GRAM  CL-   19.350
   CA GRAM  CA+2   0.411
   MG GRAM  MG+2   1.290
@@ -19,32 +20,34 @@ SYSTEM
   K  GRAM  K+     0.399
   S  GRAM  SO4-2  2.711 !0.900 !
   SI GRAM  SIO2(AQ) 0.006
-  C  PK    CO2(G) 3.5
+  
+  C  ACTIVITY CO2(G) 0.003
   OX ACTIVITY O2(G)  0.2
+  
 END SYSTEM
   OX GRAM  O2(AQ)  0.100654E-02
   
 SPECIES.EXCLUDE
   S5-2        
   S5O6-2      
-END SPECIES.EXCLUDE
-
-!S2-2        
-!S2O3-2      
-!HS2O3-      
-!H2S2O3(AQ)  
-!S2O4-2      
-!HS2O4-      
-!H2S2O4(AQ)  
-!S2O5-2      
-!S2O6-2      
-!S2O8-2      
-!S3-2        
-!S3O6-2      
-!S4-2        
-!S4O6-2      
-!SO2(AQ)     
-!SO3-2       
+  !
+  S2-2        
+  S2O3-2      
+  HS2O3-      
+  H2S2O3(AQ)  
+  S2O4-2      
+  HS2O4-      
+  H2S2O4(AQ)  
+  S2O5-2      
+  S2O6-2      
+  S2O8-2      
+  S3-2        
+  S3O6-2      
+  S4-2        
+  S4O6-2      
+  SO2(AQ)     
+  SO3-2       
+END
 
 PATH CHANGE
   C 3. 4. 0.1
@@ -52,7 +55,7 @@ END PATH
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
-
 SOLVENT
   MODEL DAV_1
 END
+
