@@ -1,4 +1,5 @@
 *.[oa]
+*.pyc
 *#
 bin/*.mod
 test/out/
