@@ -257,6 +257,7 @@ for i,centroid in enumerate(centroids):
   textstr= phases[lis_paragen[i]]
   fig.text(x,y,textstr,horizontalalignment='center')
   
-plt.savefig("0_arxim_map_tp_0"+".png")
+s= os.path.join("png","arxim_map_tp_0")
+plt.savefig(s+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
