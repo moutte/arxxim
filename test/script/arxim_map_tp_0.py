@@ -16,6 +16,8 @@ Xtol= 5.
 Ymin,Ymax,Ydelta= 500., 6500., 500.
 Ytol= 10.
 
+phases=["and","sil","kya"]
+
 #---------------------------------------------------------//user defined
 #------------------------------------------------------------------/INIT
 
@@ -34,16 +36,17 @@ if 0:
 #----------------------------------------------//initialize the x,y grid
 
 #--------------------------------------------------------------------GEM
-def index_gem(TC,Pbar):
+def phase_with_min_gibbs(TC,Pbar):
   TK= TC+273.15
-  G_and= MT.compute_gibbs("and",TK,Pbar)
-  G_sil= MT.compute_gibbs("sil",TK,Pbar)
-  G_kya= MT.compute_gibbs("kya",TK,Pbar)
-  G= [G_and,G_sil,G_kya]
-  Gmin= min(G)
+  #
+  G= []
+  for fs in phases:
+    x= MT.compute_gibbs(fs,TK,Pbar)
+    G.append(x)
+  #
   # index_Gmin= min(xrange(len(G)), key=G.__getitem__)
-  index_= G.index(min(G))
-  return index_
+  #phase= phases[G.index(min(G))]
+  return G.index(min(G))
   
 #------------------------------------------------------------------//GEM
 
@@ -54,8 +57,8 @@ def refine_xy(selec,F0,F1,x0,x1,y,tolerance):
   #
   while abs(x0-x1)>tolerance:
     x= (x0+x1)/2.
-    if selec=="x": F= index_gem(x,y)
-    if selec=="y": F= index_gem(y,x)
+    if selec=="x": F= phase_with_min_gibbs(x,y)
+    if selec=="y": F= phase_with_min_gibbs(y,x)
     # if the paragen at x is the same as the paragen at x0,
     # then the paragen change occurs between x and x1, 
     # then x becomes the new x0
@@ -89,7 +92,7 @@ for iY,y in enumerate(Yser):
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print iY,iX
-    j= index_gem(x,y)
+    j= phase_with_min_gibbs(x,y)
     if not j in lis_paragen: lis_paragen.append(j)
     tab_phase[iX,iY]= j
     tab_x[iX,iY]= x
@@ -251,8 +254,9 @@ for i,points in enumerate(lines):
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
   textstr= str(lis_paragen[i])
+  textstr= phases[lis_paragen[i]]
   fig.text(x,y,textstr,horizontalalignment='center')
   
-plt.savefig("0_arxim_map_tp"+".png")
+plt.savefig("0_arxim_map_tp_0"+".png")
 plt.show()
 #------------------------------------------------------//plot XY diagram
