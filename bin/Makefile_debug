@@ -3,7 +3,7 @@
 FC = gfortran-6
 LD = gfortran-6
 FFLAGS= -O0 -g  -fbounds-check -Wall -fbacktrace
-
+# FFLAGS= -O0
 
 .DEFAULT:
 	-touch $@

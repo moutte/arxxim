@@ -2,6 +2,9 @@
 *.pyc
 *#
 bin/*.mod
+bin/*
+!bin/arxim.exe
+!bin/Mak*
 test/out/
 !test/out/000
 src/tmp*

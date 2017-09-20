@@ -1,7 +1,7 @@
 # Makefile created by mk_gfortran_o3 $Id: mkmf,v 14.0 2007/03/20 22:13:27 fms Exp $ 
 
-FC = gfortran-6
-LD = gfortran-6
+FC = gfortran-7
+LD = gfortran-7
 FFLAGS= -O3
 
 
