@@ -153,7 +153,8 @@ subroutine GEM_Theriak_Single
   if(iError==0) then
     if(nMix>0) then
       do i=1,nMix
-        if(vSavModel(i)%nFas > 1) call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
+        if(vSavModel(i)%nFas > 1) &
+        & call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
       enddo
       ! call pause_ !!
     end if
