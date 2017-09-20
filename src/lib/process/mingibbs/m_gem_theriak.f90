@@ -154,7 +154,11 @@ subroutine GEM_Theriak_Single
     if(nMix>0) then
       do i=1,nMix
         if(vSavModel(i)%nFas > 1) &
-        & call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
+        & call Check_vXMean( &
+        & TdgK,Pbar, & 
+        & vMixModel(vSavModel(i)%iModel), &
+        & vSavModel(i))
+
       enddo
       ! call pause_ !!
     end if
@@ -265,7 +269,6 @@ subroutine GEM_Theriak_Path
   integer :: iError
   integer :: nC,nFpur,nMix
   real(dp):: TdgK0,Pbar0
-  real(dp):: G_Mixture
   !
   logical :: Ok
   character(len=3) :: PathMod3
@@ -418,7 +421,11 @@ subroutine GEM_Theriak_Path
       if(nMix>0) then
         do i=1,nMix
           ! print *,vSavModel(i)%vVol0(1)
-          if(vSavModel(i)%nFas > 1) call Check_vXMean(i,TdgK,Pbar,  G_Mixture)
+          if(vSavModel(i)%nFas > 1) &
+          & call Check_vXMean( &
+          & TdgK,Pbar, & 
+          & vMixModel(vSavModel(i)%iModel), &
+          & vSavModel(i))
         enddo
         ! call pause_ !!
       end if
@@ -475,42 +482,54 @@ subroutine GEM_Theriak_Path
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ GEM_Theriak_Path"
   !
-! contains
-
 end subroutine GEM_Theriak_Path
 
-subroutine Check_vXMean(i,TdgK,Pbar,   G)
+! subroutine Check_vXMean(i,TdgK,Pbar,   G)
+subroutine Check_vXMean( &
+& TdgK,Pbar, &  
+& MixModel,  &
+& SavModel)
 !-----------------------------------------------------------------------
 !-- for a mixing model with more than one phase in stable assemblage
 !-- compute the Gibbs for the mean composition of the different phases.
 !-- if the Gibbs is not close to zero, then there is unmixing
 !-----------------------------------------------------------------------
-  use M_Global_Vars, only: vMixModel
+  use M_T_MixModel,only: T_MixModel, MixModel_Grt 
+  use M_GEM_Vars,  only: T_SavModel
   !
-  integer, intent(in) :: i
-  real(dp),intent(in) :: TdgK,Pbar 
-  real(dp),intent(out):: G
+  real(dp),        intent(in)   :: TdgK,Pbar
+  type(T_MixModel),intent(in)   :: MixModel
+  type(T_SavModel),intent(inout):: SavModel
   !---------------------------------------------------------------------
-  integer :: J,nP,ff
+  real(dp):: G
+  integer :: nP,ff
+  logical :: MustUpdate
   real(dp),allocatable:: vX(:)
   !
-  J=  vSavModel(i)%iModel
-  nP= vMixModel(J)%NPole
+  nP= MixModel%NPole
   allocate(vX(1:nP))
   !
   vX(:)= Zero
-  do ff=1,vSavModel(i)%nFas
+  do ff=1,SavModel%nFas
     vX(:)= vX(1:nP) &
-    &    + vSavModel(i)%vMole(ff) *vSavModel(i)%tXPole(ff,1:nP)
+    &    + SavModel%vMole(ff) *SavModel%tXPole(ff,1:nP)
   enddo
   vX(:)= vX(:) /sum(vX(:))
   !
-  G= MixPhase_Grt( &
+  G= MixModel_Grt( &
   & TdgK,Pbar,    &
   & nP,           &
-  & vMixModel(J), &
-  & vSavModel(i)%vGrt0(1:nP), &
+  & MixModel,     &
+  & SavModel%vGrt0(1:nP), &
   & vX(1:nP))
+  ! if G is near zero,
+  ! then there is only one phase, with the composition vX
+  if(abs(G)<GEM_G_Iota *1.D1) then
+    MustUpdate= .true.
+    SavModel%nFas= 1
+    SavModel%tXPole(1,1:nP)= vX(1:nP)
+    SavModel%vMole(1)= sum(SavModel%vMole(:))
+  end if
   !
   deallocate(vX)
   !
@@ -829,47 +848,6 @@ contains
   end subroutine StoreResults
 
 end subroutine Theriakk
-
-real(dp) function MixPhase_Grt(TdgK,Pbar,nP,MM,vMu0rt,vX)
-  use M_T_MixModel,only: MixModel_Activities
-  !---------------------------------------------------------------------
-  real(dp),        intent(in):: TdgK,Pbar
-  integer,         intent(in):: nP
-  type(T_MixModel),intent(in):: MM        ! mixing model
-  real(dp),        intent(in):: vMu0rt(:) !
-  real(dp),        intent(in):: vX(:)     ! phase composition
-  !---------------------------------------------------------------------
-  real(dp):: vLGam(nP),vLIdeal(nP),vLnAct(nP)
-  logical :: vLPole(nP)
-  real(dp):: G
-  integer :: i
-  logical :: Ok
-  character(len=30):: Msg
-  !---------------------------------------------------------------------
-  vLPole(:)= (vX(:)>Zero) ! .and. MM%vHasPole(:)
-
-  call MixModel_Activities( & !
-  & TdgK,Pbar, & ! in
-  & MM,        & ! in
-  & vX,        & ! in
-  & vLPole,    & ! in
-  & Ok, Msg,   & ! out
-  & vLGam,     & !
-  & vLIdeal,   & !
-  & vLnAct)      !
-  !
-  G= Zero
-  do i=1,nP
-    if(vLPole(i)) &
-    ! vMu0rt(i)= vFasPur(MM%vIPole(i))%Grt
-    & G= G &
-    &  + vX(i) *(vMu0rt(i) + vLnAct(i))
-  end do
-  !
-  MixPhase_Grt= G
-
-  return
-end function MixPhase_Grt
 
 subroutine GEM_SaveResults(nFpur,Iter,vMixModel)
   integer,         intent(in):: nFpur

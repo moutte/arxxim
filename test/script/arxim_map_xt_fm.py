@@ -473,8 +473,8 @@ plt.rcParams['figure.figsize']= 8.,8.   #ratio 4/4
 plt.rcParams.update({'font.size': 9})
 
 fig= plt.subplot(1,1,1)
-symbols=['bo','go','ro','cs','mD','yd']
 symbols=['b','g','r','c','m','y']
+symbols=['bo','go','ro','cs','mD','yd']
 len_symb= len(symbols)
 fig.grid(color='r', linestyle='-', linewidth=0.2)
 fig.grid(True)

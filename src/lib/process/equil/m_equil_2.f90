@@ -475,6 +475,7 @@ subroutine Check_vXMean_Eq
 !-- with the mean composition
 !--
   use M_System_Vars,only: TdgK,Pbar
+  use M_T_MixModel, only: MixModel_Grt 
   !
   !--- T_TabPhase: same type as used for GEM routine:
   ! for a given mixing model,
@@ -545,7 +546,7 @@ subroutine Check_vXMean_Eq
         vG0(P)= vFasAffPur(tIPole(J,P))
       end do
       !
-      G= MixPhase_Grt( &
+      G= MixModel_Grt( &
       & TdgK,Pbar, &
       & nP, &
       & vMixModel(J), &
@@ -1039,47 +1040,6 @@ subroutine Compute_Transform(tTransform,vIndx,Error)
   call LU_Decomp(tTransform,vIndx,D,Error)
   !
 end subroutine Compute_Transform
-
-real(dp) function MixPhase_Grt(TdgK,Pbar,nP,MM,vMu0rt,vX)
-  use M_T_MixModel,only: T_MixModel,MixModel_Activities
-  !----------------------------------------------------------------inout
-  real(dp),        intent(in):: TdgK,Pbar
-  integer,         intent(in):: nP
-  type(T_MixModel),intent(in):: MM        ! mixing model
-  real(dp),        intent(in):: vMu0rt(:) !
-  real(dp),        intent(in):: vX(:)     ! phase composition
-  !-----------------------------------------------------------------vars
-  real(dp):: vLGam(nP),vLIdeal(nP),vLnAct(nP)
-  logical :: vLPole(nP)
-  real(dp):: G
-  integer :: i
-  logical :: Ok
-  character(len=30):: Msg
-  !---------------------------------------------------------------------
-  vLPole(:)= (vX(:)>Zero)
-  !
-  call MixModel_Activities( & !
-  & TdgK,Pbar, & ! in
-  & MM,        & ! in
-  & vX,        & ! in
-  & vLPole,    & ! in
-  & Ok, Msg,   & ! out
-  & vLGam,     & !
-  & vLIdeal,   & !
-  & vLnAct)      !
-  !
-  G= Zero
-  do i=1,nP
-    if(vLPole(i)) &
-    ! vMu0rt(i)= vFasPur(MM%vIPole(i))%Grt
-    & G= G &
-    &  + vX(i) *(vMu0rt(i) + vLnAct(i))
-  end do
-  !
-  MixPhase_Grt= G
-  !
-  return
-end function MixPhase_Grt
 
 subroutine Mixture_Minimize( &
 & vAffPole,vIPole,MixModel, &

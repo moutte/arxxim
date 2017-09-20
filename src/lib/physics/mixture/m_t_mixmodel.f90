@@ -20,6 +20,7 @@ module M_T_MixModel
   public:: MixModel_Activities
   public:: MixModel_GibbsMixRT
   public:: MixModel_GibbsIdeal
+  public:: MixModel_Grt
 
   public:: MixModel_Site_ActivIdeal
 
@@ -1092,6 +1093,46 @@ real(dp) function MixModel_GibbsMixRT( & !
   MixModel_GibbsMixRT= G_IdMixRT +G_XSMixRT
   !
 end function MixModel_GibbsMixRT
+
+real(dp) function MixModel_Grt(TdgK,Pbar,nP,MM,vMu0rt,vX)
+  !---------------------------------------------------------------------
+  real(dp),        intent(in):: TdgK,Pbar
+  integer,         intent(in):: nP
+  type(T_MixModel),intent(in):: MM        ! mixing model
+  real(dp),        intent(in):: vMu0rt(:) ! end-members' mu0's
+  real(dp),        intent(in):: vX(:)     ! phase composition
+  !---------------------------------------------------------------------
+  real(dp):: vLGam(nP),vLIdeal(nP),vLnAct(nP)
+  logical :: vLPole(nP)
+  real(dp):: G
+  integer :: i
+  logical :: Ok
+  character(len=30):: Msg
+  !---------------------------------------------------------------------
+  vLPole(:)= (vX(:)>Zero) ! .and. MM%vHasPole(:)
+
+  call MixModel_Activities( & !
+  & TdgK,Pbar, & ! in
+  & MM,        & ! in
+  & vX,        & ! in
+  & vLPole,    & ! in
+  & Ok, Msg,   & ! out
+  & vLGam,     & !
+  & vLIdeal,   & !
+  & vLnAct)      !
+  !
+  G= Zero
+  do i=1,nP
+    if(vLPole(i)) &
+    ! vMu0rt(i)= vFasPur(MM%vIPole(i))%Grt
+    & G= G &
+    &  + vX(i) *(vMu0rt(i) + vLnAct(i))
+  end do
+  !
+  MixModel_Grt= G
+  !
+  return
+end function MixModel_Grt
 
 end module M_T_MixModel
 

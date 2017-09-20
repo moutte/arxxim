@@ -353,7 +353,7 @@ for limit in lis_limits:
     if val[0]==limit:
       point= val[1],val[2]
       points.append(point)
-  points= sorted(points,key=lambda x: x[0])
+  #points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
 print "PARAGENESIS="
