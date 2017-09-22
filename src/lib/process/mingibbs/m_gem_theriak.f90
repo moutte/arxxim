@@ -51,7 +51,7 @@ module M_GEM_Theriak
   !--------------------------------------------------------------------/
   !
   !---------------------------------------------------private parameters
-  real(dp),parameter:: MixMinim_TolX= 1.D-2
+  real(dp),parameter:: MixMinim_TolX= 1.D-3
   real(dp),parameter:: GEM_G_Iota= 1.0D-9 !1.0D-9
   integer, parameter:: GEM_IterMax= 100
   !
@@ -158,7 +158,6 @@ subroutine GEM_Theriak_Single
         & TdgK,Pbar, & 
         & vMixModel(vSavModel(i)%iModel), &
         & vSavModel(i))
-
       enddo
       ! call pause_ !!
     end if
@@ -484,7 +483,6 @@ subroutine GEM_Theriak_Path
   !
 end subroutine GEM_Theriak_Path
 
-! subroutine Check_vXMean(i,TdgK,Pbar,   G)
 subroutine Check_vXMean( &
 & TdgK,Pbar, &  
 & MixModel,  &
@@ -566,10 +564,7 @@ subroutine Theriakk(iError)
   integer :: nFmixSpl
   integer :: Iter
   integer :: I,K
-  real(dp):: G_Iota
   ! character(len=30):: sFMT
-  !
-  G_Iota= GEM_G_Iota
   !
   SavModelZero%iModel=      0
   SavModelZero%nFas=        0
@@ -671,7 +666,7 @@ subroutine Theriakk(iError)
       & vMixFas_Xpole_Init, &
       & vMixFas0)
       !----------------------------------------------------------------/
-      if(all(vMixFas0(:)%Grt >=-G_Iota)) then
+      if(all(vMixFas0(:)%Grt >=-GEM_G_Iota)) then
         if(iDebug>1) call ShowResults
         call StoreResults
         exit
@@ -683,7 +678,7 @@ subroutine Theriakk(iError)
       !------------- (with the composition computed in Mixture_Minimize)
       nF= nFpur + nFmixSpl
       call GEM_AddMixtures( &
-      & nC, G_Iota, vMixModel, vMixFas0, &
+      & nC, GEM_G_Iota, vMixModel, vMixFas0, &
       & vFas0, nF)
       !
       do I=nFpur+1,nF

@@ -18,8 +18,91 @@ module M_Dtb_Test
   public:: Dtb_Test_Species
   public:: Dtb_Tabulate_PSatH2O
   public:: Dtb_Test_EQ36
+  public:: Dtb_Test_Mixture_Gmix
   !
 contains
+
+subroutine Dtb_Test_Mixture_Gmix
+  use M_Dtb_Const,   only: T_CK
+  use M_IoTools,     only: GetUnit
+  use M_TPcond_Read, only: TPpath_Read
+  use M_T_MixModel,  only: T_MixModel, MixModel_GibbsMixRT 
+  use M_Global_Tools,only: Species_TP_Update
+  !
+  use M_Global_Vars,only: vSpcDtb,vSpc,vMixModel
+  use M_Global_Vars,only: vDiscretModel,vDiscretParam
+  use M_Path_Vars,  only: vTPpath
+  !
+  type(T_MixModel):: MM
+  real(dp),allocatable:: vX(:)
+  logical, allocatable:: vL(:)
+  real(dp):: TdgK, Pbar
+  real(dp):: Gmix
+  integer :: i, F, NP
+  !
+  call GetUnit(F)
+  open(F,file="test_mixmodel.tab")
+  !
+  MM= vMixModel(1)
+  NP= MM%NPole
+  allocate(vX(NP))
+  allocate(vL(NP))
+  !
+  vX(:)= 0.D0
+  vL(:)= .false.
+  vL(1:3)= .true.
+  !
+  vX(1)= 0.D0
+  vX(3)= 0.01D0
+  do
+    vX(1)= vX(1)+1.D-2
+    vX(2)= 1.D0 - vX(1)-vX(3)
+    write(F,'(G15.6,A1,$)') vX(1),T_
+    if(vX(1)>0.999D0) exit
+  end do
+  write(F,*)
+  !
+  !--read the TP path
+  call TPpath_Read
+  !
+  do i=1,size(vTPpath)
+    print *,TdgK
+    !
+    TdgK= vTPpath(i)%TdgC +T_CK
+    Pbar= vTPpath(i)%Pbar
+    !
+    call Species_TP_Update( &
+    & TdgK,Pbar,vSpcDtb,vDiscretModel,vDiscretParam, & !in
+    & vSpc,vMixModel) !inout
+    !
+    vX(1)= 0.D0
+    vX(3)= 0.01D0
+    do
+      !
+      vX(1)= vX(1)+1.D-2
+      vX(2)= 1.D0 - vX(1)-vX(3)
+      if(vX(1)>0.999D0) exit
+      !
+      GMix= MixModel_GibbsMixRT( & !
+      & TdgK,Pbar,  & !IN
+      & MM,         & !IN, mixing model
+      & vL,         & !IN
+      & vX)           !IN
+      !! GMix= GMix *R_jk*TdgK
+      write(F,'(G15.6,A1,$)') GMix,T_
+      !
+    end do
+    write(F,*)
+    !
+  end do
+  !
+  deallocate(vX)
+  deallocate(vL)
+  !
+  close(F)
+  !
+  return
+end subroutine Dtb_Test_Mixture_Gmix
 
 subroutine Dtb_Tabulate(sCode)
 !-----------------------------------------------------------------------

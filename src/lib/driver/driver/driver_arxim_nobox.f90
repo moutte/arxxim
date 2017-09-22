@@ -366,9 +366,9 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
     call Global_Build
     call Dtb_Test_EQ36
     
-  case("DTBSOL")
+  case("DTBMIX")
     call Global_Build
-    !! call Dtb_Test_Mixture_1
+    call Dtb_Test_Mixture_Gmix
     !call Dtb_Test_Mixture_2
     !
   case("DTBFLUID")

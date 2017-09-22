@@ -549,8 +549,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  j= i%6
-  fig.plot(vx, vy, symbols[j], linestyle='-', linewidth=2.0)
+  fig.plot(vx, vy, symbols[i%len(symbols)], linestyle='-', linewidth=2.0)
 
 for i,centroid in enumerate(centroids):
   x,y,n= centroid

@@ -27,7 +27,7 @@ Debug= "3"
 
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map3d_tp.inn")
-files= glob.glob("tmp/00*.inn")
+files= glob.glob("tmp/test*.inn")
 files.sort()
 for f in files: print f
 #raw_input()

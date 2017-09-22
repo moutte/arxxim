@@ -11,6 +11,7 @@ module M_Global_Tools
   public:: Global_Species_Select
   public:: Global_TP_Update
   public:: Global_Show
+  public:: Species_TP_Update
   !
 contains
 
