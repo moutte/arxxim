@@ -48,16 +48,14 @@ def TextToLines(InName,vL):
 def vLines2Table(vL,nL,nC,TT):
   # conversion of a list of lines, with numeric values only,
   # to a table of float,
-  # skipping the first line (it contains the lables)
-  i=0
-  for line in vL:
+  # skipping the first line, which contains the labels
+  for i,line in enumerate(vL):
+    if i==0: continue #skip first line
     ww= line.split('\t')
-    if i>0:
-      for j in range(nC):
-        print ww[j]
-        TT[i-1,j]= num(ww[j]) #)float(ww[j])
-        #raw_input()
-    i+=1
+    for j in range(nC):
+      print ww[j]
+      TT[i-1,j]= num(ww[j])
+      #raw_input()
   return TT
 #-------------------------------------------------------------------data
 

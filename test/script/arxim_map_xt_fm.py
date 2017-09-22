@@ -47,7 +47,7 @@ def Yfunc(y): return 3000. + (y-400.)*10.
 
 #---------------------------------------------------------//user-defined
 '''
-the include block to be modified:
+the block to be modified:
 SYSTEM.GEM
   TDGC  1200
   PBAR  400
@@ -65,6 +65,8 @@ iValue=   2
 Xlis=[x.upper() for x in Xlis]
 Ylis=[y.upper() for y in Ylis]
 
+sBlock= "SYSTEM.GEM"
+
 # SIO2=0   SiO2  1.0=2
 XKeyword= 0
 XValue=   2
@@ -73,11 +75,10 @@ XValue=   2
 YKeyword= 0
 YValue=   1
 
-fInclude= fInn.replace(".inn",".include")
-#--clean the include file
-with open(fInclude,'r') as f:
+#--clean the inn file
+with open(fInn,'r') as f:
   lines = f.readlines()
-f=open(fInclude,'w')
+f=open(fInn,'w')
 for line in lines:
   ll= line.strip()
   if ll=='':     continue
@@ -93,27 +94,34 @@ Yindex= [-1 for s in Ylis]
 Xhead= ["  " for s in Xlis]
 Yhead= ["  " for s in Ylis]
 
-with open(fInclude,'r') as f:
+with open(fInn,'r') as f:
   lines = f.readlines()
+OK= False
 for i,line in enumerate(lines):
   ww= line.split()
-  if len(ww)>XValue:
-    s= ww[XKeyword].upper()
-    if s in Xlis:
-      j= Xlis.index(s)
-      Xindex[j]= i
-      for k in range(XValue):
-        Xhead[j]= Xhead[j] + ww[k] + "  " 
-  if len(ww)>YValue:
-    s= ww[YKeyword].upper()
-    if s in Ylis:
-      j= Ylis.index(s)
-      Yindex[j]= i
-      for k in range(YValue):
-        Yhead[j]= Yhead[j] + ww[k] + "  "
+  if not OK:
+    if ww[0].upper()==sBlock: OK=True
+  else:
+    if ww[0].upper()=="END": OK= False
+  if OK:
+    if len(ww)>XValue:
+      s= ww[XKeyword].upper()
+      if s in Xlis:
+        j= Xlis.index(s)
+        Xindex[j]= i
+        for k in range(XValue):
+          Xhead[j]= Xhead[j] + ww[k] + "  " 
+    if len(ww)>YValue:
+      s= ww[YKeyword].upper()
+      if s in Ylis:
+        j= Ylis.index(s)
+        Yindex[j]= i
+        for k in range(YValue):
+          Yhead[j]= Yhead[j] + ww[k] + "  "
 if 1:
   print Xindex, Xhead
   print Yindex, Yhead
+  raw_input()
   #sys.exit()
 
 Xlis= Xindex, Xhead
@@ -153,11 +161,11 @@ if 0:
 
 #------------------------------------------------modify the include file
 def include_modify(lis,func,x):
-  with open(fInclude,'r') as f:
+  with open(fInn,'r') as f:
     lines = f.readlines()
   idx,headd= lis
   y= func(x)
-  f=open(fInclude,'w')
+  f=open(fInn,'w')
   for i,line in enumerate(lines):
     if   i==idx[0]:  f.write("%s  %.4g\n" % (headd[0],x))
     elif i==idx[1]:  f.write("%s  %.4g\n" % (headd[1],y))

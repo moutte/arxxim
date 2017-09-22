@@ -29,7 +29,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map_xt_fsp_01.inn"
+fInn= "tmp/f1e_gem_fsp1.inn"
 
 mixture_names=[]
 
@@ -60,23 +60,18 @@ for composition:
 iKeyword= 0
 iValue=   2
 '''
-# keywords must be uppercase
-Xlis=[x.upper() for x in Xlis]
-Ylis=[y.upper() for y in Ylis]
-
-sBlock= "SYSTEM.GEM"
-
 XKeyword= 0
 XValue=   2
 
 YKeyword= 0
 YValue=   1
 
-#--clean the inn file
-with open(fInn,'r') as f:
+fInclude= fInn.replace(".inn",".include")
+#--clean the include file
+with open(fInclude,'r') as f:
   lines = f.readlines()
 #--clean the include file
-f=open(fInn,'w')
+f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
   if ll=='':     continue
@@ -91,30 +86,24 @@ Yindex= [-1 for s in Ylis]
 Xhead= ["  " for s in Xlis]
 Yhead= ["  " for s in Ylis]
 
-with open(fInn,'r') as f:
+with open(fInclude,'r') as f:
   lines = f.readlines()
-OK= False
 for i,line in enumerate(lines):
   ww= line.split()
-  if not OK:
-    if ww[0].upper()==sBlock: OK=True
-  else:
-    if ww[0].upper()=="END": OK= False
-  if OK:
-    if len(ww)>XValue:
-      s= ww[XKeyword].upper()
-      if s in Xlis:
-        j= Xlis.index(s)
-        Xindex[j]= i
-        for k in range(XValue):
-          Xhead[j]= Xhead[j] + ww[k] + "  " 
-    if len(ww)>YValue:
-      s= ww[YKeyword].upper()
-      if s in Ylis:
-        j= Ylis.index(s)
-        Yindex[j]= i
-        for k in range(YValue):
-          Yhead[j]= Yhead[j] + ww[k] + "  "
+  if len(ww)>XValue:
+    s= ww[XKeyword].upper()
+    if s in Xlis:
+      j= Xlis.index(s)
+      Xindex[j]= i
+      for k in range(XValue):
+        Xhead[j]= Xhead[j] + ww[k] + "  " 
+  if len(ww)>YValue:
+    s= ww[YKeyword].upper()
+    if s in Ylis:
+      j= Ylis.index(s)
+      Yindex[j]= i
+      for k in range(YValue):
+        Yhead[j]= Yhead[j] + ww[k] + "  "
 if 1:
   print Xindex, Xhead
   print Yindex, Yhead
@@ -178,9 +167,9 @@ if 0:
 #------------------------------------------------modify the include file
 def include_modify(lis,func,x):
   idx,headd= lis
-  with open(fInn,'r') as f:
+  with open(fInclude,'r') as f:
     lines = f.readlines()
-  f=open(fInn,'w')
+  f=open(fInclude,'w')
   for i,line in enumerate(lines):
     if i==idx[0]:
       f.write("%s  %.4g\n" % (headd[0],x))
@@ -296,7 +285,7 @@ for iY,y in enumerate(Yser):
       if iY==0 and iX==0:
         mixture_names= read_mixture_names()
         for s in mixture_names: print s
-        raw_input("type ENTER")
+        raw_input()
       save_mixture_moles(x,y)
       paragen= arxim_result(fResult) #-----------------read arxim result
       if not paragen in lis_paragen:
@@ -453,7 +442,7 @@ for reac in lis_reac:
 
 END= time.time()
 print "TIME=", END - START
-raw_input("type ENTER")
+raw_input()
 
 for i,paragen in enumerate(lis_paragen):
   print paragen

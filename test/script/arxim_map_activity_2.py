@@ -30,15 +30,14 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "tmp/map_activ_na_si.inn"
-Xlis= ["SIO2_BUFF"]
-Xlabel= "colog[SiO2]"
-Ylabel= "colog[Na+]/[H+]"
-
-fInn= "inn/map2c_activ.inn"
 fInn= "inn/map2a_activ.inn"
+fInn= "inn/map2c_activ.inn"
+
+sBlock= "SPECIES"
+
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
+
 Xlabel= "colog[SiO2]"
 Ylabel= "colog[K+]/[H+]"
 
@@ -51,7 +50,7 @@ Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 #---------------------------------------------------------//user-defined
 
 '''
-the block to be modified:
+the include block to be modified:
 SPECIES
 MIN	VIRTUAL	SIO2_BUFF	SI(1)O(2)	2700.	3.5
 MIN	VIRTUAL	KOH_BUFF	K(1)O(1)H(1)	2700.	-1.5
@@ -59,8 +58,6 @@ END
 Keyword is SIO2_BUFF,  its index is 2  -> iKeyword= 2
 Value is the last one, its index is 5  -> iValue=   5
 '''
-sBlock= "SPECIES"
-
 iKeyword= 2
 iValue=   5
 nValue=   8 #number of T-P points in the logK file
@@ -80,39 +77,23 @@ f.close()
 #-----read the inn file and store line numbers and 'headers' for X and Y
 Xhead= "  "
 Yhead= "  "
-Xindex= -1
-Yindex= -1
 with open(fInn,'r') as f:
   lines = f.readlines()
-OK= False
 for i,line in enumerate(lines):
   ww= line.split()
-  if not OK:
-    if ww[0].upper()==sBlock: OK=True
-  else:
-    if ww[0].upper()=="END": OK= False
-  if OK:
-    if len(ww)>iValue:
-      if ww[iKeyword].upper() in Xlis:
-        Xindex= i
-        for j in range(iValue):
-          Xhead= Xhead + ww[j] + "  "
-      if ww[iKeyword].upper() in Ylis:
-        Yindex= i
-        for j in range(iValue):
-          Yhead= Yhead + ww[j] + "  "
+  if len(ww)>iValue:
+    if ww[iKeyword].upper() in Xlis:
+      Xindex= i
+      for j in range(iValue):
+        Xhead= Xhead + ww[j] + "  "
+    if ww[iKeyword].upper() in Ylis:
+      Yindex= i
+      for j in range(iValue):
+        Yhead= Yhead + ww[j] + "  "
 if 0:
   print Xindex, Xhead
   print Yindex, Yhead
   raw_input()
-if Xindex<0:
-  print "line not found for "+Xlis[0]
-  raw_input()
-  sys.exit()
-if Yindex<0:
-  print "line not found for "+Ylis[0]
-  raw_input()
-  sys.exit()
 Xlis= Xindex, Xhead
 Ylis= Yindex, Yhead
 #--//
@@ -373,7 +354,7 @@ for limit in lis_limits:
     if val[0]==limit:
       point= val[1],val[2]
       points.append(point)
-  points= sorted(points,key=lambda x: x[0])
+  #points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
 print "PARAGENESIS="

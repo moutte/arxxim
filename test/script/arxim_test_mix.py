@@ -31,6 +31,8 @@ for f in files: print f
 #raw_input()
 #---------------------------------------------------------------------//
 
+
+
 i0= 0
 
 i= 0
@@ -40,12 +42,12 @@ for sFile in files:
   
   print '\n=========done '+ sFile + '==========================\n\n'
   i += 1
-  
-  with open("test_mixmodel.tab",'r') as f: lines= f.readlines()
     
   Xlabel= "xAb"
   Ylabel= "G_mix"
-  figName= "test_mixture"
+  figName= "test_mixmodel"
+  
+  with open("test_mixmodel.tab",'r') as f: lines= f.readlines()
   #--------------------------------------------------------plot XY diagram
   plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
   plt.rcParams['figure.figsize']= 8.,8.   #ratio 4/4
@@ -62,7 +64,7 @@ for sFile in files:
   fig.set_xlim(0.,1.)
 
   for i,line in enumerate(lines):
-    if i==0: continue
+    if i==0: continue #skip first line
     vx= []
     vy= []
     ww= line.split()

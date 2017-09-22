@@ -53,10 +53,9 @@ subroutine Dtb_Test_Mixture_Gmix
   vL(1:3)= .true.
   !
   vX(1)= 0.D0
-  vX(2)= 0.01D0
   do
     vX(1)= vX(1)+1.D-2
-    vX(3)= 1.D0 - vX(1)-vX(2)
+    vX(2)= 1.D0 - vX(1)
     write(F,'(G15.6,A1,$)') vX(1),T_
     if(vX(1)>0.999D0) exit
   end do
@@ -76,11 +75,11 @@ subroutine Dtb_Test_Mixture_Gmix
     & vSpc,vMixModel) !inout
     !
     vX(1)= 0.D0
-    vX(3)= 0.01D0
+    vX(2)= 0.01D0
     do
       !
       vX(1)= vX(1)+1.D-2
-      vX(2)= 1.D0 - vX(1)-vX(3)
+      vX(3)= 1.D0 - vX(1)-vX(2)
       if(vX(1)>0.999D0) exit
       !
       GMix= MixModel_GibbsMixRT( & !
