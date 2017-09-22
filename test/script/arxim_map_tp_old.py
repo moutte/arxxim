@@ -1,20 +1,22 @@
 import os, glob, sys
 import pylab as plt
 
-if sys.platform.startswith("win"):
 #windows
-  sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
+sExe= "arxim.exe"
+sExe= os.path.join("..","bin",sExe)
 
-if sys.platform.startswith("linux"):
 #linux
-  sExe= "a.out"
-  sExe= os.path.join("..","..","arx-git","bin",sExe)
-  
-  sExe= "arx_debug"
-  sExe= "arx_optim"
-  sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+sExe= "arx_o3"
+sExe= os.path.join("..","..","arx-basis","bin",sExe)
+
+sExe= "arx_optim"
+sExe= "a.out"
+sExe= os.path.join("..","..","arx-git","bin",sExe)
+
+sExe= "arx_debug"
+sExe= "arx_optim"
+sExe= "a.out"
+sExe= os.path.join("..","bin",sExe)
 
 sDebug= "1"
 sCmd=  "GEM"
@@ -28,7 +30,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user defined
-fInn= "inn/map3a_tp.inn"
+fInn= "inn/map3c_tp.inn"
 
 Xlis= ["TDGC"]  # must be uppercase ...
 Ylis= ["PBAR"]  # must be uppercase ...
@@ -59,15 +61,15 @@ Keyword is TDGC / PBAR,  its index is 0  -> iKeyword= 0
 Value is 1200 / 400,     its index is 1  -> iValue=   1
 '''
 
-sBlock= "SYSTEM.GEM"
 iKeyword= 0
 iValue=   1
 
+fInclude= fInn.replace(".inn",".include")
 #--clean the include file
-with open(fInn,'r') as f:
+with open(fInclude,'r') as f:
   lines = f.readlines()
 #--clean the include file
-f=open(fInn,'w')
+f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
   if ll=='':     continue
@@ -78,28 +80,20 @@ f.close()
 #--store line numbers and header for X and Y
 Xhead= "  "
 Yhead= "  "
-Xindex= -1
-Yindex= -1
-with open(fInn,'r') as f:
+with open(fInclude,'r') as f:
   lines = f.readlines()
-OK= False
 for i,line in enumerate(lines):
   ww= line.split()
-  if not OK:
-    if ww[0].upper()==sBlock: OK=True
-  else:
-    if ww[0].upper()=="END": OK= False
-  if OK:
-    if len(ww)>iValue:
-      if ww[iKeyword].upper() in Xlis:
-        Xindex= i
-        for j in range(iValue):
-          Xhead= Xhead + ww[j] + "  "
-      if ww[iKeyword].upper() in Ylis:
-        Yindex= i
-        for j in range(iValue):
-          Yhead= Yhead + ww[j] + "  "
-if 1:
+  if len(ww)>iValue:
+    if ww[iKeyword].upper() in Xlis:
+      Xindex= i
+      for j in range(iValue):
+        Xhead= Xhead + ww[j] + "  "
+    if ww[iKeyword].upper() in Ylis:
+      Yindex= i
+      for j in range(iValue):
+        Yhead= Yhead + ww[j] + "  "
+if 0:
   print Xindex, Xhead
   print Yindex, Yhead
   raw_input()
@@ -108,7 +102,7 @@ Ylis= Yindex, Yhead
 #--/
 
 #--write fInclude to the global variable IncLines -> don't work ...
-with open(fInn,'r') as f:
+with open(fInclude,'r') as f:
   IncLines = f.readlines()
 #--/
 
@@ -141,9 +135,9 @@ if 0:
 #------------------------------------------------modify the include file
 def include_modify(lis,x):
   idx,headd= lis
-  with open(fInn,'r') as f:
+  with open(fInclude,'r') as f:
     lines = f.readlines()
-  f=open(fInn,'w')
+  f=open(fInclude,'w')
   for i,line in enumerate(lines):
     if i==idx: f.write("%s  %.4g\n" % (headd,x))
     else:      f.write(line)

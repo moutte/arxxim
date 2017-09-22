@@ -2,28 +2,37 @@ TEST
   COMPUTE SPCPATH
   COMPUTE Q
 END TEST
+  COMPUTE SPC
+
 CONDITIONS
   TITLE  Sillen-pH diagram for Cr species, under fixed fO2
   OUTPUT out\map1b
   DEBUG  3
 END CONDITIONS
-SYSTEM
+
+INCLUDE inn/map1b_cr_ox.include
+!SYSTEM
   TDGC 25.
-  CR  MOLE CRO4-2  1E-6
-  H  PK  H+  13  
-  OX  PK  O2(AQ)  39.71  
-END
+  FE  MOLE FE+3  1E-3
+  H	  PK	H+    2
+  OX	PK	O2(G) 40
+!END
+
 SOLVENT
   MODEL DAV_1 !DH1 !
 END
+
 PATH CHANGE
-  H  PK  H+  H  initial  0.0  13  
+  H initial 0.0 final 14.0 delta 0.25
 END PATH
+
 INCLUDE dtb\elements.dtb
+
 TP.TABLE	
 TdgC	25
 Pbar	1
 END	
+
 SPECIES LOGK
 AQU	slop07	H2O	H(2)O(1)	0	0
 AQU	slop07	H+	H(1)+(1)	0	0
@@ -37,10 +46,12 @@ AQU	slop07	CROH+2	CR(1)O(1)H(1)+(2)	0	5.6813
 AQU	slop07	CR(OH)2+  CR(1)O(2)H(2)+(1)	0	0.0373
 AQU	slop07	CR(OH)3	CR(1)O(3)H(3)	0	-8.3024
 AQU	slop07	CR(OH)4- CR(1)O(4)H(4)-(1)	0	-17.684
+
 AQU	minteq	CaCrO4	CA(1)CR(1)O(4)	0	2.77
 AQU	minteq	H2CrO4	H(2)CR(1)O(4)	0	6.31
 AQU	minteq	KCrO4-	K(1)CR(1)O(4)-(1)	0	0.57
 AQU	minteq	NaCrO4-	NA(1)CR(1)O(4)-(1)	0	0.696
+
 MIN	thrchimie	CR(OH)3	CR(1)O(3)H(3)	2700	2.196
 MIN	thrchimie	CR2O3	CR(2)O(3)	2700	11.642
 MIN	minteq	CaCrO4	CA(1)CR(1)O(4)	2700	2.27
@@ -48,9 +59,11 @@ MIN	minteq	CrO3	CR(1)O(3)	2700	3.21
 MIN	minteq	MgCrO4	MG(1)CR(1)O(4)	2700	-5.38
 MIN	minteq	K2CrO4	K(2)CR(1)O(4)	2700	0.51
 MIN	minteq	Na2CrO4	NA(2)CR(1)O(4)	2700	-2.93
+
 MIN	minteq	BaCrO4	BA(1)CR(1)O(4)	2700	9.67
 MIN	minteq	PbCrO4	PB(1)CR(1)O(4)	2700	12.6
 MIN	minteq	CuCrO4	CU(1)CR(1)O(4)	2700	5.44
+
 AQU	slop07	H2,AQ	H(2)	0	-46.098
 AQU	slop07	HO2-	O(2)H(1)-(1)	0	-28.301
 AQU	slop07	OH-	O(1)H(1)-(1)	0	-13.987

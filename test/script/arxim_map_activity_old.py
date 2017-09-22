@@ -31,9 +31,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 
 #-----------------------------------------------------------user-defined
 fInn= "inn/map2a_activ.inn"
-fInn= "inn/map2c_activ.inn"
-
-sBlock= "SPECIES"
+fInn= "inn/map2b_activ.inn"
 
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
@@ -50,7 +48,7 @@ Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 #---------------------------------------------------------//user-defined
 
 '''
-the block to be modified:
+the include block to be modified:
 SPECIES
 MIN	VIRTUAL	SIO2_BUFF	SI(1)O(2)	2700.	3.5
 MIN	VIRTUAL	KOH_BUFF	K(1)O(1)H(1)	2700.	-1.5
@@ -62,11 +60,12 @@ iKeyword= 2
 iValue=   5
 nValue=   8 #number of T-P points in the logK file
 
-#--clean the inn file
-with open(fInn,'r') as f:
+fInclude= fInn.replace(".inn",".include")
+#--clean the include file
+with open(fInclude,'r') as f:
   lines = f.readlines()
 #--clean the include file
-f=open(fInn,'w')
+f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
   if ll=='':     continue
@@ -74,31 +73,23 @@ for line in lines:
   f.write(line)
 f.close()
 
-#-----read the inn file and store line numbers and 'headers' for X and Y
+#--read the include file and store line numbers and 'headers' for X and Y
 Xhead= "  "
 Yhead= "  "
-Xindex= -1
-Yindex= -1
-with open(fInn,'r') as f:
+with open(fInclude,'r') as f:
   lines = f.readlines()
-OK= False
 for i,line in enumerate(lines):
   ww= line.split()
-  if not OK:
-    if ww[0].upper()==sBlock: OK=True
-  else:
-    if ww[0].upper()=="END": OK= False
-  if OK:
-    if len(ww)>iValue:
-      if ww[iKeyword].upper() in Xlis:
-        Xindex= i
-        for j in range(iValue):
-          Xhead= Xhead + ww[j] + "  "
-      if ww[iKeyword].upper() in Ylis:
-        Yindex= i
-        for j in range(iValue):
-          Yhead= Yhead + ww[j] + "  "
-if 1:
+  if len(ww)>iValue:
+    if ww[iKeyword].upper() in Xlis:
+      Xindex= i
+      for j in range(iValue):
+        Xhead= Xhead + ww[j] + "  "
+    if ww[iKeyword].upper() in Ylis:
+      Yindex= i
+      for j in range(iValue):
+        Yhead= Yhead + ww[j] + "  "
+if 0:
   print Xindex, Xhead
   print Yindex, Yhead
   raw_input()
@@ -126,9 +117,9 @@ if 0:
 #------------------------------------------------modify the include file
 def input_modify(lis,x):
   idx,headd= lis
-  with open(fInn,'r') as f:
+  with open(fInclude,'r') as f:
     lines = f.readlines()
-  f=open(fInn,'w')
+  f=open(fInclude,'w')
   for i,line in enumerate(lines):
     if i==idx:
       f.write("%s" % (headd))
@@ -362,7 +353,7 @@ for limit in lis_limits:
     if val[0]==limit:
       point= val[1],val[2]
       points.append(point)
-  points= sorted(points,key=lambda x: x[0])
+  #points= sorted(points,key=lambda x: x[0])
   lines.append(points)
 
 print "PARAGENESIS="

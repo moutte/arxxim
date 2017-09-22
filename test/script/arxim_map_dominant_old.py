@@ -38,13 +38,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map1a_fe_ox.inn"
-#Elements=["FE"]
-Selection="FE"
-
 fInn= "inn/map1b_cr_ox.inn"
 #Elements=["CR"]
 Selection="CR"
+
+fInn= "inn/map1a_fe_ox_old.inn"
+#Elements=["FE"]
+Selection="FE"
 
 Xlis= ["H"]
 Ylis= ["OX"]
@@ -57,54 +57,20 @@ Ylabel= "colog(f_O2(g))"
 
 #---------------------------------------------------------//user-defined
 
-sBlock= "SYSTEM"
 iKeyword= 0
 iValue=   3
-nValue=   1
 
-#--clean the inn file
-with open(fInn,'r') as f:
+fInclude= fInn.replace(".inn",".include")
+
+with open(fInclude,'r') as f:
   lines = f.readlines()
-f=open(fInn,'w')
+f=open(fInclude,'w')
 for line in lines:
   ll= line.strip()
   if ll=='':     continue
   if ll[0]=='!': continue
   f.write(line)
 f.close()
-#--/
-#-----read the inn file and store line numbers and 'headers' for X and Y
-Xhead= "  "
-Yhead= "  "
-Xindex= -1
-Yindex= -1
-with open(fInn,'r') as f:
-  lines = f.readlines()
-OK= False
-for i,line in enumerate(lines):
-  ww= line.split()
-  if not OK:
-    if ww[0].upper()==sBlock: OK=True
-  else:
-    if ww[0].upper()=="END": OK= False
-  if OK:
-    if len(ww)>iValue:
-      if ww[iKeyword].upper() in Xlis:
-        Xindex= i
-        for j in range(iValue):
-          Xhead= Xhead + ww[j] + "  "
-      if ww[iKeyword].upper() in Ylis:
-        Yindex= i
-        for j in range(iValue):
-          Yhead= Yhead + ww[j] + "  "
-if 1:
-  print Xindex, Xhead
-  print Yindex, Yhead
-  raw_input()
-  #--sys.exit()
-Xlis= Xindex, Xhead
-Ylis= Yindex, Yhead
-#--//
 
 sArximCommand= sExe,fInn,sDebug,sCmd
 fResult= "tmp_species_lact.dat"
@@ -195,16 +161,17 @@ def arxim_result(s_include):
 #----------------------------------------------------------arxim results
 
 #------------------------------------------------modify the include file
-def input_modify(lis,x):
-  idx,headd= lis
-  with open(fInn,'r') as f:
+def include_modify(lis,x):
+# global variables used: fInclude, iKeyword, iValue
+  with open(fInclude,'r') as f:
     lines = f.readlines()
-  f=open(fInn,'w')
-  for i,line in enumerate(lines):
-    if i==idx:
-      f.write("%s" % (headd))
-      for j in range(nValue): f.write("%.4g  " % (x))
-      f.write('\n')
+  f=open(fInclude,'w')
+  for line in lines:
+    ww= line.split()
+    if len(ww)>iValue and ww[iKeyword] in lis:
+      for i in range(iValue):
+        f.write("  %s" % (ww[i]))
+      f.write("  %.4g\n" % (x))
     else:
       f.write(line)
   f.close()
@@ -217,7 +184,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
   #
   while abs(x0-x1)>tolerance:
     x= (x0+x1)/2.
-    input_modify(lis,x)
+    include_modify(lis,x)
     OK= arxim_execute(sArximCommand)
     if OK:
       F= arxim_result(spc_include)
@@ -255,12 +222,12 @@ tab_x=plt.zeros((Xdim,Ydim),'float')
 START= time.time()
 #-----------------------------------------------------------------y-loop
 for iY,y in enumerate(Yser):
-  input_modify(Ylis,y) #-----------------modify the include file for y
+  include_modify(Ylis,y) #-----------------modify the include file for y
   #---------------------------------------------------------------x-loop
   for iX,x in enumerate(Xser):
     print x,y
     #
-    input_modify(Xlis,x) #---------------modify the include file for x
+    include_modify(Xlis,x) #---------------modify the include file for x
     OK= arxim_execute(sArximCommand) #---------------------execute arxim
     #
     #--------------------------------------------------done on first run
@@ -345,7 +312,7 @@ lis_false_y= []
 #--refining the x-coordinate of the species change, at fixed y
 for iY in range(Ydim):
   y= tab_y[0,iY]
-  input_modify(Ylis,y)
+  include_modify(Ylis,y)
   for iX in range(1,Xdim):
     if tab_spc[iX-1,iY] != tab_spc[iX,iY]:
       print tab_x[iX,iY],tab_y[iX,iY]
@@ -396,7 +363,7 @@ for iY in range(Ydim):
 #--refining the y-coordinate of the species change, at fixed x
 for iX in range(Xdim):
   x= tab_x[iX,0]
-  input_modify(Xlis,x)
+  include_modify(Xlis,x)
   for iY in range(1,Ydim):
     if tab_spc[iX,iY-1] != tab_spc[iX,iY]:
       F0= tab_spc[iX,iY-1]
