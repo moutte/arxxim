@@ -332,7 +332,7 @@ print tab_paragen
 #sys.exit()
 
 #---------------------------------------------------------------refining
-#--refining the x-coordinate of the paragenesis change, at fixed y
+#------refining the x-coordinate of the paragenesis change, at fixed y--
 for iY in range(Ydim):
   y= tab_y[0,iY]
   include_modify(Ylis,Yfunc,y)
@@ -356,7 +356,7 @@ for iY in range(Ydim):
         #--we need two second stage refinements
           xm=x
           Fm=F
-          #----------------------second stage refinement between x0 and xm
+          #--------------------second stage refinement between x0 and xm
           x,F,OK= refine_xy(Xlis,Xfunc,F0,Fm,x0,xm,Xtol)
           if OK:
             if F0>Fm: s= str(Fm)+'='+str(F0)
@@ -383,8 +383,8 @@ for iY in range(Ydim):
         else: #F<0
           val= iX,iY
           lis_false_y.append(val)
-        
-#--refining the y-coordinate of the paragenesis change, at fixed x
+#--//      
+#------refining the y-coordinate of the paragenesis change, at fixed x--
 for iX in range(Xdim):
   x= tab_x[iX,0]
   include_modify(Xlis,Xfunc,x)
@@ -435,8 +435,9 @@ for iX in range(Xdim):
         else: #F<0
           val= iX,iY
           lis_false_y.append(val)
-          
-#--build the lines for each reaction from the lists of points
+#--//          
+#-------------------------------------------------------------//refining
+#-----------build the lines for each reaction from the lists of points--
 lines= []
 for reac in lis_reac:
   points= []
@@ -450,7 +451,7 @@ for reac in lis_reac:
       points.append(point)
   points= sorted(points,key=lambda x: x[0])
   lines.append(points)
-
+#--//
 END= time.time()
 print "TIME=", END - START
 raw_input("type ENTER")
@@ -461,9 +462,6 @@ for i,paragen in enumerate(lis_paragen):
 for reac in lis_reac:
   print reac
 #raw_input()
-
-#sys.exit()
-#-------------------------------------------------------------//refining
 
 #-----------------------------------------processing the paragenese list
 #----------i.e. find the phases that are common to all parageneses found

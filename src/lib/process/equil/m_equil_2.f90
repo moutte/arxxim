@@ -19,7 +19,7 @@ module M_Equil_2
   real(dp),parameter:: AffinIota= 1.D-3
   ! AffinIota= tolerance for equilibrium condition
   ! ( equilibrium ifF abs(Affinity)<AffinIota )
-  real(dp),parameter:: MixMinim_TolX= 1.D-3
+  real(dp),parameter:: Optimsolver_TolX= 1.D-6
   ! for mixture minimisation (non ideal case)
 
   integer, allocatable:: tIPole(:,:)
@@ -1080,7 +1080,7 @@ subroutine Mixture_Minimize( &
   logical :: OkConverge
 
   FF= 0 ! log file
-  TolX= MixMinim_TolX
+  TolX= Optimsolver_TolX
   DeltaInit= 0.05D0
 
   nP= MixModel%NPole

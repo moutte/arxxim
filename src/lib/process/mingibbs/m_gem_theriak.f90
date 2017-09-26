@@ -51,9 +51,10 @@ module M_GEM_Theriak
   !--------------------------------------------------------------------/
   !
   !---------------------------------------------------private parameters
-  real(dp),parameter:: MixMinim_TolX= 1.D-3
-  real(dp),parameter:: GEM_G_Iota= 1.0D-9 !1.0D-9
-  integer, parameter:: GEM_IterMax= 100
+  real(dp),parameter:: MixMinim_TolX=    1.D-3
+  real(dp),parameter:: Optimsolver_TolX= 1.D-6
+  real(dp),parameter:: GEM_G_Iota=       1.D-6 !1.0D-9
+  integer, parameter:: GEM_IterMax=      100
   !
   logical:: WarmRestart= .false.  !!.true.   !!
   logical:: WriteTrace=  .true.   !!.false.  !!
@@ -500,14 +501,34 @@ subroutine Check_vXMean( &
   type(T_SavModel),intent(inout):: SavModel
   !---------------------------------------------------------------------
   real(dp):: G
-  integer :: nP,ff
+  integer :: nP,ff,f1,f2
   logical :: MustUpdate
   real(dp),allocatable:: vX(:)
   !
   nP= MixModel%NPole
   allocate(vX(1:nP))
   !
+  do f1=1,SavModel%nFas
+    do f2=f1+1,SavModel%nFas
+      !if f2>f1 then
+        vX(:)= ( SavModel%vMole(f1)  *SavModel%tXPole(f1,1:nP)   &
+        &     +  SavModel%vMole(f2)  *SavModel%tXPole(f2,1:nP) ) &
+        &     / (SavModel%vMole(f1) + SavModel%vMole(f2))
+        !
+        G= MixModel_Grt( &
+        & TdgK,Pbar,    &
+        & nP,           &
+        & MixModel,     &
+        & SavModel%vGrt0(1:nP), &
+        & vX(1:nP))
+        !
+        write(94,'(i3,1x,i3,1x,G15.6)') f1,f2,G
+      !end do 
+    end do
+  end do
+  !
   vX(:)= Zero
+  ! compute mean (mole fraction) composition
   do ff=1,SavModel%nFas
     vX(:)= vX(1:nP) &
     &    + SavModel%vMole(ff) *SavModel%tXPole(ff,1:nP)
@@ -756,7 +777,7 @@ contains
   subroutine ShowResults
     integer:: I,J,K,P,M
     
-    write(6,'(A)') "pure="
+    write(6,'(A)') "PURE="
     do K=1,nC
       I= IPOSV(K)
       if(vFas0(I)%iModel==0) &
@@ -1067,11 +1088,10 @@ subroutine Mixture_Minimize( &
   integer :: Multi
   real(dp):: S
   !
-  real(dp):: TolX,DeltaInit
+  real(dp):: DeltaInit
   integer :: its,nCallG
   logical :: OkConverge
   !
-  TolX= MixMinim_TolX
   DeltaInit= 0.05D0
   !
   do I=1,size(vMixFas0)
@@ -1138,7 +1158,7 @@ subroutine Mixture_Minimize( &
         & MixModel_Optim_GetMu, & ! interface
         & FF,                   & ! IN
         & DeltaInit,            & ! IN
-        & TolX,                 & ! IN
+        & Optimsolver_TolX,     & ! IN
         & vX,                   & ! INOUT
         & vMu,                  & ! OUT
         & G,                    & ! OUT

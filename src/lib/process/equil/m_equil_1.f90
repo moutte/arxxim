@@ -12,7 +12,7 @@ module M_Equil_1
   !
   public:: Equil_Eq1
   !
-  real(dp),parameter:: MixMinim_TolX= 1.D-4
+  real(dp),parameter:: Optimsolver_TolX= 1.D-6
   != parameter for Mixture_Minimize
   !
   real(dp),parameter:: FasMinim= 1.D-9
@@ -721,7 +721,7 @@ subroutine Mixture_Minimize( &
   logical :: OkConverge
   !
   FF= 0 ! log file
-  TolX= MixMinim_TolX
+  TolX= Optimsolver_TolX
   DeltaInit= 0.05D0
   !
   MM= MixModel

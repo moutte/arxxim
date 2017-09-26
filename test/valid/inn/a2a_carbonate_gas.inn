@@ -20,8 +20,8 @@ INCLUDE dtb\hsvhkf_aqu.dtb
 INCLUDE dtb\hsvhkf_gas.dtb
 
 PATH CHANGE
-  H 4.00 10.00 0.5
-END PATH
+  H INITIAL 4.00 FINAL 10.00 DELTA 0.5
+END
 
 SOLVENT
   MODEL DAV_1

@@ -1,6 +1,6 @@
 #--------------------------------------------------------------mymakedir
 import os
-def mymakedir(newdir):
+def myMkDir(newdir):
   """works the way a good mkdir should :)
     - already exists, silently complete
     - regular file in the way, raise an exception

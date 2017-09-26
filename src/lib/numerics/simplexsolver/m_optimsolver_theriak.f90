@@ -7,9 +7,12 @@ module M_Optimsolver_Theriak
   !
   public:: Optimsolver_Theriak
   !
-  real(dp), parameter:: XMin= 1.0D-9     !enforce vX(:)>Xmin
-  real(dp), parameter:: DeltaMin= 1.0D-6 !min delta criteria in Theriak_Linesearch
-  integer,  parameter:: m_max= 20        !max iter in Theriak_Linesearch
+  real(dp), parameter:: XMin= 1.0D-9     
+  !--enforce vX(:)>Xmin, used in Project(Xmin,vXnew) in linesearch
+  real(dp), parameter:: DeltaMin= 1.0D-6 
+  !--min delta criteria in Theriak_Linesearch
+  integer,  parameter:: m_max= 20
+  !--max iter in Theriak_Linesearch
   !
   logical,parameter:: Debug= .true.  !! .false.  !! 
   integer,parameter:: IterMax= 100   !max iter in main loop
@@ -294,7 +297,7 @@ subroutine Project(Xminim,vX)
 end subroutine Project
 
 real(dp) function norm_L1(vX)
-  !--- Compute Discrete L1 Norm
+!--- Compute Discrete L1 Norm
   real(dp),intent(in):: vX(:)
   !
   norm_L1 = sum(abs(vX(:)))
@@ -302,15 +305,15 @@ real(dp) function norm_L1(vX)
 end function norm_L1
 
 real(dp) function norm_L2(vX)
-  !-- -Compute Discrete L2 Norm
+!-- -Compute Discrete L2 Norm
   real(dp),intent(in):: vX(:)
   !
-  norm_L2= SQRT(dot_product(vX,vX) )
+  norm_L2= sqrt(dot_product(vX,vX) )
   !
 end function norm_L2
 
 real(dp) function norm_LInf(vX)
-  !--- Compute Discrete LInfinity Norm
+!--- Compute Discrete LInfinity Norm
   real(dp),intent(in) :: vX(:)
   !
   norm_LInf= maxval(abs(vX))
