@@ -58,79 +58,22 @@ def tableSort(labels,TT):
   return T
 
 #-------------------------------------------------------------------plot
-def plot(labels,data): #,xLog,yLog):
+def plot(labels,data,iX,iY0,xLog=False,yLog=False):
   nlin,ncol= data.shape
   
   fig= plt.subplot()
   fig.grid(color='r', linestyle='-', linewidth=0.2)
   fig.grid(True)
   
-  symbols=['bo','go','ro','cs','mD','yd']
-  colors = ['cyan', 'lightblue', 'lightgreen', 'tan', 'pink','red', 'blue']
-  lenSym= len(symbols)
-
-  # fig.set_xlabel(titX)
-  # fig.set_ylabel(titY)
-  # fig.set_title(titre) #, fontsize=fontsize)
-  # fig.text(min(vx),max(vy),textt,
-  #  fontsize=16,ha = 'left', va = 'top')
-  
-  # fig.set_xlim(0,1.)
-  fig.set_xlim(1e-4,1.0)
-  #fig.semilogx(A[iMin:iMax,iX],A[iMin:iMax,iY],  'bo')
-  
-  xLog= False
-  yLog= False # True # 
-  
-  i0= labels.index("H2O")
-  if "pH" in labels:
-    iX= labels.index("pH")
-  else:
-    iX= 0
-  for i in range(ncol):
-    if i>i0:
-      symb= symbols[(i-i0-1)%len(symbols)]
-      vx= data[:,iX]
-      vy= data[:,i]
-      if xLog and yLog:
-        fig.loglog(vx, vy, symb, 
-          linestyle='-', linewidth=1.0, label=labels[i])
-      else:
-        if xLog:
-          fig.semilogx(vx, vy, symb, 
-            linestyle='-', linewidth=1.0, label=labels[i])
-        elif yLog:
-          fig.semilogy(vx, vy, symb, 
-            linestyle='-', linewidth=1.0, label=labels[i])
-        else:
-          fig.plot(vx, vy, symb, 
-            linestyle='-', linewidth=1.0, label=labels[i])
-      
-  fig.legend(loc='upper left')
-  plt.show()
-#-----------------------------------------------------------------//plot
-
-#-------------------------------------------------------------------plot
-def plot_wrk(labels,data,xLog=False,yLog=False):
-  nlin,ncol= data.shape
-  
-  fig= plt.subplot()
-  fig.grid(color='r', linestyle='-', linewidth=0.2)
-  fig.grid(True)
-  
-  fig.set_ylim(1e-4,1.0)
+  fig.set_xlim(1.e1,1.e7)
+  fig.set_ylim(1.e-4,1.0)
   
   symbols=['bo','go','ro','cs','mD','yd']
   colors = ['cyan', 'lightblue', 'lightgreen', 'tan', 'pink','red', 'blue']
 
-  #i0= labels.index("H2O")
-  i0= labels.index("PhiFluid")
-  iX= 0
-  if "pH" in labels: iX= labels.index("pH")
-  if "Time/YEAR" in labels: iX= labels.index("Time/YEAR")
   for i in range(ncol):
-    #if i>i0:
     if "PhiM_" in labels[i]:
+    #if i>iY0:
       sy= symbols[(i-i0-1)%len(symbols)]
       lb= labels[i].replace("PhiM_","")
       vx= data[:,iX]
@@ -169,7 +112,7 @@ sDebug= "2"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob("inn/d2*.inn")
+files= glob.glob("inn/d2b*.inn")
 files.sort()
 for f in files: print f
 #raw_input()
@@ -196,15 +139,22 @@ for sFile in files:
     s=sDirout+"_molal.restab"
     lines= open(s,'r').readlines()
     labels,tData= lines2table(lines)
-    #plot(labels,tData) #,False,True)
-    plot_wrk(labels,tData,False,True)
+    iX= 0
+    if "pH" in labels: iX= labels.index("pH")
+    iY0= labels.index("H2O")
+    plot(labels,tData,iX,iY0,False,True)
   
   if "DYN" in sCommand:
+    s=sDirout+"_activ.restab"
     s=sDirout+"_minmol.restab"
     lines= open(s,'r').readlines()
     labels,tData= lines2table(lines)
-    #plot(labels,tData) #,False,True)
-    plot_wrk(labels,tData,False,False)
+    iX= 0
+    if "Time/YEAR" in labels: iX= labels.index("Time/YEAR")
+    if "PhiFluid" in labels: iY0= labels.index("PhiFluid")
+    if "H2O" in labels: iY0= labels.index("H2O")
+    plot(labels,tData,iX,iY0,False,False)
+    plot(labels,tData,iX,iY0,True,True)
   
   print '\n=========done '+ sFile + '==========================\n\n'
   i += 1

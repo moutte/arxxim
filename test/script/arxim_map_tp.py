@@ -102,7 +102,7 @@ for i,line in enumerate(lines):
 if 1:
   print Xindex, Xhead
   print Yindex, Yhead
-  raw_input()
+  #raw_input()
 Xlis= Xindex, Xhead
 Ylis= Yindex, Yhead
 #--/

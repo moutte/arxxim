@@ -105,7 +105,7 @@ for i,line in enumerate(lines):
 if 0:
   print Xindex, Xhead
   print Yindex, Yhead
-  raw_input()
+  #raw_input()
 if Xindex<0:
   print "line not found for "+Xlis[0]
   raw_input()
