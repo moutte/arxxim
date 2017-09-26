@@ -17,8 +17,7 @@ if sys.platform.startswith("linux"):
 #linux
   sExe= "arx-basis"
   sExe= os.path.join("..","..","arx-basis","bin",sExe)
-
-  sExe= "arx_debug"
+  
   sExe= "a.out"
   sExe= os.path.join("..","bin",sExe)
 

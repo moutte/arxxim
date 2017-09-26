@@ -30,10 +30,11 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "tmp/map_activ_na_si.inn"
+fInn= "inn/map_activ_ca_si.inn"
 Xlis= ["SIO2_BUFF"]
+Ylis= ["CAO_BUFF"]
 Xlabel= "colog[SiO2]"
-Ylabel= "colog[Na+]/[H+]"
+Ylabel= "colog[Ca+2]/[H+]^2"
 
 fInn= "inn/map2c_activ.inn"
 fInn= "inn/map2a_activ.inn"

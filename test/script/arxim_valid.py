@@ -131,23 +131,25 @@ def plot_wrk(labels,data,xLog=False,yLog=False):
   for i in range(ncol):
     #if i>i0:
     if "PhiM_" in labels[i]:
-      symb= symbols[(i-i0-1)%len(symbols)]
-      labl= labels[i].replace("PhiM_","")
+      sy= symbols[(i-i0-1)%len(symbols)]
+      lb= labels[i].replace("PhiM_","")
       vx= data[:,iX]
       vy= data[:,i]
       if xLog and yLog:
-        fig.loglog(vx, vy, symb, linestyle='-',linewidth=1.0,label=labl)
+        fig.loglog(vx, vy, sy, linestyle='-',linewidth=1.0,label=lb)
       else:
         if xLog:
-          fig.semilogx(vx, vy, symb, linestyle='-',linewidth=1.0,label=labl)
+          fig.semilogx(vx, vy, sy, linestyle='-',linewidth=1.0,label=lb)
         elif yLog:
-          fig.semilogy(vx, vy, symb, linestyle='-', linewidth=1.0,label=labl)
+          fig.semilogy(vx, vy, sy, linestyle='-', linewidth=1.0,label=lb)
         else:
-          fig.plot(vx, vy, sym, linestyle='-', linewidth=1.0,label=labl)
+          fig.plot(vx, vy, sy, linestyle='-', linewidth=1.0,label=lb)
       
-  legend= fig.legend(loc='upper left')
+  #-legend= fig.legend(loc='upper left')
+  #-legend= fig.legend(bbox_to_anchor=(1.1, 1.05))
+  legend= fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1),
+          ncol=3, fancybox=True) #, shadow=True)
   for lb in legend.get_texts(): lb.set_fontsize('small')
-  for lbl in legend.get_lines(): lbl.set_lineheight(0.8)
   plt.show()
 #-----------------------------------------------------------------//plot
 
@@ -202,7 +204,7 @@ for sFile in files:
     lines= open(s,'r').readlines()
     labels,tData= lines2table(lines)
     #plot(labels,tData) #,False,True)
-    plot_wrk(labels,tData,False,True)
+    plot_wrk(labels,tData,False,False)
   
   print '\n=========done '+ sFile + '==========================\n\n'
   i += 1
