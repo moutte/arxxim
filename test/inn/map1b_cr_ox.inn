@@ -17,7 +17,7 @@ SOLVENT
   MODEL DAV_1 !DH1 !
 END
 PATH CHANGE
-  H  PK  H+  H  initial  0.0  13  
+  H  initial 1. final 13. delta 0.5
 END PATH
 INCLUDE dtb\elements.dtb
 TP.TABLE	

@@ -46,7 +46,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_gamma.restab", &
     & "DYNAMIC: activity coeff's of aqueous species")
     !
-    write(fDynGam,'(2(A,A1))',advance="no") "step",T_,"time",T_
+    write(fDynGam,'(2(A,A1))',advance="no") "STEP",T_,"TIME",T_
     call Equil_Write_EnTete(fDynGam,vSpc,vPrmFw,vSpc%Typ=="AQU") 
     !
   end if

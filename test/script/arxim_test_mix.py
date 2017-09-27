@@ -2,6 +2,7 @@
 
 import glob,os,sys
 import pylab as plt
+import MyLib as ML
 
 os.chdir("../")
 #print "DIR=", os.getcwd()
@@ -31,8 +32,17 @@ for f in files: print f
 #raw_input()
 #---------------------------------------------------------------------//
 
-
-
+def lines2vecs(lines):
+  lines= [x for x in lines if len(x.strip())>0] #remove empty lines
+  ncol= len(lines[0].split())
+  TT= []
+  for i,line in enumerate(lines):
+    ww= line.split()
+    v= plt.zeros(ncol,'float')
+    for j in range(len(ww)): v[j]= ML.num(ww[j])
+    TT.append(v)
+  return TT
+  
 i0= 0
 
 i= 0
@@ -48,13 +58,15 @@ for sFile in files:
   figName= "test_mixmodel"
   
   with open("test_mixmodel.tab",'r') as f: lines= f.readlines()
-  #--------------------------------------------------------plot XY diagram
+  vecs= lines2vecs(lines)
+  
+  #------------------------------------------------------plot XY diagram
   plt.rcParams['figure.figsize']= 8.,6.   #ratio 4/3
   plt.rcParams['figure.figsize']= 8.,8.   #ratio 4/4
   plt.rcParams.update({'font.size': 9})
 
   fig= plt.subplot(1,1,1)
-  symbols=['bo','go','ro','cs','mD','yd']
+  symbols=['bo','go','ro','co','mo','yo','bd','gd','rd','cd','md','yd']
   symbols=['b','g','r','c','m','y']
   fig.grid(color='r', linestyle='-', linewidth=0.2)
   fig.grid(True)
@@ -62,18 +74,10 @@ for sFile in files:
   #fig.set_xlim(Xmin,Xmax)
   #fig.set_ylim(Ymin,Ymax)
   fig.set_xlim(0.,1.)
-
-  for i,line in enumerate(lines):
-    if i==0: continue #skip first line
-    vx= []
-    vy= []
-    ww= line.split()
-    x= 0.
-    for w in ww:
-      x= x+0.01
-      y= float(w)
-      vx.append(x)
-      vy.append(y)
+  
+  vx= vecs[0]
+  for i,vy in enumerate(vecs):
+    if i==0: continue
     fig.plot(vx, vy, symbols[i%len(symbols)], linestyle='-', linewidth=2.0)
   
   plt.xlabel(Xlabel)
@@ -81,7 +85,7 @@ for sFile in files:
     
   plt.savefig(figName+".png")
   plt.show()
-  #------------------------------------------------------//plot XY diagram
+  #----------------------------------------------------//plot XY diagram
   
   if(i==i0):
     raw_input()
