@@ -4,7 +4,7 @@ TEST
 END
 CONDITIONS
   TITLE  KFMAS sol-sol
-  OUTPUT out\map3d
+  OUTPUT out\map_tp_1d
   DEBUG  1
 END CONDITIONS
 SYSTEM.GEM

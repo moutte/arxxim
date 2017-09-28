@@ -3,24 +3,17 @@ import pylab as plt
 
 os.chdir("../")
 
-#-------------------------------------------------------------------INIT
-if sys.platform.startswith("win"):
-#windows
+if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
-
-if sys.platform.startswith("linux"):
-#linux
+if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-  sExe= os.path.join("..","..","arx-git","bin",sExe)
-  
-  sExe= "arx_optim"
-  sExe= "arx_debug"
-  sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+sDir= os.path.join("..","bin")
+sExe= os.path.join(sDir,sExe)
 
 sDebug= "1"
 sCmd=  "GEM"
+
+#-------------------------------------------------------------------INIT
 
 #----------------------------------------------------cleaning tmp_ files
 for l in glob.glob("tmp_*"): os.remove(l)
@@ -198,22 +191,17 @@ if 0:
   sys.exit()
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
-  OK= True
+  Ok= False
   #
   os.system("%s %s %s %s" % (sCommand)) #---execute arxim
   #
   if os.path.isfile("error.log"):
-    with open("error.log",'r') as f:
-      ll= f.readline().strip()
-    if ll!="PERFECT":
-      print "error.log="+ll
-      raw_input()
-      OK= False
+    res= open("error.log",'r').read()
+    if res.strip()=="PERFECT": Ok= True
+    else: print "error.log="+ll ; raw_input()
   else:
-    print "error.log: NOT FOUND"
-    OK= False
-  #
-  return OK
+    print "error.log NOT FOUND"
+  return Ok
 #------------------------------------------------------------//arxim run
   
 #-----------------------------------------------------------read results

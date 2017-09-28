@@ -3,7 +3,8 @@ import glob,os,sys
 import pylab as plt
 import MyLib as ML
 
-os.chdir("../valid/")
+os.chdir("../")
+os.chdir("valid/")
 #print "DIR=", os.getcwd()
 
 #---------------------------------------------------------------EXE FILE

@@ -4,7 +4,7 @@ TEST
 END
 CONDITIONS
   TITLE   Ca-Si mobiles, Al inert
-  OUTPUT  out\map_CaSi
+  OUTPUT  out\map_act_b1
   DEBUG   3
 END
 SYSTEM.GEM

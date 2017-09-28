@@ -1,0 +1,21 @@
+SYSTEM
+  TDGC 25.
+  FE  MOLE FE+3  1E-6
+  H  PK  H+  2.312  
+  OX  PK  O2(G)  8  
+END
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\logk_eq36_hkf.dtb
+SOLVENT
+  MODEL DAV_1 !DH1 !
+END
+TEST
+  COMPUTE SPCPATH
+  COMPUTE Q
+END
+PATH CHANGE
+  H  initial 1. final 13. delta 0.5
+END
+CONDITIONS
+  OUTPUT out\map1a
+END

@@ -4,7 +4,7 @@ TEST
 END
 CONDITIONS
   TITLE  al-silicate
-  OUTPUT out\map3a
+  OUTPUT out\map_tp_1a
   DEBUG  1
 END CONDITIONS
 ELEMENTS

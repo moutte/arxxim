@@ -3,21 +3,12 @@ import pylab as plt
 
 #-------------------------------------------------------------------INIT
 os.chdir("../")
-
-if sys.platform.startswith("win"):
-#windows
+if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
-
-if sys.platform.startswith("linux"):
-#linux
+if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-  sExe= os.path.join("..","..","arx-git","bin",sExe)
-  
-  sExe= "arx_debug"
-  sExe= "arx_optim"
-  sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+sDir= os.path.join("..","bin")
+sExe= os.path.join(sDir,sExe)
 
 sDebug= "1"
 sCmd= "GEM"
@@ -30,14 +21,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map_activ_ca_si.inn"
+fInn= "inn/map_act_b1.inn"
 Xlis= ["SIO2_BUFF"]
 Ylis= ["CAO_BUFF"]
 Xlabel= "colog[SiO2]"
 Ylabel= "colog[Ca+2]/[H+]^2"
 
-fInn= "inn/map2c_activ.inn"
-fInn= "inn/map2a_activ.inn"
+fInn= "inn/map_act_a2.inn"
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
 Xlabel= "colog[SiO2]"
@@ -153,22 +143,17 @@ def input_modify(lis,x):
 
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
-  OK= True
+  Ok= False
   #
   os.system("%s %s %s %s" % (sCommand)) #---execute arxim
   #
   if os.path.isfile("error.log"):
-    with open("error.log",'r') as f:
-      ll= f.readline().strip()
-    if ll!="PERFECT":
-      print "error.log="+ll
-      raw_input()
-      OK= False
+    res= open("error.log",'r').read()
+    if res.strip()=="PERFECT": Ok= True
+    else: print "error.log="+ll ; raw_input()
   else:
-    print "error.log: NOT FOUND"
-    OK= False
-  #
-  return OK
+    print "error.log NOT FOUND"
+  return Ok
 #------------------------------------------------------------//arxim run
   
 #-----------------------------------------------------------read results
@@ -200,9 +185,9 @@ for iY,y in enumerate(Yser):
     OK= arxim_ok(sArximCommand) #--------------------------execute arxim
     if OK:
       paragen= arxim_result(fResult) #-------------------read arxim result
-      print paragen
       #raw_input()
       if not paragen in lis_paragen:
+        print paragen
         lis_paragen.append(paragen)
       j= lis_paragen.index(paragen)
       tab_paragen[iX,iY]= j

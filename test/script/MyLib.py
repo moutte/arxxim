@@ -96,10 +96,10 @@ def plot(fig,dataX,dataY,xLog,yLog):
   fig.grid(color='r', linestyle='-', linewidth=0.2)
   fig.grid(True)
   
-  #fig.set_xlim(1.e1,1.e7)
-  #fig.set_ylim(1.e-4,1.0)
   
-  symbols=['bo','go','ro','co','mo','yo','bd','gd','rd','cd','md','yd']
+  symbols=['bo','go','ro','co','mo','yo',\
+           'bd','gd','rd','cd','md','yd',\
+           'bD','gD','rD','cD','mD','yD']
   colors= ['cyan', 'lightblue', 'lightgreen', 'tan', 'pink','red', 'blue']
 
   labX,vX=dataX 
@@ -108,6 +108,10 @@ def plot(fig,dataX,dataY,xLog,yLog):
     sy= symbols[(i)%len(symbols)]
     if xLog and yLog:
       fig.loglog(vX, vY, sy, linestyle='-',linewidth=1.0,label=lb)
+      xmin,xmax= fig.get_xlim()
+      ymin,ymax= fig.get_ylim()
+      fig.set_xlim(xmax/1.e4,xmax)
+      fig.set_ylim(ymax/1.e4,ymax)
     else:
       if xLog:
         fig.semilogx(vX, vY, sy, linestyle='-',linewidth=1.0,label=lb)
@@ -169,7 +173,7 @@ def plot_multiple(fig,xLog,yLog,data,labels,xMin,xMax,indexX,indexY,titre):
   
   # fig.set_xlim(0,1.)
   # fig.set_xlim(1e-3,1e+3)
-  #fig.semilogx(A[iMin:iMax,iX],A[iMin:iMax,iY],  'bo')
+  # fig.semilogx(A[iMin:iMax,iX],A[iMin:iMax,iY],  'bo')
   for i in range(len(indexY)):
     if i<len(symbols):
       # vx=A[:,indexX]
@@ -240,45 +244,26 @@ def plot_single_1(fig,xLog,yLog,vx,vy,vlabs,titX,titY,titre):
       
 #----------------------------------------------------------//plot_single
 
-#---------------------------------------------------------------plot_old
-def plot_old(labels,data,iX,iY0,xLog=False,yLog=False):
-  nlin,ncol= data.shape
-  
-  fig= plt.subplot()
-  fig.grid(color='r', linestyle='-', linewidth=0.2)
-  fig.grid(True)
-  
-  fig.set_xlim(1.e1,1.e7)
-  fig.set_ylim(1.e-4,1.0)
-  
-  symbols=['bo','go','ro','co','mo','yo','bd','gd','rd','cd','md','yd']
-  colors= ['cyan', 'lightblue', 'lightgreen', 'tan', 'pink','red', 'blue']
-
-  for i in range(ncol):
-    if "PhiM_" in labels[i]:
-    #if i>iY0:
-      sy= symbols[(i-i0-1)%len(symbols)]
-      lb= labels[i].replace("PhiM_","")
-      vx= data[:,iX]
-      vy= data[:,i]
-      if xLog and yLog:
-        fig.loglog(vx, vy, sy, linestyle='-',linewidth=1.0,label=lb)
-      else:
-        if xLog:
-          fig.semilogx(vx, vy, sy, linestyle='-',linewidth=1.0,label=lb)
-        elif yLog:
-          fig.semilogy(vx, vy, sy, linestyle='-', linewidth=1.0,label=lb)
-        else:
-          fig.plot(vx, vy, sy, linestyle='-', linewidth=1.0,label=lb)
-      
-  #-legend= fig.legend(loc='upper left')
-  #-legend= fig.legend(bbox_to_anchor=(1.1, 1.05))
-  legend= fig.legend(loc='lower center', bbox_to_anchor=(0.5, 1.1),
-          ncol=3, fancybox=True) #, shadow=True)
-  for lb in legend.get_texts(): lb.set_fontsize('small')
-  plt.show()
-#-------------------------------------------------------------//plot_old
-
 if __name__ == '__main__':
-  raw_input("in progress ... type return ...")
+  # raw_input("in progress ... type return ...")
+  #
+  s="MyLib.restab"
+  lines= open(s,'r').readlines()
+  labels,tData= lines2table(lines)
+  #
+  if "Time/YEAR" in labels:
+    iX=   labels.index("Time/YEAR")
+    labX= "Time/YEAR"
+  else:
+    iX= 0
+    labX= "x"
+  dataX= (labX,tData[:,iX])
+  dataY= table_select(2,"PhiM_",labels,tData)
+  #
+  fig= plt.subplot()
+  plot(fig,dataX,dataY,False,False)
+  plt.show()
+  fig= plt.subplot()
+  plot(fig,dataX,dataY,True,True)
+  plt.show()
   

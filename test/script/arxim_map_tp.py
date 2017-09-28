@@ -1,26 +1,18 @@
 import os, glob, sys
 import pylab as plt
 
-if sys.platform.startswith("win"):
-#windows
+os.chdir("../")
+if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
-
-if sys.platform.startswith("linux"):
-#linux
+if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-  sExe= os.path.join("..","..","arx-git","bin",sExe)
-  
-  sExe= "arx_debug"
-  sExe= "arx_optim"
-  sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+sDir= os.path.join("..","bin")
+sExe= os.path.join(sDir,sExe)
 
 sDebug= "1"
 sCmd=  "GEM"
 
 #-------------------------------------------------------------------INIT
-os.chdir("../")
 #----------------------------------------------------cleaning tmp_ files
 for l in glob.glob("tmp_*"): os.remove(l)
 if os.path.isfile("error.log"): os.remove("error.log")
@@ -28,7 +20,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user defined
-fInn= "inn/map3c_tp.inn"
+fInn= "inn/map_tp_1b.inn"
 
 Xlis= ["TDGC"]  # must be uppercase ...
 Ylis= ["PBAR"]  # must be uppercase ...
@@ -163,22 +155,17 @@ def include_modify(lis,x):
 
 #--------------------------------------------------------------arxim run
 def arxim_ok(sCommand):
-  OK= True
+  Ok= False
   #
   os.system("%s %s %s %s" % (sCommand)) #---execute arxim
   #
   if os.path.isfile("error.log"):
-    with open("error.log",'r') as f:
-      ll= f.readline().strip()
-    if ll!="PERFECT":
-      print "error.log="+ll
-      raw_input()
-      OK= False
+    res= open("error.log",'r').read()
+    if res.strip()=="PERFECT": Ok= True
+    else: print "error.log="+ll ; raw_input()
   else:
-    print "error.log: NOT FOUND"
-    OK= False
-  #
-  return OK
+    print "error.log NOT FOUND"
+  return Ok
 #------------------------------------------------------------//arxim run
   
 #-----------------------------------------------------------read results

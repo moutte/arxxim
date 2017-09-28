@@ -10,21 +10,12 @@ def mynum(s):
 
 #-------------------------------------------------------------------INIT
 os.chdir("../")
-
-if sys.platform.startswith("win"):
-#windows
+if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
-
-if sys.platform.startswith("linux"):
-#linux
+if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-  sExe= os.path.join("..","..","arx-git","bin",sExe)
-  
-  sExe= "arx_debug"
-  sExe= "arx_optim"
-  sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+sDir= os.path.join("..","bin")
+sExe= os.path.join(sDir,sExe)
 
 sDebug= "1"
 sCmd= "SPC"
@@ -38,13 +29,13 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map1a_fe_ox.inn"
-#Elements=["FE"]
-Selection="FE"
-
-fInn= "inn/map1b_cr_ox.inn"
+fInn= "inn/map_dom_cr_ox.inn"
 #Elements=["CR"]
 Selection="CR"
+
+fInn= "inn/map_dom_fe_ox.inn"
+#Elements=["FE"]
+Selection="FE"
 
 Xlis= ["H"]
 Ylis= ["OX"]
@@ -140,7 +131,7 @@ def readChemicalSpace():
     s_names= f.readline().split()
     s_types= f.readline().split()
   for name in s_names: print name
-  raw_input()
+  #-raw_input()
   #------------------------------------------------//read chemical space
   return s_names,s_types
 
@@ -157,21 +148,18 @@ def saveChemicalSpace(s_names):
 #----------------------------------------------------//saveChemicalSpace
 
 #--------------------------------------------------------------arxim run
-def arxim_execute(sCommand):
-  OK= True
+def arxim_ok(sCommand):
+  Ok= False
   #
   os.system("%s %s %s %s" % (sCommand)) #---execute arxim
   #
   if os.path.isfile("error.log"):
-     with open("error.log",'r') as f:
-       ll= f.readline().strip()
-     if ll!="PERFECT":
-       print "error.log="+ll
-       raw_input()
-       OK= False
+    res= open("error.log",'r').read()
+    if res.strip()=="PERFECT": Ok= True
+    else: print "error.log="+ll ; raw_input()
   else:
-    OK= False
-  return OK
+    print "error.log NOT FOUND"
+  return Ok
 #------------------------------------------------------------//arxim run
 
 #----------------------------------------------------------arxim results
@@ -218,7 +206,7 @@ def refine_xy(lis,F0,F1,x0,x1,tolerance):
   while abs(x0-x1)>tolerance:
     x= (x0+x1)/2.
     input_modify(lis,x)
-    OK= arxim_execute(sArximCommand)
+    OK= arxim_ok(sArximCommand)
     if OK:
       F= arxim_result(spc_include)
       if F in lis_spc:
@@ -261,7 +249,7 @@ for iY,y in enumerate(Yser):
     print x,y
     #
     input_modify(Xlis,x) #---------------modify the include file for x
-    OK= arxim_execute(sArximCommand) #---------------------execute arxim
+    OK= arxim_ok(sArximCommand) #---------------------execute arxim
     #
     #--------------------------------------------------done on first run
     if (iX,iY)==(0,0):

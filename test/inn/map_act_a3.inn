@@ -3,13 +3,11 @@ TEST
   COMPUTE Q
 END TEST
   COMPUTE GEM
-
 CONDITIONS
   TITLE   K-Si-Al
-  OUTPUT  out\map2b
+  OUTPUT  out\map_act_a3
   DEBUG   3
 END
-
 SYSTEM.GEM
   TDGC   120.
   H2O    H2O   1000.
@@ -23,12 +21,12 @@ END
   KOH    KOH   1.
   SIO2   SiO2  1.
   AL     Al2O3 1.
-
-!---------------------------------------------------------------database
 INCLUDE  dtb\elements.dtb
 INCLUDE  dtb\logk_eq36_hkf_2.dtb
-INCLUDE  inn\map2b_activ.include
-
+SPECIES
+  MIN  VIRTUAL  SIO2_BUFF  SI(1)O(2)  2700.  2  2  2  2  2  2  2  2  
+  MIN  VIRTUAL  KOH_BUFF  K(1)O(1)H(1)  2700.  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  
+END
 SPECIES.EXCLUDE
   A-QUARTZ
   B-QUARTZ

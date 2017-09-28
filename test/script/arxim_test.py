@@ -4,28 +4,26 @@ import glob,os,sys
 import MyLib as ML
 import pylab as plt
 
+VALID= False
+
 os.chdir("../")
+if VALID: os.chdir("valid/")
 #print "DIR=", os.getcwd()
 
 #---------------------------------------------------------------EXE FILE
-if sys.platform.startswith("win"):
-#windows
+if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
-  sExe= os.path.join("..","bin",sExe)
-
-if sys.platform.startswith("linux"):
-#linux
-  sExe= "arx-basis"
-  sExe= os.path.join("..","..","arx-basis","bin",sExe)
-  
+if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-  sExe= os.path.join("..","bin",sExe)
+if VALID: sDir= os.path.join("..","..","bin")
+else:     sDir= os.path.join("..","bin")
+sExe= os.path.join(sDir,sExe)
 
-Debug= "3"
+Debug= "2"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob("inn/map1b*.inn")
+files= glob.glob("inn/map1a*.inn")
 files.sort()
 for f in files: print f
 #raw_input()
@@ -36,11 +34,8 @@ def check_done():
   Ok= False
   if os.path.isfile("error.log"):
     res= open("error.log",'r').read()
-    if res.strip()=="PERFECT":
-      Ok= True
-    else:
-      print "error.log="+ll
-      raw_input()
+    if res.strip()=="PERFECT": Ok= True
+    else: print "error.log="+ll ; raw_input()
   else:
     print "error.log NOT FOUND"
   return Ok
@@ -60,7 +55,8 @@ for sFile in files:
   sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\','/')
   
   if "SPCPATH" in sCommand:
-    s=sDirout+"_molal.restab"
+    #-------------------------------------------------------------------
+    s=sDirout+                                           "_molal.restab"
     lines= open(s,'r').readlines()
     labels,tData= ML.lines2table(lines)
     #
@@ -77,8 +73,30 @@ for sFile in files:
     fig= plt.subplot()
     ML.plot(fig,dataX,dataY,False,True)
     plt.show()
-  
+    #-----------------------------------------------------------------//
+    
+    #-------------------------------------------------------------------
+    s=sDirout+                                           "_activ.restab"
+    lines= open(s,'r').readlines()
+    labels,tData= ML.lines2table(lines)
+    #
+    if "pH" in labels:
+      iX= labels.index("pH")
+      labX= "pH"
+    else:
+      iX= 0
+      labX= "x"
+    dataX= (labX,tData[:,iX])
+    #
+    dataY= ML.table_select(1,"H2O",labels,tData)
+    #
+    fig= plt.subplot()
+    ML.plot(fig,dataX,dataY,False,False)
+    plt.show()
+    #-----------------------------------------------------------------//
+    
   if "DYN" in sCommand:
+    #-------------------------------------------------------------------
     if 0:
       s=sDirout+"_activ.restab"
       lines= open(s,'r').readlines()
@@ -86,7 +104,7 @@ for sFile in files:
       #
       if "TIME/YEAR" in labels:
         iX=   labels.index("TIME/YEAR")
-        labX= "Time/YEAR"
+        labX= labels[iX]
       else:
         iX= 0
         labX= "x"
@@ -96,14 +114,16 @@ for sFile in files:
       fig= plt.subplot()
       ML.plot(fig,dataX,dataY,True,False)
       plt.show()
+    #-----------------------------------------------------------------//
 
+    #-------------------------------------------------------------------
     s=sDirout+"_minmol.restab"
     lines= open(s,'r').readlines()
     labels,tData= ML.lines2table(lines)
     #
     if "Time/YEAR" in labels:
       iX=   labels.index("Time/YEAR")
-      labX= "Time/YEAR"
+      labX= labels[iX]
     else:
       iX= 0
       labX= "x"
@@ -116,6 +136,7 @@ for sFile in files:
     fig= plt.subplot()
     ML.plot(fig,dataX,dataY,True,True)
     plt.show()
+    #-----------------------------------------------------------------//
   
   print '\n=========done '+ sFile + '==========================\n\n'
   i += 1

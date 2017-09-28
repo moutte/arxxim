@@ -4,7 +4,7 @@ TEST
 END
 CONDITIONS
   TITLE   K-Si-Al
-  OUTPUT  out\map2a
+  OUTPUT  out\map_act_a1
   DEBUG   3
 END
 SYSTEM.GEM
