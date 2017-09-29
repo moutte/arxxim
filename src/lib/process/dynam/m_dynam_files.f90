@@ -223,7 +223,7 @@ subroutine EnTeteFMnk(f)
   !write(f,*)
   !
   !!if(bCell) write(f,'(A,A1)',advance="no") "iCell",T_
-  write(f,'(4(A,A1))',advance="no") "iStep", T_,"Time/"//TUNit,T_,"pH",T_,"PhiFluid",T_
+  write(f,'(4(A,A1))',advance="no") "iStep", T_,"TIME/"//TUNit,T_,"pH",T_,"PhiFluid",T_
   do i=1,N; write(f,'(A,A1)',advance="no") "PhiM_"//trim(vKinFas(i)%NamKF),T_;   end do
   do i=1,N; write(f,'(A,A1)',advance="no") "LogQsK_"//trim(vKinFas(i)%NamKF),T_; end do
   do i=1,N; write(f,'(A,A1)',advance="no") "MolNr"//trim(vKinFas(i)%NamKF),T_;   end do

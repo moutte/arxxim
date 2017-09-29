@@ -9,7 +9,7 @@ CONDITIONS
   DEBUG   3
 ENDCONDITIONS
  
-INCLUDE inn\d2_gr_common.inc
+INCLUDE valid\d2_gr_common.inc
 
 DYNAMIC
   UDARCY   0.10

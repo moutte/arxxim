@@ -18,6 +18,7 @@ Debug= "2"
 
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map_dom_fe_ox.inn")
+files= glob.glob("valid/d2*.inn")
 files.sort()
 for f in files: print f
 #raw_input()
@@ -49,50 +50,55 @@ for sFile in files:
   sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\','/')
   
   if "SPCPATH" in sCommand:
-    #-------------------------------------------------------------------
-    s=sDirout+                                           "_molal.restab"
-    lines= open(s,'r').readlines()
-    labels,tData= ML.lines2table(lines)
-    #
-    if "pH" in labels:
-      iX= labels.index("pH")
-      labX= "pH"
-    else:
-      iX= 0
-      labX= "x"
-    dataX= (labX,tData[:,iX])
-    #
-    dataY= ML.table_select(1,"H2O",labels,tData)
-    #
-    fig= plt.subplot()
-    ML.plot(fig,dataX,dataY,False,True)
-    plt.show()
+    #-------------------------------------------------------molal.restab
+    if 0:
+      s=sDirout+"_molal.restab"
+      titr= ML.extractFileName(s)
+      lines= open(s,'r').readlines()
+      labels,tData= ML.lines2table(lines)
+      #
+      if "pH" in labels:
+        iX= labels.index("pH")
+        labX= "pH"
+      else:
+        iX= 0
+        labX= "x"
+      dataX= (labX,tData[:,iX])
+      #
+      dataY= ML.table_select(1,"H2O",labels,tData)
+      #
+      fig= plt.subplot()
+      ML.plot(fig,titr,dataX,dataY,False,True)
+      plt.show()
     #-----------------------------------------------------------------//
     
-    #-------------------------------------------------------------------
-    s=sDirout+                                           "_activ.restab"
-    lines= open(s,'r').readlines()
-    labels,tData= ML.lines2table(lines)
-    #
-    if "pH" in labels:
-      iX= labels.index("pH")
-      labX= "pH"
-    else:
-      iX= 0
-      labX= "x"
-    dataX= (labX,tData[:,iX])
-    #
-    dataY= ML.table_select(1,"H2O",labels,tData)
-    #
-    fig= plt.subplot()
-    ML.plot(fig,dataX,dataY,False,False)
-    plt.show()
+    #-------------------------------------------------------activ.restab
+    if 1:
+      s=sDirout+"_activ.restab"
+      titr= ML.extractFileName(s)
+      lines= open(s,'r').readlines()
+      labels,tData= ML.lines2table(lines)
+      #
+      if "pH" in labels:
+        iX= labels.index("pH")
+        labX= "pH"
+      else:
+        iX= 0
+        labX= "x"
+      dataX= (labX,tData[:,iX])
+      #
+      dataY= ML.table_select(1,"H2O",labels,tData)
+      #
+      fig= plt.subplot()
+      ML.plot(fig,titr,dataX,dataY,False,False)
+      plt.show()
     #-----------------------------------------------------------------//
     
   if "DYN" in sCommand:
-    #-------------------------------------------------------------------
+    #-------------------------------------------------------activ.restab
     if 0:
       s=sDirout+"_activ.restab"
+      titr= ML.extractFileName(s)
       lines= open(s,'r').readlines()
       labels,tData= lines2table(lines)
       #
@@ -106,30 +112,32 @@ for sFile in files:
       dataY= ML.table_select(1,"H2O",labels,tData)
       #
       fig= plt.subplot()
-      ML.plot(fig,dataX,dataY,True,False)
+      ML.plot(fig,titr,dataX,dataY,True,False)
       plt.show()
     #-----------------------------------------------------------------//
 
-    #-------------------------------------------------------------------
-    s=sDirout+"_minmol.restab"
-    lines= open(s,'r').readlines()
-    labels,tData= ML.lines2table(lines)
-    #
-    if "Time/YEAR" in labels:
-      iX=   labels.index("Time/YEAR")
-      labX= labels[iX]
-    else:
-      iX= 0
-      labX= "x"
-    dataX= (labX,tData[:,iX])
-    dataY= ML.table_select(2,"PhiM_",labels,tData)
-    #
-    fig= plt.subplot()
-    ML.plot(fig,dataX,dataY,False,False)
-    plt.show()
-    fig= plt.subplot()
-    ML.plot(fig,dataX,dataY,True,True)
-    plt.show()
+    #------------------------------------------------------minmol.restab
+    if 1:
+      s=sDirout+"_minmol.restab"
+      titr= ML.extractFileName(s)
+      lines= open(s,'r').readlines()
+      labels,tData= ML.lines2table(lines)
+      #
+      if "TIME/YEAR" in labels:
+        iX=   labels.index("TIME/YEAR")
+        labX= labels[iX]
+      else:
+        iX= 0
+        labX= "x"
+      dataX= (labX,tData[:,iX])
+      dataY= ML.table_select(2,"PhiM_",labels,tData)
+      #
+      fig= plt.subplot()
+      ML.plot(fig,titr,dataX,dataY,False,False)
+      plt.show()
+      fig= plt.subplot()
+      ML.plot(fig,titr,dataX,dataY,True,True)
+      plt.show()
     #-----------------------------------------------------------------//
   
   print '\n=========done '+ sFile + '==========================\n\n'

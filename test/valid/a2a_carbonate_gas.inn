@@ -12,7 +12,7 @@ END
 SYSTEM
  TDGC 25.
  Pbar 1.013
- C MOBILE CO2(G) 3.000
+ C PK CO2(G) 3.000
 END
 
 INCLUDE dtb\elements.dtb
@@ -20,7 +20,7 @@ INCLUDE dtb\hsvhkf_aqu.dtb
 INCLUDE dtb\hsvhkf_gas.dtb
 
 PATH CHANGE
-  H INITIAL 4.00 FINAL 10.00 DELTA 0.5
+  C INITIAL 0.00 FINAL 12.00 DELTA 0.5
 END
 
 SOLVENT
