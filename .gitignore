@@ -11,10 +11,4 @@ src/tmp*
 test/tmp/*
 bin/a.out
 test/*.*
-test/valid/out/*.*
-test/valid/*.*
-!test/valid/out/000
-!test/valid/dtb/*
-!test/valid/inn/*
-
 

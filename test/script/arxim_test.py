@@ -4,17 +4,13 @@ import glob,os,sys
 import MyLib as ML
 import pylab as plt
 
-VALID= False
-
 os.chdir("../")
-if VALID: os.chdir("valid/")
 #print "DIR=", os.getcwd()
 
 #---------------------------------------------------------------EXE FILE
 if sys.platform.startswith("win"):    sExe= "arxim.exe"  #windows
 if sys.platform.startswith("linux"):  sExe= "a.out"      #linux
-if VALID: sDir= os.path.join("..","..","bin")
-else:     sDir= os.path.join("..","bin")
+sDir= os.path.join("..","bin")
 sExe= os.path.join(sDir,sExe)
 
 Debug= "2"
