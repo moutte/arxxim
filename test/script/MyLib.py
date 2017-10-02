@@ -91,7 +91,7 @@ def table_select(iMode,sKey,labels,TT):
 #-------------------------------------------------------------------data
 
 #-------------------------------------------------------------------plot
-def plot(fig,dataX,dataY,xLog,yLog):
+def plot(fig,titr,dataX,dataY,xLog,yLog):
   
   fig.grid(color='r', linestyle='-', linewidth=0.2)
   fig.grid(True)
@@ -120,6 +120,7 @@ def plot(fig,dataX,dataY,xLog,yLog):
       else:
         fig.plot(vX, vY, sy, linestyle='-', linewidth=1.0,label=lb)
       
+  fig.set_title(titr) #, fontsize=fontsize)
   #-legend= fig.legend(loc='upper left')
   #-legend= fig.legend(bbox_to_anchor=(1.1, 1.05))
   legend= fig.legend(loc='lower center', bbox_to_anchor=(0.5,0.),

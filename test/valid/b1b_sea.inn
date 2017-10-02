@@ -1,12 +1,13 @@
 TEST
   COMPUTE SPC
-  COMPUTE EQ1
+  COMPUTE EQU
   COMPUTE Q
 END
+  COMPUTE SPCPATH
 
 CONDITIONS
   TITLE  model seawater composition, with redox, with DAV_1
-  OUTPUT out\b1j
+  OUTPUT out\b1b
   DEBUG  3
 END
 
@@ -50,7 +51,7 @@ SPECIES.EXCLUDE
 END
 
 PATH CHANGE
-  C 3. 4. 0.1
+  C INITIAL 1. FINAL 6. DELTA 0.5
 END PATH
 
 INCLUDE dtb\elements.dtb

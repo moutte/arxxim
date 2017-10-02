@@ -11,8 +11,8 @@ END
 SYSTEM
   TDGC 25.
   FE  MOLE FE+3  1E-6
-  H  PK  H+  2.312  
-  OX  PK  O2(G)  3
+  H  PK  H+  13  
+  OX  PK  O2(G)  39.02  
 END
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_eq36_hkf.dtb
