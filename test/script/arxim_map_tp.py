@@ -2,10 +2,8 @@ import os, glob, sys
 import pylab as plt
 
 os.chdir("../")
-if sys.platform.startswith("win"):   #windows
-  sExe= "arxim.exe"
-if sys.platform.startswith("linux"): #linux
-  sExe= "a.out"
+if sys.platform.startswith("win"): sExe= "arxim.exe"   #windows
+if sys.platform.startswith("linux"): sExe= "a.out"     #linux
 sDir= os.path.join("..","bin")
 sExe= os.path.join(sDir,sExe)
 
@@ -347,7 +345,7 @@ for iX in range(Xdim):
         #--we need two second stage refinements
           ym=y
           Fm=F
-          #----------------------second stage refinement between y0 and ym
+          #--------------------second stage refinement between y0 and ym
           y,F,OK= refine_xy(Ylis,F0,Fm,y0,ym,Ytol)
           if OK:
             if F0>Fm: s= str(Fm)+'='+str(F0)
@@ -358,7 +356,7 @@ for iX in range(Xdim):
           else:
             val= iX,iY
             lis_false_y.append(val)
-          #----------------------second stage refinement between ym and y1
+          #--------------------second stage refinement between ym and y1
           y,F,OK= refine_xy(Ylis,Fm,F1,ym,y1,Ytol)
           if OK:
             if F1>Fm: s= str(Fm)+'='+str(F1)

@@ -96,6 +96,7 @@ subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
   call GetUnit(f_)
   open(f_,file=trim(NamFInn))
   !
+<<<<<<< HEAD
   if(iDebug>2) then
     do i=1,size(vFas)
       print *,"NamFs= ",trim(vFas(i)%NamFs)
@@ -103,6 +104,14 @@ subroutine KinFas_BuildLnk(vFas,vKinModel,sModelSurf,N,LnkKin)
   end if
 
   ! call pause_
+=======
+  if(iDebug>3) then
+    do i=1,size(vFas)
+      print *,"NamFs= ",trim(vFas(i)%NamFs)
+    end do
+    call pause_
+  end if
+>>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
   N= 0
   !
   BlockFound= .false.

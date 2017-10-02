@@ -46,7 +46,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_gamma.restab", &
     & "DYNAMIC: activity coeff's of aqueous species")
     !
-    write(fDynGam,'(2(A,A1))',advance="no") "STEP",T_,"TIME",T_
+    write(fDynGam,'(2(A,A1))',advance="no") "Step",T_,"Time",T_
     call Equil_Write_EnTete(fDynGam,vSpc,vPrmFw,vSpc%Typ=="AQU") 
     !
   end if
@@ -60,7 +60,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_activ.restab", &
     & "DYNAMIC: at each time step, species activities")
     !
-    write(fDynAct,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    write(fDynAct,'(2(A,A1))',advance="no") "STEP",T_,"Time/"//TUnit,T_
     do I=1,nAq; write(fDynAct,'(A12,A1)',advance="no") vSpc(vOrdAq(I))%NamSp,T_; end do
     write(fDynAct,*)
     !
@@ -75,7 +75,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_moleinbox.restab", &
     & "DYNAMIC: mole numbers of aqu.species in box")
     !
-    write(fDynMol,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    write(fDynMol,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
     do I=1,nAq; write(fDynMol,'(A,A1)',advance="no") trim(vSpc(vOrdAq(I))%NamSp),T_; end do
     write(fDynMol,*)
     !
@@ -95,7 +95,7 @@ subroutine Dynam_Files_Init
     !-- which are retrieved from vSpc(:)%vStoikio(:)
     !-- it is thus the element order in original vEle(:)
     !
-    write(fDynElement,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+    write(fDynElement,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
     do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
     & vEle(I)%NamEl//"inFluid", T_; end do
     do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
@@ -121,7 +121,7 @@ subroutine Dynam_Files_Init
     !-- e.g. when using orthogonal components !!
     !
     write(fDynEle,'(4(A,A1))',advance="no") &
-    & "STEP",T_,"TIME/"//TUnit,T_,"DeltaDarcy",T_
+    & "Step",T_,"Time/"//TUnit,T_,"DeltaDarcy",T_
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"totF", T_; end do
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"molal",T_; end do
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"inMin",T_; end do
@@ -307,7 +307,7 @@ subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
   & trim(DirOut)//"_bilans.restab", &
   & "DYNAMIC/LOG: balances on elements")
   !
-  write(f1,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
+  write(f1,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
   do I=1,size(vCpnBox)
     write(f1,'(A,A1)',advance="no") &
     & trim(vEle(vCpnBox(I)%iEle)%NamEl)//'inj',T_; end do 
