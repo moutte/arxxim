@@ -244,7 +244,7 @@ subroutine Dynam_Column
     end if
     !
     time_rt= time_rt + dt
-    print '(A,G15.8)',"Time= ",time_rt
+    print '(A,G15.8)',"TIME= ",time_rt
     !
     if (time_rt>Duration) exit
     !

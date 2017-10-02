@@ -398,9 +398,9 @@ subroutine Dynam_Calc_Main
     if(idebug>1) write(fTrc,'(A)') "Porosity Too Low !!!"
   end if
   if(DTimeTooSmall) then
-    print '(A,G12.3)',"Time Step= ", dTmin
-    print '(A)',"Time Step Too Small !!!"
-    if(idebug>1) write(fTrc,'(A)') "Time Step Too Small !!!"
+    print '(A,G12.3)',"TIME Step= ", dTmin
+    print '(A)',"TIME Step Too Small !!!"
+    if(idebug>1) write(fTrc,'(A)') "TIME Step Too Small !!!"
   end if
   
   return

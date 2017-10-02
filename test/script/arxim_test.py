@@ -18,12 +18,9 @@ Debug= "2"
 
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map_dom_fe_ox.inn")
-<<<<<<< HEAD
-files= glob.glob("valid/d2*.inn")
-=======
 files= glob.glob("valid/b1*.inn")
+files= glob.glob("valid/d2*.inn")
 
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
 files.sort()
 for f in files: print f
 #raw_input()
@@ -74,10 +71,7 @@ for sFile in files:
       #
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,True)
-<<<<<<< HEAD
-=======
       plt.savefig("png/"+titr+".png")
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
       plt.show()
     #-----------------------------------------------------------------//
     
@@ -100,10 +94,7 @@ for sFile in files:
       #
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,False)
-<<<<<<< HEAD
-=======
       plt.savefig("png/"+titr+".png")
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
       plt.show()
     #-----------------------------------------------------------------//
     
@@ -115,8 +106,8 @@ for sFile in files:
       lines= open(s,'r').readlines()
       labels,tData= lines2table(lines)
       #
-      if "Time/YEAR" in labels:
-        iX=   labels.index("Time/YEAR")
+      if "TIME/YEAR" in labels:
+        iX=   labels.index("TIME/YEAR")
         labX= labels[iX]
       else:
         iX= 0
@@ -126,10 +117,7 @@ for sFile in files:
       #
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,True,False)
-<<<<<<< HEAD
-=======
       plt.savefig("png/"+titr+".png")
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
       plt.show()
     #-----------------------------------------------------------------//
 
@@ -139,30 +127,23 @@ for sFile in files:
       titr= ML.extractFileName(s)
       lines= open(s,'r').readlines()
       labels,tData= ML.lines2table(lines)
-      #
-<<<<<<< HEAD
       if "TIME/YEAR" in labels:
         iX=   labels.index("TIME/YEAR")
-=======
-      if "Time/YEAR" in labels:
-        iX=   labels.index("Time/YEAR")
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
+      if "TIME/YEAR" in labels:
+        iX=   labels.index("TIME/YEAR")
         labX= labels[iX]
       else:
         iX= 0
         labX= "x"
       dataX= (labX,tData[:,iX])
-      dataY= ML.table_select(2,"PhiM_",labels,tData)
+      dataY= ML.table_select(2,"PHIM_",labels,tData)
       #
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,False)
       plt.show()
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,True,True)
-<<<<<<< HEAD
-=======
       plt.savefig("png/"+titr+"_log.png")
->>>>>>> 7640869623aa011c4f0e96eb94e49de38b043e6a
       plt.show()
     #-----------------------------------------------------------------//
   

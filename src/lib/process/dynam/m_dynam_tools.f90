@@ -1340,7 +1340,7 @@ end module M_Dynam_Tools
 !!   write(fTrc,'(/,A,/)') "!!!SaturState_Show_begin"
 !!   !
 !!   write(fTrc,'(8(A,A1))') &
-!!   & "Name",   T_,"Satur",T_,"Time", T_,"VFluid",T_, &
+!!   & "Name",   T_,"Satur",T_,"TIME", T_,"VFluid",T_, &
 !!   & "Surface",T_,"QsK",  T_,"vMolK",T_,"Rate",  T_
 !!   do i=1,size(vKinFas)
 !!     M=vKinFas(i)

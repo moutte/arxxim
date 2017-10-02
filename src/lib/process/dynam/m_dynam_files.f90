@@ -46,7 +46,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_gamma.restab", &
     & "DYNAMIC: activity coeff's of aqueous species")
     !
-    write(fDynGam,'(2(A,A1))',advance="no") "Step",T_,"Time",T_
+    write(fDynGam,'(2(A,A1))',advance="no") "Step",T_,"TIME",T_
     call Equil_Write_EnTete(fDynGam,vSpc,vPrmFw,vSpc%Typ=="AQU") 
     !
   end if
@@ -60,7 +60,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_activ.restab", &
     & "DYNAMIC: at each time step, species activities")
     !
-    write(fDynAct,'(2(A,A1))',advance="no") "STEP",T_,"Time/"//TUnit,T_
+    write(fDynAct,'(2(A,A1))',advance="no") "STEP",T_,"TIME/"//TUnit,T_
     do I=1,nAq; write(fDynAct,'(A12,A1)',advance="no") vSpc(vOrdAq(I))%NamSp,T_; end do
     write(fDynAct,*)
     !
@@ -75,7 +75,7 @@ subroutine Dynam_Files_Init
     & trim(DirOut)//"_moleinbox.restab", &
     & "DYNAMIC: mole numbers of aqu.species in box")
     !
-    write(fDynMol,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
+    write(fDynMol,'(2(A,A1))',advance="no") "Step",T_,"TIME/"//TUnit,T_
     do I=1,nAq; write(fDynMol,'(A,A1)',advance="no") trim(vSpc(vOrdAq(I))%NamSp),T_; end do
     write(fDynMol,*)
     !
@@ -95,7 +95,7 @@ subroutine Dynam_Files_Init
     !-- which are retrieved from vSpc(:)%vStoikio(:)
     !-- it is thus the element order in original vEle(:)
     !
-    write(fDynElement,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
+    write(fDynElement,'(2(A,A1))',advance="no") "Step",T_,"TIME/"//TUnit,T_
     do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
     & vEle(I)%NamEl//"inFluid", T_; end do
     do I=1,size(vEle); write(fDynElement,'(A,A1)',advance="no") &
@@ -121,7 +121,7 @@ subroutine Dynam_Files_Init
     !-- e.g. when using orthogonal components !!
     !
     write(fDynEle,'(4(A,A1))',advance="no") &
-    & "Step",T_,"Time/"//TUnit,T_,"DeltaDarcy",T_
+    & "Step",T_,"TIME/"//TUnit,T_,"DeltaDarcy",T_
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"totF", T_; end do
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"molal",T_; end do
     !! do I=1,size(vEle); write(fDynEle,'(A,A1)',advance="no") vEle(iCpnEle(I))%NamEl//"inMin",T_; end do
@@ -210,21 +210,21 @@ subroutine EnTeteFMnk(f)
   !
   N=size(vKinFas)
   !
-  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
+  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"TIME",T_,"pH",T_,"PhiFluid",T_
   !do J=1,3
   !  do i=1,N; write(f,'(A,A1)', advance="no") trim(vKinFas(i)%Name),T_; end do
   !end do
   !write(f,*)
   !
-  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
-  !do i=1,N; write(f,'(A,A1)',advance="no") "PhiM",T_;  end do
+  !write(f,'(4(A,A1))',advance="no") "!iStep", T_,"TIME",T_,"pH",T_,"PhiFluid",T_
+  !do i=1,N; write(f,'(A,A1)',advance="no") "PHIM",T_;  end do
   !do i=1,N; write(f,'(A,A1)',advance="no") "LogQsK",T_;  end do
   !do i=1,N; write(f,'(A,A1)',advance="no") "MolNr",T_;  end do
   !write(f,*)
   !
   !!if(bCell) write(f,'(A,A1)',advance="no") "iCell",T_
   write(f,'(4(A,A1))',advance="no") "iStep", T_,"TIME/"//TUNit,T_,"pH",T_,"PhiFluid",T_
-  do i=1,N; write(f,'(A,A1)',advance="no") "PhiM_"//trim(vKinFas(i)%NamKF),T_;   end do
+  do i=1,N; write(f,'(A,A1)',advance="no") "PHIM_"//trim(vKinFas(i)%NamKF),T_;   end do
   do i=1,N; write(f,'(A,A1)',advance="no") "LogQsK_"//trim(vKinFas(i)%NamKF),T_; end do
   do i=1,N; write(f,'(A,A1)',advance="no") "MolNr"//trim(vKinFas(i)%NamKF),T_;   end do
   write(f,*)
@@ -239,7 +239,7 @@ subroutine EnTeteFRate(f)
   !
   N=size(vKinFas)
   !
-  write(f,'(4(A,A1))',advance="no") "iStep", T_,"Time",T_,"pH",T_,"PhiFluid",T_
+  write(f,'(4(A,A1))',advance="no") "iStep", T_,"TIME",T_,"pH",T_,"PhiFluid",T_
   !
   do i=1,N; write(f,'(A,A1)',advance="no") "Phi_"    //trim(vKinFas(i)%NamKF),T_; end do
   do i=1,N; write(f,'(A,A1)',advance="no") "SurfR_"  //trim(vKinFas(i)%NamKF),T_; end do
@@ -307,7 +307,7 @@ subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
   & trim(DirOut)//"_bilans.restab", &
   & "DYNAMIC/LOG: balances on elements")
   !
-  write(f1,'(2(A,A1))',advance="no") "Step",T_,"Time/"//TUnit,T_
+  write(f1,'(2(A,A1))',advance="no") "Step",T_,"TIME/"//TUnit,T_
   do I=1,size(vCpnBox)
     write(f1,'(A,A1)',advance="no") &
     & trim(vEle(vCpnBox(I)%iEle)%NamEl)//'inj',T_; end do 
@@ -329,7 +329,7 @@ subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
   & "DYNAMIC/LOG: iMaxDelta,VarMax,iDo1,iDo2,etc.")
   !
   write(f2,'(14(A,A1))') &
-  & ".MaxVal",T_,"iStep",T_,"Time",T_,"dTime",T_,"PhiF",T_,&
+  & ".MaxVal",T_,"iStep",T_,"TIME",T_,"dTime",T_,"PhiF",T_,&
   & "iMaxDelta",T_,"VarMAx",T_,&
   & "iDo1",T_,"iDo2",T_,"Newt_iDo",T_,&
   & "Newt_iErr",T_,"NewtErrF",T_,"NewtErrX",T_,"NewtErrG",T_
@@ -345,7 +345,7 @@ subroutine Dynam_Files_OpenLogs(f1,f2,f3,f4)
   !
   write(f3,'(9(A,A1))') &
   & ".MaxAqu",T_,".MaxMin",T_,&
-  & "iStep",T_,"Time",T_,"dTime",T_,&
+  & "iStep",T_,"TIME",T_,"dTime",T_,&
   & "MaxAqu",T_,"MaxMin",T_,&
   & "MaxAquRel",T_,"MaxMinRel",T_
   !
@@ -387,7 +387,7 @@ subroutine Dynam_Files_WriteFasAff(iStep,Time,vLnAct,vLnBuf)
       call Files_Index_Write(fHtm, &
       & trim(DirOut)//"_minqsk.restab", &
       & "DYNAMIC: Q/K of all phases from database")
-      write(fDynQsK,'(2(A,A1))',advance= 'NO') "Step",T_,"Time",T_ !,"pH",T_
+      write(fDynQsK,'(2(A,A1))',advance= 'NO') "Step",T_,"TIME",T_ !,"pH",T_
       do iFs=1,nFs
         write(fDynQsK,'(A,A1)',advance= 'NO') trim(vFas(iFs)%NamFs),T_
       end do
