@@ -18,8 +18,8 @@ Debug= "2"
 
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map_dom_fe_ox.inn")
-files= glob.glob("valid/b1*.inn")
 files= glob.glob("valid/d2*.inn")
+files= glob.glob("valid/b2*.inn")
 
 files.sort()
 for f in files: print f
