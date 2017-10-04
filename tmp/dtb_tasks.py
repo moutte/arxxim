@@ -1,3 +1,5 @@
+import sys
+
 def formula_read(s):
   if s[-1]!=')':
     s= s+"(1)"
@@ -18,12 +20,14 @@ s= "list-species.txt"
 instream = open(s,'r')
 formulas = [ line.strip() for line in instream if line.strip() ]
 
-el_select= ['Al','Fe','Mg','Ca','Na','K','Si']
-el_select= el_select + ['C','S','P','F','Cl']
-el_select= el_select + ['O','H']
-el_select= el_select + ['+','-']
+select_maj= ['Al','Fe','Mg','Ca','Na','K','Si']
+select_trc= ['Sr','Ba'] + ['V','Cr','Ni','Cu','Zn'] + ['Pb','Mo','As']
+select_ani= ['C','S','N','P','F','Cl'] + ['O','H'] + ['+','-']
 
-list_select= open("list_select.txt",'w')
+el_select= select_maj + select_ani
+el_select= select_trc + select_maj + select_ani
+
+list_select= open("list-select.txt",'w')
 
 for f in formulas:
   elements,coeffs= formula_read(f)
@@ -37,12 +41,6 @@ for f in formulas:
   if isvalid:
     print f, elements
     cod= 'A'
-    if 0:
-      if 'C' in elements:
-        coef= coeffs[elements.index('C')]
-        cod= 'C'
-      else:
-        cod= 'A'
   else:
     cod= 'Z'
   ll=''

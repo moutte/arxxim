@@ -42,9 +42,9 @@ subroutine DtbMinHkf_Calc(M,TdgK,Pbar,S)
 !-- computes the standard molal thermodynamic properties of mineral M at Pbar,TdgK
 !-- using equations from Helgeson et al. (1978).
 !--
-  use M_Dtb_Const,only: CalToJoule,R_cK,R_jK,Tref,Pref
-  use M_Numeric_Const,    only: Ln10
-  use M_T_Species,only: T_Species
+  use M_Dtb_Const,    only: R_cK,R_jK,Tref,Pref
+  use M_Numeric_Const,only: Ln10
+  use M_T_Species,    only: T_Species
   !
   type(T_DtbMinHkf),intent(in)   :: M !thermodyn' model
   real(dp),         intent(in)   :: TdgK,Pbar
@@ -318,39 +318,6 @@ subroutine MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
   !
   return
 end subroutine MinHkf_Cp_Calc
-
-!!!   subroutine CalcGasHKF(s_,TdgK) !gas-> calculate G,H,S at (TdgK, Pref)
-!!!     use M_Dtb_Const,only:CalToJoule,R_jk,Tref
-!!!     use M_Numeric_Const,only:Ln10
-!!!     type(T_GasHkf),intent(inout)::S_
-!!!     real(dp),      intent(in)   ::TdgK
-!!!     !
-!!!     integer::nEl
-!!!     real(dp)::Cpr,CprdT,CprdlT
-!!!     !Cptrms(phase,i,CpRegion,T,Cpr,CprdT,CprdlT)
-!!!     !Computes the standard molal heat capacity and heat capacity temperature integrals, 
-!!!     !evaluated from Tref to T at 1 bar.
-!!!     Cpr=       Cp    (TdgK,     S_%MK(1),S_%MK(2),S_%MK(3))
-!!!     CprdT=     CpdT  (Tref,TdgK,S_%MK(1),S_%MK(2),S_%MK(3))
-!!!     CprdlT=    CpdlnT(Tref,TdgK,S_%MK(1),S_%MK(2),S_%MK(3))
-!!!     !H(Pr,T)=  Hf(Pr,Tr) + Intg<Tr,T>(Cp.dT)
-!!!     !S(Pr,T)=  S(Pr,Tr)  + Intg<Tr,T>(Cp.dT/T)
-!!!     !G(Pr,T)=  Gf(Pr,Tr) - S(Pr,Tr).(T-Tr) + Intg<Tr,T>(Cp.dT) - T.Intg<Tr,T>(Cp.dT/T)
-!!!     S_%Vr=   S_%V0R
-!!!     S_%Sr=   S_%S0_ + CprdlT
-!!!     S_%Hr=   S_%H0R  + CprdT
-!!!     S_%Gr=   S_%G0R  - S_%S0_*(TdgK - Tref) + CprdT - TdgK*CprdlT
-!!!     !conversions Cal -> Joule
-!!!     S_%Gr=   S_%Gr*CalToJoule
-!!!     S_%Hr=   S_%Hr*CalToJoule
-!!!     S_%Sr=   S_%Sr*CalToJoule
-!!!     !
-!!!     nEl=size(vEle)
-!!!     S_%S0Ele= dot_product(S_%Stoik(1:nEl),vEle(1:nEl)%S0) /S_%Div
-!!!     S_%WeitKg=dot_product(S_%Stoik(1:nEl)/S_%Div,vEle(1:nEl)%WeitKg) /S_%Div
-!!!     !
-!!!     S_%logK=-S_%Gr/R_jk/TdgK/Ln10
-!!!   end subroutine CalcGasHKF
 
 end module M_T_DtbMinHkf
 

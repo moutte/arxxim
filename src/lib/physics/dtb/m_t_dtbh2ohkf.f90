@@ -134,12 +134,11 @@ subroutine CalcGShok( & !SupCrt92
 !--   Re(j), effective electrostatic radius of species j, 
 !--   W(j), conventional Born coefficient
 !--
-
   use M_Dtb_Const,only:T_CK
-  
+  !
   real(dp),intent(in) :: TdgK,Pbar,Dgcm3,beta,alpha,daldT
   real(dp),intent(out):: g,dgdP,dgdT,d2gdT2
-  
+  !
   !beta,dgdP: /bar; alpha,dgdT: /K; daldT,d2gdT2: /K^2
   real(dp)::&
   & T,P,D,&

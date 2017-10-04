@@ -292,7 +292,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !
     call ReadRValsV(L,K,vX)
     !-------------------------------------------------/ scan a data line
-    !!
+
     !! select case(W)
     !!   case("ENDINPUT"); exit DoFile !DoFile
     !!   case("END","ENDSPECIES"); exit DoFile !DoFile
@@ -346,7 +346,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !!   call ReadRValsV(L,K,vX)
     !!   !
     !! end if
-    !
+
     !------------------------------------------------------ read formula
     call Formula_Read(M%Formula,vEle,ZSp,Div_,fOk,vStoik)
     if(.not. fOk) cycle DoFile !-----------------------------------cycle
@@ -360,7 +360,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       M%A1= vX(6);   M%A2= vX(7);  M%A3=  vX(8); M%A4=vX(9);
       M%C1= vX(10);  M%C2= vX(11)
       M%wref=vX(12)
-      M%Chg= INT(vX(13))
+      M%Chg= int(vX(13))
       !
     else
       !
@@ -368,7 +368,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       M%A1= vX(4);  M%A2= vX(5); M%A3=  vX(6); M%A4=vX(7);
       M%C1= vX(8);  M%C2= vX(9)
       M%wref= vX(10)
-      M%Chg=  INT(vX(11))
+      M%Chg=  int(vX(11))
       !
     end if
     !
@@ -377,6 +377,8 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     M%A4=    M%A4*1.0D04
     M%C2=    M%C2*1.0D04
     M%Wref=  M%wref*1.0D05
+    !
+    call Conversion_CalToJoule(M)
     !
     N=N+1
     call IntToStr4(N,ICode)
@@ -435,5 +437,24 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   !
   return
 end subroutine DtbAquHKF_Read
+
+subroutine Conversion_CalToJoule(M)
+  use M_Dtb_Const,  only: CalToJoule
+  !
+  type(T_DtbAquHkf),intent(inout):: M
+  !
+  M%G0R=   M%G0R *CalToJoule
+  M%H0R=   M%H0R *CalToJoule
+  M%S0_=   M%S0_ *CalToJoule
+  M%A1=    M%A1  *CalToJoule
+  M%A2=    M%A2  *CalToJoule
+  M%A3=    M%A3  *CalToJoule
+  M%A4=    M%A4  *CalToJoule
+  M%C1=    M%C1  *CalToJoule
+  M%C2=    M%C2  *CalToJoule
+  M%wref=  M%wref*CalToJoule
+  !
+  return
+end subroutine Conversion_CalToJoule
 
 end module M_Dtb_Read_DtbAquHkf
