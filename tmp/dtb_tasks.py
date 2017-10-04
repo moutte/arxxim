@@ -1,5 +1,21 @@
 import sys
 
+
+
+import math as m
+
+r= m.sqrt(10.)
+r= m.sqrt(r)
+r= m.sqrt(r)
+print r
+x= 1.
+r= 1.333521
+for i in range(50):
+  x= x*r
+  if x>5000.: break
+  print i,x
+sys.exit()
+
 def formula_read(s):
   if s[-1]!=')':
     s= s+"(1)"
