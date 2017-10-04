@@ -192,8 +192,8 @@ subroutine DtbAquHkf_Calc( &
   &  - (M%A3*(P-Pref) + M%A4*log(PpPsi/P0pPsi)) *Two *T /TmTht**3
   CpR= CpS + CpR
   !
-  Hs= w *Z_                &
-  & + w *Y_ *T             &
+  Hs= w *Z_       &
+  & + w *Y_ *T    &
   & - T *Z_ *dwdT
   if(new) Hs= Hs*CalToJoule 
   Hs= Hs &
@@ -206,7 +206,7 @@ subroutine DtbAquHkf_Calc( &
   & + M%A2*log(PpPsi/P0pPsi) &
   & +(M%A3*(P-Pref) + M%A4*log(PpPsi/P0pPsi))*(T + TmTht)/TmTht/TmTht
   HR= Hs + HR
-  !GZterm
+  !
   Gs= w*Z_
   if(new) Gs= Gs*CalToJoule 
   Gs= Gs &

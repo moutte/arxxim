@@ -53,6 +53,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
 !-- a "direct-access file" that is built from SLOP98.DAT using CPRONS92.FOR)
 !--
   use M_Dtb_Const,  only: T_CK,Tref,Pref,S0_Hydrogen
+  use M_Dtb_Const,  only: CalToJoule
   use M_Files,      only: DirDtbLog,Files_Index_Write
   use M_T_Element,  only: T_Element,Formula_Build,Formula_Read
   use M_Dtb_Read_Tools
@@ -378,7 +379,16 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     M%C2=    M%C2*1.0D04
     M%Wref=  M%wref*1.0D05
     !
-    call Conversion_CalToJoule(M)
+    M%G0R=   M%G0R *CalToJoule
+    M%H0R=   M%H0R *CalToJoule
+    M%S0_=   M%S0_ *CalToJoule
+    M%A1=    M%A1  *CalToJoule
+    M%A2=    M%A2  *CalToJoule
+    M%A3=    M%A3  *CalToJoule
+    M%A4=    M%A4  *CalToJoule
+    M%C1=    M%C1  *CalToJoule
+    M%C2=    M%C2  *CalToJoule
+    M%wref=  M%wref*CalToJoule
     !
     N=N+1
     call IntToStr4(N,ICode)
@@ -437,24 +447,5 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   !
   return
 end subroutine DtbAquHKF_Read
-
-subroutine Conversion_CalToJoule(M)
-  use M_Dtb_Const,  only: CalToJoule
-  !
-  type(T_DtbAquHkf),intent(inout):: M
-  !
-  M%G0R=   M%G0R *CalToJoule
-  M%H0R=   M%H0R *CalToJoule
-  M%S0_=   M%S0_ *CalToJoule
-  M%A1=    M%A1  *CalToJoule
-  M%A2=    M%A2  *CalToJoule
-  M%A3=    M%A3  *CalToJoule
-  M%A4=    M%A4  *CalToJoule
-  M%C1=    M%C1  *CalToJoule
-  M%C2=    M%C2  *CalToJoule
-  M%wref=  M%wref*CalToJoule
-  !
-  return
-end subroutine Conversion_CalToJoule
 
 end module M_Dtb_Read_DtbAquHkf
