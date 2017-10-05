@@ -1,21 +1,5 @@
 import sys
 
-
-
-import math as m
-
-r= m.sqrt(10.)
-r= m.sqrt(r)
-r= m.sqrt(r)
-print r
-x= 1.
-r= 1.333521
-for i in range(50):
-  x= x*r
-  if x>5000.: break
-  print i,x
-sys.exit()
-
 def formula_read(s):
   if s[-1]!=')':
     s= s+"(1)"
@@ -37,11 +21,11 @@ instream = open(s,'r')
 formulas = [ line.strip() for line in instream if line.strip() ]
 
 select_maj= ['Al','Fe','Mg','Ca','Na','K','Si']
-select_trc= ['Sr','Ba'] + ['V','Cr','Ni','Cu','Zn'] + ['Pb','Mo','As']
+select_trc= ['Sr','Ba'] + ['Mn','V','Cr','Ni','Cu','Zn'] + ['Pb','Mo','As']
 select_ani= ['C','S','N','P','F','Cl'] + ['O','H'] + ['+','-']
 
-el_select= select_maj + select_ani
-el_select= select_trc + select_maj + select_ani
+el_select_maj= select_maj + select_ani
+el_select_trc= select_trc + select_maj + select_ani
 
 list_select= open("list-select.txt",'w')
 
@@ -50,18 +34,19 @@ for f in formulas:
   #print list_elements
   #raw_input()
   isvalid= True
+  isvalid_trc= False
   for el in elements:
-    if not el in el_select:
+    if not el in el_select_trc:
       isvalid= False
       break
-  if isvalid:
-    print f, elements
-    cod= 'A'
-  else:
-    cod= 'Z'
+    else:
+      if el in select_trc: isvalid_trc= True
+  if isvalid_trc: cod= 'TRC'
+  elif isvalid:   cod= 'MAJ'
+  else:           cod= 'Z'
   ll=''
-  if cod=='A':
-    for el in el_select:
+  if isvalid:
+    for el in el_select_trc:
       if el in elements:
         i= elements.index(el)
         if coeffs[i]!='0': 
@@ -73,4 +58,23 @@ for f in formulas:
   list_select.write("%s\t%s\n" % (ll,cod))
   
 list_select.close()
+
+sys.exit()
+
+#-------------------------------------------------------------test log_P
+import math as m
+
+r= m.sqrt(10.)
+r= m.sqrt(r)
+r= m.sqrt(r)
+print r
+x= 1.
+#r= 1.333521
+for i in range(50):
+  x= x*r
+  if x>5000.: break
+  print i,x,m.log(x,10)
+
+sys.exit()
+#-------------------------------------------------------------test log_P
 

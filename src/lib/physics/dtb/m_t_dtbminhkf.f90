@@ -31,15 +31,16 @@ module M_T_DtbMinHkf
     & Tmax,    &
     & WeitKg,  &
     & S0Ele !ref. state entropy
-    real(dp),dimension(3):: Ttran, Htran, Vtran
-    real(dp),dimension(3):: MK1, MK2, MK3, MK4, dPdTtr !MK=MaierKelly Coeff's
+    real(dp),dimension(3):: Ttran, Htran, Vtran, dPdTtr
+    real(dp),dimension(4):: MK1, MK2, MK3, MK4
   end type T_DtbMinHkf
   !
 contains
 
 subroutine DtbMinHkf_Calc(M,TdgK,Pbar,S)
 !--
-!-- computes the standard molal thermodynamic properties of mineral M at Pbar,TdgK
+!-- computes the standard molal thermodynamic properties
+!-- of mineral M at Pbar,TdgK,
 !-- using equations from Helgeson et al. (1978).
 !--
   use M_Dtb_Const,    only: R_cK,R_jK,Tref,Pref
@@ -57,7 +58,7 @@ subroutine DtbMinHkf_Calc(M,TdgK,Pbar,S)
   Spttrm=  Zero
   Hpttrm=  Zero
   Gpttrm=  Zero
-  !--------------------------------------------------- Phase Transition terms --
+  !---------------------------------------------- Phase Transition terms
   PhasRegion=f_MinHkf_PhaseRegion(M,Pbar,Pref,TdgK)
   do PhTran=1,PhasRegion-1
     Spttrm=  Spttrm + M%Htran(PhTran) /M%Ttran(PhTran)
@@ -65,7 +66,7 @@ subroutine DtbMinHkf_Calc(M,TdgK,Pbar,S)
     Gpttrm=  Gpttrm + M%Htran(PhTran) *(One - TdgK /M%Ttran(PhTran))
     !!-> when there is phase transition, transition enthalpy is used  ...
   end do
-  !--------------------------------------------------/ Phase Transition terms --
+  !---------------------------------------------/ Phase Transition terms
   !
   select case(trim(M%Typ))
   
@@ -120,48 +121,33 @@ subroutine DtbMinHkf_Zero(M)
   M%V0R=   Zero
   M%S0Ele= Zero
   !
-  M%MK1(1:3)= Zero
-  M%MK2(1:3)= Zero
-  M%MK3(1:3)= Zero
+  M%MK1(1:4)= Zero
+  M%MK2(1:4)= Zero
+  M%MK3(1:4)= Zero
 end subroutine DtbMinHkf_Zero
 
-!! integer function DtbMinHkf_Index(Str,V) 
-!! !.-> index of mineral named Str in vDtbMinHkf
-  !! character(*),                  intent(in):: Str
-  !! type(T_DtbMinHkf),dimension(:),intent(in):: V
-  !! integer     ::I
-  !! DtbMinHkf_Index=0
-  !! I=0
-  !! do
-    !! I=I+1 !; if(idebug>1) write(fTrc,'(A)') vEle(I)%SpName
-    !! if(trim(Str)==trim(V(I)%Name)) then;
-      !! DtbMinHkf_Index=I
-      !! exit
-    !! end if
-    !! if(I==size(V)) exit
-  !! end do !if Str not found -> DtbMinThr_Index=0
-!! end function DtbMinHkf_Index
-
-function Cp(T,a,b,c)
+function Cp(T,cf)
 !.standard molal heat capacity at T.
-  real(dp)::Cp,T,a,b,c
-  Cp=  a + b*T + c/T/T
+  real(dp):: Cp,T,cf(:)
+  Cp=  cf(1) + cf(2)*T + cf(3)/T/T + cf(4)/sqrt(T)
 end function Cp
 
-function CpdT(T1,T2,a,b,c)
+function CpdT(T1,T2,cf)
 !.integral Cp.dT evaluated from T1 to T2.
-  real(dp)::CpdT,T1,T2,a,b,c
-  CpdT= a*(T2     - T1    ) &
-  &   + b*(T2*T2  - T1*T1 )/2.0d0 &
-  &   - c*(One/T2 - One/T1)
+  real(dp):: CpdT,T1,T2,cf(:)
+  CpdT= cf(1)*(T2       - T1      ) &
+  &   + cf(2)*(T2*T2    - T1*T1   )/2.0D0 &
+  &   - cf(3)*(One/T2   - One/T1  ) &
+  &   + cf(4)*(sqrt(T2) - sqrt(T1))*2.0D0
 end function CpdT
 
-function CpdlnT(T1,T2,a,b,c)
+function CpdlnT(T1,T2,cf)
 !.integral Cp.dlnT evaluated from T1 to T2.
-  real(dp)::CpdlnT,T1,T2,a,b,c
-  CpdlnT= a*(log(T2)   - log(T1)  ) &
-  &     + b*(T2        - T1       ) &
-  &     - c*(One/T2/T2 - One/T1/T1)/2.0D0
+  real(dp):: CpdlnT,T1,T2,cf(:)
+  CpdlnT= cf(1)*(log(T2)      - log(T1)     ) &
+  &     + cf(2)*(T2           - T1          ) &
+  &     - cf(3)*(One/T2/T2    - One/T1/T1   )/2.0D0 &
+  &     - cf(4)*(One/sqrt(T2) - One/sqrt(T1))*2.0D0
 end function CpdlnT
 
 subroutine MinHkf_Vol_Calc( &
@@ -220,15 +206,14 @@ subroutine MinHkf_Vol_Calc( &
 end subroutine MinHkf_Vol_Calc
 
 integer function f_MinHkf_PhaseRegion(M,P,P_ref,T)
+!-- Returns phase region for mineral imin at P, T; 
+!-- and, as a side effect, TtranP(1..MXTRAN) as f(P).
+!-- f_MinHkf_PhaseRegion-  1 ... TtranP(1) > T  [or imin lacks transn]
+!-- f_MinHkf_PhaseRegion-  2 ... TtranP(1) - T  [- TtranP(2)]
+!-- f_MinHkf_PhaseRegion-  3 ... TtranP(2) - T  [- TtranP(3)]
+!-- f_MinHkf_PhaseRegion-  4 ... TtranP(3) - T
   type(T_DtbMinHkf),intent(in)::M
   real(dp),      intent(in)::P,P_ref,T
-  !
-  !-- Returns phase region for mineral imin at P, T; 
-  !-- and, as a side effect, TtranP(1..MXTRAN) as f(P).
-  !-- f_MinHkf_PhaseRegion-  1 ... TtranP(1) > T  [or imin lacks transn]
-  !-- f_MinHkf_PhaseRegion-  2 ... TtranP(1) - T  [- TtranP(2)]
-  !-- f_MinHkf_PhaseRegion-  3 ... TtranP(2) - T  [- TtranP(3)]
-  !-- f_MinHkf_PhaseRegion-  4 ... TtranP(3) - T
   !
   real(dp),dimension(3)::TtranP
   !
@@ -238,18 +223,21 @@ integer function f_MinHkf_PhaseRegion(M,P,P_ref,T)
   else                         ;  TtranP(1)=M%Ttran(1)+(P-P_ref)/M%dPdTtr(1)
   end if
   if (T<=TtranP(1)) return
+  !
   f_MinHkf_PhaseRegion=  2 !-- phase region 2
   if (M%nTran==1) return
   if (M%dPdTtr(2)==Zero) then  ;  TtranP(2)=M%Ttran(2)
   else                         ;  TtranP(2)=M%Ttran(2)+(P-P_ref)/M%dPdTtr(2)
   end if
   if (T<=TtranP(2)) return
+  !
   f_MinHkf_PhaseRegion=  3 !-- phase region 3
   if (M%nTran== 2)   return
   if (M%dPdTtr(3)==Zero) then  ;  TtranP(3)=M%Ttran(3)
   else                         ;  TtranP(3)=M%Ttran(3)+(P-P_ref)/M%dPdTtr(3)
   end if
   if (T<=TtranP(3)) return
+  !
   f_MinHkf_PhaseRegion=  4 !-- phase region 4
   return
 end function f_MinHkf_PhaseRegion
@@ -272,7 +260,6 @@ subroutine MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
 !-- computes the standard molal heat capacity and heat capacity temperature integrals, 
 !-- evaluated from Tref to TdgK at 1 bar.
 !--
-  !
   type(T_DtbMinHkf),intent(in) :: M
   real(dp),         intent(in) :: TdgK,T_ref
   real(dp),         intent(out):: Cpr,CprdT,CprdlT 
@@ -281,39 +268,39 @@ subroutine MinHkf_Cp_Calc(M,TdgK,T_ref,Cpr,CprdT,CprdlT)
   !
   select case(f_MinHkf_CpRegion(M,TdgK)) !iCpRegion)
   case(1)
-    Cpr=     Cp(TdgK,          M%MK1(1),M%MK1(2),M%MK1(3))
-    CprdT=   CpdT(T_ref,  TdgK,M%MK1(1),M%MK1(2),M%MK1(3))
-    CprdlT=  CpdlnT(T_ref,TdgK,M%MK1(1),M%MK1(2),M%MK1(3))
+    Cpr=     Cp(TdgK,          M%MK1(1:4))
+    CprdT=   CpdT(T_ref,  TdgK,M%MK1(1:4))
+    CprdlT=  CpdlnT(T_ref,TdgK,M%MK1(1:4))
   case(2)
-    Cpr=   Cp(TdgK,                 M%MK2(1),M%MK2(2),M%MK2(3))
+    Cpr=   Cp(TdgK,                 M%MK2(1:4))
     !
-    CprdT= CpdT(T_ref,M%Ttran(1),   M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &    + CpdT(M%Ttran(1),TdgK,    M%MK2(1),M%MK2(2),M%MK2(3))
+    CprdT= CpdT(T_ref,M%Ttran(1),   M%MK1(1:4)) &
+    &    + CpdT(M%Ttran(1),TdgK,    M%MK2(1:4))
     !
-    CprdlT= CpdlnT(T_ref,M%Ttran(1),M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &     + CpdlnT(M%Ttran(1),TdgK,M%MK2(1),M%MK2(2),M%MK2(3))
+    CprdlT= CpdlnT(T_ref,M%Ttran(1),M%MK1(1:4)) &
+    &     + CpdlnT(M%Ttran(1),TdgK, M%MK2(1:4))
   case(3)
-    Cpr=     Cp(TdgK, M%MK3(1),M%MK3(2),M%MK3(3))
+    Cpr=     Cp(TdgK, M%MK3(1:4))
     !
-    CprdT= CpdT(T_ref,M%Ttran(1),       M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &    + CpdT(M%Ttran(1),M%Ttran(2),  M%MK2(1),M%MK2(2),M%MK2(3)) &
-    &    + CpdT(M%Ttran(2),TdgK,        M%MK3(1),M%MK3(2),M%MK3(3))
+    CprdT= CpdT(T_ref,M%Ttran(1),       M%MK1(1:4)) &
+    &    + CpdT(M%Ttran(1),M%Ttran(2),  M%MK2(1:4)) &
+    &    + CpdT(M%Ttran(2),TdgK,        M%MK3(1:4))
     !
-    CprdlT= CpdlnT(T_ref,M%Ttran(1),     M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1),M%MK2(2),M%MK2(3)) &
-    &     + CpdlnT(M%Ttran(2),TdgK,      M%MK3(1),M%MK3(2),M%MK3(3))
+    CprdlT= CpdlnT(T_ref,M%Ttran(1),     M%MK1(1:4)) &
+    &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1:4)) &
+    &     + CpdlnT(M%Ttran(2),TdgK,      M%MK3(1:4))
   case(4)
-    Cpr= Cp(  TdgK,                      M%MK4(1),M%MK4(2),M%MK4(3))
+    Cpr= Cp(TdgK, M%MK4(1:4))
     !
-    CprdT= CpdT(T_ref,     M%Ttran(1),M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &    + CpdT(M%Ttran(1),M%Ttran(2),M%MK2(1),M%MK2(2),M%MK2(3)) &
-    &    + CpdT(M%Ttran(2),M%Ttran(3),M%MK3(1),M%MK3(2),M%MK3(3)) &
-    &    + CpdT(M%Ttran(3),TdgK,      M%MK4(1),M%MK4(2),M%MK4(3)) 
+    CprdT= CpdT(T_ref,     M%Ttran(1),M%MK1(1:4)) &
+    &    + CpdT(M%Ttran(1),M%Ttran(2),M%MK2(1:4)) &
+    &    + CpdT(M%Ttran(2),M%Ttran(3),M%MK3(1:4)) &
+    &    + CpdT(M%Ttran(3),TdgK,      M%MK4(1:4)) 
     !
-    CprdlT= CpdlnT(T_ref,     M%Ttran(1),M%MK1(1),M%MK1(2),M%MK1(3)) &
-    &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1),M%MK2(2),M%MK2(3)) &
-    &     + CpdlnT(M%Ttran(2),M%Ttran(3),M%MK3(1),M%MK3(2),M%MK3(3)) &
-    &     + CpdlnT(M%Ttran(3),TdgK,      M%MK4(1),M%MK4(2),M%MK4(3))
+    CprdlT= CpdlnT(T_ref,     M%Ttran(1),M%MK1(1:4)) &
+    &     + CpdlnT(M%Ttran(1),M%Ttran(2),M%MK2(1:4)) &
+    &     + CpdlnT(M%Ttran(2),M%Ttran(3),M%MK3(1:4)) &
+    &     + CpdlnT(M%Ttran(3),TdgK,      M%MK4(1:4))
   end select
   !
   return

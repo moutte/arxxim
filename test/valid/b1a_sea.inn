@@ -1,9 +1,10 @@
 TEST
   COMPUTE DTBAQU
   COMPUTE SPC
+  COMPUTE EQU
   COMPUTE Q
 END
-  COMPUTE EQU
+  
   COMPUTE EQUTP
 CONDITIONS
   TITLE  model seawater composition, no redox, with DAV_1
@@ -25,7 +26,8 @@ END
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\hsvhkf_min.dtb
-INCLUDE dtb\hsvhkf_aqu.dtb
+!INCLUDE dtb\hsvhkf_aqu.dtb
+INCLUDE tmp\hsvhkf_aqu_zimmer.dtb
 INCLUDE dtb\hsvhkf_gas.dtb
 
 TP.TABLE

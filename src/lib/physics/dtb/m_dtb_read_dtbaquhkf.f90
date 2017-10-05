@@ -77,25 +77,26 @@ subroutine DtbAquHKF_Read(F,vEle,N)
   real(dp):: X
   real(dp),dimension(dimV)::vX
   !
-  !--- for header processing --
+  !------------------------------------------------for header processing
   logical :: IsHeader
   integer,parameter:: nField= 10
   character(len=12):: vStrField(1:nField)
   ! vStrField contains names of all possible fields in a database
-  integer :: vifield(1:nField)
-  ! character(len=12):: vStrUnit(1:nField)
-  !---/ for header processing --
+  integer:: vifield(1:nField)
+  ! index of a given field in current format
+  !--------------------------------------------------------------------/
   !
   integer,allocatable::vStoik(:) !for Formula_Read
   !
-  !--- for formula translation --
+  !----------------------------------------------for formula translation
   character(len=6):: CodFormula
   ! CodFormula is either "SCFORM" or "ECFORM" (names inherited from SUPCRT files):
   !   SCFORM = compact formula,  e.g. SiO2
   !   ECFORM = extended formula, e.g. SI(1)O(2)
   character(len=2),allocatable:: vElement(:)  !
   integer:: fFormula
-  !---/
+  !--------------------------------------------------------------------/
+  character(len=7):: CodUnit ! CALORIE / JOULE
   !---------------------------------------------------------------------
   ! if (N>1) LisCur => LisAquHkf
   !
@@ -122,6 +123,8 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !
   end if
   !--------------------------------------------------------------/ trace
+  !
+  CodUnit="CALORIE"
   !
   !--- for formula translation --
   CodFormula= "ECFORM"
@@ -200,12 +203,15 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     !---------------------------------------- process first word of line
     select case(W)
     !
-    case("ENDINPUT")
-      exit DoFile
+    case("ENDINPUT")  ;  exit DoFile
     !
-    case("END","ENDSPECIES")
-      exit DoFile
+    case("END","ENDSPECIES")  ;  exit DoFile
     !
+    case("UNIT")
+      !-> can change the CODE, i.e. the data source inside the block
+      call LinToWrd(L,W,EoL)
+      CodUnit= trim(W)
+      cycle DoFile
     !------------------------------------------------ for old formats --
     case("CODE")
       !-> can change the CODE, i.e. the data source inside the block
@@ -214,7 +220,7 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       !
       ! if FilCode changes, must re-initialize vifield ...!
       if (FilCode(1:5)=="OBIGT") then
-        L= "INDEX NAME SKIP SCFORM type SKIP SKIP SKIP PARAMETERS"
+        L= "INDEX NAME SKIP SCFORM TYPE SKIP SKIP SKIP PARAMETERS"
       else ! case of SLOP98.DAT
         L= "INDEX NAME SKIP SKIP ECFORM SKIP SKIP PARAMETERS"
       end if
@@ -379,16 +385,19 @@ subroutine DtbAquHKF_Read(F,vEle,N)
     M%C2=    M%C2*1.0D04
     M%Wref=  M%wref*1.0D05
     !
-    M%G0R=   M%G0R *CalToJoule
-    M%H0R=   M%H0R *CalToJoule
-    M%S0_=   M%S0_ *CalToJoule
-    M%A1=    M%A1  *CalToJoule
-    M%A2=    M%A2  *CalToJoule
-    M%A3=    M%A3  *CalToJoule
-    M%A4=    M%A4  *CalToJoule
-    M%C1=    M%C1  *CalToJoule
-    M%C2=    M%C2  *CalToJoule
-    M%wref=  M%wref*CalToJoule
+    ! print *,"CodUnit", trim(CodUnit)  ;  call Pause_
+    if(trim(CodUnit)=="CALORIE") then
+      M%G0R=   M%G0R *CalToJoule
+      M%H0R=   M%H0R *CalToJoule
+      M%S0_=   M%S0_ *CalToJoule
+      M%A1=    M%A1  *CalToJoule
+      M%A2=    M%A2  *CalToJoule
+      M%A3=    M%A3  *CalToJoule
+      M%A4=    M%A4  *CalToJoule
+      M%C1=    M%C1  *CalToJoule
+      M%C2=    M%C2  *CalToJoule
+      M%wref=  M%wref*CalToJoule
+    end if
     !
     N=N+1
     call IntToStr4(N,ICode)
