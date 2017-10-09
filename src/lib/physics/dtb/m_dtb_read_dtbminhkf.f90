@@ -86,7 +86,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   !
   character(len=255):: L,W,sFormul
   character(len=4)  :: ICode
-  character(len=10) :: sFormat
+  character(len=11) :: sFormat
   type(T_DtbMinHkf) :: M
   real(dp),dimension(dimV)::vX
   logical :: EoL, fOk, SubBlock
@@ -141,7 +141,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
   !---------------------------------------------------------------/trace
   !
   SubBlock= .false.
-  sFormat= "HKF_CAL"
+  sFormat= "HKF_CALORIE"
   !
   !--- for formula translation --
   CodFormula= "ECFORM"
@@ -322,7 +322,7 @@ subroutine DtbMinHKF_Read(F,vEle,N)
       M%NTran= 0
     end if
     !
-    if(sFormat(1:7)=="HKF_CAL") then
+    if(trim(sFormat)=="HKF_CALORIE") then
       M%G0R=    M%G0R   *CalToJoule
       M%H0R=    M%H0R   *CalToJoule
       M%S0_=    M%S0_   *CalToJoule

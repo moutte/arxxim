@@ -1,0 +1,245 @@
+#CEMENT PHASE DATABASE
+#
+#Valid range : 0 - 50°C
+#
+#Temperature dependence described by three-term analytical model
+#
+#
+#Based on CEMDATA07 version 07.02 (14.08.2008)
+#
+#http://www.empa.ch/plugin/template/empa/*/62204
+#
+#
+#Information: D. Jacques (2009): Benchmarking of the cement model and detrimental chemical reactions including temperature dependent parameters
+#                                Project near surface disposal of catergory A waste at Dessel
+#					   NIRAS-MP5-03 DATA-LT(NF) Version 1
+#					   NIROND-TR 2008-30 E	
+#
+#            Thaumasite added on 28-05-2010
+
+
+SOLUTION_MASTER_SPECIES
+
+                                                                                                      
+#        ATOMIC WEIGHTS                                                                                
+#        Naturally occuring elements: IUPAC 1993 Table 1 rounded to 0.001                              
+#        Radioelements: Mass number of longest-lived isotope                                           
+#                                                                                                      
+#                                                                                                      
+#
+#  elemen     species        alk   gfw_formula element_gfw atomic 
+#                                                          number
+#
+H               H+          -1.0        H         1.008   #   1
+H(0)            H2           0.0        H                 #    
+H(1)            H+          -1.0        H                 #    
+E               e-           0.0        0.0        0.0    #       
+O               H2O          0.0        O        15.999   #   8
+O(0)            O2           0.0        O                 #        
+O(-2)           H2O          0.0        O                 #    
+C              HCO3-         1.0        C        12.011   #   6
+C(+4)          HCO3-         1.0      HCO3-               #    
+C(-4)           CH4          0.0       CH4                #    
+Alkalinity     HCO3-         1.0      HCO3-      61.016   #    
+Ca             Ca+2          0.0        Ca       40.078   #  20
+Si            Si(OH)4        0.0        Si       28.086   #  14
+K               K+           0.0        K        39.098   #  19
+Mg             Mg+2          0.0        Mg       24.305   #  12
+Al             Al+3          0.0        Al       26.982   #  13
+S              SO4-2         0.0        S        32.067   #  16
+S(-2)           HS-          1.0        HS                #
+S(2)          S2O3-2         0.0       S2O3               #
+S(4)          SO3-2          0.0       SO3                #
+S(6)           SO4-2         0.0       SO4                #
+Fe             Fe+2          0.0        Fe       55.845   #  26
+Fe(2)          Fe+2          0.0        Fe                #    
+Fe(3)          Fe+3          0.0        Fe                #
+Br              Br-          0.0        Br       79.904   #  35
+Cl              Cl-          0.0        Cl       35.453   #  17
+N              NO3-          0.0        N        14.007   #   7
+N(0)            N2           0.0        N2                #
+N(-3)          NH4+          0.0       NH4                #
+N(5)           NO3-          0.0       NO3                #
+Na              Na+          0.0        Na        22.99   #  11
+
+
+SOLUTION_SPECIES
+
+# PMATCH MASTER SPECIES
+
+H+                   = H+                  
+    log_k      0.0
+    -gamma     9.00    0.064
+
+e-                   = e-                  
+    log_k      0.0
+
+H2O                  = H2O                 
+    log_k      0.0
+    -gamma     0.00    0.0#64
+
+HCO3-                = HCO3-               
+    log_k      0.0
+    -gamma     5.40    0.064
+
+Ca+2                 = Ca+2                
+    log_k      0.0
+    -gamma     4.86    0.064 # 0.01564
+
+Si(OH)4              = Si(OH)4             
+    log_k      0.0
+    -gamma     0.00    0.0#64
+
+#b parameter not changed from here on for primary master species
+
+Al+3                 = Al+3                
+    log_k      0.0
+    -gamma     6.65   0.064 # 0.19
+
+Fe+2                 = Fe+2                
+    log_k      0.0
+    -gamma     5.08    0.064 # 0.16
+
+K+                   = K+                  
+    log_k      0.0
+    -gamma     3.71    0.064 # 0.01
+
+Mg+2                 = Mg+2                
+    log_k      0.0
+    -gamma     5.46    0.064 # 0.22
+
+SO4-2                = SO4-2               
+    log_k      0.0
+    -gamma     5.31   0.064 # -0.07
+
+Br-                  = Br-
+    log_k      0.0
+    -gamma     3.00    0.064 # 0.00
+
+Cl-                  = Cl-
+    log_k      0.0
+    -gamma     3.71    0.01
+
+NO3-                 = NO3-
+    log_k      0.0
+    -gamma     3.00    0.064 # 0.00
+    
+Na+                  = Na+
+    log_k      0.0
+    -gamma     4.32    0.064 # 0.06
+
+# PMATCH SECONDARY MASTER SPECIES
+ 
+ 
+  +1.000Al+3                 +1.000SO4-2                = AlSO4+ ;    -gamma      4.00    0.064	; log_K   	3.900111	 ; -analytical_expression 	-59.74759294081	0	2048.61497066133	22.9451885920	0	   
+ +1.000Al+3                 +2.000SO4-2                = Al(SO4)2- ; -gamma      4.00    0.0640	; log_K   	5.900097	 ; -analytical_expression 	-129.37633673647	0	5505.68803129935	47.2073519666	0	   
+ +1.000Al+3                 +2.000H2O                  -2.000H+                   = Al(OH)2+ ;    -gamma      4.00    0.0640	; log_K   	-10.5937	 ; -analytical_expression 	32.53631959378	0	-6492.54044012403	-8.6321382739	0	   
+ +1.000Al+3                 +4.000H2O                  -4.000H+                   = Al(OH)4- ;   -gamma      4.00    0.0640	; log_K   	-22.8786	 ; -analytical_expression 	32.96015215706	0	-10341.60374731900	-8.5473467468	0	   
+ +1.000Al+3                 +3.000H2O                  -3.000H+                   = Al(OH)3 ; -gamma      0.00    0.00	; log_K   	-16.4319	 ; -analytical_expression 	91.66401813525	0	-11712.97320105170	-27.8112600743	0	   
+ +1.000Al+3                 +1.000H2O                  -1.000H+                   = AlOH+2 ;    -gamma      4.00    0.0640	; log_K   	-4.95693	 ; -analytical_expression 	-34.57025049802	0	-869.70655319713	13.1464151225	0	   
+ +1.000Al(OH)4-             +1.000Si(OH)4              -1.000H2O                  = Al(OH)6SiO- ;    -gamma      4.00    0.0640	; log_K   	3.600009	 ; -analytical_expression 	0.00000000000	0	1073.39477649456	0.0000000000	0	   
+ +1.000Al+3                 +1.000SiO(OH)3-            = AlSiO(OH)3+2 ;    -gamma      4.00    0.0640	; log_K   	7.400086	 ; -analytical_expression 	0.00000000000	0	2206.33554059029	0.0000000000	0	   
+ +1.000Ca+2                 -1.000H+                   +1.000HCO3-                = CaCO3   ;    -gamma      0.00    0.0	; log_K   	-7.10471	 ; -analytical_expression 	18.67700851789	0	-2532.27825260820	-6.9868218332	0	   
+ +1.000Ca+2                 +1.000HCO3-                = CaHCO3+    ;    -gamma      4.00    0.064	; log_K   	1.105633	 ; -analytical_expression 	-103.46104593645	0	4604.38192941364	36.0178771810	0	   
+ +1.000Ca+2                 +1.000SO4-2                = CaSO4 ;    -gamma      0.00    0.0640	; log_K   	2.300088	 ; -analytical_expression 	-64.25337074408	0	2770.03421100362	23.1418327719	0	   
+ +1.000Ca+2                 +1.000H2O                  -1.000H+                   = CaOH+   ;    -gamma      4.00    0.064	; log_K   	-12.7798	 ; -analytical_expression 	14.19214642856	0	-4635.48173840128	-4.6171091261	0	   
+ +1.000Ca+2                 +1.000SiO(OH)3-            = CaSiO(OH)3+  ;    -gamma      4.00    0.064	; log_K   	1.200061	 ; -analytical_expression 	-88.10659232191	0	3919.11589441343	30.7796851528	0	   
+ +1.000Ca+2                 +1.000SiO2(OH)2-2          = CaSiO2(OH)2        ;  -gamma      0.00    0.0	; log_K   	4.600017	 ; -analytical_expression 	0.00003498360	0	1371.64549038842	-0.0000120272	0	   
+ +1.000Fe+2                 +1.000HCO3-                -1.000H+                   = FeCO3 ;     -gamma      0.00    0.00	; log_K   	-5.94898	 ; -analytical_expression 	16.83325757655	0	-1846.89625963213	-6.7038225945	0	   
+ +1.000Fe+2                 +1.000HCO3-                = FeHCO3+ ;  -gamma      4.00    0.0640	; log_K   	1.999985	 ; -analytical_expression 	-104.57077896404	0	5270.65115685443	35.9245463653	0	   
+ +1.000Fe+2                 +1.000H+                   +1.000SO4-2                = FeHSO4+ ;     -gamma      4.00    0.0640	; log_K   	3.067952	 ; -analytical_expression 	-217.68294720087	0	9316.87298664815	76.5843086363	0	   
+ +1.000Fe+2                 +1.000SO4-2                = FeSO4 ;    -gamma      0.00    0.00	; log_K   	2.249983	 ; -analytical_expression 	-65.22644646497	0	2644.89637498019	23.6844985453	0	   
+ +1.000Fe+2                 +1.000Cl-                  = FeCl+ ;     -gamma      4.00    0.0640	; log_K   	0.139978	 ; -analytical_expression 	-84.08990370509	0	3692.01184090337	29.0358662146	0	   
+ +1.000Fe+2                 +1.000H2O                  -1.000H+                   = FeOH+ ;    -gamma      4.00    0.0640	; log_K   	-9.49965	 ; -analytical_expression 	-7.35359137368	0	-2427.06600313247	2.4220308834	0	   
+ +1.000H+                   +1.000SO4-2                +1.000Fe+3                 = FeHSO4+2 ;     -gamma      4.00    0.0640	; log_K   	4.468082	 ; -analytical_expression 	-268.70278991437	0	13166.04041835980	92.5513349554	0	   
+ +1.000SO4-2                +1.000Fe+3                 = FeSO4+ ;     -gamma      4.00    0.0640	; log_K   	4.040089	 ; -analytical_expression 	-61.88124256446	0	2185.38358231463	23.6787255052	0	   
+ +2.000SO4-2                +1.000Fe+3                 = Fe(SO4)2- ;     -gamma      4.00    0.0640	; log_K   	5.380128	 ; -analytical_expression 	-131.48050051289	0	5443.75324149227	47.9311468746	0	   
+ +1.000Fe+2                 -1.000e-                   = Fe+3 ;     -gamma      9.00    0.0640	; log_K   	-13.0201	 ; -analytical_expression 	6.52902464956	0	-2917.27751554918	-5.3251484453	0	   
+ +3.000H2O                  -3.000H+                   +1.000Fe+3                 = Fe(OH)3   ;	; log_K   	-12.5594	 ; -analytical_expression 	147.12395569469	0	-13347.13553589500	-46.4423038760	0	   
+ +2.000H2O                  -2.000H+                   +2.000Fe+3                 = Fe2(OH)2+4 ;     -gamma      4.00    0.0640	; log_K   	-2.94948	 ; -analytical_expression 	6.94584777011	0	-2950.65882826826	0.0000120272	0	   
+ +4.000H2O                  -4.000H+                   +3.000Fe+3                 = Fe3(OH)4+5 ;     -gamma      9.00    0.0640	; log_K   	-6.29892	 ; -analytical_expression 	4.18235662859	0	-3125.11656793865	0.0000240543	0	   
+ +1.000Cl-                  +1.000Fe+3                 = FeCl+2 ;    -gamma      4.00    0.0640	; log_K   	1.480017	 ; -analytical_expression 	-72.69030177926	0	3122.83931417149	25.7418657263	0	   
+ +2.000Cl-                  +1.000Fe+3                 = FeCl2+ ;    -gamma      4.00    0.0640	; log_K   	2.129977	 ; -analytical_expression 	-215.95223084886	0	9794.48642498307	74.8585304486	0	   
+ +3.000Cl-                  +1.000Fe+3                 = FeCl3 ;     -gamma      0.00    0.0640	; log_K   	1.129985	 ; -analytical_expression 	-285.45375024869	0	13355.40022646740	97.7088246932	0	   
+ +1.000H2O                  -1.000H+                   +1.000Fe+3                 = FeOH+2 ;     -gamma      4.00    0.0640	; log_K   	-2.18961	 ; -analytical_expression 	16.59946235915	0	-2732.42292291182	-3.8894655247	0	   
+ +2.000H2O                  -2.000H+                   +1.000Fe+3                 = Fe(OH)2+   ;     -gamma      4.00    0.0640	; log_K   	-5.66961	 ; -analytical_expression 	78.23475365977	0	-7306.78682417424	-24.0049022733	0	   
+ +4.000H2O                  -4.000H+                   +1.000Fe+3                 = Fe(OH)4-   ;     -gamma      4.00    0.0640	; log_K   	-21.5993	 ; -analytical_expression 	117.57797560593	0	-14082.57228041010	-37.1561282625	0	   
+ +1.000Fe+3                 +1.000SiO(OH)3-            = FeSiO(OH)3+2 ;    -gamma      4.00    0.0640	; log_K   	9.699999	 ; -analytical_expression 	0.00006996720	0	2892.15594977973	-0.0000240543	0	   
+ +1.000K+                   +1.000SO4-2                = KSO4- ;    -gamma      4.00    0.0640  	; log_K   	0.850029	 ; -analytical_expression 	-72.97654888147	0	3150.05834400053	25.5660285453	0	   
+ +1.000K+                   +1.000H2O                  -1.000H+                   = KOH ;    -gamma      0.00    0.00	; log_K   	-14.4597	 ; -analytical_expression 	55.77230945322	0	-5964.47470504443	-20.2983699581	0	   
+ +1.000Mg+2                 -1.000H+                   +1.000HCO3-                = MgCO3 ;     -gamma      0.00    0.00	; log_K   	-7.34928	 ; -analytical_expression 	17.81062888483	0	-2178.42833934954	-7.2149771905	0	   
+ +1.000Mg+2                 +1.000HCO3-                = MgHCO3+ ;     -gamma      4.00    0.064	; log_K   	1.068142	 ; -analytical_expression 	-107.35949477825	0	4739.07110899493	37.3957094285	0	   
+ +1.000Mg+2                 +1.000H2O                  -1.000H+                   = MgOH+ ;    -gamma      4.00    0.0640	; log_K   	-11.4397	 ; -analytical_expression 	-27.03763638067	0	-2051.24072933459	9.0841192085	0	   
+ +1.000Mg+2                 +1.000SO4-2                = MgSO4 ;     -gamma      0.00    0.00	; log_K   	2.36999	 ; -analytical_expression 	-65.50267875609	0	2716.83921823504	23.7471600852	0	   
+ +1.000Mg+2                 +1.000SiO(OH)3-            = MgSiO(OH)3+ ;     -gamma      4.00    0.0640	; log_K   	1.499989	 ; -analytical_expression 	-92.66274049892	0	4338.36419953797	32.1739946190	0	   
+ +1.000Mg+2                 +1.000SiO2(OH)2-2          = MgSiO2(OH)2 ;     -gamma      0.00    0.00	; log_K   	5.700009	 ; -analytical_expression 	0.00003498360	0	1699.67075541936	-0.0000120272	0	   
+ +1.000Na+                  -1.000H+                   +1.000HCO3-                = NaCO3- ; -gamma      4.00    0.0640	; log_K   	-9.05897	 ; -analytical_expression 	8.57582729935	0	-417.55748897161	-6.5608195793	0	   
+ +1.000Na+                  +1.000HCO3-                = NaHCO3 ;     -gamma      0.00    0.00	; log_K   	-0.25	 ; -analytical_expression 	-69.04984593286	0	3027.60721771434	23.7006149490	0	   
+ +1.000Na+                  +1.000SO4-2                = NaSO4- ;     -gamma      4.00    0.0640	; log_K   	0.700065	 ; -analytical_expression 	-67.94698554238	0	2908.64969369569	23.8000796198	0	   
+ +1.000Na+                  +1.000H2O                  -1.000H+                   = NaOH ;    -gamma      0.00    0.00	; log_K   	-14.1797	 ; -analytical_expression 	40.02241563584	0	-4902.58161996995	-15.2600694449	0	   
+ +1.000Si(OH)4              -1.000H+                   = SiO(OH)3-   ;     -gamma      4.00    0.064	; log_K   	-9.80974	 ; -analytical_expression 	67.70633238796	0	-4741.99183185177	-24.8993626804	0	   
+ +1.000Si(OH)4              -2.000H+                   = SiO2(OH)2-2  ;    -gamma      4.00    0.064	; log_K   	-23.1397	 ; -analytical_expression 	-10.00067913457	0	-3917.49762695022	0.0000120272	0	   
+ +1.000H+                   -1.000H2O                  +1.000HCO3-                = CO2  ;     -gamma      0.00    0.0	; log_K   	6.351807	 ; -analytical_expression 	-118.94289041477	0	6009.06305396012	42.4908984414	0	   
+ -1.000H+                   +1.000HCO3-                = CO3-2  ;     -gamma      5.40    0.064	; log_K   	-10.3289	 ; -analytical_expression 	81.27367428255	0	-4731.00208183675	-30.6072155785	0	   
+ +1.000HCO3-                +9.000H+                   +8.000e-                   -3.000H2O                  = CH4     ;  -gamma      0.00    0.0	; log_K   	27.8481	 ; -analytical_expression 	-177.87782773202	0	21721.88220712880	64.7294909742	0	   
+ +1.000NH4+                 -1.000H+                   = NH3 ;     -gamma      0.00    0.00	; log_K   	-9.23697	 ; -analytical_expression 	-3.59831980108	0	-2549.62881993208	1.1769785592	0	   
+ +1.000NO3-                +10.000H+                   +8.000e-                   -3.000H2O                  = NH4+ ;     -gamma      2.50    0.0640	; log_K   	119.1361	 ; -analytical_expression 	-116.84941401789	0	46557.19607874130	43.2967186280	0	   
+ +2.000NO3-                +12.000H+                  +10.000e-                   -6.000H2O                  = N2 ;     -gamma      0.00    0.00	; log_K   	207.2662	 ; -analytical_expression 	-275.27055430258	0	81299.07928897020	98.6135081923	0	   
+ +2.000SO4-2               +10.000H+                   +8.000e-                   -5.000H2O                  = S2O3-2 ;     -gamma      4.00    0.0640	; log_K   	38.01267	 ; -analytical_expression 	-214.77995703953	0	24017.66212043470	80.6443193886	0	   
+ +1.000H+                   +1.000SO3-2                = HSO3- ;     -gamma      4.00    0.0640	; log_K   	7.219989	 ; -analytical_expression 	-87.59223471343	0	3812.55224613743	33.1491573165	0	   
+ +1.000SO4-2                +2.000H+                   +2.000e-                   -1.000H2O                  = SO3-2 ;     -gamma      4.50    0.0640	; log_K   	-3.39725	 ; -analytical_expression 	-20.01098159798	0	1624.20845779751	7.2712643319	0	   
+ +1.000H+                   +1.000SO4-2                = HSO4- ;     -gamma      4.00    0.0640	; log_K   	1.987722	 ; -analytical_expression 	-95.44960727141	0	3428.44243310458	34.7309703157	0	   
+ +1.000HS-                  +1.000H+                   = H2S ;     -gamma      0.00    0.00	; log_K   	6.989962	 ; -analytical_expression 	-92.54543936710	0	5444.49694476074	32.8459524374	0	   
+ +1.000SO4-2                +9.000H+                   +8.000e-                   -4.000H2O                  = HS- ;     -gamma      3.50    0.0640	; log_K   	33.68888	 ; -analytical_expression 	-148.49636393000	0	20433.96976138830	56.9613843750	0	   
+ +1.000HS-                  -1.000H+                   = S-2 ;     -gamma      5.00    0.0640	; log_K   	-19	 ; -analytical_expression 	0.00001044666	0	-5667.31548660147	0.0000000000	0	   
+ +1.000H2O                  -1.000H+                   = OH-  ;    -gamma     10.65    0.064	; log_K   	-13.9998	 ; -analytical_expression 	69.84779493355	0	-6215.12596863142	-25.4612719210	0	   
+ +2.000H+                   +2.000e-                   = H2   ;     -gamma      0.00    0.0	; log_K   	-3.10597	 ; -analytical_expression 	-55.35493262717	0	2808.32060172984	20.0675686240	0	   
+ +2.000H2O                  -4.000H+                   -4.000e-                   = O2   ;    -gamma      0.00    0.0	; log_K   	-85.9855	 ; -analytical_expression 	-30.79426700990	0	-27925.53838584180	10.0321005086	0	 
+
+
+
+PHASES
+
+ 
+CH4(g)   ;              CH4                    =  +1.000CH4                 	; log_K   	-2.8565	 ; -analytical_expression 	-89.63393582234	0	4440.29675525994	29.0478933816	0	   
+CO2(g)   ;              CO2                    =  +1.000H+                   -1.000H2O                  +1.000HCO3-               	; log_K   	-7.81956	 ; -analytical_expression 	41.87683954485	0	-1740.14204852581	-17.7229926959	0	   
+H2(g)    ;   H2                     =  +1.000H2                  	; log_K   	-3.10597	 ; -analytical_expression 	-52.09936672097	0	2359.52736654890	16.6015796481	0	   
+O2(g)    ;   O2                     =  +1.000O2                  	; log_K   	-2.8812	 ; -analytical_expression 	-76.67437063690	0	3828.93234444672	24.6329609322	0	   
+H2S(g)   ;  H2S                    =  +1.000HS-                  +1.000H+	; log_K   	-8.00993	 ; -analytical_expression 	37.63799849734	0	-2225.98872774971	-15.4105293036	0	   
+N2(g)    ; N2                     =  +1.000N2	; log_K   	-3.18743	 ; -analytical_expression 	-76.72711536033	0	3734.51086475577	24.6580977111	0	   
+SiO2am ; SiO2 + 1OH- + 1H2O =  SiO(OH)3-	; log_K   	1.475988	 ; -analytical_expression 	-2.14181238156	0	664.05554528339	0.5620295123	0	   
+CSHtob1 ; (CaO)2(SiO2)2.4(H2O)3.2 + 1.2 H2O = 2 Ca++ + 2.4 SiO(OH)3- + 1.6OH-	; log_K   	-19.1991	 ; -analytical_expression 	240.84653128714	0	-13954.21726608490	-86.1775378224	0	   
+CSHjen ; (CaO)1.666667(SiO2)(H2O)2.1 + 0.566667 H2O = 1.666667Ca++ + SiO(OH)3- + 2.333334OH-	; log_K   	-13.1659	 ; -analytical_expression 	211.28870953694	0	-10574.51261009040	-76.3734723995	0	   
+CSHtob2 ; (CaO)0.83333(SiO2)(H2O)1.3333 + 0.50003H2O = 0.83333Ca++ + SiO(OH)3- + 0.66666OH-	; log_K   	-8.0014	 ; -analytical_expression 	100.35344189250	0	-5814.81586527851	-35.9075880599	0	   
+C2AH8 ; Ca2Al2(OH)10:3H2O = 2Ca++ + 2Al(OH)4- + 2OH- + 3H2O	; log_K   	-13.5622	 ; -analytical_expression 	154.48530223981	0	-8994.12914254083	-55.7212631893	0	   
+C2FH8 ; Ca2Fe2(OH)10:3H2O = 2Ca++ + 2Fe(OH)4- + 2OH- + 3H2O	; log_K   	-17.602	 ; -analytical_expression 	299.40318587869	0	-18138.64886929690	-103.5235991057	0	   
+hydrogarnetOH  ; Ca3Al2(OH)12 = 3Ca++ + 2Al(OH)4- + 4OH-	; log_K   	-20.8411	 ; -analytical_expression 	291.27318390754	0	-13720.16812376770	-107.5364633634	0	   
+hydrogarnetFe  ; Ca3Fe2(OH)12 = 3Ca++ + 2Fe(OH)4- + 4OH-	; log_K   	-25.158	 ; -analytical_expression 	437.20835028023	0	-23213.52271974500	-155.3909971844	0	   
+C4AH13 ; Ca4Al2(OH)14:6H2O = 4Ca++ + 2Al(OH)4- + 6OH- + 6H2O	; log_K   	-25.4033	 ; -analytical_expression 	407.04628084006	0	-21037.51384617330	-146.2503502912	0	   
+C4FH13 ; Ca4Fe2(OH)14:6H2O = 4Ca++ + 2Fe(OH)4- + 6OH- + 6H2O	; log_K   	-29.4028	 ; -analytical_expression 	552.15552475835	0	-30178.01620624420	-194.1184748109	0	   
+Ettringite ; Ca6Al2(SO4)3(OH)12:26H2O = 6Ca++ + 2Al(OH)4- + 3SO4-- + 4OH- + 26H2O	; log_K   	-44.9085	 ; -analytical_expression 	529.27779378424	0	-34439.99676380200	-185.3386429266	0	   
+tricarboaluminate ; Ca6Al2(CO3)3(OH)12:26H2O = 6Ca++ + 2Al(OH)4- + 3CO3-- + 4OH- + 26H2O	; log_K   	-46.5085	 ; -analytical_expression 	526.28378030499	0	-32615.50770370250	-187.2629896410	0	   
+Fe-ettringite ; Ca6Fe2(SO4)3(OH)12:26H2O = 6Ca++ + 2Fe(OH)4- + 3SO4-- + 4OH- + 26H2O	; log_K   	-44.0084	 ; -analytical_expression 	674.03730619220	0	-42106.04906255390	-233.0864957767	0	   
+monosulfoaluminate ; Ca4Al2(SO4)(OH)12:6H2O = 4Ca++ + 2Al(OH)4- + SO4-- + 4OH- + 6H2O	; log_K   	-29.2628	 ; -analytical_expression 	404.92625454716	0	-21017.60772698490	-146.9719803091	0	   
+Fe-monosulfate ; Ca4Fe2(SO4)(OH)12:6H2O = 4Ca++ + 2Fe(OH)4- + SO4-- + 4OH- + 6H2O	; log_K   	-33.2028	 ; -analytical_expression 	549.68566248846	0	-30126.34439200350	-194.7198331591	0	   
+stratlingite ; Ca2Al2SiO2(OH)10:3H2O = 2Ca++ + 2Al(OH)4- + 1SiO(OH)3- + OH- +2H2O	; log_K   	-19.7042	 ; -analytical_expression 	148.95692659946	0	-9589.95690828914	-55.1593539487	0	   
+Fe-stratlingite ; Ca2Fe2SiO2(OH)10:3H2O = 2Ca++ + 2Fe(OH)4- + 1SiO(OH)3- + OH- +2H2O	; log_K   	-23.702	 ; -analytical_expression 	293.87516007432	0	-18722.47854424510	-102.9618101367	0	   
+hemicarboaluminate ; Ca4Al2(CO3)0.5(OH)13:5.5H2O = 4Ca++ + 2Al(OH)4- + 0.5CO3-- + 5OH- + 5.5H2O	; log_K   	-29.1327	 ; -analytical_expression 	411.51063104013	0	-21526.38118104660	-148.8963270235	0	   
+Fe-hemicarbonate ; Ca4Fe2(CO3)0.5(OH)13:5.5H2O = 4Ca++ + 2Fe(OH)4- + 0.5CO3-- + 5OH- + 5.5H2O	; log_K   	-33.1027	 ; -analytical_expression 	556.27003898143	0	-30644.51984410740	-196.6441798735	0	   
+monocarboaluminate ; Ca4Al2(CO3)(OH)12:5H2O = 4Ca++ + 2Al(OH)4- + CO3-- + 4OH- + 5H2O	; log_K   	-31.4726	 ; -analytical_expression 	419.54622572991	0	-22668.16504663430	-151.5423037557	0	   
+Fe-monocarbonate ; Ca4Fe2(CO3)(OH)12:5H2O = 4Ca++ + 2Fe(OH)4- + CO3-- + 4OH- + 5H2O	; log_K   	-35.5 ; -analytical_expression 	554.47107047792	0	-31715.13432703260	-195.43556986521	0	   
+hydrotaliceOH ; Mg4Al2(OH)14:3H2O = 4Mg++ + 2Al(OH)4- + 6OH- + 3H2O	; log_K   	-56.0214	 ; -analytical_expression 	354.74992257809	0	-22738.24127204280	-135.1853566837	0	   
+hydrotalciteFe  ; Mg4Fe2(OH)14:3H2O = 4Mg++ + 2Fe(OH)4- + 6OH- + 3H2O	; log_K   	-60.002	 ; -analytical_expression 	499.50943498605	0	-31856.37993510370	-182.9332095337	0	   
+CAH10 ; CaAl2(OH)8:6H2O = Ca++ + 2Al(OH)4- + 6H2O	; log_K   	-7.50282	 ; -analytical_expression 	19.33995799190	0	-4170.78109558596	-5.1912860770	0	   
+hydrogarnetSi   ; Ca3Al2(SiO4)0.8(OH)8.8 + 2.4H2O = 3Ca++ + 2Al(OH)4- + 0.8 SiO(OH)3- + 3.2OH-	; log_K   	-29.8707	 ; -analytical_expression 	305.23780762563	0	-16550.88410201760	-112.9922268420	0	   
+hydrotalciteC  ; Mg4Al2(OH)12CO3:3H2O = 4Mg++ + 2Al(OH)4- + CO3-- + 4OH- + 3H2O	; log_K   	-51.142	 ; -analytical_expression 	358.37159560480	0	-21030.32915266930	-136.9894317284	0	   
+syngenite ; K2Ca(SO4)2H2O = 2K+ + 1Ca++ + 2SO4-- + 1H2O	; log_K   	-7.2003	 ; -analytical_expression 	256.44664476696	0	-12598.84393306150	-89.4698545074	0	   
+Al(OH)3am ; Al(OH)3 = Al(OH)4- - 1OH-	; log_K   	0.239427	 ; -analytical_expression 	-48.08001615409	0	1546.32359095493	17.4322960704	0	   
+Fe(OH)3mic ; Fe(OH)3 = Fe(OH)4- - 1OH-	; log_K   	-4.60039	 ; -analytical_expression 	2.49263607431	0	-2892.86085047996	1.0555041728	0	   
+Calcite ; CaCO3                  =  +1.000Ca+2                 -1.000H+                   +1.000HCO3-	; log_K   	1.84897	 ; -analytical_expression 	49.00173153277	0	-958.45338123134	-17.7571498501	0	   
+Portlandite ; Ca(OH)2                =  +1.000Ca+2                 +2.000H2O                  -2.000H+	; log_K   	22.79937	 ; -analytical_expression 	-11.29923807115	0	7303.68926279255	3.8839330279	0	   
+Anhydrite ; CaSO4                  =  +1.000Ca+2                 +1.000SO4-2	; log_K   	-4.35754	 ; -analytical_expression 	131.22651283827	0	-5228.78943438100	-47.7070807540	0	   
+Gypsum ; CaSO4:2H2O             =  +1.000Ca+2                 +1.000SO4-2                +2.000H2O	; log_K   	-4.58147	 ; -analytical_expression 	111.52942046684	0	-5116.92285811085	-39.9882855394	0	   
+Hematite ; Fe2O3                  =  +3.000H2O                  -6.000H+                   +2.000Fe+3	; log_K   	1.118973	 ; -analytical_expression 	-11.36089784168	0	6572.14422725869	-3.8633665724	0	   
+Brucite ; Mg(OH)2                =  +1.000Mg+2                 +2.000H2O                  -2.000H+	; log_K   	16.83953	 ; -analytical_expression 	-21.32005009039	0	6781.89650685512	6.2277873260	0	 
+Thaumasite ;  (CaSiO3)2(CaSO4)2(CaCO3)2(H2O)30= 6.000 Ca+2 + 2  SiO(OH)3- +  2 CO3-2 + 2 SO4-2 + 2 OH- + 26 H2O	 ; log_K	-49.4078983	 ; -analytical_expression 	596.55829677308	0	-37214.18686948530	-210.5956935526	0

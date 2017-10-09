@@ -1,0 +1,104 @@
+TP.TABLE	
+TdgC	25
+Pbar	1.01325
+END TP.TABLE
+
+SOLVENT	
+NAME H2O	
+Rho	0.997062
+Eps	78.2452
+DHA	0.511381
+DHB	0.328784
+BDOT	0.041
+END SOLVENT
+
+!--------------------------------------------------------------------AQU
+SPECIES
+AQU	HAAR_etal	H2O	H(2)O(1)	0	0
+AQU	SLOP98_0005	ALOO-	AL(1)O(2)-(1)	3.3	0
+AQU	SLOP98_0026	CO3-2	C(1)O(3)-(2)	4.5	0
+AQU	SLOP98_0028	CA+2	CA(1)+(2)	4.3	0
+AQU	SLOP98_0038	CL-	CL(1)-(1)	3.7	0
+AQU	SLOP98_0053	H+	H(1)+(1)	9	0
+AQU	SLOP98_0090	FEO2-	FE(1)O(2)-(1)	3.7	0
+AQU	SLOP98_0104	MG+2	MG(1)+(2)	4.1	0
+AQU	SLOP98_0123	NA+	NA(1)+(1)	3.7	0
+AQU	SLOP98_0167	SIO2(AQ)	SI(1)O(2)+(0)	3.7	0
+AQU	SLOP98_0001	AL+3	AL(1)+(3)	4.4	22.188788
+AQU	SLOP98_0002	ALO+	AL(1)O(1)+(1)	2.9	11.854515
+AQU	SLOP98_0003	ALOH+2	AL(1)O(1)H(1)+(2)	4	17.195892
+AQU	SLOP98_0004	ALOOH(AQ)	H(1)AL(1)O(2)+(0)	3.7	6.6021367
+AQU	SLOP98_0021	CAOH+	CA(1)O(1)H(1)+(1)	3.5	-12.825742
+AQU	SLOP98_0025	CO2(AQ)	C(1)O(2)+(0)	3.7	16.66593
+AQU	SLOP98_0027	CAHCO3+	CA(1)H(1)C(1)O(3)+(1)	3.8	11.375436
+AQU	SLOP98_0029	CACL+	CA(1)CL(1)+(1)	3.4	-0.29246841
+AQU	SLOP98_0030	CACL2(AQ)	CA(1)CL(2)+(0)	3.7	-0.64357676
+AQU	SLOP98_0062	HCO3-	H(1)C(1)O(3)-(1)	4.2	10.328712
+AQU	SLOP98_0073	HSIO3-	H(1)SI(1)O(3)-(1)	3.5	-9.5778145
+AQU	SLOP98_0081	FE+3	FE(1)+(3)	4.5	21.605319
+AQU	SLOP98_0084	FEOH+2	FE(1)O(1)H(1)+(2)	4.2	19.408088
+AQU	SLOP98_0086	FEO+	FE(1)O(1)+(1)	3.1	15.962984
+AQU	SLOP98_0089	HFEO2(AQ)	H(1)FE(1)O(2)+(0)	3.7	9.6023089
+AQU	SLOP98_0102	MG(CO3)(AQ)	MG(1)C(1)O(3)+(0)	3.7	2.9789125
+AQU	SLOP98_0103	MG(HCO3)+	MG(1)H(1)C(1)O(3)+(1)	3.3	11.364441
+AQU	SLOP98_0105	MGCL+	MG(1)CL(1)+(1)	3	-0.13487322
+AQU	SLOP98_0107	MGOH+	MG(1)O(1)H(1)+(1)	3	-11.674931
+AQU	SLOP98_0125	NACL(AQ)	NA(1)CL(1)+(0)	3.7	-0.7769817
+AQU	SLOP98_0127	NAHSIO3(AQ)	NA(1)H(1)SI(1)O(3)+(0)	3.7	-7.7467796
+AQU	SLOP98_0129	NAOH(AQ)	NA(1)O(1)H(1)+(0)	3.7	-14.197186
+AQU	SLOP98_0137	OH-	O(1)H(1)-(1)	3.3	-13.987547
+AQU	SLOP98_0232	HCL(AQ)	H(1)CL(1)	3.7	-0.7102788
+AQU	SLOP98_0233	CACO3(AQ)	CA(1)C(1)O(3)+(0)	3.7	3.327088
+AQU	SLOP98_0236	FECL+2	FE(1)CL(1)+(2)	4	23.085247
+AQU	SLOP98_0261	MG(HSIO3)+	MG(1)H(1)SI(1)O(3)+(1)	2.9	-8.3177873
+AQU	SLOP98_0262	CA(HSIO3)+	CA(1)H(1)SI(1)O(3)+(1)	3.3	-8.5677406
+END
+!-------------------------------------------------------------------/AQU
+
+!--------------------------------------------------------------------MIN
+SPECIES
+FORMULA SCFORM
+
+MIN	JENSEN	Portlandite	Ca(OH)2	2700	-22.799
+MIN	JENSEN	Silica (am)	SiO2	2700	2.714
+MIN	JENSEN	Brucite	Mg(OH)2	2700	-16.839
+MIN	JENSEN	Gypsum	CaSO4(H2O)2	2700	4.58
+MIN	JENSEN	Calcite	CaCO3	2700	-1.849
+MIN	JENSEN	HydrogarnetSi	Ca3Al2(SiO4)8/10(OH)88/10	2700	29.871
+MIN	JENSEN	Fe-monosulfate	Ca4Fe2(SO4)(OH)12(H2O)6	2700	33.203
+!-----------------------------------------------------------------------
+! C–S–H (ss)					
+MIN	JENSEN	TobH	(CaO)2/3(SiO2)(H2O)3/2	2700	-8.272
+MIN	JENSEN	TobD	(CaO)5/6(SiO2)2/3(H2O)11/6	2700	-13.624
+MIN	JENSEN	JenH	(CaO)4/3(SiO2)(H2O)13/6	2700	-22.173
+MIN	JENSEN	JenD	(CaO)3/2(SiO2)2/3(H2O)5/2	2700	-28.713
+!-----------------------------------------------------------------------
+! AFm (1) (ss)					
+MIN	JENSEN	C2AH8C2AH8	Ca2Al2(OH)10(H2O)3	2700	13.562
+MIN	JENSEN	C2FH8C2FH8	Ca2Fe2(OH)10(H2O)3	2700	17.602
+!-----------------------------------------------------------------------
+! AFm (2) (ss)					
+MIN	JENSEN	C4AH13C4AH13	Ca4Al2(OH)14(H2O)6	2700	25.403
+MIN	JENSEN	C4FH13C4FH13	Ca4Fe2(OH)14(H2O)6	2700	29.403
+!-----------------------------------------------------------------------
+AFm (3) (ss)					
+MIN	JENSEN	C2ASH8	(CaO)2(Al2O3)(SiO2)(H2O)8	2700	20.49
+MIN	JENSEN	C2FSH8	(CaO)2(Fe2O3)(SiO2)(H2O)8	2700	24.8
+!-----------------------------------------------------------------------
+! AFm (4) (ss)					
+MIN	JENSEN	C4AS‾H12	(CaO)3(Al2O3)(CaSO4)(H2O)12	2700	27.7
+MIN	JENSEN	C4FS‾H12	(CaO)3(Fe2O3)(CaSO4)(H2O)12	2700	32.02
+!-----------------------------------------------------------------------
+Hydrogarnets (ss)					
+MIN	JENSEN	C3AH6	(CaO)3(Al2O3)(H2O)6	2700	34.07
+MIN	JENSEN	C3FH6	(CaO)3(Fe2O3)(H2O)6	2700	22.46
+!-----------------------------------------------------------------------
+! AFt (1) (ss)					
+MIN	JENSEN	Al-Ettringite	Ca6Al2(SO4)3(OH)12(H2O)26	2700	44.909
+MIN	JENSEN	Fe-Ettringite	Ca6Fe2(SO4)3(OH)12(H2O)26	2700	44.008
+!-----------------------------------------------------------------------
+! AFt (2) (ss)					
+MIN	JENSEN	Al-Ettringite	Ca6Al2(SO4)3(OH)12(H2O)26	2700	44.909
+MIN	JENSEN	Tricarboaluminate	Ca6Al2(CO3)3(OH)12(H2O)12	2700	46.509
+END
+!-------------------------------------------------------------------/MIN
