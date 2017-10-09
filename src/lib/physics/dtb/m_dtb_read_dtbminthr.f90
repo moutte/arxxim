@@ -456,6 +456,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   &   "ABBREV      ","SOURCE      ","FORMAT      ","FITTING     ","PARAMETERS  " /)
   !
   !--- scan default field list
+  L= "TYPE NAME ECFORM ABBREV SOURCE FORMAT PARAMETERS"
   L= "TYPE NAME ECFORM SKIP SOURCE SKIP PARAMETERS"
   !
   !if(iDebug==4) print *,"< Default values"

@@ -4,7 +4,7 @@ TEST
 END
 CONDITIONS
   TITLE  al-silicate
-  OUTPUT out\map_tp_1a
+  OUTPUT out\map_tp_1a1
   DEBUG  1
 END CONDITIONS
 ELEMENTS
@@ -20,7 +20,7 @@ ELEMENTS
   K  0.039098   1  1  64.67 
   Na 0.022990   1  1  51.46 
 END ELEMENTS
-INCLUDE dtb\hsvthr_thcalc_db55_min.tab
+INCLUDE dtb\hsvthr_twq_dec06_min.dtb
 SPECIES HSV.THR
 TYPE NAME   SCFORM  SOURCE  FORMAT   PARAMETERS
 GAS  WATER  H2O     haar    THERIAK  SPECIAL H2O_HGK
