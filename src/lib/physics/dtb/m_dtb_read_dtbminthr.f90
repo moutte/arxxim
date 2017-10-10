@@ -140,8 +140,8 @@ subroutine DtbMinThr_Read(F,vEle,N)
     case("MINERAL","GAS")
     
       select case(W)
-      case("MINERAL") ; bGas=.false.; bMin=.true.
-      case("GAS")     ; bGas=.true.;  bMin=.false.
+      case("MINERAL") ; bGas=.false. ; bMin=.true.
+      case("GAS")     ; bGas=.true.  ; bMin=.false.
       end select
 
       call DtbMinThr_Zero(M)

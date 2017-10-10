@@ -1,4 +1,6 @@
 import sys
+import math as m
+import pylab as plt
 
 def formula_read(s):
   if s[-1]!=')':
@@ -14,7 +16,46 @@ def formula_read(s):
       list_elements.append(y.capitalize())
       list_coeffs.append(z)
   return list_elements, list_coeffs
+  
+#--------------------------------------------------compute analytic logK
+#--subroutine DtbLogKAnl_Calc
+def logK(fit,T):
+  # PHREEQC
+  x= fit[0] + fit[1]*T + fit[2]/T + fit[3]*m.log(T,10) + fit[4]/T/T
+  return x
 
+s= "dtb_anl_test.tab"
+instream = open(s,'r')
+coeffs = [ line.strip() for line in instream if line.strip() ]
+for line in coeffs:
+  ww= line.split()
+  Min= ww[0]
+  fit= []
+  for i,w in enumerate(ww):
+    if i>1: fit.append(float(w))
+  print Min,fit
+  #
+  Xmin,Xmax,Xdim= 0.,150.,7
+  Tser= plt.linspace(Xmin,Xmax,num=Xdim)
+  logKs=[]
+  for T in Tser:
+    TK= T + 273.15
+    x= -logK(fit,TK) # MINUS SIGN !!!
+    print T,x
+    logKs.append(x)
+  #raw_input()
+  #
+  fig= plt.subplot(1,1,1)
+  fig.grid(color='r', linestyle='-', linewidth=0.2)
+  fig.grid(True)
+  fig.plot(Tser, logKs, 'o',linestyle='-',linewidth=1.0)
+  fig.set_title(Min)
+  plt.show()
+  #
+sys.exit()
+#------------------------------------------------//compute analytic logK
+
+#---------------------------------------------sorting species by formula
 s= "list-species.txt"
 # formulas= open(s,'r').readlines()
 instream = open(s,'r')
@@ -60,6 +101,7 @@ for f in formulas:
 list_select.close()
 
 sys.exit()
+#-------------------------------------------//sorting species by formula
 
 #-------------------------------------------------------------test log_P
 import math as m

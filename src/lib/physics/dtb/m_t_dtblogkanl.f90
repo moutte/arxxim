@@ -79,26 +79,18 @@ contains
       LogK = M%vX(1)
     
     case(1) !"PHREEQC"
-    !! if(trim(M%Fitting)=="PHREEQC") then
-      !! T = TdgK
-      !! LogK = M%A               &
-      !! &    + M%B * T           &
-      !! &    + M%C * 1.D0/T      &
-      !! &    + M%D * Log(T)/LN10 &
-      !! &    + M%E * 1.D0/T/T
-    !! end if
       LogK = M%vX(1)               &
       &    + M%vX(2) * T           &
-      &    + M%vX(3) * 1.D0/T      &
+      &    + M%vX(3) / T           &
       &    + M%vX(4) * Log(T)/LN10 &
-      &    + M%vX(5) * 1.D0/T/T
+      &    + M%vX(5) / T**2
     
     case(2) !"CHRISTOV"
       LogK = M%vX(1)               &
       &    + M%vX(2) * T           &
-      &    + M%vX(3) * 1.D0/T      &
+      &    + M%vX(3) / T           &
       &    + M%vX(4) * Log(T)/LN10 &
-      &    + M%vX(5) * 1.D0/T/T
+      &    + M%vX(5) / T**2
     
     end select
     !
