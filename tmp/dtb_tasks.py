@@ -22,6 +22,7 @@ def formula_read(s):
 def logK(fit,T):
   # PHREEQC
   x= fit[0] + fit[1]*T + fit[2]/T + fit[3]*m.log(T,10) + fit[4]/T/T
+  if len(fit)>5: x= x + fit[5]*T*T
   return x
 
 s= "dtb_anl_test.tab"
