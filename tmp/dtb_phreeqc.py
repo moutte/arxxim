@@ -21,7 +21,7 @@ def ChargeReplace(w):
   w= w.replace('++++',  '+4')
   w= w.replace('+++',   '+3')
   w= w.replace('++',    '+2')
-  
+  #
   w= w.replace(' - ', ' -')
   w= w.replace('------','-6')
   w= w.replace('-----', '-5')
@@ -30,6 +30,22 @@ def ChargeReplace(w):
   w= w.replace('--',    '-2')
   return w
 #--------------------------------------------------------//ChargeReplace
+#-----------------------------------------------------------FormulaClean
+def FormulaClean(w):
+  if ':' in w:
+    w= w.replace(':H2O',   '(H2O)'    )
+    w= w.replace(':2H2O',  '(H2O)2'   )
+    w= w.replace(':3H2O',  '(H2O)3'   )
+    w= w.replace(':4H2O',  '(H2O)4'   )
+    w= w.replace(':5H2O',  '(H2O)5'   )
+    w= w.replace(':6H2O',  '(H2O)6'   )
+    w= w.replace(':7H2O',  '(H2O)7'   )
+    w= w.replace(':8H2O',  '(H2O)8'   )
+    w= w.replace(':10H2O', '(H2O)10'  )
+    w= w.replace(':26H2O', '(H2O)26'  )
+    w= w.replace(':5.5H2O','(H2O)11/2')
+  return w
+#---------------------------------------------------------------------//
 
 Xmin,Xmax,Xdim= 0.,150.,7
 Tser= plt.linspace(Xmin,Xmax,num=Xdim)
@@ -57,6 +73,7 @@ listSeco= []
 listName= []
 listForm= []
 listStok= []
+listType= []
 
 def species_scan(s):
   ww= s.split()
@@ -106,6 +123,7 @@ for line in f:
     listSeco.append(ww[1])
     listName.append(ww[1])
     listForm.append(ww[1])
+    listType.append("AQU")
 #raw_input()
 
 if 0:
@@ -154,12 +172,13 @@ for line in f:
   elif "=" in ww:
     ww= line.split('=')
     listReac.append(ww[1])
-    listForm.append(ww[0])
+    listForm.append(FormulaClean(ww[0]))
   else:
     listName.append(line.strip())
+    listType.append("MIN")
   #if ww[0]=="PHASES": break
 
-#---------------stoikio of sec'species with respect to prim'species only
+#--------------------stoikio of phases with respect to prim'species only
 print "==sec'species stoikio=="
 for i,reac in enumerate(listReac):
   coeffs,specis= species_scan(reac)
@@ -189,18 +208,24 @@ raw_input("ENT")
 #---------------------------------------------------------------------//
 
 fLogk= open(fData+".logk",'w')
+for prim in listPrim:
+  fLogk.write("%s\t" % prim)
+  for i in range(len(Tser)): fLogk.write("0.0\t")
+  fLogk.write('\n')
 for i,logk in enumerate(listLogK):
   fLogk.write("%s\t" % listNamK[i])
-  for x in logk: fLogk.write("%.4g\t" % x)
+  for x in logk: fLogk.write("%.6g\t" % x)
   fLogk.write('\n')
 raw_input("ENT")
 
 #-----------------------------------------------------write stokio table
 fo= open(fData+"_stoikio.tab",'w')
-fo.write(".formula\t")
+fo.write(".type\t.name\t.formula\t")
 for prim in listPrim: fo.write("%s\t" % prim)
 fo.write("\n")
 for i,frm in enumerate(listForm):
+  fo.write("%s\t" % listType[i])
+  fo.write("%s\t" % listName[i])
   fo.write("%s\t" % frm)
   for x in listStok[i]: fo.write("%.4g\t" % x)
   fo.write("\n")

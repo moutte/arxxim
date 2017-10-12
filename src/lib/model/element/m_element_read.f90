@@ -264,7 +264,6 @@ subroutine Elements_BuildLnk(LnkEle,nEle)
         call Str_Append(W,3)
         if(index(sListElem,trim(W))<1) then
           !
-          call Str_Append(W,3)
           Ele%NamEl=trim(W)
           if(idebug>1) write(fTrc,"(A3)") Ele%NamEl
           !

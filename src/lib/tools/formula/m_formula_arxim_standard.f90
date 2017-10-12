@@ -91,15 +91,14 @@ contains
       call WrdToInt(sCoeff,Coeff)
        
       select case(trim(sElem))
-        case("___"); exit                    !end of formula
-        case("DIV"); nDiv=Coeff; cycle
-        case("/__"); nDiv=Coeff; cycle
-        case("E__"); Z= Coeff;   cycle
-        case("+__"); Z= Coeff;   cycle
-        case("-__"); Z=-Coeff;   cycle
+        case("___")  ; exit                    !end of formula
+        case("DIV")  ; nDiv=Coeff ;   cycle
+        case("/__")  ; nDiv=Coeff ;   cycle
+        case("E__")  ; Z= Coeff   ;   cycle
+        case("+__")  ; Z= Coeff   ;   cycle
+        case("-__")  ; Z=-Coeff   ;   cycle
       end select
        
-      !if(DebFormula) write(fTrc,'(A)') trim(sElem)
       iEl=Name_Index(sElem,vNameEle)
        
       if(iEl==0) then
