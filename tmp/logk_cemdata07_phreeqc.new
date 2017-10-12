@@ -1,71 +1,81 @@
+SOLUTION_MASTER_SPECIES
+H               H+          -1.0        H         1.008   #   1
+H(0)            H2           0.0        H #
+H(1)            H+          -1.0        H #
+E               e-           0.0        0.0        0.0    #
+O               H2O          0.0        O        15.999   #   8
+O(0)            O2           0.0        O #
+O(-2)           H2O          0.0        O #
+C              HCO3-         1.0        C        12.011   #   6
+C(+4)          HCO3-         1.0      HCO3-               #
+C(-4)           CH4          0.0       CH4                #
+Alkalinity     HCO3-         1.0      HCO3-      61.016   #
+Ca             Ca+2          0.0        Ca       40.078   #  20
+Si            Si(OH)4        0.0        Si       28.086   #  14
+K               K+           0.0        K        39.098   #  19
+Mg             Mg+2          0.0        Mg       24.305   #  12
+Al             Al+3          0.0        Al       26.982   #  13
+S              SO4-2         0.0        S        32.067   #  16
+S(-2)           HS-          1.0        HS                #
+S(2)          S2O3-2         0.0       S2O3               #
+S(4)          SO3-2          0.0       SO3                #
+S(6)           SO4-2         0.0       SO4                #
+Fe             Fe+2          0.0        Fe       55.845   #  26
+Fe(2)          Fe+2          0.0        Fe                #
+Fe(3)          Fe+3          0.0        Fe                #
+Br              Br-          0.0        Br       79.904   #  35
+Cl              Cl-          0.0        Cl       35.453   #  17
+N              NO3-          0.0        N        14.007   #   7
+N(0)            N2           0.0        N2                #
+N(-3)          NH4+          0.0       NH4                #
+N(5)           NO3-          0.0       NO3                #
+Na              Na+          0.0        Na        22.99   #  11
 SOLUTION_SPECIES
-
-# PMATCH MASTER SPECIES
-
 H+ = H+
 log_k  0.0
 -gamma 9.00 0.064
-
 e- = e-
 log_k  0.0
-
 H2O   = H2O
 log_k  0.0
 -gamma 0.00 0.0 #64
-
 HCO3- = HCO3-
 log_k  0.0
 -gamma 5.40 0.064
-
 Ca+2  = Ca+2
 log_k  0.0
 -gamma 4.86 0.064 # 0.01564
-
 Si(OH)4 = Si(OH)4
 log_k  0.0
 -gamma 0.00 0.0 #64
-
-#b parameter not changed from here on for primary master species
-
 Al+3  = Al+3
 log_k  0.0
 -gamma 6.65   0.064 # 0.19
-
 Fe+2  = Fe+2
 log_k  0.0
 -gamma 5.08 0.064 # 0.16
-
 K+ = K+
 log_k  0.0
 -gamma 3.71 0.064 # 0.01
-
 Mg+2  = Mg+2
 log_k  0.0
 -gamma 5.46 0.064 # 0.22
-
 SO4-2 = SO4-2
 log_k  0.0
 -gamma 5.31   0.064 # -0.07
-
 Br-   = Br-
 log_k  0.0
 -gamma 3.00 0.064 # 0.00
-
 Cl-   = Cl-
 log_k  0.0
 -gamma 3.71 0.01
-
 NO3-  = NO3-
 log_k  0.0
 -gamma 3.00 0.064 # 0.00
-
 Na+   = Na+
 log_k  0.0
 -gamma 4.32 0.064 # 0.06
-
-# PMATCH SECONDARY MASTER SPECIES
 SECONDARY
-
 +1.000 Si(OH)4 -1.000 H+ = SiO(OH)3-   
  -gamma  4.00 0.064 
  log_K -9.80974  
@@ -130,6 +140,10 @@ SECONDARY
   -gamma  0.00 0.0 
  log_K 4.600017  
  -analytical_expression  0.000 03498360 0 1371.64549038842 -0.000 0120272 0
++1.000 Fe+2  -1.000 e- = Fe+3 
+ -gamma  9.00 0.0640 
+ log_K -13.0201  
+ -analytical_expression  6.52902464956 0 -2917.27751554918 -5.3251484453 0
 +1.000 Fe+2  +1.000 HCO3- -1.000 H+ = FeCO3 
  -gamma  0.00 0.00 
  log_K -5.94898  
@@ -166,10 +180,6 @@ SECONDARY
  -gamma  4.00 0.0640 
  log_K 5.380128  
  -analytical_expression  -131.48050051289 0 5443.75324149227 47.9311468746 0
-+1.000 Fe+2  -1.000 e- = Fe+3 
- -gamma  9.00 0.0640 
- log_K -13.0201  
- -analytical_expression  6.52902464956 0 -2917.27751554918 -5.3251484453 0
 +3.000 H2O   -3.000 H+ +1.000 Fe+3  = Fe(OH)3   
  log_K -12.5594  
  -analytical_expression  147.12395569469 0 -13347.13553589500 -46.4423038760 0
@@ -269,14 +279,14 @@ SECONDARY
   -gamma  0.00 0.0 
  log_K 27.8481  
  -analytical_expression  -177.87782773202 0 21721.88220712880 64.7294909742 0
-+1.000 NH4+  -1.000 H+ = NH3 
- -gamma  0.00 0.00 
- log_K -9.23697  
- -analytical_expression  -3.59831980108 0 -2549.62881993208 1.1769785592 0
 +1.000 NO3- +10.000 H+ +8.000 e- -3.000 H2O   = NH4+ 
  -gamma  2.50 0.0640 
  log_K 119.1361  
  -analytical_expression  -116.84941401789 0 46557.19607874130 43.2967186280 0
++1.000 NH4+  -1.000 H+ = NH3 
+ -gamma  0.00 0.00 
+ log_K -9.23697  
+ -analytical_expression  -3.59831980108 0 -2549.62881993208 1.1769785592 0
 +2.000 NO3- +12.000 H+   +10.000 e- -6.000 H2O   = N2 
  -gamma  0.00 0.00 
  log_K 207.2662  
@@ -285,26 +295,26 @@ SECONDARY
  -gamma  4.00 0.0640 
  log_K 38.01267  
  -analytical_expression  -214.77995703953 0 24017.66212043470 80.6443193886 0
-+1.000 H+ +1.000 SO3-2 = HSO3- 
- -gamma  4.00 0.0640 
- log_K 7.219989  
- -analytical_expression  -87.59223471343 0 3812.55224613743 33.1491573165 0
 +1.000 SO4-2 +2.000 H+ +2.000 e- -1.000 H2O   = SO3-2 
  -gamma  4.50 0.0640 
  log_K -3.39725  
  -analytical_expression  -20.01098159798 0 1624.20845779751 7.2712643319 0
++1.000 H+ +1.000 SO3-2 = HSO3- 
+ -gamma  4.00 0.0640 
+ log_K 7.219989  
+ -analytical_expression  -87.59223471343 0 3812.55224613743 33.1491573165 0
 +1.000 H+ +1.000 SO4-2 = HSO4- 
  -gamma  4.00 0.0640 
  log_K 1.987722  
  -analytical_expression  -95.44960727141 0 3428.44243310458 34.7309703157 0
-+1.000 HS-   +1.000 H+ = H2S 
- -gamma  0.00 0.00 
- log_K 6.989962  
- -analytical_expression  -92.54543936710 0 5444.49694476074 32.8459524374 0
 +1.000 SO4-2 +9.000 H+ +8.000 e- -4.000 H2O   = HS- 
  -gamma  3.50 0.0640 
  log_K 33.68888  
  -analytical_expression  -148.49636393000 0 20433.96976138830 56.9613843750 0
++1.000 HS-   +1.000 H+ = H2S 
+ -gamma  0.00 0.00 
+ log_K 6.989962  
+ -analytical_expression  -92.54543936710 0 5444.49694476074 32.8459524374 0
 +1.000 HS-   -1.000 H+ = S-2 
  -gamma  5.00 0.0640 
  log_K -19  
@@ -321,34 +331,29 @@ SECONDARY
  -gamma  0.00 0.0 
  log_K -85.9855  
  -analytical_expression  -30.79426700990 0 -27925.53838584180 10.0321005086 0
-
-
-
 PHASES
-
-
 CH4(g)   
- CH4 = CH4   
+ CH4 = 1. CH4   
  log_K -2.8565  
  -analytical_expression  -89.63393582234 0 4440.29675525994 29.0478933816 0
 CO2(g)   
- CO2 = H+ -1.000 H2O   +1.000 HCO3-  
+ CO2 = 1. H+ -1.000 H2O   +1.000 HCO3-  
  log_K -7.81956  
  -analytical_expression  41.87683954485 0 -1740.14204852581 -17.7229926959 0
 H2(g) 
-   H2  = H2 
+   H2  = 1. H2 
  log_K -3.10597  
  -analytical_expression  -52.09936672097 0 2359.52736654890 16.6015796481 0
 O2(g) 
-   O2  = O2 
+   O2  = 1. O2 
  log_K -2.8812  
  -analytical_expression  -76.67437063690 0 3828.93234444672 24.6329609322 0
 H2S(g)   
-  H2S = HS-   +1.000 H+ 
+  H2S = 1. HS-   +1.000 H+ 
  log_K -8.00993  
  -analytical_expression  37.63799849734 0 -2225.98872774971 -15.4105293036 0
 N2(g) 
- N2  = N2 
+ N2  = 1. N2 
  log_K -3.18743  
  -analytical_expression  -76.72711536033 0 3734.51086475577 24.6580977111 0
 SiO2am 
@@ -364,7 +369,7 @@ CSHjen
  log_K -13.1659  
  -analytical_expression  211.28870953694 0 -10574.51261009040 -76.3734723995 0
 CSHtob2 
- (CaO)0.83333(SiO2)(H2O)1.3333 = 0.83333 Ca++  +SiO(OH)3-  +0.66666 OH-  -0.50003 H2O
+ (CaO)0.83333(SiO2)(H2O)1.3333 = 0.83333 Ca++  +1 SiO(OH)3-  +0.66666 OH-  -0.50003 H2O
  log_K -8.0014  
  -analytical_expression  100.35344189250 0 -5814.81586527851 -35.9075880599 0
 C2AH8 
@@ -408,7 +413,7 @@ monosulfoaluminate
  log_K -29.2628  
  -analytical_expression  404.92625454716 0 -21017.60772698490 -146.9719803091 0
 Fe-monosulfate 
- Ca4Fe2(SO4)(OH)12:6H2O = 4 Ca++  +2 Fe(OH)4-  + SO4--  +4 OH-  +6 H2O 
+ Ca4Fe2(SO4)(OH)12:6H2O = 4 Ca++  +2 Fe(OH)4-  +1 SO4--  +4 OH-  +6 H2O 
  log_K -33.2028  
  -analytical_expression  549.68566248846 0 -30126.34439200350 -194.7198331591 0
 stratlingite 
@@ -428,7 +433,7 @@ Fe-hemicarbonate
  log_K -33.1027  
  -analytical_expression  556.27003898143 0 -30644.51984410740 -196.6441798735 0
 monocarboaluminate 
- Ca4Al2(CO3)(OH)12:5H2O = 4 Ca++  +2 Al(OH)4-  +1 CO3--  + 4OH-  +5 H2O 
+ Ca4Al2(CO3)(OH)12:5H2O = 4 Ca++  +2 Al(OH)4-  +1 CO3--  +4 OH-  +5 H2O 
  log_K -31.4726  
  -analytical_expression  419.54622572991 0 -22668.16504663430 -151.5423037557 0
 Fe-monocarbonate 
