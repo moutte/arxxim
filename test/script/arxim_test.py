@@ -18,7 +18,7 @@ Debug= "3"
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map_dom_fe_ox.inn")
 files= glob.glob("valid/d2*.inn")
-files= glob.glob("valid/b1a*.inn")
+files= glob.glob("valid/a0a*.inn")
 
 files.sort()
 for f in files: print f
@@ -31,7 +31,7 @@ def check_done():
   if os.path.isfile("error.log"):
     res= open("error.log",'r').read()
     if res.strip()=="PERFECT": Ok= True
-    else: print "error.log="+ll ; raw_input()
+    else: print "error.log="+res ; raw_input()
   else:
     print "error.log NOT FOUND"
   return Ok

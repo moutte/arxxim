@@ -98,7 +98,7 @@ for line in fi:
     logKs=[]
     for T in Tser:
       TK= T + 273.15
-      logKs.append(-logK(coefs,TK)) # MINUS SIGN !!!
+      logKs.append(logK(coefs,TK)) # NO MINUS SIGN !!!
     listLogK.append(logKs)
     listNamK.append(nam)
 #---------------------------------------------------------------------//
