@@ -12,6 +12,7 @@ module M_Numeric_Tools
   
   !---
   public:: Interpol
+  public:: linear_interp_2d
   !---
   public:: vAbs
   !---
@@ -43,18 +44,18 @@ module M_Numeric_Tools
 contains
 
 
- !--------------- LINEAR TABLE INTERPOLATION  -------------------------------------------
+!---------------------------------------------LINEAR TABLE INTERPOLATION
 
 
   real(dp) function Interpol(T,iota,N,vT,vP)
-    !----------------------------------------------------------------------
-    ! provisional, basic linear interpolation of P from a table (vT,vP)
-    ! assumes the vT-series is strictly increasing from 1 to N
-    !----------------------------------------------------------------------
+  !---------------------------------------------------------------------
+  ! provisional, basic linear interpolation of P from a table (vT,vP)
+  ! assumes the vT-series is strictly increasing from 1 to N
+  !---------------------------------------------------------------------
     implicit none
-    real(dp),              intent(in)   :: T,iota
-    integer,               intent(in)   :: N
-    real(dp), dimension(:),intent(in)   :: vT,vP
+    real(dp), intent(in):: T,iota
+    integer,  intent(in):: N
+    real(dp), intent(in):: vT(:),vP(:)
     !
     real(dp):: P,K1,K2
     integer :: I
@@ -64,18 +65,18 @@ contains
     I=1; do while(T>vT(I)); I=I+1; end do !-> find upper bound
     !
     if(abs(T-vT(I))<=Iota) then
-       P= vP(I)
+      P= vP(I)
     else
-       K1= (T-vT(I)  ) /(vT(I-1) - vT(I)  )
-       K2= (T-vT(I-1)) /(vT(I)   - vT(I-1))
-       P=  K1 *vP(I-1) + K2 *vP(I)
+      K1= (T-vT(I)  ) /(vT(I-1) - vT(I)  )
+      K2= (T-vT(I-1)) /(vT(I)   - vT(I-1))
+      P=  K1 *vP(I-1) + K2 *vP(I)
     end if
     Interpol= P
     return
   end function Interpol
 
 
-  !--------------- VECTOR UTILS  -------------------------------------------
+!-----------------------------------------------------------VECTOR UTILS
 
 
   real(dp) function vAbs(V) 
@@ -188,7 +189,7 @@ contains
   end subroutine UNIT_MATRIX
 
 
-  !--------------- SORTING ---------------------------------------------------
+!----------------------------------------------------------------SORTING
 
   subroutine SWAP_R(A,B) 
     !-----------------------
@@ -253,54 +254,54 @@ contains
     l=1
     r=n
     do
-       if (r-l < NN) then !Insertion sort when subarray small enough.
-          do j=l+1,r
-             a=arr(j)
-             do i=j-1,l,-1
-                if (arr(i) <= a) exit
-                arr(i+1)=arr(i)
-             end do
-             arr(i+1)=a
+      if (r-l < NN) then !Insertion sort when subarray small enough.
+        do j=l+1,r
+          a=arr(j)
+          do i=j-1,l,-1
+            if (arr(i) <= a) exit
+            arr(i+1)=arr(i)
           end do
-          if (jstack==0) return
-          r=istack(jstack) !________________Pop stack and begin a new round of partitioning
-          l=istack(jstack-1)
-          jstack=jstack-2
-       else
-          k=(l+r)/2 !_______________________Choose median of left, center, and right elements as partitioning element a
-          call SWAP_R(arr(k),arr(l+1)) !______Also rearrange so that a(l)<=a(l+1)<=a(r).
-          call SWAP_RMASKED(arr(l),  arr(r),  arr(l)>arr(r))
-          call SWAP_RMASKED(arr(l+1),arr(r),  arr(l+1)>arr(r))
-          call SWAP_RMASKED(arr(l),  arr(l+1),arr(l)>arr(l+1))
-          i=l+1
-          j=r
-          a=arr(l+1) !______________________Partitioning element
-          do
-             do !____________________________Scan up to find element >= a.
-                i=i+1
-                if(arr(i)>=a) exit
-             end do
-             do !____________________________Scan down to find element <= a
-                j=j-1
-                if(arr(j)<=a) exit
-             end do
-             if (j<i) exit !_______________Pointers crossed. Exit with partitioning complete.
-             call SWAP_R(arr(i),arr(j))
+          arr(i+1)=a
+        end do
+        if (jstack==0) return
+        r=istack(jstack) !________________Pop stack and begin a new round of partitioning
+        l=istack(jstack-1)
+        jstack=jstack-2
+      else
+        k=(l+r)/2 !_______________________Choose median of left, center, and right elements as partitioning element a
+        call SWAP_R(arr(k),arr(l+1)) !______Also rearrange so that a(l)<=a(l+1)<=a(r).
+        call SWAP_RMASKED(arr(l),  arr(r),  arr(l)>arr(r))
+        call SWAP_RMASKED(arr(l+1),arr(r),  arr(l+1)>arr(r))
+        call SWAP_RMASKED(arr(l),  arr(l+1),arr(l)>arr(l+1))
+        i=l+1
+        j=r
+        a=arr(l+1) !______________________Partitioning element
+        do
+          do !____________________________Scan up to find element >= a.
+            i=i+1
+            if(arr(i)>=a) exit
           end do
-          arr(l+1)=arr(j) !_________________Insert partitioning element.
-          arr(j)=a
-          jstack=jstack+2
-          if (jstack > NSTACK) return !call nrerror('sort: NSTACK too small')
-          if (r-i+1>=j-l) then
-             istack(jstack)=r
-             istack(jstack-1)=i
-             r=j-1
-          else
-             istack(jstack)=j-1
-             istack(jstack-1)=l
-             l=i
-          end if
-       end if
+          do !____________________________Scan down to find element <= a
+            j=j-1
+            if(arr(j)<=a) exit
+          end do
+          if (j<i) exit !_______________Pointers crossed. Exit with partitioning complete.
+          call SWAP_R(arr(i),arr(j))
+        end do
+        arr(l+1)=arr(j) !_________________Insert partitioning element.
+        arr(j)=a
+        jstack=jstack+2
+        if (jstack > NSTACK) return !call nrerror('sort: NSTACK too small')
+        if (r-i+1>=j-l) then
+          istack(jstack)=r
+          istack(jstack-1)=i
+          r=j-1
+        else
+          istack(jstack)=j-1
+          istack(jstack-1)=l
+          l=i
+        end if
+      end if
     end do
   end subroutine Sort
 
@@ -387,19 +388,16 @@ contains
       integer, intent(inout) :: i,j
       integer :: swp
       if (arr(j)<arr(i)) then
-         swp=i; i=j; j=swp
+        swp=i; i=j; j=swp
       end if
     end subroutine Icomp_Xchg
 
   end subroutine CalcPermut
 
-
-  !--------------- FINITE DifFERENCE JACOBIAN -------------------------------------------
-  
-
+!--------------- FINITE DifFERENCE JACOBIAN ----------------------------
   subroutine Jacobian_Numeric(vFunc,X,vFuncX,tJac) !from "NR"
-    !.forward-difference approximation to Jacobian
-    !use M_Numeric_Tools
+  !.forward-difference approximation to Jacobian
+  !use M_Numeric_Tools
     real(dp),dimension(:),   intent(in)   :: vFuncX !vector(:) of function values at x
     real(dp),dimension(:),   intent(inout):: X !point(:) at which Jacobian is evaluated
     real(dp),dimension(:,:), intent(out)  :: tJac !(:,:) output Jacobian
@@ -429,8 +427,8 @@ contains
     end do
   end subroutine Jacobian_Numeric
 
-  !---
-
+!-----------------------------------------------------------------------
+  
   subroutine Jacobian_Numeric_Bis(vFunc,X,vFX,tJac) !from "NR"
     !.forward-difference approximation to Jacobian
     !use M_Numeric_Tools
@@ -467,6 +465,71 @@ contains
     end do
 
   end subroutine Jacobian_Numeric_Bis
+
+subroutine linspace(xmin,xdelta,nval,vec)
+  real(dp),intent(in) :: xmin,xdelta
+  integer, intent(in) :: nval
+  real(dp),intent(out):: vec(nval)
+  !
+  integer:: i
+  !
+  vec(1)= xmin
+  do i=2,nval
+    vec(i)= vec(1)+xdelta
+  end do
+end subroutine linspace
+
+integer function bracket(m,xar,xi)
+  integer, intent(in):: m       !the number of data values
+  real(dp),intent(in):: xar(m)  !the data values, sorted
+  real(dp),intent(in):: xi      !the query value
+  !
+  integer:: lo,mid,up
+  !
+  if(xi<xar(1) .or. xar(m)<xi) then
+    bracket= -1
+  else
+    lo= 1    !lower
+    up= mid  !upper
+    do while(lo+1<up)
+      mid= (lo+up)/2 !mid'point
+      if (xi<xar(mid)) then ;  up= mid !mid'point becomes the new upper
+      else                  ;  lo= mid !mid'point becomes the new lower
+      end if
+    end do
+    bracket= lo
+  end if
+  !
+end function bracket
+
+subroutine linear_interp_2d(m,n,x1a,x2a,ya,x1,x2,  yo,ok)
+  integer, intent(in) :: m,n
+  real(dp),intent(in) :: x1a(m),x2a(n),ya(m,n)
+  real(dp),intent(in) :: x1,x2
+  real(dp),intent(out):: yo
+  logical, intent(out):: ok
+  !
+  real(dp):: u,t
+  integer :: j,k
+  !
+  ok= .true.
+  j= bracket(m,x1a,x1)
+  k= bracket(n,x2a,x2)
+  !
+  if(j<0 .or. k<0) then
+    ok= .false.
+    return
+  end if
+  !
+  t= (x1 -x1a(j))/(x1a(j+1)-x1a(j))
+  u= (x2 -x2a(j))/(x2a(k+1)-x2a(k))
+  yo= (1-t)*(1-u)*ya(j,k)     &
+  & +    t *(1-u)*ya(j+1,k)   &
+  & +    t *u    *ya(j+1,k+1) &
+  & + (1-t)*u    *ya(j,k+1)
+  !
+  return 
+end subroutine linear_interp_2d
 
 end module M_Numeric_Tools
 

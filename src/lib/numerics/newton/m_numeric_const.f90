@@ -8,9 +8,10 @@ module M_Numeric_Const !useful constants
     Ln10=      2.302585092994_dp, & != log(10.0_dp)
     !MaxExpDP=  200.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
     !MinExpDP= -200.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    MaxExpDP=  300.0_dp, &      !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    MinExpDP= -300.0_dp, &      !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
-    TinyDP=    1.0E-300_dp      !TINY(Pi)
+    MaxExpDP=  300.0_dp,      &  !MAXEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+    MinExpDP= -300.0_dp,      &  !MINEXPONENT(rDum), bricolage.. to prevent OVERFLOW with EXP in Newton
+    TinyDP=    1.0E-300_dp,   &  !TINY(Pi)
+    HugeDP=    1.0E+300_dp
   !TINY(x)->smallest number in model of same type and kind parameters as x
   !  ex:real(8) r -> TINY(r)=2.22...E-308
   !HUGE(x)->largest number in model of same type and kind parameters as x
