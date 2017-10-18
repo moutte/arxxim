@@ -51,6 +51,7 @@ Xmin,Xmax,Xdim= 0.,150.,7
 Tser= plt.linspace(Xmin,Xmax,num=Xdim)
 
 #---------------------------------------------------read PRIMARY species
+listGamm= []
 listPrim= []
 for line in f:
   line= ChargeReplace(line)
@@ -65,7 +66,6 @@ raw_input("ENT")
 #-------------------------------------------------//read PRIMARY species
 
 #---------------------------------------------read SECONDARY aqu'species
-# listGamm= [] # open(s+".gam",'w')
 listAnly= [] # open(s+".anl",'w')
 listReac= []
 listLogK= []  ;  listNamK= []
@@ -113,7 +113,7 @@ for line in f:
   if '#' in ww:
     i= ww.index('#')
     ww= ww[0:i+1]
-  if   ww[0]== "-gamma":                 continue #listGamm.append(ww[1:])
+  if   ww[0]== "-gamma": listGamm.append(ww[1:])
   elif ww[0]== "-analytical_expression": continue #listAnly.append(ww[1:])
   elif ww[0].lower()== "log_k":          continue #listLogK.append(ww[1:])
   elif "=" in ww:
@@ -152,7 +152,7 @@ for line in fi:
     logKs=[]
     for T in Tser:
       TK= T + 273.15
-      logKs.append(-logK(coefs,TK)) # MINUS SIGN !!!
+      logKs.append(logK(coefs,TK)) # MINUS SIGN !!!
     listLogK.append(logKs)
     listNamK.append(nam)
 #---------------------------------------------------------------------//
@@ -176,9 +176,9 @@ for line in f:
   else:
     listName.append(line.strip())
     listType.append("MIN")
-  #if ww[0]=="PHASES": break
+#----------------------------------------------------------//read PHASES
 
-#--------------------stoikio of phases with respect to prim'species only
+#---------------stoikio of sec'species & phases w.r.t. prim'species only
 print "==sec'species stoikio=="
 for i,reac in enumerate(listReac):
   coeffs,specis= species_scan(reac)
@@ -187,33 +187,46 @@ for i,reac in enumerate(listReac):
   for j,sp in enumerate(specis):
     if sp in listPrim:
       stoikio[listPrim.index(sp)]= coeffs[j]
+      
   for j,sp in enumerate(specis):
     if sp in listSeco:
       isec= listSeco.index(sp)
       if isec<i:
         for k in range(len(stoikio)):
-          kk= listStok[isec][k]
-          if kk!=0:
-            stoikio[k]= stoikio[k] + listStok[isec][k]*coeffs[j]
-            for T in range(len(Tser)):
-              listLogK[i][T]= listLogK[i][T] + kk*listLogK[isec][T]
+          stoikio[k]= stoikio[k] + listStok[isec][k]*coeffs[j]
       else:
         print sp, "=species without stoik"
+        raw_input()
     elif not sp in listPrim:
       print sp, "=species not found"
+      raw_input()
+      
+  for j,sp in enumerate(specis):
+    if sp in listSeco:
+      isec= listSeco.index(sp)
+      for T in range(len(Tser)):
+        listLogK[i][T]= listLogK[i][T] + listLogK[isec][T]*coeffs[j]
+
   print stoikio
   listStok.append(stoikio)
   # raw_input()
 raw_input("ENT")
 #---------------------------------------------------------------------//
 
+# TYPE INDEX NAME ECFORM SIZE PARAMETERS
+
 fLogk= open(fData+".logk",'w')
+fLogk.write("%s\t%s\t%s\t%s\t%s\t%s\n" % ("TYPE","INDEX","NAME","SCFORM","SIZE","PARAMETERS"))
 for prim in listPrim:
-  fLogk.write("%s\t" % prim)
+  fLogk.write("%s\t%s\t%s\t%s\t%s\t" % ("AQU","CEMDATA07",prim,prim,"0.0"))
   for i in range(len(Tser)): fLogk.write("0.0\t")
   fLogk.write('\n')
 for i,logk in enumerate(listLogK):
-  fLogk.write("%s\t" % listNamK[i])
+  fLogk.write("%s\t" % listType[i])
+  fLogk.write("CEMDATA07\t")
+  fLogk.write("%s\t" % listName[i])
+  fLogk.write("%s\t" % listForm[i])
+  fLogk.write("0.0\t")
   for x in logk: fLogk.write("%.6g\t" % x)
   fLogk.write('\n')
 raw_input("ENT")

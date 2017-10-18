@@ -34,6 +34,7 @@ SOLUTION_SPECIES
 H+ = H+
 log_k      0.0
 -gamma     9.00    0.064
+#O2 = O2
 e- = e-
 log_k      0.0
 H2O = H2O
@@ -75,6 +76,15 @@ log_k      0.0
 Na+ = Na+
 log_k      0.0
 -gamma     4.32    0.064 # 0.06
++2.000 H2O       -4.000 H+           -4.000 e- = O2
+#+0.500 H2O       -1.000 H+           -0.250 O2 = e-
+-gamma      0.00    0.0
+log_K   	-85.9855
+-analytical_expression 	-30.79426700990	0	-27925.53838584180	10.0321005086	0
+# 1 O2 formed from 4 e-
+#-analytical_expression 	  38.0229    7.99407E-03   -2.7655e+004  -1.4506e+001  199838.45
+# 1 e- formed from 0.25 O2
+#-analytical_expression 	 -9.505725	-0.0019985175	+6913.75	+3.6265	-49959.6125
 +1.000 Si(OH)4   -1.000 H+           = SiO(OH)3-
 -gamma      4.00    0.064
 log_K   	-9.80974
@@ -326,10 +336,6 @@ log_K   	-13.9998
 -gamma      0.00    0.0
 log_K   	-3.10597
 -analytical_expression 	-55.35493262717	0	2808.32060172984	20.0675686240	0
-+2.000 H2O       -4.000 H+           -4.000 e- = O2
--gamma      0.00    0.0
-log_K   	-85.9855
--analytical_expression 	-30.79426700990	0	-27925.53838584180	10.0321005086	0
 PHASES
 CH4(g)
 CH4  =  +1.000 CH4

@@ -1,4 +1,5 @@
 .type	.name	.formula	H+	e-	H2O	HCO3-	Ca+2	Si(OH)4	Al+3	Fe+2	K+	Mg+2	SO4-2	Br-	Cl-	NO3-	Na+	
+AQU	O2	O2	-4	-4	2	0	0	0	0	0	0	0	0	0	0	0	0	
 AQU	SiO(OH)3-	SiO(OH)3-	-1	0	0	0	0	1	0	0	0	0	0	0	0	0	0	
 AQU	SiO2(OH)2-2	SiO2(OH)2-2	-2	0	0	0	0	1	0	0	0	0	0	0	0	0	0	
 AQU	AlSO4+	AlSO4+	0	0	0	0	0	0	1	0	0	0	1	0	0	0	0	
@@ -62,7 +63,6 @@ AQU	H2S	H2S	10	8	-4	0	0	0	0	0	0	0	1	0	0	0	0
 AQU	S-2	S-2	8	8	-4	0	0	0	0	0	0	0	1	0	0	0	0	
 AQU	OH-	OH-	-1	0	1	0	0	0	0	0	0	0	0	0	0	0	0	
 AQU	H2	H2	2	2	0	0	0	0	0	0	0	0	0	0	0	0	0	
-AQU	O2	O2	-4	-4	2	0	0	0	0	0	0	0	0	0	0	0	0	
 MIN	CH4(g)	CH4 	9	8	-3	1	0	0	0	0	0	0	0	0	0	0	0	
 MIN	CO2(g)	CO2 	1	0	-1	1	0	0	0	0	0	0	0	0	0	0	0	
 MIN	H2(g)	H2  	2	2	0	0	0	0	0	0	0	0	0	0	0	0	0	
@@ -70,9 +70,9 @@ MIN	O2(g)	O2  	-4	-4	2	0	0	0	0	0	0	0	0	0	0	0	0
 MIN	H2S(g)	H2S 	10	8	-4	0	0	0	0	0	0	0	1	0	0	0	0	
 MIN	N2(g)	N2  	12	10	-6	0	0	0	0	0	0	0	0	0	0	2	0	
 MIN	SiO2am	SiO2 	0	0	-2	0	0	1	0	0	0	0	0	0	0	0	0	
-MIN	CSHtob1	(CaO)2(SiO2)2.4(H2O)3.2 	-4	0	0.4	0	2	2.4	0	0	0	0	0	0	0	0	0	
-MIN	CSHjen	(CaO)1.666667(SiO2)(H2O)2.1 	-3.333	0	1.767	0	1.667	1	0	0	0	0	0	0	0	0	0	
-MIN	CSHtob2	(CaO)0.83333(SiO2)(H2O)1.3333 	-1.667	0	0.1666	0	0.8333	1	0	0	0	0	0	0	0	0	0	
+MIN	CSHtob1	(CaO)2(SiO2)12/5(H2O)16/5 	-4	0	0.4	0	2	2.4	0	0	0	0	0	0	0	0	0	
+MIN	CSHjen	(CaO)5/3(SiO2)(H2O)21/10 	-3.333	0	1.767	0	1.667	1	0	0	0	0	0	0	0	0	0	
+MIN	CSHtob2	(CaO)5/6(SiO2)(H2O)5/3 	-1.667	0	0.1666	0	0.8333	1	0	0	0	0	0	0	0	0	0	
 MIN	C2AH8	Ca2Al2(OH)10(H2O)3 	-10	0	13	0	2	0	2	0	0	0	0	0	0	0	0	
 MIN	C2FH8	Ca2Fe2(OH)10(H2O)3 	-10	-2	13	0	2	0	0	2	0	0	0	0	0	0	0	
 MIN	hydrogarnetOH	Ca3Al2(OH)12 	-12	0	12	0	3	0	2	0	0	0	0	0	0	0	0	
@@ -93,7 +93,7 @@ MIN	Fe-monocarbonate	Ca4Fe2(CO3)(OH)12(H2O)5 	-13	-2	17	1	4	0	0	2	0	0	0	0	0	0	0
 MIN	hydrotalciteOH	Mg4Al2(OH)14(H2O)3 	-14	0	17	0	0	0	2	0	0	4	0	0	0	0	0	
 MIN	hydrotalciteFe	Mg4Fe2(OH)14(H2O)3 	-14	-2	17	0	0	0	0	2	0	4	0	0	0	0	0	
 MIN	CAH10	CaAl2(OH)8(H2O)6 	-8	0	14	0	1	0	2	0	0	0	0	0	0	0	0	
-MIN	hydrogarnetSi	Ca3Al2(SiO4)0.8(OH)8.8 	-12	0	8.8	0	3	0.8	2	0	0	0	0	0	0	0	0	
+MIN	hydrogarnetSi	Ca3Al2(SiO4)4/5(OH)44/5 	-12	0	8.8	0	3	0.8	2	0	0	0	0	0	0	0	0	
 MIN	hydrotalciteC	Mg4Al2(OH)12CO3(H2O)3 	-13	0	15	1	0	0	2	0	0	4	0	0	0	0	0	
 MIN	syngenite	K2Ca(SO4)2H2O 	0	0	1	0	1	0	0	0	2	0	2	0	0	0	0	
 MIN	Al(OH)3am	Al(OH)3 	-3	0	3	0	0	0	1	0	0	0	0	0	0	0	0	
