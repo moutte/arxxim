@@ -14,20 +14,15 @@ SYSTEM.GEM
   CA(OH)2 Ca(OH)2  1000.
   AL      Al2O3    0.01
 END
-  NAOH   NaOH  1000.
-  CA     CaO   0.01
-  KOH    KOH   1000.
-  NA     Na2O  0.1
-  H2O    H2O   1.
-  SIO2   SiO2  1.
-  AL     Al2O3 1.
 INCLUDE  dtb\elements.dtb
-INCLUDE  tmp\00_logk_prim_noclay.dtb
+INCLUDE  dtb\logk_cemdata_07_fe3.dtb
 SPECIES
-  MIN  VIRTUAL  SIO2_BUFF  SI(1)O(2)  2700.  2  2  2  2  2  2  2  2  
-  MIN  VIRTUAL  CAO_BUFF  CA(1)O(2)H(2)  2700.  -3.422  -3.422  -3.422  -3.422  -3.422  -3.422  -3.422  -3.422  
+  MIN  VIRTUAL  SIO2_BUFF  SI(1)O(2)  2700.  -40  -40  -40  -40  -40  -40  -40  -40  
+  MIN  VIRTUAL  CAO_BUFF  CA(1)O(2)H(2)  2700.  -34.2  -34.2  -34.2  -34.2  -34.2  -34.2  -34.2  -34.2  
 END
 SPECIES.EXCLUDE
+  SIO2-AM
+  PORTLANDITE
   A-QUARTZ
   B-QUARTZ
   COESITE

@@ -7,21 +7,25 @@ END
   COMPUTE EQUTP
 
 CONDITIONS
-  TITLE  basic
+  TITLE  test ciment dtb
   OUTPUT out\a0a
   DEBUG  2
 END
 
 SYSTEM
- TDGC 25.
- C  INERT HCO3- 0.1
- NA INERT NA+
- FE INERT FE+2
- CA INERT CA+2
- OX PK    O2 40
- AL INERT Al+3
+  TDGC 25.
+  SI MOLE  Si(OH)4
+  AL INERT Al+3
+  FE MOLE  Fe+3
+  MG MOLE  MG+2
+  CA MOLE  CA+2
+  NA MOLE  NA+
+  K  MOLE  K+
+  C  MOLE  HCO3- 0.1
+  CL MOLE  CL-
+  S  MOLE  SO4-2
+  OX PK    O2    40
 END SYSTEM
- OX PK e- 5
 
 PATH CHANGE
   NA INITIAL 1D-6 FINAL 2.0 RATIO 1.5
@@ -38,7 +42,7 @@ END
   SI  GRAM  Si(OH)4
 
 INCLUDE dtb\elements.dtb
-INCLUDE dtb\logk_cemdata_07.dtb
+INCLUDE dtb\logk_cemdata_07_fe3.dtb
 !INCLUDE dtb\logk_eq36_hkf.dtb
 
 SOLVENT

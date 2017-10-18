@@ -1,0 +1,53 @@
+TEST
+  COMPUTE SPC
+  COMPUTE Q
+END
+  COMPUTE SPCPATH
+  COMPUTE EQU
+  COMPUTE DTBAQU
+  COMPUTE EQUTP
+
+CONDITIONS
+  TITLE  test ciment dtb, basis change, compute logk's from OH-species
+  OUTPUT out\a0b
+  DEBUG  2
+END
+
+SYSTEM
+  TDGC 25.
+  SI MOLE  SiO(OH)3-
+  AL INERT Al(OH)4-
+  FE MOLE  Fe(OH)4-
+  MG MOLE  MG+2
+  CA MOLE  CA+2
+  NA MOLE  NA+
+  K  MOLE  K+
+  C  MOLE  HCO3- 0.1
+  CL MOLE  CL-
+  S  MOLE  SO4-2
+  H  MOLE  OH-
+  OX PK    O2 40
+END SYSTEM
+
+PATH CHANGE
+  NA INITIAL 1D-6 FINAL 2.0 RATIO 1.5
+END
+
+  NA   MOLE  NA+
+  K    MOLE  K+
+  CL   MOLE  CL-
+  S    MOLE  SO4-2
+  SI   MOLE  Si(OH)4
+  AL   MOLE  Al+3
+  FE   MOLE  Fe+2
+  MG   MOLE  MG+2
+  SI   MOLE  Si(OH)4
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\logk_cemdata_07.dtb
+!INCLUDE dtb\logk_eq36_hkf.dtb
+
+SOLVENT
+  MODEL DAV_1
+END
+

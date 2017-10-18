@@ -37,6 +37,7 @@ log_k  0.0
 #O2 = O2
 e- = e-
 log_k  0.0
+-gamma 0.00 0.0 
 H2O   = H2O
 log_k  0.0
 -gamma 0.00 0.0 #64
@@ -187,6 +188,7 @@ log_K   	-85.9855
  log_K 5.380128  
  -analytical_expression  -131.48050051289 0 5443.75324149227 47.9311468746 0
 +3.000 H2O   -3.000 H+ +1.000 Fe+3  = Fe(OH)3   
+ -gamma  0.00 0.00 
  log_K -12.5594  
  -analytical_expression  147.12395569469 0 -13347.13553589500 -46.4423038760 0
 +2.000 H2O   -2.000 H+ +2.000 Fe+3  = Fe2(OH)2+4 
@@ -382,11 +384,11 @@ C2FH8
  Ca2Fe2(OH)10:3H2O = 2 Ca++  +2 Fe(OH)4-  +2 OH-  +3 H2O 
  log_K -17.602  
  -analytical_expression  299.40318587869 0 -18138.64886929690 -103.5235991057 0
-hydrogarnetOH  
+hydrogarnet-OH  
  Ca3Al2(OH)12 = 3 Ca++  +2 Al(OH)4-  +4 OH- 
  log_K -20.8411  
  -analytical_expression  291.27318390754 0 -13720.16812376770 -107.5364633634 0
-hydrogarnetFe  
+hydrogarnet-Fe  
  Ca3Fe2(OH)12 = 3 Ca++  +2 Fe(OH)4-  +4 OH- 
  log_K -25.158  
  -analytical_expression  437.20835028023 0 -23213.52271974500 -155.3909971844 0
@@ -406,7 +408,7 @@ tricarboaluminate
  Ca6Al2(CO3)3(OH)12:26H2O = 6 Ca++  +2 Al(OH)4-  +3 CO3--  +4 OH-  +26 H2O 
  log_K -46.5085  
  -analytical_expression  526.28378030499 0 -32615.50770370250 -187.2629896410 0
-Fe-ettringite 
+ettringite-Fe
  Ca6Fe2(SO4)3(OH)12:26H2O = 6 Ca++  +2 Fe(OH)4-  +3 SO4--  +4 OH-  +26 H2O 
  log_K -44.0084  
  -analytical_expression  674.03730619220 0 -42106.04906255390 -233.0864957767 0
@@ -414,7 +416,7 @@ monosulfoaluminate
  Ca4Al2(SO4)(OH)12:6H2O = 4 Ca++  +2 Al(OH)4-  +1 SO4--  +4 OH-  +6 H2O 
  log_K -29.2628  
  -analytical_expression  404.92625454716 0 -21017.60772698490 -146.9719803091 0
-Fe-monosulfate 
+monosulfate-Fe
  Ca4Fe2(SO4)(OH)12:6H2O = 4 Ca++  +2 Fe(OH)4-  +1 SO4--  +4 OH-  +6 H2O 
  log_K -33.2028  
  -analytical_expression  549.68566248846 0 -30126.34439200350 -194.7198331591 0
@@ -422,7 +424,7 @@ stratlingite
  Ca2Al2SiO2(OH)10:3H2O = 2 Ca++  +2 Al(OH)4-  +1 SiO(OH)3-  +1 OH- +2 H2O 
  log_K -19.7042  
  -analytical_expression  148.95692659946 0 -9589.95690828914 -55.1593539487 0
-Fe-stratlingite 
+stratlingite-Fe
  Ca2Fe2SiO2(OH)10:3H2O = 2 Ca++  +2 Fe(OH)4-  +1 SiO(OH)3-  +1 OH- +2 H2O 
  log_K -23.702  
  -analytical_expression  293.87516007432 0 -18722.47854424510 -102.9618101367 0
@@ -430,7 +432,7 @@ hemicarboaluminate
  Ca4Al2(CO3)0.5(OH)13:5.5H2O = 4 Ca++  +2 Al(OH)4-  +0.5 CO3--  +5 OH-  +5.5 H2O 
  log_K -29.1327  
  -analytical_expression  411.51063104013 0 -21526.38118104660 -148.8963270235 0
-Fe-hemicarbonate 
+hemicarbonate-Fe
  Ca4Fe2(CO3)0.5(OH)13:5.5H2O = 4 Ca++  +2 Fe(OH)4-  +0.5 CO3--  +5 OH-  +5.5 H2O 
  log_K -33.1027  
  -analytical_expression  556.27003898143 0 -30644.51984410740 -196.6441798735 0
@@ -438,15 +440,15 @@ monocarboaluminate
  Ca4Al2(CO3)(OH)12:5H2O = 4 Ca++  +2 Al(OH)4-  +1 CO3--  +4 OH-  +5 H2O 
  log_K -31.4726  
  -analytical_expression  419.54622572991 0 -22668.16504663430 -151.5423037557 0
-Fe-monocarbonate 
+monocarbonate-Fe
  Ca4Fe2(CO3)(OH)12:5H2O = 4 Ca++  +2 Fe(OH)4-  +1 CO3--  +4 OH-  +5 H2O 
  log_K -35.5 
  -analytical_expression  554.47107047792 0 -31715.13432703260 -195.43556986521 0
-hydrotalciteOH 
+hydrotalcite-OH 
  Mg4Al2(OH)14:3H2O = 4 Mg++  +2 Al(OH)4-  +6 OH-  +3 H2O 
  log_K -56.0214  
  -analytical_expression  354.74992257809 0 -22738.24127204280 -135.1853566837 0
-hydrotalciteFe  
+hydrotalcite-Fe  
  Mg4Fe2(OH)14:3H2O = 4 Mg++  +2 Fe(OH)4-  +6 OH-  +3 H2O 
  log_K -60.002  
  -analytical_expression  499.50943498605 0 -31856.37993510370 -182.9332095337 0
@@ -454,11 +456,11 @@ CAH10
  CaAl2(OH)8:6H2O = +1 Ca++  +2 Al(OH)4-  +6 H2O 
  log_K -7.50282  
  -analytical_expression  19.33995799190 0 -4170.78109558596 -5.1912860770 0
-hydrogarnetSi   
+hydrogarnet-Si   
  Ca3Al2(SiO4)4/5(OH)44/5 = 3 Ca++  +2 Al(OH)4-  +0.8 SiO(OH)3-  +3.2 OH-  -2.4 H2O
  log_K -29.8707  
  -analytical_expression  305.23780762563 0 -16550.88410201760 -112.9922268420 0
-hydrotalciteC  
+hydrotalcite-C  
  Mg4Al2(OH)12CO3:3H2O = 4 Mg++  +2 Al(OH)4-  +1 CO3--  +4 OH-  +3 H2O 
  log_K -51.142  
  -analytical_expression  358.37159560480 0 -21030.32915266930 -136.9894317284 0
@@ -466,11 +468,11 @@ syngenite
  K2Ca(SO4)2H2O = 2 K+  +1 Ca++  +2 SO4--  +1 H2O 
  log_K -7.2003  
  -analytical_expression  256.44664476696 0 -12598.84393306150 -89.4698545074 0
-Al(OH)3am 
+Al(OH)3-am 
  Al(OH)3 = +1 Al(OH)4- -1 OH- 
  log_K 0.239427  
  -analytical_expression  -48.08001615409 0 1546.32359095493 17.4322960704 0
-Fe(OH)3mic 
+Fe(OH)3-mic 
  Fe(OH)3 = +1 Fe(OH)4- -1 OH- 
  log_K -4.60039  
  -analytical_expression  2.49263607431 0 -2892.86085047996 1.0555041728 0

@@ -22,7 +22,7 @@ def ChargeReplace(w):
   w= w.replace('+++',   '+3')
   w= w.replace('++',    '+2')
   #
-  w= w.replace(' - ', ' -')
+  w= w.replace(' - ',   ' -')
   w= w.replace('------','-6')
   w= w.replace('-----', '-5')
   w= w.replace('----',  '-4')
@@ -58,10 +58,12 @@ for line in f:
   if not line.strip(): continue
   if line.strip()[0]=='#': continue
   ww= line.split()
-  if ww[0]=="SECONDARY": break
+  if ww[0]== "SECONDARY": break
+  if ww[0]== "-gamma": listGamm.append(ww[1])
   if "=" in ww: listPrim.append(ww[2])
     
-for prim in listPrim: print prim
+for i, prim in enumerate(listPrim):
+  print prim,listGamm[i]
 raw_input("ENT")    
 #-------------------------------------------------//read PRIMARY species
 
@@ -85,7 +87,7 @@ def species_scan(s):
   return coeffs,specis
 
 #------------read analytical_expression of sec'species and compute logks
-fi= open("logk_cemdata07_phreeqc_orig.new",'r')
+fi= open("logk_cemdata07_phreeqc.new.orig",'r')
 for line in fi:
   line= line.strip()
   if not line.strip(): continue
@@ -113,7 +115,7 @@ for line in f:
   if '#' in ww:
     i= ww.index('#')
     ww= ww[0:i+1]
-  if   ww[0]== "-gamma": listGamm.append(ww[1:])
+  if   ww[0]== "-gamma": listGamm.append(ww[1])
   elif ww[0]== "-analytical_expression": continue #listAnly.append(ww[1:])
   elif ww[0].lower()== "log_k":          continue #listLogK.append(ww[1:])
   elif "=" in ww:
@@ -176,6 +178,7 @@ for line in f:
   else:
     listName.append(line.strip())
     listType.append("MIN")
+    listGamm.append("2600")
 #----------------------------------------------------------//read PHASES
 
 #---------------stoikio of sec'species & phases w.r.t. prim'species only
@@ -217,16 +220,17 @@ raw_input("ENT")
 
 fLogk= open(fData+".logk",'w')
 fLogk.write("%s\t%s\t%s\t%s\t%s\t%s\n" % ("TYPE","INDEX","NAME","SCFORM","SIZE","PARAMETERS"))
-for prim in listPrim:
-  fLogk.write("%s\t%s\t%s\t%s\t%s\t" % ("AQU","CEMDATA07",prim,prim,"0.0"))
+for i,prim in enumerate(listPrim):
+  fLogk.write("%s\t%s\t%s\t%s\t" % ("AQU","CEMDATA07",prim,prim))
+  fLogk.write("%s\t" % (listGamm[i]))
   for i in range(len(Tser)): fLogk.write("0.0\t")
   fLogk.write('\n')
 for i,logk in enumerate(listLogK):
   fLogk.write("%s\t" % listType[i])
-  fLogk.write("CEMDATA07\t")
+  fLogk.write("CEMDAT07\t")
   fLogk.write("%s\t" % listName[i])
   fLogk.write("%s\t" % listForm[i])
-  fLogk.write("0.0\t")
+  fLogk.write("%s\t" % listGamm[i+len(listPrim)])
   for x in logk: fLogk.write("%.6g\t" % x)
   fLogk.write('\n')
 raw_input("ENT")

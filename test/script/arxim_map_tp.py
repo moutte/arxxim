@@ -252,9 +252,15 @@ for iY,y in enumerate(Yser):
       tab_y[iX,iY]= y
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
-plt.figure()
-plt.imshow(tab_paragen, aspect='auto', interpolation='none', origin='lower')
-plt.show()
+
+if 1:
+  plt.figure()
+  plt.imshow(
+    tab_paragen,
+    aspect='auto', 
+    interpolation='none', 
+    origin='lower')
+  plt.show()
 
 #---------------------------------compute the positions for field labels
 centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
@@ -471,7 +477,7 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  j= i%6
+  j= i%len(symbols)
   fig.plot(vx, vy, symbols[j], linestyle='-', linewidth=2.0)
 
 for i,centroid in enumerate(centroids):

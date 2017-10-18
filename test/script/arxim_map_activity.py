@@ -21,23 +21,26 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map_act_b1.inn"
-Xlis= ["SIO2_BUFF"]
-Ylis= ["CAO_BUFF"]
-Xlabel= "colog[SiO2]"
-Ylabel= "colog[Ca+2]/[H+]^2"
-
 fInn= "inn/map_act_a2.inn"
 Xlis= ["SIO2_BUFF"]
 Ylis= ["KOH_BUFF"]
 Xlabel= "colog[SiO2]"
 Ylabel= "colog[K+]/[H+]"
 
+fInn= "inn/map_act_b1.inn"
+Xlis= ["SIO2_BUFF"]
+Ylis= ["CAO_BUFF"]
+Xlabel= "colog[SiO2]"
+Ylabel= "colog[Ca+2]/[H+]^2"
+
 Xmin,Xmax,Xdelta,Xtol= 3.,  2., 0.05,  0.01
 Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
 
 Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
 Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
+
+Xmin,Xmax,Xdelta,Xtol= 0., -40., 2.,  0.02
+Ymin,Ymax,Ydelta,Ytol= 0., -40., 2.,  0.02
 
 #---------------------------------------------------------//user-defined
 
@@ -196,6 +199,14 @@ for iY,y in enumerate(Yser):
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
     
+if 1:
+  plt.figure()
+  plt.imshow(
+    tab_paragen,
+    aspect='auto', 
+    interpolation='none')
+  plt.show()
+
 #---------------------------------compute the positions for field labels
 centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]
 for iY,y in enumerate(Yser):
@@ -442,7 +453,8 @@ for i,points in enumerate(lines):
   for x,y in points:
     vx.append(x)
     vy.append(y)
-  fig.plot(vx, vy, symbols[i%6], linestyle='-', linewidth=2.0)
+  j=i%len(symbols)
+  fig.plot(vx, vy, symbols[j], linestyle='-', linewidth=2.0)
   
 for i,centroid in enumerate(centroids):
   x,y,n= centroid
