@@ -76,7 +76,7 @@ listName= []
 listForm= []
 listStok= []
 listType= []
-
+#------------------------------------------------------species_scan
 def species_scan(s):
   ww= s.split()
   coeffs=[]
@@ -85,6 +85,7 @@ def species_scan(s):
     if i%2==0: coeffs.append(float(w))
     else:      specis.append(w)
   return coeffs,specis
+#----------------------------------------------------//species_scan
 
 #------------read analytical_expression of sec'species and compute logks
 fi= open("logk_cemdata07_phreeqc.new.orig",'r')

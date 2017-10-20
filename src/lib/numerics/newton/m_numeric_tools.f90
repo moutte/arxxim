@@ -436,12 +436,12 @@ contains
     real(dp),dimension(:),   intent(in)   :: vFX     !vector(:) of function values at x
     real(dp),dimension(:,:), intent(out)  :: tJac   !(:,:) output Jacobian
     interface
-       function vFunc(X)
-         use M_Kinds
-         implicit none
-         real(dp),dimension(:),intent(in):: X
-         real(dp),dimension(size(X))     :: vFunc
-       end function vFunc
+      function vFunc(X)
+        use M_Kinds
+        implicit none
+        real(dp),dimension(:),intent(in):: X
+        real(dp),dimension(size(X))     :: vFunc
+      end function vFunc
     endinterface
     !
     real(dp),parameter:: EPS=1.0E-6_dp
@@ -453,15 +453,15 @@ contains
     H = EPS*abs(X)
 
     do j=1,N
-       if (H(j)==Zero) H(j)=Eps
+      if (H(j)==Zero) H(j)=Eps
     end do
 
     !--
     XplusH = X
     do j=1,N  
-       XplusH(j) = X(J) + H(J)
-       tJac(:,j) = ( vFunc(XplusH) - vFX )/ H(j) !Forward difference formula.
-       XplusH(j) = X(j)
+      XplusH(j) = X(J) + H(J)
+      tJac(:,j) = ( vFunc(XplusH) - vFX )/ H(j) !Forward difference formula.
+      XplusH(j) = X(j)
     end do
 
   end subroutine Jacobian_Numeric_Bis
