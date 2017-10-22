@@ -119,6 +119,9 @@ def plot(fig,titr,dataX,dataY,xLog,yLog):
         fig.semilogy(vX, vY, sy, linestyle='-', linewidth=1.0,label=lb)
       else:
         fig.plot(vX, vY, sy, linestyle='-', linewidth=1.0,label=lb)
+        #ymin,ymax= fig.get_ylim()
+        #fig.set_ylim(ymax/1.e4,ymax)
+        #fig.set_ylim(-15.,-1.)
       
   fig.set_title(titr) #, fontsize=fontsize)
   #-legend= fig.legend(loc='upper left')

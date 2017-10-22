@@ -1,7 +1,8 @@
 TEST
-  COMPUTE SPCPATH
+  COMPUTE EQUPATH
   COMPUTE Q
 END
+  COMPUTE SPCPATH
   COMPUTE EQU
   COMPUTE DTBAQU
   COMPUTE EQUTP
@@ -14,22 +15,30 @@ END
 
 SYSTEM
   TDGC 25.
-  SI MOLE  Si(OH)4
+  SI MOLE  H4(SiO4)  1.0
+  CA MOLE  Ca+2      1.0
+  AL MOLE  AL+3      0.01
+END SYSTEM
+  SI MOLE  SiO2(aq)
+  H  PK    H+  7.
+  C  MOLE  HCO3- 0.1
+  NA NA+ 1.0
+  CL MOLE  CL- 1.0
   AL INERT Al+3
   FE MOLE  Fe+3
   MG MOLE  MG+2
   CA MOLE  CA+2
-  NA MOLE  NA+
   K  MOLE  K+
-  C  MOLE  HCO3- 0.1
   CL MOLE  CL-
   S  MOLE  SO4-2
-  OX PK    O2    40
-END SYSTEM
+  OX PK    O2(aq)   40
 
 PATH CHANGE
-  NA INITIAL 1D-6 FINAL 2.0 RATIO 1.5
+  CA 3.0 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9 4.0
+  SI 2.0 1.9 1.8 1.7 1.6 1.5 1.4 1.3 1.2 1.1 1.0 
 END
+  H INITIAL 1. FINAL 13. DELTA 0.5
+  NA INITIAL 1D-6 FINAL 2.0 RATIO 1.5
 
   NA   GRAM  NA+
   K    GRAM  K+
@@ -42,10 +51,18 @@ END
   SI  GRAM  Si(OH)4
 
 INCLUDE dtb\elements.dtb
-INCLUDE dtb\logk_cemdata_07_fe3.dtb
-!INCLUDE dtb\logk_eq36_hkf.dtb
-
-SOLVENT
-  MODEL DAV_1
+INCLUDE dtb\logk_header_eq36.dtb
+SPECIES LOGK
+INCLUDE dtb\logk_THC_crunch_v9b0_aqu.tab
 END
+SPECIES LOGK
+INCLUDE dtb\logk_THC_crunch_v9b0_min.tab
+END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_datacom_min.tab
+!! END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_datacom_aqu.tab
+!! END
+
 

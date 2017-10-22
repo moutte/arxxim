@@ -59,9 +59,13 @@ if 0:
   fi= open(fname+".second","r")
   fs= open(fname+".second.select","w")
   fr= open(fname+".second.reject","w")
+  fg= open(fname+".second.organi","w")
   lisSecond= []
   for ll in fi:
     if not ll.strip(): continue
+    if ll.strip()[0]=='!':
+      fg.write(ll)
+      continue
     ww= ll.split()
     namSp= ww[0].replace("'","")  ;  print namSp
     nReac= int(ww[1]) # number of prim'species in formation reaction
@@ -79,6 +83,7 @@ if 0:
   fi.close()
   fs.close()
   fr.close()
+  fg.close()
   sys.exit()
 #---------------------------------------------//select secondary species
 
@@ -111,33 +116,70 @@ fi.close()
 #sys.exit()
 #---------------------------------------------------//species to element
 
+#---------------------------------------------------build ECFORM formula
+def buildEcform(stoikio):
+  ecform= [0. for el in lisElem]
+  for i,x in enumerate(stoikio):
+    if x!=0.:
+      for j in range(len(lisElem)):
+        ecform[j]= ecform[j] + x*lisStoikioPrim[i][j]
+  needDiv= False
+  for x in ecform:
+     if round(x)!=x: needDiv= True ;  break
+  if needDiv: ecform= [x*100. for x in ecform]
+  s= ""
+  for i,x in enumerate(ecform):
+    if abs(x)>0.001:
+      s= s+ lisElem[i] + '(' + str(x) + ')'
+  if needDiv: s= s + "Div(100)"
+  s=s.replace("Chg(-","-(")
+  s=s.replace("Chg(","+(")
+  sEcform= s.replace(".0)",")")
+  print sEcform
+  return sEcform
+#-------------------------------------------------//build ECFORM formula
+  
 #-------------------------------------------------read secondary species
 fi= open(fname+".second.select","r")
-ft= open(fname+"_second_stoik.tab","w")
-fo= open(fname+"_second.tab","w")
+ft= open("logk_"+fname+"_aqu_stoik.tab","w")
+fo= open("logk_"+fname+"_aqu.tab","w")
+fo25= open("logk_"+fname+"_aqu_25c.tab","w")
 fw= open("tmp","w")
 
-fo.write("%s\t%s\t%s\t%s\t%s\t%s\t" % 
-        ("TYPE","SOURCE","NAME","SCFORM","SIZE","PARAMETERS"))
+fo.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t" % 
+        ("TYPE","SOURCE","INDEX","NAME","ECFORM","SIZE","PARAMETERS"))
 #for t in lisTdg: fo.write("LOGK\t")
 fo.write('\n')
+fo25.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t" % 
+        ("TYPE","SOURCE","INDEX","NAME","ECFORM","SIZE","PARAMETERS"))
+#for t in lisTdg: fo.write("LOGK\t")
+fo25.write('\n')
 
 ft.write("%s\t%s\t" % ("TYP","SPECIES"))
 for sp in lisPrimary: ft.write("%s\t" % sp)
 ft.write('\n')
 
 lisSecond= []
-lisStoik=   []
+lisStoik=  []
 lisLogks=  []
 
 sTyp= "AQU"
-
-for i,s in enumerate(lisPrimary):
-  fo.write('%s\t%s\t%s\t' % (sTyp,sSource,s))
-  fo.write('%s\t' % s)
+iIdx= 0
+for i,sNam in enumerate(lisPrimary):
+  iIdx+=1
+  sIdx='_'+str(iIdx).zfill(4) 
+  fo.write('%s\t%s\t%s\t%s\t' % (sTyp,sSource,sIdx,sNam))
+  stoikio= [0. for p in lisPrimary]  ;  stoikio[i]=1
+  ss= buildEcform(stoikio)
+  
+  fo.write('%s\t' % ss)
   fo.write('%.4g\t' % lisSize[i])
   for x in lisTdg: fo.write('0.0\t')
   fo.write('\n')
+  fo25.write('%s\t' % ss)
+  fo25.write('%.4g\t' % lisSize[i])
+  fo25.write('0.0\t')
+  fo25.write('\n')
   
 for ll in fi:
   if not ll.strip(): continue
@@ -181,19 +223,31 @@ for ll in fi:
   lisStoik.append(stoikio)
   lisLogks.append(logks)
   
+  sEcform= buildEcform(stoikio)
+        
   # write stoikio's
   ft.write('%s\t%s\t' % (sTyp,namSp))
   for x in stoikio: ft.write('%.4g\t' % x)
   ft.write('\n')
   # write logk's
-  fo.write('%s\t%s\t%s\t' % (sTyp,sSource,namSp))
-  fo.write('%s\t' % namSp)
+  iIdx+=1
+  sIdx='_'+str(iIdx).zfill(4)
+  
+  fo.write('%s\t%s\t%s\t%s\t' % (sTyp,sSource,sIdx,namSp))
+  fo.write('%s\t' % sEcform)
   fo.write('%.4g\t' % size)
-  for x in logks: fo.write('%.4g\t' % x)
+  for x in logks: fo.write('%.4g\t' % -x)
   fo.write('\n')
 
+  fo25.write('%s\t%s\t%s\t%s\t' % (sTyp,sSource,sIdx,namSp))
+  fo25.write('%s\t' % sEcform)
+  fo25.write('%.4g\t' % size)
+  fo25.write('%.4g\t' % -logks[1])
+  fo25.write('\n')
+  
 fi.close()
 fo.close()
+fo25.close()
 fw.close()
 
 #sys.exit()
@@ -206,6 +260,7 @@ if 0:
   fr= open(fname+".minerals.reject","w")
   for ll in fi:
     if not ll.strip(): continue
+    if ll.strip()[0]=='!': continue
     ww= ll.split()
     nReac= int(ww[2]) # number of prim'species in formation reaction
     sReac= ww[3:3+2*nReac]
@@ -226,12 +281,13 @@ if 0:
 
 #----------------------------------------------------------read minerals
 fi= open(fname+".minerals.select","r")
-fo= open(fname+"_minerals.tab","w")
-ft= open(fname+"_minerals_stoik.tab","w")
+fo= open("logk_"+fname+"_min.tab","w")
+fo25= open("logk_"+fname+"_min_25c.tab","w")
+ft= open("logk_"+fname+"_min_stoik.tab","w")
 fw= open("tmp","w")
 
-fo.write("%s\t%s\t%s\t%s\t%s\t%s\t" % 
-        ("TYPE","SOURCE","NAME","SCFORM","SIZE","PARAMETERS"))
+fo.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t" % 
+        ("TYPE","SOURCE","INDEX","NAME","ECFORM","SIZE","PARAMETERS"))
 fo.write('\n')
 
 ft.write("%s\t%s\t" % ("TYP","SPECIES"))
@@ -240,21 +296,25 @@ ft.write('\n')
 
 lisMin=   []
 
-sTyp= "AQU"
-for i,s in enumerate(lisPrimary):
-  fo.write('%s\t%s\t%s\t' % (sTyp,sSource,s))
-  fo.write('%s\t' % s)
-  fo.write('%.4g\t' % lisSize[i])
-  for x in lisTdg: fo.write('0.0\t')
-  fo.write('\n')
+if 0:
+  sTyp= "AQU"
+  for i,s in enumerate(lisPrimary):
+    fo.write('%s\t%s\t%s\t' % (sTyp,sSource,s))
+    fo.write('%s\t' % s)
+    fo.write('%.4g\t' % lisSize[i])
+    for x in lisTdg: fo.write('0.0\t')
+    fo.write('\n')
   
-sTyp= "MIN"
 for ll in fi:
   if not ll.strip(): continue
+  if ll.strip()[0]=='!': continue
   ww= ll.split()
   
   namSp= ww[0].replace("'","")  ;  print namSp
   lisMin.append(namSp)
+  
+  if "(g)" in namSp: sTyp= "GAS"
+  else:              sTyp= "MIN"
   
   nReac= int(ww[2]) # number of prim'species in formation reaction
   sReac= ww[3:3+2*nReac]
@@ -288,39 +348,39 @@ for ll in fi:
         if lisLogks[isec][T]!=500. and logks[T]!=500:
           logks[T]= logks[T] + lisLogks[isec][T]*coeffs[j]
   
-  #---------------------------------------------build ECFORM formula----
-  ecform= [0. for el in lisElem]
-  for i,x in enumerate(stoikio):
-    if x!=0.:
-      for j in range(len(lisElem)):
-        ecform[j]= ecform[j] + x*lisStoikioPrim[i][j]
-  s= ""
-  for i,x in enumerate(ecform):
-    if x!=0.:
-      s= s+ lisElem[i] + '(' + str(x) + ')'
-  sEcform= s.replace(".0)",")")
-  print sEcform
-  #-------------------------------------------//build ECFORM formula----
-        
-  
   lisStoik.append(stoikio)
   lisLogks.append(logks)
+  
+  sEcform= buildEcform(stoikio)
   
   # write stoikio's
   ft.write('%s\t%s\t' % (sTyp,namSp))
   for x in stoikio: ft.write('%.4g\t' % x)
   ft.write('\n')
   # write logk's
-  fo.write('%s\t%s\t%s\t' % (sTyp,sSource,namSp))
+  iIdx+=1
+  sIdx='_'+str(iIdx).zfill(4)
+  
+  if '.' in sEcform: fo.write('!')
+  fo.write('%s\t%s\t%s\t%s\t' % (sTyp,sSource,sIdx,namSp))
   fo.write('%s\t' % sEcform)
   fo.write('%.4g\t' % size)
-  for x in logks: fo.write('%.4g\t' % x)
+  for x in logks: fo.write('%.4g\t' % -x)
   fo.write('\n')
 
+  if '.' in sEcform: fo25.write('!')
+  fo25.write('%s\t%s\t%s\t%s\t' % (sTyp,sSource,sIdx,namSp))
+  fo25.write('%s\t' % sEcform)
+  fo25.write('%.4g\t' % size)
+  fo25.write('%.4g\t' % -logks[1])
+  fo25.write('\n')
+  
 fi.close()
 fo.close()
+fo25.close()
 fw.close()
 #----------------------------------------------------------read minerals
+
 sys.exit()
 
 

@@ -72,9 +72,10 @@ subroutine DtbAquHkf_Calc( &
 & pW, & !IN:  T,P and dielectric properties of Solvent
 & S)    !OUT: species
 !--
-!-- computes the standard partial molal thermodynamic properties (Benson Convention) 
-!-- of aqueous species s_ at T,P
-!-- using Tanger And Helgeson (1988), Shock Et Al. (1991), and Johnson Et Al. (1991).
+!-- computes the standard partial molal thermodynamic properties 
+!-- (Benson Convention) of aqueous species s_ at T,P
+!-- using Tanger And Helgeson (1988), Shock Et Al. (1991), 
+!-- and Johnson Et Al. (1991).
 !--
   use M_Numeric_Const,only: Ln10
   use M_T_Element,    only: T_Element
@@ -286,13 +287,13 @@ subroutine DtbAquHkf_CalcThr( &
 !-- before call to DtbAquHkf_CalcThr, must have computed prop' of H2O -> pW
 !--
   use M_Dtb_Const,only: CalToJoule, Tref, Pref, T_CK, R_jk, DtbConv_Benson
-  use M_Numeric_Const,   only:Ln10
+  use M_Numeric_Const,only: Ln10
   use M_T_DtbH2OHkf
   use M_T_Species, only: T_Species
   !
-  type(T_DtbAquHkf),  intent(in) :: M
-  type(T_DtbH2OHkf),intent(in) :: pW
-  type(T_Species),    intent(out):: S
+  type(T_DtbAquHkf), intent(in) :: M
+  type(T_DtbH2OHkf), intent(in) :: pW
+  type(T_Species),   intent(out):: S
   !
   real(dp):: P,T
   real(dp):: &

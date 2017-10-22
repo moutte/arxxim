@@ -25,6 +25,7 @@ Pbar  1.0   1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0  1.0
 END TP.TABLE
 
 INCLUDE dtb\elements.dtb
+!INCLUDE dtb\logk_eq36_THCv90b.dtb
 INCLUDE dtb\hsvhkf_aqu.dtb
 
 SOLVENT

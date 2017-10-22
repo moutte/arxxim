@@ -1,0 +1,774 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+DEBUG	../arxim_map_dominant.py	/^DEBUG= False$/;"	kind:variable	line:23
+Debug	../arxim_test.py	/^Debug= "3"$/;"	kind:variable	line:15
+Debug	../arxim_test_mix.py	/^Debug= "3"$/;"	kind:variable	line:25
+END	../arxim_map_dominant.py	/^END= time.time()$/;"	kind:variable	line:457
+END	../arxim_map_xt_fsp.py	/^END= time.time()$/;"	kind:variable	line:443
+F0	../arxim_map_activity.py	/^      F0= tab_paragen[iX,iY-1]$/;"	kind:variable	line:322
+F0	../arxim_map_activity.py	/^      F0= tab_paragen[iX-1,iY]$/;"	kind:variable	line:276
+F0	../arxim_map_dominant.py	/^      F0= tab_spc[iX,iY-1]$/;"	kind:variable	line:390
+F0	../arxim_map_dominant.py	/^      F0= tab_spc[iX-1,iY]$/;"	kind:variable	line:340
+F0	../arxim_map_tp.py	/^      F0= tab_paragen[iX,iY-1]$/;"	kind:variable	line:340
+F0	../arxim_map_tp.py	/^      F0= tab_paragen[iX-1,iY]$/;"	kind:variable	line:291
+F0	../arxim_map_xt_fm.py	/^      F0= tab_paragen[iX,iY-1]$/;"	kind:variable	line:344
+F0	../arxim_map_xt_fm.py	/^      F0= tab_paragen[iX-1,iY]$/;"	kind:variable	line:295
+F0	../arxim_map_xt_fsp.py	/^      F0= tab_paragen[iX,iY-1]$/;"	kind:variable	line:381
+F0	../arxim_map_xt_fsp.py	/^      F0= tab_paragen[iX-1,iY]$/;"	kind:variable	line:329
+F1	../arxim_map_activity.py	/^      F1= tab_paragen[iX,  iY]$/;"	kind:variable	line:277
+F1	../arxim_map_activity.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:323
+F1	../arxim_map_dominant.py	/^      F1= tab_spc[iX,  iY]$/;"	kind:variable	line:341
+F1	../arxim_map_dominant.py	/^      F1= tab_spc[iX,iY]$/;"	kind:variable	line:391
+F1	../arxim_map_tp.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:292
+F1	../arxim_map_tp.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:341
+F1	../arxim_map_xt_fm.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:296
+F1	../arxim_map_xt_fm.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:345
+F1	../arxim_map_xt_fsp.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:330
+F1	../arxim_map_xt_fsp.py	/^      F1= tab_paragen[iX,iY]$/;"	kind:variable	line:382
+File_Select	../MyLibTk.py	/^def File_Select(indir,file_type,file_pattern):$/;"	kind:function	line:3
+Fm	../arxim_map_activity.py	/^        Fm=F$/;"	kind:variable	line:291
+Fm	../arxim_map_activity.py	/^        Fm=F$/;"	kind:variable	line:337
+Fm	../arxim_map_dominant.py	/^          Fm=F$/;"	kind:variable	line:356
+Fm	../arxim_map_dominant.py	/^          Fm=F$/;"	kind:variable	line:406
+Fm	../arxim_map_tp.py	/^          Fm=F$/;"	kind:variable	line:307
+Fm	../arxim_map_tp.py	/^          Fm=F$/;"	kind:variable	line:356
+Fm	../arxim_map_xt_fm.py	/^          Fm=F$/;"	kind:variable	line:311
+Fm	../arxim_map_xt_fm.py	/^          Fm=F$/;"	kind:variable	line:360
+Fm	../arxim_map_xt_fsp.py	/^          Fm=F$/;"	kind:variable	line:346
+Fm	../arxim_map_xt_fsp.py	/^          Fm=F$/;"	kind:variable	line:398
+G_and	../MyThermo.py	/^  G_and= compute_gibbs("and",T,P)$/;"	kind:variable	line:183
+G_kya	../MyThermo.py	/^  G_kya= compute_gibbs("kya",T,P)$/;"	kind:variable	line:184
+G_sil	../MyThermo.py	/^  G_sil= compute_gibbs("sil",T,P)$/;"	kind:variable	line:182
+IncLines	../arxim_map_tp.py	/^  IncLines = f.readlines()$/;"	kind:variable	line:102
+ListBoxChoice	../MyLibTk.py	/^class ListBoxChoice(object):$/;"	kind:class	line:19
+MyLib.py	../MyLib.py	1;"	kind:file	line:1
+MyLibTk.py	../MyLibTk.py	1;"	kind:file	line:1
+MyThermo.py	../MyThermo.py	1;"	kind:file	line:1
+OK	../arxim_map_activity.py	/^    OK= arxim_ok(sArximCommand) #--------------------------execute arxim$/;"	kind:variable	line:188
+OK	../arxim_map_activity.py	/^OK= False$/;"	kind:variable	line:81
+OK	../arxim_map_dominant.py	/^    OK= arxim_ok(sArximCommand) #---------------------execute arxim$/;"	kind:variable	line:252
+OK	../arxim_map_dominant.py	/^OK= False$/;"	kind:variable	line:74
+OK	../arxim_map_tp.py	/^    OK= arxim_ok(sArximCommand) #--------------------------execute arxim$/;"	kind:variable	line:240
+OK	../arxim_map_tp.py	/^OK= False$/;"	kind:variable	line:75
+OK	../arxim_map_xt_fm.py	/^    OK= arxim_ok(sArximCommand) #--------------------------execute arxim$/;"	kind:variable	line:253
+OK	../arxim_map_xt_fm.py	/^OK= False$/;"	kind:variable	line:90
+OK	../arxim_map_xt_fsp.py	/^    OK= arxim_ok(sArximCommand) #--------------------------execute arxim$/;"	kind:variable	line:281
+OK	../arxim_map_xt_fsp.py	/^OK= False$/;"	kind:variable	line:89
+P	../MyThermo.py	/^  P= 1000.   #pression en bars$/;"	kind:variable	line:180
+START	../arxim_map_dominant.py	/^START= time.time()$/;"	kind:variable	line:243
+START	../arxim_map_xt_fsp.py	/^START= time.time()$/;"	kind:variable	line:272
+Selection	../arxim_map_dominant.py	/^Selection="CR"$/;"	kind:variable	line:34
+Selection	../arxim_map_dominant.py	/^Selection="FE"$/;"	kind:variable	line:38
+T	../MyThermo.py	/^  T= 1273.15 #temperature en Kelvin$/;"	kind:variable	line:179
+TextToLines	../MyLib.py	/^def TextToLines(InName,vL):$/;"	kind:function	line:30
+XKeyword	../arxim_map_xt_fm.py	/^XKeyword= 0$/;"	kind:variable	line:62
+XKeyword	../arxim_map_xt_fsp.py	/^XKeyword= 0$/;"	kind:variable	line:62
+XValue	../arxim_map_xt_fm.py	/^XValue=   2$/;"	kind:variable	line:63
+XValue	../arxim_map_xt_fsp.py	/^XValue=   2$/;"	kind:variable	line:63
+Xdim	../arxim_map_activity.py	/^Xdim= int(abs(Xmax-Xmin)\/Xdelta)+1$/;"	kind:variable	line:122
+Xdim	../arxim_map_dominant.py	/^Xdim= int(round(abs(Xmax-Xmin)\/Xdelta))+1$/;"	kind:variable	line:115
+Xdim	../arxim_map_tp.py	/^Xdim= int(round(abs(Xmax-Xmin)\/Xdelta))+1$/;"	kind:variable	line:119
+Xdim	../arxim_map_xt_fm.py	/^Xdim= int(round(abs(Xmax-Xmin)\/Xdelta))+1$/;"	kind:variable	line:136
+Xdim	../arxim_map_xt_fsp.py	/^Xdim= int(round(abs(Xmax-Xmin)\/Xdelta))+1$/;"	kind:variable	line:147
+Xfunc	../arxim_map_xt_fm.py	/^def Xfunc(x): return 1. - x$/;"	kind:function	line:36
+Xfunc	../arxim_map_xt_fsp.py	/^def Xfunc(x): return 100. - x$/;"	kind:function	line:37
+Xhead	../arxim_map_activity.py	/^          Xhead= Xhead + ww[j] + "  "$/;"	kind:variable	line:93
+Xhead	../arxim_map_activity.py	/^Xhead= "  "$/;"	kind:variable	line:75
+Xhead	../arxim_map_dominant.py	/^          Xhead= Xhead + ww[j] + "  "$/;"	kind:variable	line:86
+Xhead	../arxim_map_dominant.py	/^Xhead= "  "$/;"	kind:variable	line:68
+Xhead	../arxim_map_tp.py	/^          Xhead= Xhead + ww[j] + "  "$/;"	kind:variable	line:87
+Xhead	../arxim_map_tp.py	/^Xhead= "  "$/;"	kind:variable	line:69
+Xhead	../arxim_map_xt_fm.py	/^Xhead= ["  " for s in Xlis]$/;"	kind:variable	line:85
+Xhead	../arxim_map_xt_fsp.py	/^Xhead= ["  " for s in Xlis]$/;"	kind:variable	line:84
+Xindex	../arxim_map_activity.py	/^        Xindex= i$/;"	kind:variable	line:91
+Xindex	../arxim_map_activity.py	/^Xindex= -1$/;"	kind:variable	line:77
+Xindex	../arxim_map_dominant.py	/^        Xindex= i$/;"	kind:variable	line:84
+Xindex	../arxim_map_dominant.py	/^Xindex= -1$/;"	kind:variable	line:70
+Xindex	../arxim_map_tp.py	/^        Xindex= i$/;"	kind:variable	line:85
+Xindex	../arxim_map_tp.py	/^Xindex= -1$/;"	kind:variable	line:71
+Xindex	../arxim_map_xt_fm.py	/^Xindex= [-1 for s in Xlis] $/;"	kind:variable	line:82
+Xindex	../arxim_map_xt_fsp.py	/^Xindex= [-1 for s in Xlis] $/;"	kind:variable	line:81
+Xlabel	../arxim_map_activity.py	/^Xlabel= "colog[SiO2]"$/;"	kind:variable	line:27
+Xlabel	../arxim_map_activity.py	/^Xlabel= "colog[SiO2]"$/;"	kind:variable	line:33
+Xlabel	../arxim_map_dominant.py	/^Xlabel= "pH"$/;"	kind:variable	line:46
+Xlabel	../arxim_map_tp.py	/^Xlabel= "T \/DGC"$/;"	kind:variable	line:26
+Xlabel	../arxim_map_xt_fm.py	/^Xlabel= "FM"$/;"	kind:variable	line:27
+Xlabel	../arxim_map_xt_fsp.py	/^Xlabel= "AB"$/;"	kind:variable	line:31
+Xlabel	../arxim_test_mix.py	/^  Xlabel= "xAb"$/;"	kind:variable	line:56
+Xlis	../arxim_map_activity.py	/^Xlis= Xindex, Xhead$/;"	kind:variable	line:110
+Xlis	../arxim_map_activity.py	/^Xlis= ["SIO2_BUFF"]$/;"	kind:variable	line:25
+Xlis	../arxim_map_activity.py	/^Xlis= ["SIO2_BUFF"]$/;"	kind:variable	line:31
+Xlis	../arxim_map_dominant.py	/^Xlis= Xindex, Xhead$/;"	kind:variable	line:96
+Xlis	../arxim_map_dominant.py	/^Xlis= ["H"]$/;"	kind:variable	line:40
+Xlis	../arxim_map_tp.py	/^Xlis= Xindex, Xhead$/;"	kind:variable	line:96
+Xlis	../arxim_map_tp.py	/^Xlis= ["TDGC"]  # must be uppercase ...$/;"	kind:variable	line:23
+Xlis	../arxim_map_xt_fm.py	/^Xlis= Xindex, Xhead$/;"	kind:variable	line:118
+Xlis	../arxim_map_xt_fm.py	/^Xlis= ["FeO","MGO"]$/;"	kind:variable	line:25
+Xlis	../arxim_map_xt_fm.py	/^Xlis=[x.upper() for x in Xlis]$/;"	kind:variable	line:56
+Xlis	../arxim_map_xt_fsp.py	/^Xlis= Xindex, Xhead$/;"	kind:variable	line:116
+Xlis	../arxim_map_xt_fsp.py	/^Xlis= ["OR_","AB_"]         # must be uppercase ...$/;"	kind:variable	line:29
+Xlis	../arxim_map_xt_fsp.py	/^Xlis=[x.upper() for x in Xlis]$/;"	kind:variable	line:57
+Xser	../arxim_map_activity.py	/^Xser= plt.linspace(Xmin,Xmax,num=Xdim)$/;"	kind:variable	line:123
+Xser	../arxim_map_dominant.py	/^Xser= plt.linspace(Xmin,Xmax,num=Xdim)$/;"	kind:variable	line:116
+Xser	../arxim_map_tp.py	/^Xser= plt.linspace(Xmin,Xmax,num=Xdim)$/;"	kind:variable	line:120
+Xser	../arxim_map_xt_fm.py	/^Xser= plt.linspace(Xmin,Xmax,num=Xdim)$/;"	kind:variable	line:137
+Xser	../arxim_map_xt_fsp.py	/^Xser= plt.linspace(Xmin,Xmax,num=Xdim)$/;"	kind:variable	line:148
+Xser2	../arxim_map_xt_fm.py	/^  Xser2= [Xfunc(x) for x in Xser]$/;"	kind:variable	line:146
+Xser2	../arxim_map_xt_fsp.py	/^  Xser2= [Xfunc(x) for x in Xser]$/;"	kind:variable	line:154
+YKeyword	../arxim_map_xt_fm.py	/^YKeyword= 0$/;"	kind:variable	line:66
+YKeyword	../arxim_map_xt_fsp.py	/^YKeyword= 0$/;"	kind:variable	line:65
+YValue	../arxim_map_xt_fm.py	/^YValue=   1$/;"	kind:variable	line:67
+YValue	../arxim_map_xt_fsp.py	/^YValue=   1$/;"	kind:variable	line:66
+Ydim	../arxim_map_activity.py	/^Ydim= int(abs(Ymax-Ymin)\/Ydelta)+1$/;"	kind:variable	line:119
+Ydim	../arxim_map_dominant.py	/^Ydim= int(round(abs(Ymax-Ymin)\/Ydelta))+1$/;"	kind:variable	line:118
+Ydim	../arxim_map_tp.py	/^Ydim= int(round(abs(Ymax-Ymin)\/Ydelta))+1$/;"	kind:variable	line:122
+Ydim	../arxim_map_xt_fm.py	/^Ydim= int(round(abs(Ymax-Ymin)\/Ydelta))+1$/;"	kind:variable	line:139
+Ydim	../arxim_map_xt_fsp.py	/^Ydim= int(round(abs(Ymax-Ymin)\/Ydelta))+1$/;"	kind:variable	line:150
+Yfunc	../arxim_map_xt_fm.py	/^def Yfunc(y): return 3000. + (y-400.)*10.$/;"	kind:function	line:37
+Yfunc	../arxim_map_xt_fsp.py	/^def Yfunc(y): return 1000. #+ (y-400.)*10.$/;"	kind:function	line:38
+Yhead	../arxim_map_activity.py	/^          Yhead= Yhead + ww[j] + "  "$/;"	kind:variable	line:97
+Yhead	../arxim_map_activity.py	/^Yhead= "  "$/;"	kind:variable	line:76
+Yhead	../arxim_map_dominant.py	/^          Yhead= Yhead + ww[j] + "  "$/;"	kind:variable	line:90
+Yhead	../arxim_map_dominant.py	/^Yhead= "  "$/;"	kind:variable	line:69
+Yhead	../arxim_map_tp.py	/^          Yhead= Yhead + ww[j] + "  "$/;"	kind:variable	line:91
+Yhead	../arxim_map_tp.py	/^Yhead= "  "$/;"	kind:variable	line:70
+Yhead	../arxim_map_xt_fm.py	/^Yhead= ["  " for s in Ylis]$/;"	kind:variable	line:86
+Yhead	../arxim_map_xt_fsp.py	/^Yhead= ["  " for s in Ylis]$/;"	kind:variable	line:85
+Yindex	../arxim_map_activity.py	/^        Yindex= i$/;"	kind:variable	line:95
+Yindex	../arxim_map_activity.py	/^Yindex= -1$/;"	kind:variable	line:78
+Yindex	../arxim_map_dominant.py	/^        Yindex= i$/;"	kind:variable	line:88
+Yindex	../arxim_map_dominant.py	/^Yindex= -1$/;"	kind:variable	line:71
+Yindex	../arxim_map_tp.py	/^        Yindex= i$/;"	kind:variable	line:89
+Yindex	../arxim_map_tp.py	/^Yindex= -1$/;"	kind:variable	line:72
+Yindex	../arxim_map_xt_fm.py	/^Yindex= [-1 for s in Ylis]$/;"	kind:variable	line:83
+Yindex	../arxim_map_xt_fsp.py	/^Yindex= [-1 for s in Ylis]$/;"	kind:variable	line:82
+Ylabel	../arxim_map_activity.py	/^Ylabel= "colog[Ca+2]\/[H+]^2"$/;"	kind:variable	line:34
+Ylabel	../arxim_map_activity.py	/^Ylabel= "colog[K+]\/[H+]"$/;"	kind:variable	line:28
+Ylabel	../arxim_map_dominant.py	/^Ylabel= "colog(f_O2(g))"$/;"	kind:variable	line:47
+Ylabel	../arxim_map_tp.py	/^Ylabel= "P \/BAR"$/;"	kind:variable	line:27
+Ylabel	../arxim_map_xt_fm.py	/^Ylabel= "T \/DGC"$/;"	kind:variable	line:28
+Ylabel	../arxim_map_xt_fsp.py	/^Ylabel= "T\/DGC"$/;"	kind:variable	line:32
+Ylabel	../arxim_test_mix.py	/^  Ylabel= "G_mix"$/;"	kind:variable	line:57
+Ylis	../arxim_map_activity.py	/^Ylis= Yindex, Yhead$/;"	kind:variable	line:111
+Ylis	../arxim_map_activity.py	/^Ylis= ["CAO_BUFF"]$/;"	kind:variable	line:32
+Ylis	../arxim_map_activity.py	/^Ylis= ["KOH_BUFF"]$/;"	kind:variable	line:26
+Ylis	../arxim_map_dominant.py	/^Ylis= Yindex, Yhead$/;"	kind:variable	line:97
+Ylis	../arxim_map_dominant.py	/^Ylis= ["OX"]$/;"	kind:variable	line:41
+Ylis	../arxim_map_tp.py	/^Ylis= Yindex, Yhead$/;"	kind:variable	line:97
+Ylis	../arxim_map_tp.py	/^Ylis= ["PBAR"]  # must be uppercase ...$/;"	kind:variable	line:24
+Ylis	../arxim_map_xt_fm.py	/^Ylis= Yindex, Yhead$/;"	kind:variable	line:119
+Ylis	../arxim_map_xt_fm.py	/^Ylis= ["TDGC","PBAR"]$/;"	kind:variable	line:26
+Ylis	../arxim_map_xt_fm.py	/^Ylis=[y.upper() for y in Ylis]$/;"	kind:variable	line:57
+Ylis	../arxim_map_xt_fsp.py	/^Ylis= Yindex, Yhead$/;"	kind:variable	line:117
+Ylis	../arxim_map_xt_fsp.py	/^Ylis= ["TDGC","PBAR"]       # must be uppercase ...$/;"	kind:variable	line:30
+Ylis	../arxim_map_xt_fsp.py	/^Ylis=[y.upper() for y in Ylis]$/;"	kind:variable	line:58
+Yser	../arxim_map_activity.py	/^Yser= plt.linspace(Ymin,Ymax,num=Ydim)$/;"	kind:variable	line:120
+Yser	../arxim_map_dominant.py	/^Yser= plt.linspace(Ymin,Ymax,num=Ydim)$/;"	kind:variable	line:119
+Yser	../arxim_map_tp.py	/^Yser= plt.linspace(Ymin,Ymax,num=Ydim)$/;"	kind:variable	line:123
+Yser	../arxim_map_xt_fm.py	/^Yser= plt.linspace(Ymin,Ymax,num=Ydim)$/;"	kind:variable	line:140
+Yser	../arxim_map_xt_fsp.py	/^Yser= plt.linspace(Ymin,Ymax,num=Ydim)$/;"	kind:variable	line:151
+Yser2	../arxim_map_xt_fm.py	/^  Yser2= [Yfunc(y) for y in Yser]$/;"	kind:variable	line:147
+Yser2	../arxim_map_xt_fsp.py	/^  Yser2= [Yfunc(y) for y in Yser]$/;"	kind:variable	line:155
+__init__	../MyLibTk.py	/^  def __init__(self, master=None,title=None,message=None,list=[],x=0):$/;"	kind:member	line:20
+_cancel	../MyLibTk.py	/^  def _cancel(self, event=None):$/;"	kind:member	line:77
+_choose	../MyLibTk.py	/^  def _choose(self, event=None):$/;"	kind:member	line:65
+arxim_map_activity.py	../arxim_map_activity.py	1;"	kind:file	line:1
+arxim_map_dominant.py	../arxim_map_dominant.py	1;"	kind:file	line:1
+arxim_map_tp.py	../arxim_map_tp.py	1;"	kind:file	line:1
+arxim_map_xt_fm.py	../arxim_map_xt_fm.py	1;"	kind:file	line:1
+arxim_map_xt_fsp.py	../arxim_map_xt_fsp.py	1;"	kind:file	line:1
+arxim_mixtures.py	../arxim_mixtures.py	1;"	kind:file	line:1
+arxim_ok	../arxim_map_activity.py	/^def arxim_ok(sCommand):$/;"	kind:function	line:148
+arxim_ok	../arxim_map_dominant.py	/^def arxim_ok(sCommand):$/;"	kind:function	line:151
+arxim_ok	../arxim_map_tp.py	/^def arxim_ok(sCommand):$/;"	kind:function	line:155
+arxim_ok	../arxim_map_xt_fm.py	/^def arxim_ok(sCommand):$/;"	kind:function	line:168
+arxim_ok	../arxim_map_xt_fsp.py	/^def arxim_ok(sCommand):$/;"	kind:function	line:193
+arxim_result	../arxim_map_activity.py	/^def arxim_result(fResult): #(sCommand):$/;"	kind:function	line:163
+arxim_result	../arxim_map_dominant.py	/^def arxim_result(s_include):$/;"	kind:function	line:166
+arxim_result	../arxim_map_tp.py	/^def arxim_result(fResult): #(sCommand):$/;"	kind:function	line:170
+arxim_result	../arxim_map_xt_fm.py	/^def arxim_result(fResult): #(sCommand):$/;"	kind:function	line:183
+arxim_result	../arxim_map_xt_fsp.py	/^def arxim_result(fResult): #(sCommand):$/;"	kind:function	line:208
+arxim_test.py	../arxim_test.py	1;"	kind:file	line:1
+arxim_test_mix.py	../arxim_test_mix.py	1;"	kind:file	line:1
+aspect	../arxim_map_activity.py	/^    aspect='auto', $/;"	kind:variable	line:206
+aspect	../arxim_map_tp.py	/^    aspect='auto', $/;"	kind:variable	line:260
+centroids	../arxim_map_activity.py	/^centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]$/;"	kind:variable	line:211
+centroids	../arxim_map_dominant.py	/^centroids=[ (0.,0.,0) for i in range(len(spc_names))]$/;"	kind:variable	line:288
+centroids	../arxim_map_tp.py	/^centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]$/;"	kind:variable	line:266
+centroids	../arxim_map_xt_fm.py	/^centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]$/;"	kind:variable	line:270
+centroids	../arxim_map_xt_fsp.py	/^centroids=[ (0.,0.,0) for i in range(len(lis_paragen))]$/;"	kind:variable	line:304
+check_done	../arxim_test.py	/^def check_done():$/;"	kind:function	line:29
+compute_gibbs	../MyThermo.py	/^def compute_gibbs(name,TK,Pbar):$/;"	kind:function	line:4
+dataX	../MyLib.py	/^  dataX= (labX,tData[:,iX])$/;"	kind:variable	line:261
+dataX	../arxim_test.py	/^      dataX= (labX,tData[:,iX])$/;"	kind:variable	line:114
+dataX	../arxim_test.py	/^      dataX= (labX,tData[:,iX])$/;"	kind:variable	line:137
+dataX	../arxim_test.py	/^      dataX= (labX,tData[:,iX])$/;"	kind:variable	line:67
+dataX	../arxim_test.py	/^      dataX= (labX,tData[:,iX])$/;"	kind:variable	line:90
+dataY	../MyLib.py	/^  dataY= table_select(2,"PhiM_",labels,tData)$/;"	kind:variable	line:262
+dataY	../arxim_test.py	/^      dataY= ML.table_select(1,"H2O",labels,tData)$/;"	kind:variable	line:115
+dataY	../arxim_test.py	/^      dataY= ML.table_select(1,"H2O",labels,tData)$/;"	kind:variable	line:69
+dataY	../arxim_test.py	/^      dataY= ML.table_select(1,"H2O",labels,tData)$/;"	kind:variable	line:92
+dataY	../arxim_test.py	/^      dataY= ML.table_select(2,"PHIM_",labels,tData)$/;"	kind:variable	line:138
+dim	../arxim_map_xt_fsp.py	/^dim= len(s)$/;"	kind:variable	line:491
+extractFileName	../MyLib.py	/^def extractFileName(s):$/;"	kind:function	line:14
+f	../arxim_map_activity.py	/^f=open(fInn,'w')$/;"	kind:variable	line:66
+f	../arxim_map_dominant.py	/^f=open(fInn,'w')$/;"	kind:variable	line:59
+f	../arxim_map_tp.py	/^f=open(fInn,'w')$/;"	kind:variable	line:60
+f	../arxim_map_xt_fm.py	/^f=open(fInn,'w')$/;"	kind:variable	line:72
+f	../arxim_map_xt_fsp.py	/^f= open("mix_mean.tab",'w')$/;"	kind:variable	line:586
+f	../arxim_map_xt_fsp.py	/^f= open("mixture.tab",'w',0)$/;"	kind:variable	line:502
+f	../arxim_map_xt_fsp.py	/^f=open(fInn,'w')$/;"	kind:variable	line:72
+f	../arxim_mixtures.py	/^f= open("mix_mean.tab",'w')$/;"	kind:variable	line:25
+fInn	../arxim_map_activity.py	/^fInn= "inn\/map_act_a2.inn"$/;"	kind:variable	line:24
+fInn	../arxim_map_activity.py	/^fInn= "inn\/map_act_b1.inn"$/;"	kind:variable	line:30
+fInn	../arxim_map_dominant.py	/^fInn= "inn\/map_dom_cr_ox.inn"$/;"	kind:variable	line:32
+fInn	../arxim_map_dominant.py	/^fInn= "inn\/map_dom_fe_ox.inn"$/;"	kind:variable	line:36
+fInn	../arxim_map_tp.py	/^fInn= "inn\/map_tp_1a.inn"$/;"	kind:variable	line:21
+fInn	../arxim_map_xt_fm.py	/^fInn= "inn\/map3b_tp.inn"$/;"	kind:variable	line:24
+fInn	../arxim_map_xt_fsp.py	/^fInn= "inn\/map_xt_fsp_01.inn"$/;"	kind:variable	line:25
+fParagen	../arxim_map_tp.py	/^fParagen= open("paragen.txt",'w',0)$/;"	kind:variable	line:116
+fParagen	../arxim_map_xt_fm.py	/^fParagen= open("paragen.txt",'w',0)$/;"	kind:variable	line:133
+fParagen	../arxim_map_xt_fsp.py	/^fParagen= open("paragen.txt",'w',0)$/;"	kind:variable	line:131
+fResult	../arxim_map_activity.py	/^fResult= "tmp_gem.tab"$/;"	kind:variable	line:115
+fResult	../arxim_map_dominant.py	/^fResult= "tmp_species_lact.dat"$/;"	kind:variable	line:101
+fResult	../arxim_map_dominant.py	/^fResult= "tmp_species_mole.dat"$/;"	kind:variable	line:102
+fResult	../arxim_map_tp.py	/^fResult= "tmp_gem.tab"$/;"	kind:variable	line:111
+fResult	../arxim_map_xt_fm.py	/^fResult= "tmp_gem.tab"$/;"	kind:variable	line:128
+fResult	../arxim_map_xt_fsp.py	/^fResult= "tmp_gem.tab"$/;"	kind:variable	line:126
+fig	../MyLib.py	/^  fig= plt.subplot()$/;"	kind:variable	line:264
+fig	../MyLib.py	/^  fig= plt.subplot()$/;"	kind:variable	line:267
+fig	../arxim_map_activity.py	/^fig= plt.subplot(1,1,1)$/;"	kind:variable	line:441
+fig	../arxim_map_dominant.py	/^fig= plt.subplot(1,1,1)$/;"	kind:variable	line:484
+fig	../arxim_map_tp.py	/^fig= plt.subplot(1,1,1)$/;"	kind:variable	line:465
+fig	../arxim_map_xt_fm.py	/^fig= plt.subplot(1,1,1)$/;"	kind:variable	line:469
+fig	../arxim_map_xt_fsp.py	/^fig= plt.subplot(1,1,1)$/;"	kind:variable	line:534
+fig	../arxim_test.py	/^      fig= plt.subplot()$/;"	kind:variable	line:117
+fig	../arxim_test.py	/^      fig= plt.subplot()$/;"	kind:variable	line:140
+fig	../arxim_test.py	/^      fig= plt.subplot()$/;"	kind:variable	line:143
+fig	../arxim_test.py	/^      fig= plt.subplot()$/;"	kind:variable	line:71
+fig	../arxim_test.py	/^      fig= plt.subplot()$/;"	kind:variable	line:94
+fig	../arxim_test_mix.py	/^  fig= plt.subplot(1,1,1)$/;"	kind:variable	line:68
+figName	../arxim_map_activity.py	/^  figName= tail$/;"	kind:variable	line:426
+figName	../arxim_map_activity.py	/^  figName= tail.split('.')[0]$/;"	kind:variable	line:424
+figName	../arxim_map_activity.py	/^figName= "png\/"+figName$/;"	kind:variable	line:431
+figName	../arxim_map_dominant.py	/^  figName= tail$/;"	kind:variable	line:469
+figName	../arxim_map_dominant.py	/^  figName= tail.split('.')[0]$/;"	kind:variable	line:467
+figName	../arxim_map_dominant.py	/^figName= "png\/"+figName$/;"	kind:variable	line:474
+figName	../arxim_map_tp.py	/^  figName= tail$/;"	kind:variable	line:449
+figName	../arxim_map_tp.py	/^  figName= tail.split('.')[0]$/;"	kind:variable	line:447
+figName	../arxim_map_tp.py	/^figName= "png\/"+figName$/;"	kind:variable	line:454
+figName	../arxim_map_xt_fm.py	/^  figName= tail$/;"	kind:variable	line:453
+figName	../arxim_map_xt_fm.py	/^  figName= tail.split('.')[0]$/;"	kind:variable	line:451
+figName	../arxim_map_xt_fm.py	/^figName= "png\/"+figName$/;"	kind:variable	line:458
+figName	../arxim_map_xt_fsp.py	/^  figName= tail$/;"	kind:variable	line:518
+figName	../arxim_map_xt_fsp.py	/^  figName= tail.split('.')[0]$/;"	kind:variable	line:516
+figName	../arxim_map_xt_fsp.py	/^figName= "png\/"+figName$/;"	kind:variable	line:523
+figName	../arxim_test_mix.py	/^  figName= "test_mixmodel"$/;"	kind:variable	line:58
+files	../arxim_test.py	/^files= glob.glob("inn\/map_dom_fe_ox.inn")$/;"	kind:variable	line:19
+files	../arxim_test.py	/^files= glob.glob("valid\/a0a*.inn")$/;"	kind:variable	line:21
+files	../arxim_test.py	/^files= glob.glob("valid\/d2*.inn")$/;"	kind:variable	line:20
+files	../arxim_test_mix.py	/^files= glob.glob("tmp\/test*.inn")$/;"	kind:variable	line:29
+horizontalalignment	../arxim_map_activity.py	/^    horizontalalignment='center',$/;"	kind:variable	line:464
+horizontalalignment	../arxim_map_dominant.py	/^    horizontalalignment='center')$/;"	kind:variable	line:508
+horizontalalignment	../arxim_map_tp.py	/^    horizontalalignment='center')$/;"	kind:variable	line:490
+horizontalalignment	../arxim_map_xt_fm.py	/^    horizontalalignment='center')$/;"	kind:variable	line:494
+horizontalalignment	../arxim_map_xt_fsp.py	/^    horizontalalignment='center')$/;"	kind:variable	line:557
+i	../arxim_map_activity.py	/^    i= tab_paragen[iX,iY]$/;"	kind:variable	line:214
+i	../arxim_map_dominant.py	/^    i= tab_spc[iX,iY]$/;"	kind:variable	line:291
+i	../arxim_map_tp.py	/^    i= tab_paragen[iX,iY]$/;"	kind:variable	line:269
+i	../arxim_map_xt_fm.py	/^    i= tab_paragen[iX,iY]$/;"	kind:variable	line:273
+i	../arxim_map_xt_fsp.py	/^    i= tab_paragen[iX,iY]$/;"	kind:variable	line:307
+i	../arxim_test.py	/^    i= 0$/;"	kind:variable	line:154
+i	../arxim_test.py	/^i= 0$/;"	kind:variable	line:41
+i	../arxim_test_mix.py	/^    i= 0$/;"	kind:variable	line:92
+i	../arxim_test_mix.py	/^i= 0$/;"	kind:variable	line:48
+i0	../arxim_test.py	/^i0= 0$/;"	kind:variable	line:40
+i0	../arxim_test_mix.py	/^i0= 0$/;"	kind:variable	line:46
+iKeyword	../arxim_map_activity.py	/^iKeyword= 2$/;"	kind:variable	line:58
+iKeyword	../arxim_map_dominant.py	/^iKeyword= 0$/;"	kind:variable	line:52
+iKeyword	../arxim_map_tp.py	/^iKeyword= 0$/;"	kind:variable	line:53
+iValue	../arxim_map_activity.py	/^iValue=   5$/;"	kind:variable	line:59
+iValue	../arxim_map_dominant.py	/^iValue=   3$/;"	kind:variable	line:53
+iValue	../arxim_map_tp.py	/^iValue=   1$/;"	kind:variable	line:54
+iX	../MyLib.py	/^    iX=   labels.index("Time\/YEAR")$/;"	kind:variable	line:256
+iX	../MyLib.py	/^    iX= 0$/;"	kind:variable	line:259
+iX	../arxim_test.py	/^        iX=   labels.index("TIME\/YEAR")$/;"	kind:variable	line:109
+iX	../arxim_test.py	/^        iX=   labels.index("TIME\/YEAR")$/;"	kind:variable	line:130
+iX	../arxim_test.py	/^        iX=   labels.index("TIME\/YEAR")$/;"	kind:variable	line:132
+iX	../arxim_test.py	/^        iX= 0$/;"	kind:variable	line:112
+iX	../arxim_test.py	/^        iX= 0$/;"	kind:variable	line:135
+iX	../arxim_test.py	/^        iX= 0$/;"	kind:variable	line:65
+iX	../arxim_test.py	/^        iX= 0$/;"	kind:variable	line:88
+iX	../arxim_test.py	/^        iX= labels.index("pH")$/;"	kind:variable	line:62
+iX	../arxim_test.py	/^        iX= labels.index("pH")$/;"	kind:variable	line:85
+include_modify	../arxim_map_tp.py	/^def include_modify(lis,x):$/;"	kind:function	line:132
+include_modify	../arxim_map_xt_fm.py	/^def include_modify(lis,func,x):$/;"	kind:function	line:154
+include_modify	../arxim_map_xt_fsp.py	/^def include_modify(lis,func,x):$/;"	kind:function	line:172
+inn_scan_list	../MyLib.py	/^def inn_scan_list(sName,sBlock,sKey):$/;"	kind:function	line:132
+inn_scan_word	../MyLib.py	/^def inn_scan_word(sName,sBlock,sKey):$/;"	kind:function	line:146
+input_modify	../arxim_map_activity.py	/^def input_modify(lis,x):$/;"	kind:function	line:132
+input_modify	../arxim_map_dominant.py	/^def input_modify(lis,x):$/;"	kind:function	line:186
+interpolation	../arxim_map_activity.py	/^    interpolation='none')$/;"	kind:variable	line:207
+interpolation	../arxim_map_tp.py	/^    interpolation='none', $/;"	kind:variable	line:261
+isPartout	../arxim_map_activity.py	/^isPartout=[True for i in range(len(lis_phase))]$/;"	kind:variable	line:394
+isPartout	../arxim_map_tp.py	/^isPartout=[True for i in range(len(lis_phase))]$/;"	kind:variable	line:416
+isPartout	../arxim_map_xt_fm.py	/^isPartout=[True for i in range(len(lis_phase))]$/;"	kind:variable	line:420
+isPartout	../arxim_map_xt_fsp.py	/^isPartout=[True for i in range(len(lis_phase))]$/;"	kind:variable	line:462
+j	../arxim_map_activity.py	/^      j= lis_paragen.index(paragen)$/;"	kind:variable	line:195
+j	../arxim_map_activity.py	/^  j=i%len(symbols)$/;"	kind:variable	line:456
+j	../arxim_map_tp.py	/^      j= lis_paragen.index(paragen)$/;"	kind:variable	line:249
+j	../arxim_map_tp.py	/^  j= i%len(symbols)$/;"	kind:variable	line:480
+j	../arxim_map_xt_fm.py	/^        j= Xlis.index(s)$/;"	kind:variable	line:101
+j	../arxim_map_xt_fm.py	/^        j= Ylis.index(s)$/;"	kind:variable	line:108
+j	../arxim_map_xt_fm.py	/^      j= lis_paragen.index(paragen)$/;"	kind:variable	line:262
+j	../arxim_map_xt_fsp.py	/^        j= Xlis.index(s)$/;"	kind:variable	line:100
+j	../arxim_map_xt_fsp.py	/^        j= Ylis.index(s)$/;"	kind:variable	line:107
+j	../arxim_map_xt_fsp.py	/^      j= lis_paragen.index(paragen)$/;"	kind:variable	line:296
+labX	../MyLib.py	/^    labX= "Time\/YEAR"$/;"	kind:variable	line:257
+labX	../MyLib.py	/^    labX= "x"$/;"	kind:variable	line:260
+labX	../arxim_test.py	/^        labX= "pH"$/;"	kind:variable	line:63
+labX	../arxim_test.py	/^        labX= "pH"$/;"	kind:variable	line:86
+labX	../arxim_test.py	/^        labX= "x"$/;"	kind:variable	line:113
+labX	../arxim_test.py	/^        labX= "x"$/;"	kind:variable	line:136
+labX	../arxim_test.py	/^        labX= "x"$/;"	kind:variable	line:66
+labX	../arxim_test.py	/^        labX= "x"$/;"	kind:variable	line:89
+labX	../arxim_test.py	/^        labX= labels[iX]$/;"	kind:variable	line:110
+labX	../arxim_test.py	/^        labX= labels[iX]$/;"	kind:variable	line:133
+len_symb	../arxim_map_dominant.py	/^len_symb= len(symbols)$/;"	kind:variable	line:487
+len_symb	../arxim_map_xt_fm.py	/^len_symb= len(symbols)$/;"	kind:variable	line:472
+lines	../MyLib.py	/^  lines= open(s,'r').readlines()$/;"	kind:variable	line:252
+lines	../arxim_map_activity.py	/^  lines = f.readlines()$/;"	kind:variable	line:64
+lines	../arxim_map_activity.py	/^  lines = f.readlines()$/;"	kind:variable	line:80
+lines	../arxim_map_activity.py	/^lines= []$/;"	kind:variable	line:362
+lines	../arxim_map_dominant.py	/^  lines = f.readlines()$/;"	kind:variable	line:58
+lines	../arxim_map_dominant.py	/^  lines = f.readlines()$/;"	kind:variable	line:73
+lines	../arxim_map_dominant.py	/^lines= []$/;"	kind:variable	line:435
+lines	../arxim_map_tp.py	/^  lines = f.readlines()$/;"	kind:variable	line:58
+lines	../arxim_map_tp.py	/^  lines = f.readlines()$/;"	kind:variable	line:74
+lines	../arxim_map_tp.py	/^lines= []$/;"	kind:variable	line:384
+lines	../arxim_map_xt_fm.py	/^  lines = f.readlines()$/;"	kind:variable	line:89
+lines	../arxim_map_xt_fm.py	/^lines= []$/;"	kind:variable	line:388
+lines	../arxim_map_xt_fsp.py	/^  lines = f.readlines()$/;"	kind:variable	line:88
+lines	../arxim_map_xt_fsp.py	/^lines= []$/;"	kind:variable	line:429
+lines	../arxim_test.py	/^      lines= open(s,'r').readlines()$/;"	kind:variable	line:105
+lines	../arxim_test.py	/^      lines= open(s,'r').readlines()$/;"	kind:variable	line:127
+lines	../arxim_test.py	/^      lines= open(s,'r').readlines()$/;"	kind:variable	line:58
+lines	../arxim_test.py	/^      lines= open(s,'r').readlines()$/;"	kind:variable	line:81
+lines2table	../MyLib.py	/^def lines2table(lines):$/;"	kind:function	line:53
+lines2vecs	../arxim_test_mix.py	/^def lines2vecs(lines):$/;"	kind:function	line:35
+lis_false_x	../arxim_map_activity.py	/^lis_false_x= []$/;"	kind:variable	line:267
+lis_false_x	../arxim_map_dominant.py	/^lis_false_x= []$/;"	kind:variable	line:330
+lis_false_x	../arxim_map_tp.py	/^lis_false_x= []$/;"	kind:variable	line:229
+lis_false_x	../arxim_map_xt_fm.py	/^lis_false_x= []$/;"	kind:variable	line:242
+lis_false_x	../arxim_map_xt_fsp.py	/^lis_false_x= []$/;"	kind:variable	line:269
+lis_false_y	../arxim_map_activity.py	/^lis_false_y= []$/;"	kind:variable	line:268
+lis_false_y	../arxim_map_dominant.py	/^lis_false_y= []$/;"	kind:variable	line:331
+lis_false_y	../arxim_map_tp.py	/^lis_false_y= []$/;"	kind:variable	line:230
+lis_false_y	../arxim_map_xt_fm.py	/^lis_false_y= []$/;"	kind:variable	line:243
+lis_false_y	../arxim_map_xt_fsp.py	/^lis_false_y= []$/;"	kind:variable	line:270
+lis_limits	../arxim_map_activity.py	/^lis_limits=  []$/;"	kind:variable	line:264
+lis_limits	../arxim_map_dominant.py	/^lis_limits=  []$/;"	kind:variable	line:327
+lis_paragen	../arxim_map_activity.py	/^lis_paragen=[]$/;"	kind:variable	line:179
+lis_paragen	../arxim_map_tp.py	/^lis_paragen=[]$/;"	kind:variable	line:223
+lis_paragen	../arxim_map_xt_fm.py	/^lis_paragen=[]$/;"	kind:variable	line:236
+lis_paragen	../arxim_map_xt_fsp.py	/^lis_paragen=[]$/;"	kind:variable	line:261
+lis_phase	../arxim_map_activity.py	/^lis_phase= []$/;"	kind:variable	line:388
+lis_phase	../arxim_map_tp.py	/^lis_phase= []$/;"	kind:variable	line:410
+lis_phase	../arxim_map_xt_fm.py	/^lis_phase= []$/;"	kind:variable	line:414
+lis_phase	../arxim_map_xt_fsp.py	/^lis_phase= []$/;"	kind:variable	line:456
+lis_reac	../arxim_map_tp.py	/^lis_reac=  []$/;"	kind:variable	line:226
+lis_reac	../arxim_map_xt_fm.py	/^lis_reac=  []$/;"	kind:variable	line:239
+lis_reac	../arxim_map_xt_fsp.py	/^lis_reac=  []$/;"	kind:variable	line:266
+lis_spc	../arxim_map_dominant.py	/^lis_spc=[]$/;"	kind:variable	line:110
+lis_xy_x	../arxim_map_activity.py	/^lis_xy_x=  []$/;"	kind:variable	line:265
+lis_xy_x	../arxim_map_dominant.py	/^lis_xy_x=  []$/;"	kind:variable	line:328
+lis_xy_x	../arxim_map_tp.py	/^lis_xy_x=  []$/;"	kind:variable	line:227
+lis_xy_x	../arxim_map_xt_fm.py	/^lis_xy_x=  []$/;"	kind:variable	line:240
+lis_xy_x	../arxim_map_xt_fsp.py	/^lis_xy_x=  []$/;"	kind:variable	line:267
+lis_xy_y	../arxim_map_activity.py	/^lis_xy_y=  []$/;"	kind:variable	line:266
+lis_xy_y	../arxim_map_dominant.py	/^lis_xy_y=  []$/;"	kind:variable	line:329
+lis_xy_y	../arxim_map_tp.py	/^lis_xy_y=  []$/;"	kind:variable	line:228
+lis_xy_y	../arxim_map_xt_fm.py	/^lis_xy_y=  []$/;"	kind:variable	line:241
+lis_xy_y	../arxim_map_xt_fsp.py	/^lis_xy_y=  []$/;"	kind:variable	line:268
+list	../MyLibTk.py	/^  list = [random.randint(1,100) for x in range(50)]$/;"	kind:variable	line:89
+ll	../arxim_map_activity.py	/^  ll= line.strip()$/;"	kind:variable	line:68
+ll	../arxim_map_dominant.py	/^  ll= line.strip()$/;"	kind:variable	line:61
+ll	../arxim_map_tp.py	/^  ll= line.strip()$/;"	kind:variable	line:62
+ll	../arxim_map_xt_fm.py	/^  ll= line.strip()$/;"	kind:variable	line:74
+ll	../arxim_map_xt_fsp.py	/^  ll= line.strip()$/;"	kind:variable	line:74
+mix_is_same	../arxim_map_xt_fsp.py	/^def mix_is_same(v1,v2,tol):$/;"	kind:function	line:569
+mix_is_same	../arxim_mixtures.py	/^def mix_is_same(v1,v2,tol):$/;"	kind:function	line:5
+mixture_names	../arxim_map_xt_fsp.py	/^        mixture_names= read_mixture_names()$/;"	kind:variable	line:285
+mixture_names	../arxim_map_xt_fsp.py	/^mixture_names=[]$/;"	kind:variable	line:27
+myMkDir	../MyLib.py	/^def myMkDir(newdir):$/;"	kind:function	line:3
+mynum	../arxim_map_dominant.py	/^def mynum(s):$/;"	kind:function	line:5
+nValue	../arxim_map_activity.py	/^nValue=   8 #number of T-P points in the logK file$/;"	kind:variable	line:60
+nValue	../arxim_map_dominant.py	/^nValue=   1$/;"	kind:variable	line:54
+newp	../arxim_map_activity.py	/^  newp= ""$/;"	kind:variable	line:406
+newp	../arxim_map_tp.py	/^  newp= ""$/;"	kind:variable	line:428
+newp	../arxim_map_xt_fm.py	/^  newp= ""$/;"	kind:variable	line:432
+newp	../arxim_map_xt_fsp.py	/^  newp= ""$/;"	kind:variable	line:474
+nmix	../arxim_map_xt_fsp.py	/^        nmix= nmix-1$/;"	kind:variable	line:636
+nmix	../arxim_map_xt_fsp.py	/^      nmix= nmix-1$/;"	kind:variable	line:624
+nmix	../arxim_map_xt_fsp.py	/^      nmix= nmix-1$/;"	kind:variable	line:630
+nmix	../arxim_map_xt_fsp.py	/^    nmix= nmix-1$/;"	kind:variable	line:619
+nmix	../arxim_map_xt_fsp.py	/^  nmix= 3$/;"	kind:variable	line:611
+nmix	../arxim_mixtures.py	/^        nmix= nmix-1$/;"	kind:variable	line:75
+nmix	../arxim_mixtures.py	/^      nmix= nmix-1$/;"	kind:variable	line:63
+nmix	../arxim_mixtures.py	/^      nmix= nmix-1$/;"	kind:variable	line:69
+nmix	../arxim_mixtures.py	/^    nmix= nmix-1$/;"	kind:variable	line:58
+nmix	../arxim_mixtures.py	/^  nmix= 3$/;"	kind:variable	line:50
+num	../MyLib.py	/^def num(s):$/;"	kind:function	line:24
+origin	../arxim_map_tp.py	/^    origin='lower')$/;"	kind:variable	line:262
+p0	../arxim_map_xt_fsp.py	/^        p0= p0+p2$/;"	kind:variable	line:638
+p0	../arxim_map_xt_fsp.py	/^      p0= p0+p2$/;"	kind:variable	line:626
+p0	../arxim_map_xt_fsp.py	/^    p0= p0+p1$/;"	kind:variable	line:621
+p0	../arxim_mixtures.py	/^        p0= p0+p2$/;"	kind:variable	line:77
+p0	../arxim_mixtures.py	/^      p0= p0+p2$/;"	kind:variable	line:65
+p0	../arxim_mixtures.py	/^    p0= p0+p1$/;"	kind:variable	line:60
+p1	../arxim_map_xt_fsp.py	/^      p1= p1+p2$/;"	kind:variable	line:632
+p1	../arxim_map_xt_fsp.py	/^    p1= 0.$/;"	kind:variable	line:622
+p1	../arxim_mixtures.py	/^      p1= p1+p2$/;"	kind:variable	line:71
+p1	../arxim_mixtures.py	/^    p1= 0.$/;"	kind:variable	line:61
+p2	../arxim_map_xt_fsp.py	/^        p2= 0.$/;"	kind:variable	line:639
+p2	../arxim_map_xt_fsp.py	/^      p2= 0.$/;"	kind:variable	line:627
+p2	../arxim_map_xt_fsp.py	/^      p2= 0.$/;"	kind:variable	line:633
+p2	../arxim_mixtures.py	/^        p2= 0.$/;"	kind:variable	line:78
+p2	../arxim_mixtures.py	/^      p2= 0.$/;"	kind:variable	line:66
+p2	../arxim_mixtures.py	/^      p2= 0.$/;"	kind:variable	line:72
+paragen	../arxim_map_activity.py	/^      paragen= arxim_result(fResult) #-------------------read arxim result$/;"	kind:variable	line:190
+paragen	../arxim_map_tp.py	/^      paragen= arxim_result(fResult) #-----------------read arxim result$/;"	kind:variable	line:242
+paragen	../arxim_map_xt_fm.py	/^      paragen= arxim_result(fResult) #-----------------read arxim result$/;"	kind:variable	line:255
+paragen	../arxim_map_xt_fsp.py	/^      paragen= arxim_result(fResult) #-----------------read arxim result$/;"	kind:variable	line:289
+phase_Partout	../arxim_map_activity.py	/^phase_Partout=[]$/;"	kind:variable	line:400
+phase_Partout	../arxim_map_tp.py	/^phase_Partout=[]$/;"	kind:variable	line:422
+phase_Partout	../arxim_map_xt_fm.py	/^phase_Partout=[]$/;"	kind:variable	line:426
+phase_Partout	../arxim_map_xt_fsp.py	/^phase_Partout=[]$/;"	kind:variable	line:468
+plot	../MyLib.py	/^def plot(fig,titr,dataX,dataY,xLog,yLog):$/;"	kind:function	line:94
+plot_multiple	../MyLib.py	/^def plot_multiple(fig,xLog,yLog,data,labels,xMin,xMax,indexX,indexY,titre):$/;"	kind:function	line:161
+plot_single_1	../MyLib.py	/^def plot_single_1(fig,xLog,yLog,vx,vy,vlabs,titX,titY,titre):$/;"	kind:function	line:209
+point	../arxim_map_activity.py	/^      point= val[1],val[2]$/;"	kind:variable	line:367
+point	../arxim_map_activity.py	/^      point= val[1],val[2]$/;"	kind:variable	line:371
+point	../arxim_map_dominant.py	/^      point= val[1],val[2]$/;"	kind:variable	line:440
+point	../arxim_map_dominant.py	/^      point= val[1],val[2]$/;"	kind:variable	line:444
+point	../arxim_map_tp.py	/^      point= val[1],val[2]$/;"	kind:variable	line:389
+point	../arxim_map_tp.py	/^      point= val[1],val[2]$/;"	kind:variable	line:393
+point	../arxim_map_xt_fm.py	/^      point= val[1],val[2]$/;"	kind:variable	line:393
+point	../arxim_map_xt_fm.py	/^      point= val[1],val[2]$/;"	kind:variable	line:397
+point	../arxim_map_xt_fsp.py	/^      point= val[1],val[2]$/;"	kind:variable	line:434
+point	../arxim_map_xt_fsp.py	/^      point= val[1],val[2]$/;"	kind:variable	line:438
+points	../arxim_map_activity.py	/^  points= []$/;"	kind:variable	line:364
+points	../arxim_map_activity.py	/^  points= sorted(points,key=lambda x: x[0])$/;"	kind:variable	line:373
+points	../arxim_map_dominant.py	/^  points= []$/;"	kind:variable	line:437
+points	../arxim_map_dominant.py	/^  points= sorted(points,key=lambda x: x[0])$/;"	kind:variable	line:446
+points	../arxim_map_tp.py	/^  points= []$/;"	kind:variable	line:386
+points	../arxim_map_tp.py	/^  points= sorted(points,key=lambda x: x[0])$/;"	kind:variable	line:395
+points	../arxim_map_xt_fm.py	/^  points= []$/;"	kind:variable	line:390
+points	../arxim_map_xt_fm.py	/^  points= sorted(points,key=lambda x: x[0])$/;"	kind:variable	line:399
+points	../arxim_map_xt_fsp.py	/^  points= []$/;"	kind:variable	line:431
+points	../arxim_map_xt_fsp.py	/^  points= sorted(points,key=lambda x: x[0])$/;"	kind:variable	line:440
+readChemicalSpace	../arxim_map_dominant.py	/^def readChemicalSpace():$/;"	kind:function	line:128
+read_mixture_names	../arxim_map_xt_fsp.py	/^def read_mixture_names():$/;"	kind:function	line:134
+refine_xy	../arxim_map_activity.py	/^def refine_xy(lis,F0,F1,x0,x1,tolerance):$/;"	kind:function	line:230
+refine_xy	../arxim_map_dominant.py	/^def refine_xy(lis,F0,F1,x0,x1,tolerance):$/;"	kind:function	line:202
+refine_xy	../arxim_map_tp.py	/^def refine_xy(lis,F0,F1,x0,x1,tolerance):$/;"	kind:function	line:182
+refine_xy	../arxim_map_xt_fm.py	/^def refine_xy(lis,func,F0,F1,x0,x1,tolerance):$/;"	kind:function	line:195
+refine_xy	../arxim_map_xt_fsp.py	/^def refine_xy(lis,func,F0,F1,x0,x1,tolerance):$/;"	kind:function	line:220
+returnValue	../MyLibTk.py	/^  def returnValue(self):$/;"	kind:member	line:80
+returnValue	../MyLibTk.py	/^  returnValue = ListBoxChoice(root, "Number Picking", "Pick one of these crazy random numbers", list,0).returnValue()$/;"	kind:variable	line:91
+returnValue	../MyLibTk.py	/^  returnValue = True$/;"	kind:variable	line:88
+root	../MyLibTk.py	/^  root = Tk()$/;"	kind:variable	line:86
+s	../MyLib.py	/^  s="MyLib.restab"$/;"	kind:variable	line:251
+s	../arxim_map_xt_fm.py	/^      s= ww[XKeyword].upper()$/;"	kind:variable	line:99
+s	../arxim_map_xt_fm.py	/^      s= ww[YKeyword].upper()$/;"	kind:variable	line:106
+s	../arxim_map_xt_fsp.py	/^      s= ww[XKeyword].upper()$/;"	kind:variable	line:98
+s	../arxim_map_xt_fsp.py	/^      s= ww[YKeyword].upper()$/;"	kind:variable	line:105
+s	../arxim_test.py	/^      s=sDirout+"_activ.restab"$/;"	kind:variable	line:103
+s	../arxim_test.py	/^      s=sDirout+"_activ.restab"$/;"	kind:variable	line:79
+s	../arxim_test.py	/^      s=sDirout+"_minmol.restab"$/;"	kind:variable	line:125
+s	../arxim_test.py	/^      s=sDirout+"_molal.restab"$/;"	kind:variable	line:56
+sArximCommand	../arxim_map_activity.py	/^sArximCommand= sExe,fInn,sDebug,sCmd$/;"	kind:variable	line:114
+sArximCommand	../arxim_map_dominant.py	/^sArximCommand= sExe,fInn,sDebug,sCmd$/;"	kind:variable	line:100
+sArximCommand	../arxim_map_tp.py	/^sArximCommand= sExe,fInn,sDebug,sCmd$/;"	kind:variable	line:105
+sArximCommand	../arxim_map_xt_fm.py	/^sArximCommand= sExe,fInn,sDebug,sCmd$/;"	kind:variable	line:122
+sArximCommand	../arxim_map_xt_fsp.py	/^sArximCommand= sExe,fInn,sDebug,sCmd$/;"	kind:variable	line:120
+sBlock	../arxim_map_activity.py	/^sBlock= "SPECIES"$/;"	kind:variable	line:56
+sBlock	../arxim_map_dominant.py	/^sBlock= "SYSTEM"$/;"	kind:variable	line:51
+sBlock	../arxim_map_tp.py	/^sBlock= "SYSTEM.GEM"$/;"	kind:variable	line:52
+sBlock	../arxim_map_xt_fm.py	/^sBlock= "SYSTEM.GEM"$/;"	kind:variable	line:59
+sBlock	../arxim_map_xt_fsp.py	/^sBlock= "SYSTEM.GEM"$/;"	kind:variable	line:60
+sCmd	../arxim_map_activity.py	/^sCmd= "GEM"$/;"	kind:variable	line:14
+sCmd	../arxim_map_dominant.py	/^sCmd= "SPC"$/;"	kind:variable	line:21
+sCmd	../arxim_map_tp.py	/^sCmd=  "GEM"$/;"	kind:variable	line:11
+sCmd	../arxim_map_xt_fm.py	/^sCmd=  "GEM"$/;"	kind:variable	line:15
+sCmd	../arxim_map_xt_fsp.py	/^sCmd=  "GEM"$/;"	kind:variable	line:14
+sCommand	../arxim_test.py	/^  sCommand= ML.inn_scan_list(sFile,"TEST","COMPUTE")$/;"	kind:variable	line:50
+sDebug	../arxim_map_activity.py	/^sDebug= "1"$/;"	kind:variable	line:13
+sDebug	../arxim_map_dominant.py	/^sDebug= "1"$/;"	kind:variable	line:20
+sDebug	../arxim_map_tp.py	/^sDebug= "1"$/;"	kind:variable	line:10
+sDebug	../arxim_map_xt_fm.py	/^sDebug= "1"$/;"	kind:variable	line:14
+sDebug	../arxim_map_xt_fsp.py	/^sDebug= "1"$/;"	kind:variable	line:13
+sDir	../arxim_map_activity.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:10
+sDir	../arxim_map_dominant.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:17
+sDir	../arxim_map_tp.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:7
+sDir	../arxim_map_xt_fm.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:11
+sDir	../arxim_map_xt_fsp.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:10
+sDir	../arxim_test.py	/^sDir= os.path.join("..","bin")$/;"	kind:variable	line:12
+sDirout	../arxim_test.py	/^  sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\\\','\/')$/;"	kind:variable	line:51
+sExe	../arxim_map_activity.py	/^  sExe= "a.out"$/;"	kind:variable	line:9
+sExe	../arxim_map_activity.py	/^  sExe= "arxim.exe"$/;"	kind:variable	line:7
+sExe	../arxim_map_activity.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:11
+sExe	../arxim_map_dominant.py	/^  sExe= "a.out"$/;"	kind:variable	line:16
+sExe	../arxim_map_dominant.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:18
+sExe	../arxim_map_tp.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:8
+sExe	../arxim_map_xt_fm.py	/^  sExe= "a.out"$/;"	kind:variable	line:10
+sExe	../arxim_map_xt_fm.py	/^  sExe= "arxim.exe"$/;"	kind:variable	line:8
+sExe	../arxim_map_xt_fm.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:12
+sExe	../arxim_map_xt_fsp.py	/^  sExe= "a.out"$/;"	kind:variable	line:9
+sExe	../arxim_map_xt_fsp.py	/^  sExe= "arxim.exe"$/;"	kind:variable	line:7
+sExe	../arxim_map_xt_fsp.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:11
+sExe	../arxim_test.py	/^sExe= os.path.join(sDir,sExe)$/;"	kind:variable	line:13
+sExe	../arxim_test_mix.py	/^  sExe= "a.out"$/;"	kind:variable	line:22
+sExe	../arxim_test_mix.py	/^  sExe= "arx-basis"$/;"	kind:variable	line:18
+sExe	../arxim_test_mix.py	/^  sExe= "arx_debug"$/;"	kind:variable	line:21
+sExe	../arxim_test_mix.py	/^  sExe= "arxim.exe"$/;"	kind:variable	line:13
+sExe	../arxim_test_mix.py	/^  sExe= os.path.join("..","..","arx-basis","bin",sExe)$/;"	kind:variable	line:19
+sExe	../arxim_test_mix.py	/^  sExe= os.path.join("..","bin",sExe)$/;"	kind:variable	line:14
+sExe	../arxim_test_mix.py	/^  sExe= os.path.join("..","bin",sExe)$/;"	kind:variable	line:23
+saveChemicalSpace	../arxim_map_dominant.py	/^def saveChemicalSpace(s_names):$/;"	kind:function	line:138
+save_mixture_moles	../arxim_map_xt_fsp.py	/^def save_mixture_moles(x,y):$/;"	kind:function	line:140
+spc	../arxim_map_dominant.py	/^      spc= -1$/;"	kind:variable	line:279
+spc	../arxim_map_dominant.py	/^      spc= arxim_result(spc_include)$/;"	kind:variable	line:273
+spc_include	../arxim_map_dominant.py	/^      spc_include=plt.zeros(len(spc_names), dtype=bool)$/;"	kind:variable	line:262
+spc_names	../arxim_map_dominant.py	/^        spc_names= f.readline().split()$/;"	kind:variable	line:257
+spc_names	../arxim_map_dominant.py	/^spc_names= []$/;"	kind:variable	line:107
+spc_names_fe	../arxim_map_dominant.py	/^spc_names_fe= []$/;"	kind:variable	line:109
+spc_types	../arxim_map_dominant.py	/^        spc_types= f.readline().split()$/;"	kind:variable	line:258
+spc_types	../arxim_map_dominant.py	/^spc_types= []$/;"	kind:variable	line:108
+symbols	../arxim_map_activity.py	/^symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:443
+symbols	../arxim_map_activity.py	/^symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']$/;"	kind:variable	line:442
+symbols	../arxim_map_dominant.py	/^symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:486
+symbols	../arxim_map_dominant.py	/^symbols=['bo','go','ro','cs','mD','yd','bo','go','ro','cs','mD','yd']$/;"	kind:variable	line:485
+symbols	../arxim_map_tp.py	/^symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:467
+symbols	../arxim_map_tp.py	/^symbols=['bo','go','ro','cs','mD','yd']$/;"	kind:variable	line:466
+symbols	../arxim_map_xt_fm.py	/^symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:470
+symbols	../arxim_map_xt_fm.py	/^symbols=['bo','go','ro','cs','mD','yd']$/;"	kind:variable	line:471
+symbols	../arxim_map_xt_fsp.py	/^symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:535
+symbols	../arxim_map_xt_fsp.py	/^symbols=['bo','go','ro','cs','mD','yd']$/;"	kind:variable	line:536
+symbols	../arxim_test_mix.py	/^  symbols=['b','g','r','c','m','y']$/;"	kind:variable	line:70
+symbols	../arxim_test_mix.py	/^  symbols=['bo','go','ro','co','mo','yo','bd','gd','rd','cd','md','yd']$/;"	kind:variable	line:69
+tMix	../arxim_map_xt_fsp.py	/^tMix= []$/;"	kind:variable	line:492
+tMix	../arxim_map_xt_fsp.py	/^tMix= []$/;"	kind:variable	line:573
+tMix	../arxim_map_xt_fsp.py	/^tMix= sorted(tMix,key=lambda x: y)$/;"	kind:variable	line:500
+tMix	../arxim_mixtures.py	/^tMix= []$/;"	kind:variable	line:12
+tMixtur	../arxim_map_xt_fsp.py	/^tMixtur= [] #table of mixture compositions$/;"	kind:variable	line:263
+tab_paragen	../arxim_map_activity.py	/^tab_paragen=plt.zeros((Xdim,Ydim),'int')$/;"	kind:variable	line:176
+tab_paragen	../arxim_map_tp.py	/^tab_paragen=plt.zeros((Xdim,Ydim),'int')$/;"	kind:variable	line:220
+tab_paragen	../arxim_map_xt_fm.py	/^tab_paragen=plt.zeros((Xdim,Ydim),'int')$/;"	kind:variable	line:233
+tab_paragen	../arxim_map_xt_fsp.py	/^tab_paragen=plt.zeros((Xdim,Ydim),'int')$/;"	kind:variable	line:258
+tab_spc	../arxim_map_dominant.py	/^tab_spc=plt.zeros((Xdim,Ydim),'int')$/;"	kind:variable	line:239
+tab_x	../arxim_map_activity.py	/^tab_x=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:178
+tab_x	../arxim_map_dominant.py	/^tab_x=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:241
+tab_x	../arxim_map_tp.py	/^tab_x=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:222
+tab_x	../arxim_map_xt_fm.py	/^tab_x=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:235
+tab_x	../arxim_map_xt_fsp.py	/^tab_x=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:260
+tab_y	../arxim_map_activity.py	/^tab_y=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:177
+tab_y	../arxim_map_dominant.py	/^tab_y=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:240
+tab_y	../arxim_map_tp.py	/^tab_y=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:221
+tab_y	../arxim_map_xt_fm.py	/^tab_y=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:234
+tab_y	../arxim_map_xt_fsp.py	/^tab_y=plt.zeros((Xdim,Ydim),'float')$/;"	kind:variable	line:259
+table_select	../MyLib.py	/^def table_select(iMode,sKey,labels,TT):$/;"	kind:function	line:74
+table_sort	../MyLib.py	/^def table_sort(labels,TT):$/;"	kind:function	line:63
+test_func_in_func	../arxim_map_xt_fsp.py	/^  def test_func_in_func(x,f):$/;"	kind:function	line:164
+textstr	../arxim_map_activity.py	/^  textstr= lis_paragen[i].replace('=','\\n')$/;"	kind:variable	line:461
+textstr	../arxim_map_dominant.py	/^  textstr= spc_names[i]$/;"	kind:variable	line:504
+textstr	../arxim_map_tp.py	/^  textstr= lis_paragen[i].replace('=','\\n')$/;"	kind:variable	line:485
+textstr	../arxim_map_tp.py	/^  textstr= str(i)$/;"	kind:variable	line:486
+textstr	../arxim_map_xt_fm.py	/^  textstr= lis_paragen[i].replace('=','\\n')$/;"	kind:variable	line:489
+textstr	../arxim_map_xt_fm.py	/^  textstr= str(i)$/;"	kind:variable	line:490
+textstr	../arxim_map_xt_fsp.py	/^  textstr= lis_paragen[i].replace('=','\\n')$/;"	kind:variable	line:553
+titr	../arxim_test.py	/^      titr= ML.extractFileName(s)$/;"	kind:variable	line:104
+titr	../arxim_test.py	/^      titr= ML.extractFileName(s)$/;"	kind:variable	line:126
+titr	../arxim_test.py	/^      titr= ML.extractFileName(s)$/;"	kind:variable	line:57
+titr	../arxim_test.py	/^      titr= ML.extractFileName(s)$/;"	kind:variable	line:80
+tol	../arxim_map_xt_fsp.py	/^tol= 0.05$/;"	kind:variable	line:609
+tol	../arxim_mixtures.py	/^tol= 0.05$/;"	kind:variable	line:48
+v	../arxim_map_xt_fsp.py	/^    v= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:581
+v	../arxim_map_xt_fsp.py	/^  v=[]$/;"	kind:variable	line:496
+v	../arxim_mixtures.py	/^    v= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:20
+v0n	../arxim_map_xt_fsp.py	/^        v0n= (p0*v0+p2*v2)\/(p0+p2)$/;"	kind:variable	line:637
+v0n	../arxim_map_xt_fsp.py	/^      v0n= (p0*v0n+p2*v2)\/(p0+p2)$/;"	kind:variable	line:625
+v0n	../arxim_map_xt_fsp.py	/^    v0n= (p0*v0+p1*v1)\/(p0+p1)$/;"	kind:variable	line:620
+v0n	../arxim_map_xt_fsp.py	/^  v0n= v0$/;"	kind:variable	line:615
+v0n	../arxim_map_xt_fsp.py	/^v0n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:588
+v0n	../arxim_mixtures.py	/^        v0n= (p0*v0+p2*v2)\/(p0+p2)$/;"	kind:variable	line:76
+v0n	../arxim_mixtures.py	/^      v0n= (p0*v0n+p2*v2)\/(p0+p2)$/;"	kind:variable	line:64
+v0n	../arxim_mixtures.py	/^    v0n= (p0*v0+p1*v1)\/(p0+p1)$/;"	kind:variable	line:59
+v0n	../arxim_mixtures.py	/^  v0n= v0$/;"	kind:variable	line:54
+v0n	../arxim_mixtures.py	/^v0n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:27
+v1n	../arxim_map_xt_fsp.py	/^      v1n= (p1*v1+p2*v2)\/(p1+p2)$/;"	kind:variable	line:631
+v1n	../arxim_map_xt_fsp.py	/^  v1n= v1$/;"	kind:variable	line:616
+v1n	../arxim_map_xt_fsp.py	/^v1n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:589
+v1n	../arxim_mixtures.py	/^      v1n= (p1*v1+p2*v2)\/(p1+p2)$/;"	kind:variable	line:70
+v1n	../arxim_mixtures.py	/^  v1n= v1$/;"	kind:variable	line:55
+v1n	../arxim_mixtures.py	/^v1n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:28
+v2n	../arxim_map_xt_fsp.py	/^  v2n= v2$/;"	kind:variable	line:617
+v2n	../arxim_map_xt_fsp.py	/^v2n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:590
+v2n	../arxim_mixtures.py	/^  v2n= v2$/;"	kind:variable	line:56
+v2n	../arxim_mixtures.py	/^v2n= plt.zeros(len(ww)-2,'float')$/;"	kind:variable	line:29
+vLines2Table	../MyLib.py	/^def vLines2Table(vL,nL,nC,TT):$/;"	kind:function	line:39
+val	../arxim_map_activity.py	/^          val= iX,iY$/;"	kind:variable	line:301
+val	../arxim_map_activity.py	/^          val= iX,iY$/;"	kind:variable	line:312
+val	../arxim_map_activity.py	/^          val= iX,iY$/;"	kind:variable	line:347
+val	../arxim_map_activity.py	/^          val= iX,iY$/;"	kind:variable	line:358
+val	../arxim_map_activity.py	/^          val= s,x,y$/;"	kind:variable	line:298
+val	../arxim_map_activity.py	/^          val= s,x,y$/;"	kind:variable	line:309
+val	../arxim_map_activity.py	/^          val= s,x,y$/;"	kind:variable	line:344
+val	../arxim_map_activity.py	/^          val= s,x,y$/;"	kind:variable	line:355
+val	../arxim_map_activity.py	/^        val= s,x,y$/;"	kind:variable	line:285
+val	../arxim_map_activity.py	/^        val= s,x,y$/;"	kind:variable	line:331
+val	../arxim_map_dominant.py	/^            val= iX,iY$/;"	kind:variable	line:366
+val	../arxim_map_dominant.py	/^            val= iX,iY$/;"	kind:variable	line:377
+val	../arxim_map_dominant.py	/^            val= iX,iY$/;"	kind:variable	line:416
+val	../arxim_map_dominant.py	/^            val= iX,iY$/;"	kind:variable	line:427
+val	../arxim_map_dominant.py	/^            val= s,x,y$/;"	kind:variable	line:363
+val	../arxim_map_dominant.py	/^            val= s,x,y$/;"	kind:variable	line:374
+val	../arxim_map_dominant.py	/^            val= s,x,y$/;"	kind:variable	line:413
+val	../arxim_map_dominant.py	/^            val= s,x,y$/;"	kind:variable	line:424
+val	../arxim_map_dominant.py	/^          val= iX,iY$/;"	kind:variable	line:380
+val	../arxim_map_dominant.py	/^          val= iX,iY$/;"	kind:variable	line:430
+val	../arxim_map_dominant.py	/^        val= s,x,y$/;"	kind:variable	line:349
+val	../arxim_map_dominant.py	/^        val= s,x,y$/;"	kind:variable	line:399
+val	../arxim_map_tp.py	/^            val= iX,iY$/;"	kind:variable	line:317
+val	../arxim_map_tp.py	/^            val= iX,iY$/;"	kind:variable	line:328
+val	../arxim_map_tp.py	/^            val= iX,iY$/;"	kind:variable	line:366
+val	../arxim_map_tp.py	/^            val= iX,iY$/;"	kind:variable	line:377
+val	../arxim_map_tp.py	/^            val= s,x,y$/;"	kind:variable	line:314
+val	../arxim_map_tp.py	/^            val= s,x,y$/;"	kind:variable	line:325
+val	../arxim_map_tp.py	/^            val= s,x,y$/;"	kind:variable	line:363
+val	../arxim_map_tp.py	/^            val= s,x,y$/;"	kind:variable	line:374
+val	../arxim_map_tp.py	/^          val= iX,iY$/;"	kind:variable	line:331
+val	../arxim_map_tp.py	/^          val= iX,iY$/;"	kind:variable	line:380
+val	../arxim_map_tp.py	/^        val= s,x,y$/;"	kind:variable	line:300
+val	../arxim_map_tp.py	/^        val= s,x,y$/;"	kind:variable	line:349
+val	../arxim_map_xt_fm.py	/^            val= iX,iY$/;"	kind:variable	line:321
+val	../arxim_map_xt_fm.py	/^            val= iX,iY$/;"	kind:variable	line:332
+val	../arxim_map_xt_fm.py	/^            val= iX,iY$/;"	kind:variable	line:370
+val	../arxim_map_xt_fm.py	/^            val= iX,iY$/;"	kind:variable	line:381
+val	../arxim_map_xt_fm.py	/^            val= s,x,y$/;"	kind:variable	line:318
+val	../arxim_map_xt_fm.py	/^            val= s,x,y$/;"	kind:variable	line:329
+val	../arxim_map_xt_fm.py	/^            val= s,x,y$/;"	kind:variable	line:367
+val	../arxim_map_xt_fm.py	/^            val= s,x,y$/;"	kind:variable	line:378
+val	../arxim_map_xt_fm.py	/^          val= iX,iY$/;"	kind:variable	line:335
+val	../arxim_map_xt_fm.py	/^          val= iX,iY$/;"	kind:variable	line:384
+val	../arxim_map_xt_fm.py	/^        val= s,x,y$/;"	kind:variable	line:304
+val	../arxim_map_xt_fm.py	/^        val= s,x,y$/;"	kind:variable	line:353
+val	../arxim_map_xt_fsp.py	/^            val= iX,iY$/;"	kind:variable	line:357
+val	../arxim_map_xt_fsp.py	/^            val= iX,iY$/;"	kind:variable	line:369
+val	../arxim_map_xt_fsp.py	/^            val= iX,iY$/;"	kind:variable	line:409
+val	../arxim_map_xt_fsp.py	/^            val= iX,iY$/;"	kind:variable	line:421
+val	../arxim_map_xt_fsp.py	/^            val= s,x,y$/;"	kind:variable	line:353
+val	../arxim_map_xt_fsp.py	/^            val= s,x,y$/;"	kind:variable	line:365
+val	../arxim_map_xt_fsp.py	/^            val= s,x,y$/;"	kind:variable	line:405
+val	../arxim_map_xt_fsp.py	/^            val= s,x,y$/;"	kind:variable	line:417
+val	../arxim_map_xt_fsp.py	/^          val= iX,iY$/;"	kind:variable	line:372
+val	../arxim_map_xt_fsp.py	/^          val= iX,iY$/;"	kind:variable	line:424
+val	../arxim_map_xt_fsp.py	/^        val= s,x,y$/;"	kind:variable	line:338
+val	../arxim_map_xt_fsp.py	/^        val= s,x,y$/;"	kind:variable	line:390
+vecs	../arxim_test_mix.py	/^  vecs= lines2vecs(lines)$/;"	kind:variable	line:61
+verticalalignment	../arxim_map_activity.py	/^    verticalalignment='center')$/;"	kind:variable	line:465
+verticalalignment	../arxim_map_dominant.py	/^    verticalalignment='center',$/;"	kind:variable	line:507
+verticalalignment	../arxim_map_tp.py	/^    verticalalignment='center',$/;"	kind:variable	line:489
+verticalalignment	../arxim_map_xt_fm.py	/^    verticalalignment='center',$/;"	kind:variable	line:493
+verticalalignment	../arxim_map_xt_fsp.py	/^    verticalalignment='center',$/;"	kind:variable	line:556
+vx	../arxim_map_activity.py	/^  vx= []$/;"	kind:variable	line:451
+vx	../arxim_map_dominant.py	/^  vx= []$/;"	kind:variable	line:495
+vx	../arxim_map_tp.py	/^  vx= []$/;"	kind:variable	line:475
+vx	../arxim_map_xt_fm.py	/^  vx= []$/;"	kind:variable	line:480
+vx	../arxim_map_xt_fsp.py	/^  vx= []$/;"	kind:variable	line:544
+vx	../arxim_test_mix.py	/^  vx= vecs[0]$/;"	kind:variable	line:78
+vy	../arxim_map_activity.py	/^  vy= []$/;"	kind:variable	line:452
+vy	../arxim_map_dominant.py	/^  vy= []$/;"	kind:variable	line:496
+vy	../arxim_map_tp.py	/^  vy= []$/;"	kind:variable	line:476
+vy	../arxim_map_xt_fm.py	/^  vy= []$/;"	kind:variable	line:481
+vy	../arxim_map_xt_fsp.py	/^  vy= []$/;"	kind:variable	line:545
+ww	../arxim_map_activity.py	/^  ww= line.split()$/;"	kind:variable	line:83
+ww	../arxim_map_activity.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:390
+ww	../arxim_map_activity.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:396
+ww	../arxim_map_activity.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:405
+ww	../arxim_map_dominant.py	/^  ww= line.split()$/;"	kind:variable	line:76
+ww	../arxim_map_tp.py	/^  ww= line.split()$/;"	kind:variable	line:77
+ww	../arxim_map_tp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:412
+ww	../arxim_map_tp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:418
+ww	../arxim_map_tp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:427
+ww	../arxim_map_xt_fm.py	/^  ww= line.split()$/;"	kind:variable	line:92
+ww	../arxim_map_xt_fm.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:416
+ww	../arxim_map_xt_fm.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:422
+ww	../arxim_map_xt_fm.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:431
+ww	../arxim_map_xt_fsp.py	/^  ww= line.split()$/;"	kind:variable	line:577
+ww	../arxim_map_xt_fsp.py	/^  ww= line.split()$/;"	kind:variable	line:91
+ww	../arxim_map_xt_fsp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:458
+ww	../arxim_map_xt_fsp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:464
+ww	../arxim_map_xt_fsp.py	/^  ww= paragen.split('=')$/;"	kind:variable	line:473
+ww	../arxim_mixtures.py	/^  ww= line.split()$/;"	kind:variable	line:16
+x	../arxim_map_activity.py	/^  x= tab_x[iX,0]$/;"	kind:variable	line:318
+x	../arxim_map_dominant.py	/^  x= tab_x[iX,0]$/;"	kind:variable	line:386
+x	../arxim_map_tp.py	/^  x= tab_x[iX,0]$/;"	kind:variable	line:336
+x	../arxim_map_xt_fm.py	/^  x= tab_x[iX,0]$/;"	kind:variable	line:340
+x	../arxim_map_xt_fsp.py	/^    x= ww[0]$/;"	kind:variable	line:579
+x	../arxim_map_xt_fsp.py	/^  x= 0.45$/;"	kind:variable	line:189
+x	../arxim_map_xt_fsp.py	/^  x= 0.95$/;"	kind:variable	line:167
+x	../arxim_map_xt_fsp.py	/^  x= tab_x[iX,0]$/;"	kind:variable	line:377
+x	../arxim_mixtures.py	/^    x= ww[0]$/;"	kind:variable	line:18
+x0	../arxim_map_activity.py	/^      x0= tab_x[iX-1,iY]$/;"	kind:variable	line:278
+x0	../arxim_map_dominant.py	/^      x0= tab_x[iX-1,iY]$/;"	kind:variable	line:342
+x0	../arxim_map_tp.py	/^      x0= tab_x[iX-1,iY]$/;"	kind:variable	line:293
+x0	../arxim_map_xt_fm.py	/^      x0= tab_x[iX-1,iY]$/;"	kind:variable	line:297
+x0	../arxim_map_xt_fsp.py	/^      x0= tab_x[iX-1,iY]$/;"	kind:variable	line:331
+x1	../arxim_map_activity.py	/^      x1= tab_x[iX,  iY]$/;"	kind:variable	line:279
+x1	../arxim_map_dominant.py	/^      x1= tab_x[iX,  iY]$/;"	kind:variable	line:343
+x1	../arxim_map_tp.py	/^      x1= tab_x[iX,iY]$/;"	kind:variable	line:294
+x1	../arxim_map_xt_fm.py	/^      x1= tab_x[iX,iY]$/;"	kind:variable	line:298
+x1	../arxim_map_xt_fsp.py	/^      x1= tab_x[iX,iY]$/;"	kind:variable	line:332
+x_	../arxim_map_activity.py	/^    x_= (n*x_+ x)\/(n+1)$/;"	kind:variable	line:216
+x_	../arxim_map_dominant.py	/^    x_= (n*x_+ x)\/(n+1)$/;"	kind:variable	line:293
+x_	../arxim_map_tp.py	/^    x_= (n*x_+ x)\/(n+1)$/;"	kind:variable	line:271
+x_	../arxim_map_xt_fm.py	/^    x_= (n*x_+ x)\/(n+1)$/;"	kind:variable	line:275
+x_	../arxim_map_xt_fsp.py	/^    x_= (n*x_+ x)\/(n+1)$/;"	kind:variable	line:309
+xm	../arxim_map_activity.py	/^        xm=x$/;"	kind:variable	line:290
+xm	../arxim_map_dominant.py	/^          xm=x$/;"	kind:variable	line:355
+xm	../arxim_map_tp.py	/^          xm=x$/;"	kind:variable	line:306
+xm	../arxim_map_xt_fm.py	/^          xm=x$/;"	kind:variable	line:310
+xm	../arxim_map_xt_fsp.py	/^          xm=x$/;"	kind:variable	line:345
+y	../arxim_map_activity.py	/^  y= tab_y[0,iY]$/;"	kind:variable	line:272
+y	../arxim_map_dominant.py	/^  y= tab_y[0,iY]$/;"	kind:variable	line:335
+y	../arxim_map_tp.py	/^  y= tab_y[0,iY]$/;"	kind:variable	line:287
+y	../arxim_map_xt_fm.py	/^  y= tab_y[0,iY]$/;"	kind:variable	line:291
+y	../arxim_map_xt_fsp.py	/^    y= ww[1]$/;"	kind:variable	line:580
+y	../arxim_map_xt_fsp.py	/^  y= tab_y[0,iY]$/;"	kind:variable	line:325
+y	../arxim_map_xt_fsp.py	/^  y= test_func_in_func(x,Xfunc)$/;"	kind:variable	line:168
+y	../arxim_mixtures.py	/^    y= ww[1]$/;"	kind:variable	line:19
+y0	../arxim_map_activity.py	/^      y0= tab_y[iX,iY-1]$/;"	kind:variable	line:324
+y0	../arxim_map_dominant.py	/^      y0= tab_y[iX,iY-1]$/;"	kind:variable	line:392
+y0	../arxim_map_tp.py	/^      y0= tab_y[iX,iY-1]$/;"	kind:variable	line:342
+y0	../arxim_map_xt_fm.py	/^      y0= tab_y[iX,iY-1]$/;"	kind:variable	line:346
+y0	../arxim_map_xt_fsp.py	/^      y0= tab_y[iX,iY-1]$/;"	kind:variable	line:383
+y1	../arxim_map_activity.py	/^      y1= tab_y[iX,iY]$/;"	kind:variable	line:325
+y1	../arxim_map_dominant.py	/^      y1= tab_y[iX,iY]$/;"	kind:variable	line:393
+y1	../arxim_map_tp.py	/^      y1= tab_y[iX,iY]$/;"	kind:variable	line:343
+y1	../arxim_map_xt_fm.py	/^      y1= tab_y[iX,iY]$/;"	kind:variable	line:347
+y1	../arxim_map_xt_fsp.py	/^      y1= tab_y[iX,iY]$/;"	kind:variable	line:384
+y_	../arxim_map_activity.py	/^    y_= (n*y_+ y)\/(n+1)$/;"	kind:variable	line:217
+y_	../arxim_map_dominant.py	/^    y_= (n*y_+ y)\/(n+1)$/;"	kind:variable	line:294
+y_	../arxim_map_tp.py	/^    y_= (n*y_+ y)\/(n+1)$/;"	kind:variable	line:272
+y_	../arxim_map_xt_fm.py	/^    y_= (n*y_+ y)\/(n+1)$/;"	kind:variable	line:276
+y_	../arxim_map_xt_fsp.py	/^    y_= (n*y_+ y)\/(n+1)$/;"	kind:variable	line:310
+ym	../arxim_map_activity.py	/^        ym=y$/;"	kind:variable	line:336
+ym	../arxim_map_dominant.py	/^          ym=y$/;"	kind:variable	line:405
+ym	../arxim_map_tp.py	/^          ym=y$/;"	kind:variable	line:355
+ym	../arxim_map_xt_fm.py	/^          ym=y$/;"	kind:variable	line:359
+ym	../arxim_map_xt_fsp.py	/^          ym=y$/;"	kind:variable	line:397

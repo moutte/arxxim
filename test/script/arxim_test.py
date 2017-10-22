@@ -12,7 +12,7 @@ if sys.platform.startswith("linux"):  sExe= "a.out"      #linux
 sDir= os.path.join("..","bin")
 sExe= os.path.join(sDir,sExe)
 
-Debug= "3"
+Debug= "2"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
