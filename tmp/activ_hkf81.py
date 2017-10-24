@@ -1,26 +1,42 @@
 # solventParamNaCl= 1.0e-07 * bNaCl(Pbar, TdegC)
 # shortRangeInteractionParamNaCl= 1.0e-02 * bNapClm(Pbar, TdegC)
 
+def effectiveIonicRadius(Z):
+# effective ionic radius according to TOUGHREACT, Appendix H, p178
+  if  (Z==-1): r= 1.81        # Cl- value
+  elif(Z==-2): r= 3.00        # average of CO3-- and SO4-- values
+  elif(Z==-3): r= 4.20        # estimation from straight line fit with charge
+  elif(Z==+1): r= 2.31        # NH4+ value
+  elif(Z==+2): r= 2.80        # average for +2 species in HKF'81 table 3
+  elif(Z==+3): r= 3.60        # average for +3 species in HKF'81 table 3
+  elif(Z==+4): r= 4.50        # estimaton using HKF eq. 142
+  elif(Z< -3): r=-Z*4.2/3.0   # based on linear extrapolation
+  else:        r= Z*4.5/4.0   # based on linear extrapolation
+  return r
+
 # electrostatic constant, HKF model, (A*cal)/mol
 eta= 1.66027e+05
 # Born coefficient of the ion H+
 omegaH= 0.5387e+05
+# mol'weight H20
+MWs= 0.0180153
 
-Zi= species.charge()
+species=[]
+name,charge,molal= "Na+", 1,0.1  ;  species.append((name,charge,molal))
+name,charge,molal= "K+",  1,0.1  ;  species.append((name,charge,molal))
+name,charge,molal= "Ca+2",2,0.1  ;  species.append((name,charge,molal))
+name,charge,molal= "Cl-",-1,0.1  ;  species.append((name,charge,molal))
 
-def effectiveIonicRadius(Z):
-# effective ionic radius according to TOUGHREACT, Appendix H, p178
-  if  (Z==-1): r_eff= 1.81        # Cl- value
-  elif(Z==-2): r_eff= 3.00        # average of CO3-- and SO4-- values
-  elif(Z==-3): r_eff= 4.20        # estimation from straight line fit with charge
-  elif(Z==+1): r_eff= 2.31        # NH4+ value
-  elif(Z==+2): r_eff= 2.80        # average for +2 species in HKF'81 table 3
-  elif(Z==+3): r_eff= 3.60        # average for +3 species in HKF'81 table 3
-  elif(Z==+4): r_eff= 4.50        # estimaton using HKF eq. 142
-  elif(Z< -3): r_eff=-Z*4.2/3.0   # based on linear extrapolation
-  else:        r_eff= Z*4.5/4.0   # based on linear extrapolation
-  return r_eff
-
+sum_charged= 0.
+sum_molal=   0.
+IonStr=      0.
+for sp in species:
+  name,z,molal= sp
+  if z!=0: sum_charged= sum_charged +molal
+  sum_molal= sum_molal +molal
+  if z!=0: IonStr= IonStr +molal *z*z
+IonStr= IonStr/2.
+sqrtI= sqrt(IonStr)
 
 '''
 const double A = debyeHuckelParamA(T, P);
@@ -32,52 +48,27 @@ const double bNapClm = shortRangeInteractionParamNaCl(T, P);
 # osmotic coefficient of the aqueous phase
 ChemicalScalar phi(num_species)
 
-alpha = xw/(1.0 - xw) * log10(xw);
-
-# Loop over all charged species in the mixture
-for(unsigned i = 0; i < num_charged_species; ++i) {
-  # The index of the charged species in the mixture
-  const Index ispecies = icharged_species[i];
-
-  # The molality of the charged species and its molar derivatives
-  mi=  molality of the charged species
-  # Check if the molality of the charged species is zero
-  if(mi.val == 0.0): continue
-
-  # The electrical charge of the charged species
-  z = charges[i]
+alpha = xw/(1.0 - xw) * log10(xw)
+phi= 0
+for sp in species:
+  name,z,mi= sp
+  if z==0: continue  
   z2 = z*z
-
-  # The effective radius of the charged species
-  eff_radius = effective_radii[i];
-
-  # The Born coefficient of the current charged species
-  const double 
-  omega = eta*z2/eff_radius - z*omegaH;
-
-  # The absolute Born coefficient of the current charged species
-  omega_abs = eta*z2/eff_radius;
-
+  radius = effectiveIonicRadius(z)
+  omega_= eta*z2/radius - z*omegaH  # Born coefficient
+  omega_abs= eta*z2/radius # absolute Born coefficient
   # Debye-Huckel ion size parameter according to Reed (1982), cf TOUGHREACT
-  if z<0: a_0= 2.0*(eff_radius -z*1.91)/(1.0 - z)
-  else:   a_0= 2.0*(eff_radius +z*1.81)/(1.0 + z)
+  if z<0: a_o= 2.0*(radius -z*1.91)/(1.0 - z)
+  else:   a_o= 2.0*(radius +z*1.81)/(1.0 + z)
+  # lambda in HKF'81 activity coefficient model
+  lambd= 1.0 + a_o*B_DH*sqrtI
+  # eq.298 HKF81 (probable sign error in eq.H1, TOUGHREACT p177)
+  x= -(A_DH*z2*sqrtI)/lambd +(omega_abs*bNaCl +bNapClm -0.19*(abs(z)-1.))*IonStr
+  lnGam= x*ln10 +log(1.+MWs*sum_mi)
 
-  # Lambda parameter, HKF'81 activity coefficient model
-  lambd= 1.0 + a_0*B_DH*sqrtI;
+  sigma= 3.0/pow(a_o*B_DH*sqrtI, 3)*(lambd -1.0/lambd -2.0*log(lambd))
 
-  # log10 of the activity coefficient (in molar fraction scale)
-  log10_gi= -(A_DH*z2*sqrtI)/lambd + (omega_abs*bNaCl + bNapClm - 0.19*(abs(z) - 1.)) * I
-
-  # Set the activity coefficient of the current charged species
-  res.ln_activity_coefficients[ispecies] = log10_gi * ln10;
-
-  # The sigma parameter of the current ion and its molar derivatives
-  sigma = 3.0/pow(a*B*sqrtI, 3) * (lambd - 1.0/lambd - 2.0*log(lambd));
-
-  # Check if the molar fraction of water is one
-  if(xw.val != 1.0) {
-    # The psi contribution of the current ion and its molar derivatives
-    psi = A*z2*sqrtI*sigma/3.0 + alpha - 0.5*(omega*bNaCl + bNapClm - 0.19*(std::abs(z) - 1.0)) * I;
+  psi= A_DH*z2*sqrtI*sigma/3.0 + alpha -0.5*(omega*bNaCl + bNapClm - 0.19*(std::abs(z) - 1.0)) * I;
 
     # The stoichiometric molality of the current charged species
     ChemicalScalar msi = ms.row(i);
