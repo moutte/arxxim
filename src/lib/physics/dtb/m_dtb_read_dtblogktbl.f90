@@ -296,8 +296,10 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
     call ReadRValsV(L,mDum,vX)
     !--------------------------------------------------/scan a data line
     !
-    if(mDum<DtbLogK_Dim) &
-    & call Stop_("Dimension of LogK array < Dimension of TP table !!")
+    if(mDum<DtbLogK_Dim) then
+      print *,trim(L)
+      call Stop_("Dimension of LogK array < Dimension of TP table !!")
+    end if
     !
     !-------------------------------------------------------read formula
     call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)

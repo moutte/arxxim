@@ -46,7 +46,7 @@ contains
     !------------------------------------------------------------ Solute
     LnGam_Charged = -dhA *(SqrtIoSt/(One + 1.5D0*SqrtIoSt))*Ln10
     !
-    LnGam_Neutral = Zero
+    LnGam_Neutral= Zero
     !
     do iAq=1,nSolut
       if (vZSp(iAq)/=0) then
@@ -61,7 +61,7 @@ contains
     !-----------------------------------------------------------/ Solute
     !
     !----------------------------------------------------------- Solvent
-    Sum_Solute = sum(vMolal(:))
+    Sum_Solute= sum(vMolal(:))
     !-- LewisRandall,23-39,p347; EQ3NR-Doc, p.39
     LnActSv= Ln10 *Two/3.0D0 *dhA  *SqrtIost**3 *Sigma(SqrtIoSt) &
     &      - Ln10            *dhA  *IonStr*IonStr &
@@ -86,7 +86,7 @@ contains
     real(dp):: XX
     
     XX= One+x
-    Sigma=  3.0D0*(XX - One/XX - Two*log(XX)) /X**3
+    Sigma= 3.0D0*(XX - One/XX - Two*log(XX)) /X**3
     
   end function Sigma
   

@@ -503,22 +503,3 @@ MIN	crunch	_0813	Bogusite	Ca(1)C(1)O(3)	36.93	-1.849
 MIN	crunch	_0814	HCl(c)	Cl(1)H(1)	1e-05	2	
 MIN	crunch	_0815	HNO3(c)	N(1)O(3)H(1)	1e-05	2	
 MIN	crunch	_0816	CSH(1.8)	Si(100)Ca(180)O(900)H(1040)Div(100)	124.1	-32.6	
-GAS	crunch	_0817	C2H4(g)		0	2.324	
-GAS	crunch	_0818	CH4(g)	C(1)H(4)	0	-141.3	
-GAS	crunch	_0819	CO(g)	C(1)O(1)	0	-38.69	
-GAS	crunch	_0820	CO2(g)	C(1)O(2)	0	7.814	
-GAS	crunch	_0821	CO2(g)*	C(1)O(2)	0	6.745	
-GAS	crunch	_0822	Cl2(g)	Cl(2)	0	-3	
-GAS	crunch	_0823	F2(g)	F(2)	0	-55.72	
-GAS	crunch	_0824	H2(g)	H(2)	0	-43	
-GAS	crunch	_0825	H2O(g)	O(1)H(2)	0	-1.585	
-GAS	crunch	_0826	H2S(g)	S(1)H(2)	0	-130.3	
-GAS	crunch	_0827	HCl(g)	Cl(1)H(1)	0	-6.306	
-GAS	crunch	_0828	HF(g)	F(1)H(1)	0	-1.113	
-GAS	crunch	_0829	N2(g)	H(-6)	0	119.6	
-GAS	crunch	_0830	NH3(g)		0	-1.797	
-GAS	crunch	_0831	NO(g)	O(-1)+(1)	0	-0.7554	
-GAS	crunch	_0832	NO2(g)	N(1)O(2)	0	-8.367	
-GAS	crunch	_0833	O2(g)	O(2)	0	2.898	
-GAS	crunch	_0834	S2(g)	S(2)	0	-200.3	
-GAS	crunch	_0835	SO2(g)	S(1)O(2)	0	-37.73	
