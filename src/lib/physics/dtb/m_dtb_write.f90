@@ -35,7 +35,7 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
   use M_T_DtbAquHkf,only: T_DtbAquHkf,DtbAquHkf_Calc
   !
   use M_Dtb_Vars,   only: vDtbAquHkf
-  !
+  !---------------------------------------------------------------------
   type(T_TPCond),dimension(:),intent(in):: vTPCond
   !
   integer :: N,NN,jTP,iSp,f1,f2,f3 !,f4
@@ -53,7 +53,7 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
   type(T_DtbH2OHkf):: pW_ref
   type(T_Species)  :: S_ref
   type(T_Species),allocatable:: vS_ref(:)
-  !
+  !---------------------------------------------------------------------
   N=  size(vDtbAquHkf)
   NN= size(vTPCond)
   !
@@ -84,7 +84,7 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
   end do
   !---/
   !
-  !------------------------ compute properties at standard T,P cond'n --
+  !--------------------------- compute properties at standard T,P cond'n
   call DtbH2OHkf_Calc( &
   & T_ref,P_ref,&
   & pW_ref) !out
@@ -103,9 +103,9 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
   ! print *,'(A,G15.6)',"Alfa_ref=   ",Alfa_ref
   ! print *,'(A,G15.6)',"dAlfdT_ref= ",dAlfdT_ref
   ! pause
-  !------------------------/compute properties at standard T,P cond'n --
+  !---------------------------/compute properties at standard T,P cond'n
   !
-  !-------------------- compute Thermodyn. properties for all species --
+  !----------------------- compute Thermodyn. properties for all species
   do jTP=1,NN
     !
     call DtbH2OHkf_Calc( &
@@ -128,7 +128,7 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
     end do
   end do
   !
-  !----------------- compute logK according to Anderson Density Model --
+  !-------------------- compute logK according to Anderson Density Model --
   do iSp=1,size(vDtbAquHkf)
     do jTP=1,NN
       !
@@ -153,11 +153,11 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
       !
     end do
   end do
-  !-----------------/compute logK according to Anderson Density Model --
+  !--------------------/compute logK according to Anderson Density Model
   !
-  !----------------------------------------------------------/compute --
+  !-------------------------------------------------------------/compute
   !
-  !----------------------------------------------------------- OUTPUT --
+  !-------------------------------------------------------------- OUTPUT
   call GetUnit(f1)
   open(f1,file=trim(DirDtbOut)//"hkf_aqu_volumes.tab")
   call WriteTPsequence(f1,vTPCond) 
@@ -180,7 +180,7 @@ subroutine DtbAquHkf_Tabulate(vTPCond)
   & trim(DirDtbOut)//"hkf_aqu_gibbs.tab",&
   & "DTB: Hkf/ AquSpecies/ GibbsEnergy")
   !
-  !--------------------------------------------- tabulate aqu'species --
+  !------------------------------------------------ tabulate aqu'species
   
   write(f1,'(4(A,A1))', advance="no") "AQU",T_,"NUM",T_,"NAME",T_,"Rho",T_
   do jTP=1,NN; write(f1,'(G15.8,A1)',advance="no") Rho(jTP), T_;   end do
@@ -288,7 +288,7 @@ subroutine DtbMinHkf_Tabulate(vTPCond)
   use M_T_Species,  only: T_Species
   !
   use M_Dtb_Vars,   only: vDtbMinHkf
-  !
+  !---------------------------------------------------------------------
   type(T_TPCond), dimension(:),intent(in):: vTPCond
   !
   type(T_DtbMinHkf):: M
@@ -296,12 +296,12 @@ subroutine DtbMinHkf_Tabulate(vTPCond)
   integer :: jTP,iSp,f2,f3,N,NN
   !
   type(T_Species),allocatable,dimension(:,:)::tS
-  !
+  !---------------------------------------------------------------------
   N=  size(vDtbMinHkf)
   NN= size(vTPCond)
   allocate(tS(1:N,1:NN))
   !
-  !-------------------- compute Thermodyn. properties for all species --
+  !----------------------- compute Thermodyn. properties for all species
   do iSp=1,size(vDtbMinHkf)
     do jTP=1,NN
       !tS(iSp,jTP)=
@@ -312,9 +312,9 @@ subroutine DtbMinHkf_Tabulate(vTPCond)
       & tS(iSp,jTP))
     end do
   end do
-  !---------------------------------------------------------/ compute --
+  !------------------------------------------------------------/ compute
   !
-  !----------------------------------------------------------- OUTPUT --
+  !-------------------------------------------------------------- OUTPUT
   call GetUnit(f2)
   open(f2,file=trim(DirDtbOut)//"hkf_min_cp.tab")
   !
@@ -349,7 +349,7 @@ subroutine DtbMinHkf_Tabulate(vTPCond)
     write(f3,*)
     !
   end do
-  !-----------------------------------------------------------/OUTPUT --
+  !--------------------------------------------------------------/OUTPUT
   !
   !close(f1)
   close(f2)
@@ -371,7 +371,7 @@ subroutine DtbAquThr_Tabulate(vTPCond)
   use M_Fluid_Calc, only: EosFluid_Calc
   !
   use M_Dtb_Vars,   only: vDtbAquHkf
-  !
+  !---------------------------------------------------------------------
   type(T_TPCond), dimension(:),intent(in):: vTPCond
   !
   integer :: jTP,iSp,f1,f2,f3,N,NN
@@ -387,14 +387,14 @@ subroutine DtbAquThr_Tabulate(vTPCond)
   type(T_DtbAquHkf):: M
   type(T_Species),  allocatable:: tS(:,:)
   type(T_DtbH2OHkf),allocatable:: pW(:)
-  !
+  !---------------------------------------------------------------------
   N=  size(vDtbAquHkf)
   NN= size(vTPCond)
   allocate(tS(1:N,1:NN))
   allocate(pW(1:NN))
   allocate(vS_ref(1:N))
   !
-  !------------------------ compute properties at standard T,P cond'n --
+  !--------------------------- compute properties at standard T,P cond'n
   Pbar_ref= 1.0D0
   TdgK_ref= 25.0D0 +T_CK
   !
@@ -411,9 +411,9 @@ subroutine DtbAquThr_Tabulate(vTPCond)
     & pW_ref,          & !in
     & vS_ref(iSp))
   end do
-  !------------------------/compute properties at standard T,P cond'n --
+  !---------------------------/compute properties at standard T,P cond'n
   !
-  !-------------------- compute Thermodyn. properties for all species --
+  !----------------------- compute Thermodyn. properties for all species
   do jTP=1,NN
     call DtbH2OHkf_Calc( &
     & vTPCond(jTP)%TdgC+T_CK,vTPCond(jTP)%Pbar,&
@@ -427,9 +427,9 @@ subroutine DtbAquThr_Tabulate(vTPCond)
       & tS(iSp,jTP))
     end do
   end do
-  !---------------------------------------------------------- compute --
+  !------------------------------------------------------------- compute
   !
-  !----------------------------------------------------------- OUTPUT --
+  !-------------------------------------------------------------- OUTPUT
   call GetUnit(f1)
   open(f1,file=trim(DirDtbOut)//"thr_aqu_volume.tab")
   call WriteTPsequence(f1,vTPCond)
@@ -451,7 +451,7 @@ subroutine DtbAquThr_Tabulate(vTPCond)
   & trim(DirDtbOut)//"thr_aqu_gibbs.tab",&
   & "DTB: logK,AquSpecies,HkfData,ThrConvention")
   !
-  !------------------------------------------------ tabulate logK_H2O --
+  !--------------------------------------------------- tabulate logK_H2O
   write(fLogK,'(A3,A1,A15,A1,A23,A1,A39,A1,A7,A1)',advance="no") &
   & "AQU",T_,"THR_H2O",T_,"H2O",T_,"O(1)H(2)",T_,"   0.00",T_
   do jTP=1,NN
@@ -463,7 +463,7 @@ subroutine DtbAquThr_Tabulate(vTPCond)
     write(fLogK,'(F12.6,A1)',advance="no") -G_H2O/R_jk/TdgK/Ln10,T_
   end do
   write(fLogK,*)
-  !-----------------------------------------------/ tabulate logK_H2O --
+  !--------------------------------------------------/ tabulate logK_H2O
   !
   !write(fLogK,'(A,A1,A,A1,A7,A1)',advance="no") &
   !& "H2O",T_,"O(1)H(2)",T_,"   0.00",T_
@@ -474,7 +474,7 @@ subroutine DtbAquThr_Tabulate(vTPCond)
   !end do
   !write(fLogK,*)
   !
-  !--------------------------------------------- tabulate aqu'species --
+  !------------------------------------------------ tabulate aqu'species
   do iSp=1,size(vDtbAquHkf)
     !
     M=vDtbAquHkf(iSp)
@@ -502,13 +502,13 @@ subroutine DtbAquThr_Tabulate(vTPCond)
     write(fLogK,*)
     !
   end do !iSp
-  !--------------------------------------------/ tabulate aqu'species --
+  !-----------------------------------------------/ tabulate aqu'species
   !
   close(f1)
   close(f2)
   close(f3)
   close(fLogK)
-  !-----------------------------------------------------------/OUTPUT --
+  !--------------------------------------------------------------/OUTPUT
   !
   deallocate(tS)
   deallocate(pW)
@@ -527,7 +527,7 @@ subroutine DtbMin_Tabulate(sCode,vTPCond) !
   use M_T_DtbMinThr
   !
   use M_Dtb_Vars,   only: vDtbMinThr, vDtbMinHkf
-  !
+  !---------------------------------------------------------------------
   character(len=*),intent(in):: sCode
   type(T_TPCond),  intent(in):: vTPCond(:)
   !
@@ -540,7 +540,7 @@ subroutine DtbMin_Tabulate(sCode,vTPCond) !
   !! integer :: ff(1:5)
   real(dp):: TdgK, Pbar
   character(len=63):: Str
-  !
+  !---------------------------------------------------------------------
   ! must have called InitTPsequence beforehand ...
   !
   call GetUnit(f1)
@@ -593,7 +593,7 @@ subroutine DtbMin_Tabulate(sCode,vTPCond) !
   if(sCode=="HKF")  nMin= size(vDtbMinHkf)
   allocate(tS(1:nMin,1:nTP))
   !
-  !-------------------- compute Thermodyn. properties for all species --
+  !----------------------- compute Thermodyn. properties for all species
   do iMin=1,nMin!____________
     do jTP=1,nTP
       TdgK= vTPCond(jTP)%TdgC+T_CK
@@ -612,7 +612,7 @@ subroutine DtbMin_Tabulate(sCode,vTPCond) !
       tS(iMin,jTP)= S
     end do
   end do
-  !-------------------/ compute Thermodyn. properties for all species --
+  !----------------------/ compute Thermodyn. properties for all species
   !
   do iMin=1,nMin
     if(sCode=="THR") then 
@@ -711,7 +711,7 @@ subroutine DtbSys_Tabulate(sCode,vTPCond) !
   use M_T_DtbMinThr
   !
   use M_Dtb_Vars,   only: vDtbMinThr, vDtbMinHkf
-  !
+  !---------------------------------------------------------------------
   character(len=*),intent(in):: sCode
   type(T_TPCond),  intent(in):: vTPCond(:)
   !
@@ -724,7 +724,7 @@ subroutine DtbSys_Tabulate(sCode,vTPCond) !
   !! integer :: ff(1:5)
   real(dp):: TdgK, Pbar
   character(len=63):: Str
-  !
+  !---------------------------------------------------------------------
   ! must have called InitTPsequence beforehand ...
   !
   call GetUnit(f1)
@@ -777,7 +777,7 @@ subroutine DtbSys_Tabulate(sCode,vTPCond) !
   if(sCode=="HKF")  nMin= size(vDtbMinHkf)
   allocate(tS(1:nMin,1:nTP))
   !
-  !-------------------- compute Thermodyn. properties for all species --
+  !----------------------- compute Thermodyn. properties for all species
   do iMin=1,nMin!____________
     do jTP=1,nTP
       TdgK= vTPCond(jTP)%TdgC+T_CK
@@ -796,7 +796,7 @@ subroutine DtbSys_Tabulate(sCode,vTPCond) !
       tS(iMin,jTP)= S
     end do
   end do
-  !-------------------/ compute Thermodyn. properties for all species --
+  !----------------------/ compute Thermodyn. properties for all species
   !
   do iMin=1,nMin
     if(sCode=="THR") then 
@@ -891,16 +891,16 @@ subroutine DtbH2OHkf_Tabulate(vTPCond)
   use M_T_DtbH2OHkf,only: T_DtbH2OHkf,DtbH2OHkf_Calc
   use M_T_DtbAquHkf
   use M_IoTools
-  !
+  !---------------------------------------------------------------------
   type(T_TPCond), dimension(:),intent(in):: vTPCond
   !
   integer::i,f1,NN
   type(T_DtbH2OHkf):: p
   type(T_DtbH2OHkf),allocatable:: vDtbH2OHkf(:)
   
-  !----------------------------------------- write Solvent properties --
+  !-------------------------------------------- write Solvent properties
   !
-  !------------------------------------- results of HKF-Haar routines --
+  !---------------------------------------- results of HKF-Haar routines
   NN= size(vTPCond)
   allocate(vDtbH2OHkf(1:NN))
   
@@ -934,7 +934,7 @@ subroutine DtbH2OHkf_Tabulate(vTPCond)
   end do !I
   
   close(f1)
-  !----------------------------------------/ write Solvent properties --
+  !-------------------------------------------/ write Solvent properties
   !
   write(fLogK,'(/,A)') "TP.TABLE"
   !
@@ -980,11 +980,13 @@ subroutine WriteTPsequence(f,vTPCond)
   
   write(f,'(4(A6,A1))',advance="no") &
   & ".TYP",T_,".SOURCE",T_,".SPECIES",T_,".TDGC",T_
-  do I=1,NN; write(f,'(G15.4, A1)',advance="no") vTPCond(I)%TdgC,T_; end do; write(f,*)
-  
+  ! do I=1,NN; write(f,'(G15.4, A1)',advance="no") vTPCond(I)%TdgC,T_; end do; write(f,*)
+  write(f,'(*(G15.4, A1))') (vTPCond(I)%TdgC,T_,I=1,NN)
+
   write(f,'(4(A6,A1))',advance="no") &
   & ".TYP",T_,".SOURCE",T_,".SPECIES",T_,".PBAR",T_
-  do I=1,NN; write(f,'(G15.4, A1)',advance="no") vTPCond(I)%Pbar,T_; end do; write(f,*)
+  ! do I=1,NN; write(f,'(G15.4, A1)',advance="no") vTPCond(I)%Pbar,T_; end do; write(f,*)
+  write(f,'(*(G15.4, A1))') (vTPCond(I)%Pbar,T_,I=1,NN)
   
   return
 end subroutine WriteTPsequence
@@ -1058,20 +1060,18 @@ subroutine DtbMinHkf_Write
 end subroutine DtbMinHkf_Write
 
 subroutine DtbAquHkf_Write
-!--
+!-----------------------------------------------------------------------
 !-- check result DtbAquHKF_Read
 !-- make a new version of Hkf base, one species per line
-!--
-
+!-----------------------------------------------------------------------
   use M_Dtb_Const,only: Tref
   use M_Files,    only: DirDtbOut,Files_Index_Write
   use M_T_DtbAquHkf
   use M_Dtb_Vars, only: vDtbAquHkf
-  !
+  !---------------------------------------------------------------------
   type(T_DtbAquHkf):: M
   integer:: I,f
-  
-  
+  !---------------------------------------------------------------------
   if(idebug>1) write(fTrc,'(/,A)') "< DtbAquHkf_Write"
   !
   call GetUnit(f)
@@ -1091,8 +1091,8 @@ subroutine DtbAquHkf_Write
   do I=1,size(vDtbAquHkf)
     M=vDtbAquHkf(I)
     write(f,'(3(A,A1))',advance="no") &
-    & M%Num,T_,&
-    & M%Name,T_,&
+    & M%Num,    T_,&
+    & M%Name,   T_,&
     & M%Formula,T_
     !!Y=dot_product(M%Stoik(1:nEl),vEle(1:nEl)%S0)
     !!write(f,'(5(G15.8,A1))',advance="no") X,   T_,Y,   T_,M%G0R, T_,M%H0R,T_,M%S0_,T_
@@ -1109,18 +1109,16 @@ subroutine DtbAquHkf_Write
 end subroutine DtbAquHkf_Write
 
 subroutine DtbMinThr_Write
-!--
+!-----------------------------------------------------------------------
 !--check result DtbMinHKF_Read
-!--
-  
+!-----------------------------------------------------------------------  
   use M_Files,      only: DirDtbOut,Files_Index_Write
   use M_Dtb_Vars,   only: vDtbMinThr
   use M_T_DtbMinThr,only: T_DtbMinThr
-  
+  !---------------------------------------------------------------------
   type(T_DtbMinThr):: M
   integer          :: I,f
-  
-  !!=parameters=========================================================
+  !---------------------------------------------------------------------
   !  integer :: nLanda !number of landau transitions
   !  integer :: codVol !code for volume function
   !  real(dp)::& !for landau transitions

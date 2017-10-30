@@ -256,13 +256,13 @@ subroutine DtbAquHkf_Calc( &
   !
   ! cation -> use RejRef of Cl-, i.e. 1.81 Angstrom
   if(Zj>0) S%AquSize= &
-  & 2.D0*(Nu_Cation*RejRef + abs(Zj) *Rej_Anion) &
-  &     /(Nu_Cation        + abs(Zj))
+  & 2.D0*(Nu_Cation*RejRef +Zj*Rej_Anion) &
+  &     /(Nu_Cation        +Zj)
   !
   ! anion -> 
   if(Zj<0) S%AquSize= &
-  & 2.D0*(Nu_Anion *RejRef + abs(Zj) *Rej_Cation) &
-  &     /(Nu_Anion         + abs(Zj))
+  & 2.D0*(Nu_Anion*RejRef -Zj*Rej_Cation) &
+  &     /(Nu_Anion        -Zj)
   !
   if(M%name=='H+') S%AquSize= 9.0D0
   !
