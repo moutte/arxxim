@@ -116,10 +116,10 @@ subroutine DtbH2OHkf_Calc(TdgK,Pbar,pW)
   
   ! formulas for pW%Rho in g/cm3 !!
   ! with Rho in kg/m3, should use Rho/1.D3 !!
-  pW%dhA= 1.824829238D6 *SQRT(pW%Rho) /SQRT((pW%Eps*TdgK)**3)
-  !with IonSizeParam in NM, dhA=0.5095 at 25°C
-  pW%dhB= 50.29158649D0 *SQRT(pW%Rho) /SQRT(pW%Eps*TdgK)
-  !with IonSizeParam in NM, dhB=0.3284 at 25°C
+  pW%dhA= 1.824829238D6 *sqrt(pW%Rho) /sqrt((pW%Eps*TdgK)**3)
+  !with IonSizeParam in nm, dhA=0.5095 at 25°C
+  pW%dhB= 50.29158649D0 *sqrt(pW%Rho) /sqrt(pW%Eps*TdgK)
+  !with IonSizeParam in nm, dhB=0.3284 at 25°C
   
 end subroutine DtbH2OHkf_Calc
 
@@ -222,112 +222,94 @@ subroutine CalcGShok( & !SupCrt92
   return
 end subroutine CalcGShok
 
-!! subroutine CalcBorn92(Eps,dEps_dP,dEps_dT,d2Eps_dT2,Zeps,Qeps,Yeps,Xeps)
-!! !                     >InPut________________________>OutPut
-!! !Compute the Z, Q, Y, and X Born functions from their eps, dedP, dedT, and d2edT2 counterparts.
-!! !produced by Johnson-Norton (1991) equation (= JN91)
-!! !from SupCrt92
-!! !(not used, rewritten within calling procedures)
-!!   implicit none !real(dp) (a-h,o-z)
-!!   real(dp)::&
-!!     Eps,dEps_dP,dEps_dT,d2Eps_dT2,& !IN
-!!     Zeps,Qeps,Yeps,Xeps             !OUT
-!!   !
-!!   Qeps= dEps_dP/Eps/Eps
-!!   Xeps= (d2Eps_dT2-2.0D0/Eps*dEps_dT**2)/Eps/Eps
-!!   Yeps= dEps_dT/Eps/Eps
-!!   Zeps=-One/Eps
-!! end subroutine CalcBorn92
-
 subroutine CalcEpsJN91( &
 & TdgK,Dgcm3,Beta,Alpha,dAldT, &
 & Eps,dEdP,dEdT,d2EdT2)
-!--
+!-----------------------------------------------------------------------
 !-- from SupCrt (Johnson & Norton 91), also found in deCapitani
 !-- Compute (eps, dedP, dedT, d2edT2)(T,D) 
 !-- using equations given by Johnson and Norton (1991)
 !-- -- fit parameters regressed from least squares fit to dielectric data
 !-- consistent with the HK74 equation at low temperatures
 !-- and with the Pitz83 equation at high temperatures
-!--
+!-----------------------------------------------------------------------
 !-- Units:
 !--   T: K; D: g/cm3;
 !--   beta,dedP: /bar;
 !--   alpha,dedT: /K;
 !--   daldT,d2edT2: /K^2
-!--
-
+!-----------------------------------------------------------------------
   use M_Dtb_Const, only:TRef
-  
+  !---------------------------------------------------------------------
   real(dp),intent(in) :: TdgK,Dgcm3,Beta,Alpha,dAldT
   real(dp),intent(out):: Eps,dEdP,dEdT,d2EdT2
-  
+  !---------------------------------------------------------------------
   real(dp):: a(10)
   real(dp):: c(5), dcdT(5), dc2dTT(5)
   real(dp):: T, D, Tn
   integer :: J,K
   !save
   !real(dp),parameter:: Tref=298.15_R8_
-  
+  !---------------------------------------------------------------------
   T=TdgK
   D=Dgcm3
-  
+  !
   a=(/ &
   &  0.1470333593E+02, 0.2128462733E+03,-0.1154445173E+03, &
   &  0.1955210915E+02,-0.8330347980E+02, 0.3213240048E+02, &
   & -0.6694098645E+01,-0.3786202045E+02, 0.6887359646E+02, &
   & -0.2729401652E+02 /)
-  
+  !
   Tn= T / Tref
   c(1)= One
   dCdT(1)= Zero
   dC2dTT(1)= Zero
-  
+  !
   C(2)= a(1)/Tn
   dCdT(2)= -a(1)*Tref/T**2
   dC2dTT(2)= Two*a(1)*Tref/T**3
-  
+  !
   C(3)= a(2)/Tn &
-      + a(3) &
-      + a(4)*Tn           
+  &   + a(3) &
+  &   + a(4)*Tn           
   dCdT(3)= -a(2)*Tref/T**2 &
-         +  a(4)/Tref           
+  &      +  a(4)/Tref           
   dC2dTT(3)= Two*a(2)*Tref/T**3
-  
+  !
   C(4)= a(5)/Tn &
-      + a(6)*Tn &
-      + a(7)*Tn**2
+  &   + a(6)*Tn &
+  &   + a(7)*Tn**2
   dCdT(4)= -a(5)    *Tref/T**2 &
-         +  a(6)         /Tref &
-         +  a(7)*Two*T   /Tref**2
+  &      +  a(6)         /Tref &
+  &      +  a(7)*Two*T   /Tref**2
   dC2dTT(4)= Two*a(5)*Tref/T**3 &
-           + Two*a(7)/Tref**2
-  
+  &        + Two*a(7)/Tref**2
+  !
   C(5)= a(8)/Tn**2 &
-      + a(9)/Tn &
-      + a(10)
+  &   + a(9)/Tn &
+  &   + a(10)
   dCdT(5)= -Two*a(8)*Tref**2/T**3 &
-         - a(9)*Tref/T**2
+  &      - a(9)*Tref/T**2
   dC2dTT(5)= 6.0d0*a(8)*Tref**2/T**4 &
-           + Two*a(9)*Tref/T**3
-  
+  &        + Two*a(9)*Tref/T**3
+  !
   eps= Zero
   do k=1,5
     eps= eps  + c(k)*D**(k-1)
   end do !Eps=C1+C2*D^2+..+C5*D^4
-  
+  !
   dedP= Zero
   do j= 0,4
     dedP= dedP + j*c(j+1)*D**j
   end do
   dedP= beta * dedP
-  
+  !
   dedT= Zero
   do j= 0,4
     dedT= dedT &
     &   + D**j *( dcdT(j+1) - j*alpha*c(j+1) )
   end do
-  
+  !
   d2edT2= Zero
   do j= 0,4
     d2edT2= d2edT2 &
@@ -336,7 +318,7 @@ subroutine CalcEpsJN91( &
     &   -j *(alpha*dcdT(j+1) + c(j+1)*daldT) &
     &   -j *alpha *(dcdT(j+1) - j*alpha*c(j+1)))
   end do
-  
+  !
   return
 end subroutine CalcEpsJN91
 

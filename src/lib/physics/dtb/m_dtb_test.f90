@@ -14,6 +14,7 @@ module M_Dtb_Test
   public:: Dtb_Tabulate_ForSystem
   public:: Dtb_Test_Fluid
   public:: Dtb_Test_H2OHkf
+  public:: Dtb_Test_H2OHkf_new
   public:: Dtb_Test_AquHkf
   public:: Dtb_Test_Species
   public:: Dtb_Tabulate_PSatH2O
@@ -278,22 +279,22 @@ subroutine Dtb_Tabulate_ForSystem( &
   !
   nCp=size(vCpn)
   !
-  !--------------------------------logK from current prim'species set--/
+  !----------------------------------------------------------HEADER file
   call GetUnit(F)
-  open(F,file=trim(DirOut)//"_logk_prim.dtb")
+  open(F,file=trim(DirOut)//"_logk_header.dtb")
   !
   !--------------------------------------------------------index in html
   call Files_Index_Write(fHtm,&
   & trim(DirOut)//"_logk_prim.dtb",&
   & "table of logK from prim'species, for current run")
-  !----------------------------------------------------/
+  !--------------------------------------------------------------------/
   !
   !-------------------------------------------------------TP.TABLE block
   write(F,'(/,A)') "TP.TABLE"
   call OutStrVec(F,vTPpath(1:N)%TdgC,Opt_S="TdgC")
   call OutStrVec(F,vTPpath(1:N)%Pbar,Opt_S="Pbar")
   write(F,'(A,/)') "END TP.TABLE"
-  !---------------------------------------------------/
+  !------------------------------------------------------/TP.TABLE block
   !
   !--------------------------------------------------------SOLVENT block
   write(F,'(/,A)') "SOLVENT"
@@ -304,10 +305,17 @@ subroutine Dtb_Tabulate_ForSystem( &
   call OutStrVec(F,vSolvDat(1:N)%dhB, Opt_S="DHB")
   call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
   write(F,'(A,/)') "END SOLVENT"
-  !----------------------------------------------------/
+  !-------------------------------------------------------/SOLVENT block
+  !
+  close(F)
+  !---------------------------------------------------------/HEADER file
+  !
+  !-----------------------------------logK from current prim'species set
+  call GetUnit(F)
+  open(F,file=trim(DirOut)//"_logk_prim.dtb")
   !
   !------------------------------------------------------- SPECIES block
-  write(F,'(/,A)') "SPECIES" !
+  write(F,'(A)') "SPECIES" !
   !-------------------------------------first, write the primary species
   DoPrim: do I=1,size(vSpc)
     !
@@ -328,19 +336,10 @@ subroutine Dtb_Tabulate_ForSystem( &
     & trim(S%NamSp),  T_, &
     & trim(S%Formula),T_
     
-    !write(F,'(4(A,A1),$)') &
-    !& trim(S%Typ),    T_, &
-    !& trim(Cc),       T_, &
-    !& trim(S%NamSp),   T_, &
-    !& trim(S%Formula),T_
-    
-    if(S%Typ=="AQU") then
-      !for aqu'species, write size parameter
-      !print *,"S%NamSp=",trim(S%NamSp)
-      write(F, '(F15.1,A1,$)') S%AquSize, T_
-    else
-      !for non aqueous species, write density
-      write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
+    if(S%Typ=="AQU") then       ! for aqu'species, write size parameter
+      write(F, '(F6.2,A1,$)') S%AquSize, T_
+    else                        ! for non aqueous species, write density
+      write(F, '(G15.6,A1,$)') S%WeitKg / S%V0, T_
     end if
     
     !MODif!2016/02!
@@ -368,15 +367,13 @@ subroutine Dtb_Tabulate_ForSystem( &
     & trim(S%NamSp),   T_, &
     & trim(S%Formula), T_
     !
-    if(S%Typ=="AQU") then
-      !-- for aqu'species, write size parameter
-      write(F, '(F15.1,A1,$)') S%AquSize, T_
-    else
-      !-- for non aqueous species, write density
+    if(S%Typ=="AQU") then      !-- for aqu'species, write size parameter
+      write(F, '(F6.2,A1,$)') S%AquSize, T_
+    else                      !-- for non aqueous species, write density
       if(S%V0<1.D-9) then
         write(F,'(A,A1,$)') "_?_",T_
       else
-        write(F, '(G15.8,A1,$)') S%WeitKg / S%V0, T_
+        write(F, '(G15.6,A1,$)') S%WeitKg / S%V0, T_
       end if
     end if
     !
@@ -399,7 +396,7 @@ subroutine Dtb_Tabulate_ForSystem( &
   close(F)
   !
   if(idebug>2) print '(A)',"Table of LogK in "//trim(DirOut)//"_logk.dtb"
-  !------------------------------/ logK from current prim'species set --
+  !---------------------------------/ logK from current prim'species set
   !
   !---------------------------------------------------------------------
   !-------------------------------------------------- logK from database
@@ -413,26 +410,26 @@ subroutine Dtb_Tabulate_ForSystem( &
   & "table of logK from elements, for current run")
   !----------------------------------------------------/
   !
-  !-------------------------------------------------------TP.TABLE block
-  write(F,'(/,A)') "TP.TABLE"
-  call OutStrVec(F,vTPpath(1:N)%TdgC,Opt_S="TdgC")
-  call OutStrVec(F,vTPpath(1:N)%Pbar,Opt_S="Pbar")
-  write(F,'(A,/)') "END TP.TABLE"
-  !------------------------------------------------------/
-  !
-  !--------------------------------------------------------SOLVENT block
-  write(F,'(/,A)') "SOLVENT"
-  write(F,'(A)') "NAME H2O"
-  call OutStrVec(F,vSolvDat(1:N)%Rho, Opt_S="Rho")
-  call OutStrVec(F,vSolvDat(1:N)%Eps, Opt_S="Eps")
-  call OutStrVec(F,vSolvDat(1:N)%dhA, Opt_S="DHA")
-  call OutStrVec(F,vSolvDat(1:N)%dhB, Opt_S="DHB")
-  call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
-  write(F,'(A,/)') "END SOLVENT"
-  !-------------------------------------------------------/SOLVENT block
+  ! !-------------------------------------------------------TP.TABLE block
+  ! write(F,'(/,A)') "TP.TABLE"
+  ! call OutStrVec(F,vTPpath(1:N)%TdgC,Opt_S="TdgC")
+  ! call OutStrVec(F,vTPpath(1:N)%Pbar,Opt_S="Pbar")
+  ! write(F,'(A,/)') "END TP.TABLE"
+  ! !------------------------------------------------------/
+  ! !
+  ! !--------------------------------------------------------SOLVENT block
+  ! write(F,'(/,A)') "SOLVENT"
+  ! write(F,'(A)') "NAME H2O"
+  ! call OutStrVec(F,vSolvDat(1:N)%Rho, Opt_S="Rho")
+  ! call OutStrVec(F,vSolvDat(1:N)%Eps, Opt_S="Eps")
+  ! call OutStrVec(F,vSolvDat(1:N)%dhA, Opt_S="DHA")
+  ! call OutStrVec(F,vSolvDat(1:N)%dhB, Opt_S="DHB")
+  ! call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
+  ! write(F,'(A,/)') "END SOLVENT"
+  ! !-------------------------------------------------------/SOLVENT block
   !
   !--------------------------------------------------------SPECIES block
-  write(F,'(/,A)') "SPECIES" !
+  write(F,'(A)') "SPECIES" !
   !-------------------------------------first, write the primary species
   DoPrim2: do I=1,size(vSpc)
     !
@@ -601,7 +598,6 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     !
     write(F,'(/,A)') "SPECIES" !
     !
-  !
   case("GIBBS","GIBBS2","VOLUME")
     !
     select case(trim(sCode))
@@ -621,7 +617,7 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     & ".Type",T_,".Trace",T_,".Species",T_,".ECFORM",T_
     ! call OutStrVec(F,vTPCond(:)%Pbar,Opt_S="Pbar")
     call OutStrVec(F,vTPCond(:)%Pbar)
-  !
+    !
   end select
   !--------------------------------------------------------/write header
   !
@@ -710,7 +706,7 @@ subroutine Dtb_Test_EQ36
   !
   use M_Global_Vars,only: vSpcDtb,vSpc
   !
-  type(T_TPCond)      :: vTPcond(8)
+  type(T_TPCond)       :: vTPcond(8)
   type(T_SolModel)     :: Slv
   type(T_SolModelDat)  :: vSolvDat(8)
   real(dp),allocatable:: tGrt(:,:),tVol(:,:)
@@ -936,6 +932,87 @@ subroutine Dtb_Test_Species
   !
   return
 end subroutine Dtb_Test_Species
+
+subroutine Dtb_Test_H2OHkf_new
+!--
+!-- tabulate the properties of H2O used by the HKF model
+!--
+  use M_Dtb_Const,  only: T_CK
+  use M_IOTools,    only: GetUnit
+  use M_TPcond_Read,only: TPpath_Read,TPgrid_Build
+  use M_Path_Vars,  only: vTPpath
+  use M_Fluid_Calc
+  use M_T_DtbH2OHkf
+  !---------------------------------------------------------------------
+  logical :: Ok
+  real(dp):: TdgC,TdgK,Pbar,Psat
+  integer :: f
+  integer :: iT,iP
+  type(T_DtbH2OHkf):: pW
+  real(dp):: TdgC_range(21)
+  real(dp):: Pbar_range(10)
+  !---------------------------------------------------------------------
+  TdgC_range= [ &
+  &  0.01d0,  25.d0,  50.d0,  75.d0, 100.d0, &
+  &  125.d0, 150.d0, 175.d0, 200.d0, 225.d0, &
+  &  250.d0, 275.d0, 300.d0, 325.d0, 350.d0, &
+  &  375.d0, 400.d0, 425.d0, 450.d0, 475.d0, 500.d0]
+  Pbar_range= (/ &
+  & 1.d0,     250.d0,  500.d0,  750.d0, 1000.d0, &
+  & 1500.d0, 2000.d0, 3000.d0, 4000.d0, 5000.d0  /)
+  !
+  TdgK= 298.15D0
+  Pbar= 1.01325D0
+  !
+  call TPgrid_Build(Ok)
+  if(.not. Ok) call TPpath_Read(TdgK,Pbar)
+  !
+  call GetUnit(f)
+  open(f,file="dtbh2ohkf.restab")
+  write(f,'(19(A,A1))') &
+  & "TdgC",       t_,"Pbar",         t_, &
+  & "Rho",        t_,"Eps",          t_, &
+  & "Q*1.D6",     t_,"X*1.D6",       t_, &
+  & "Y*1.D6",     t_,"Z*1.D6",       t_, &
+  & "dhA",        t_,"dhB",          t_, &
+  & "Alfa*1.D6",  t_,"dAlfdT*1.D6",  t_, &
+  & "Beta*1.D6",  t_,"dBetdT*1.D6",  t_, "dBetdP*1.D6",t_, &
+  & "dGshdP*1.D6",t_,"dGshdT*1.D6",  t_, &
+  & "dGshdT*1.D6",t_,"d2GshdT2*1.D6",t_
+  !
+  do iT=1,size(TdgC_range)
+    !
+    TdgC= TdgC_range(iT)
+    TdgK= TdgC +T_CK
+    !
+    do iP=1,size(Pbar_range)
+      !
+      Pbar= Pbar_range(iP)
+      if (TdgK<=647.25D0) then
+        call Eos_H2O_Psat(TdgK,Psat)
+        if(Pbar<Psat) Pbar= Psat
+      end if
+      !
+      call DtbH2OHkf_Calc(TdgK,Pbar,pW)
+      !
+      write(f,'(19(G15.6,A1))')         &
+      & TdgC,       t_, Pbar,       t_, &
+      & pW%Rho*1.D3,t_, pW%Eps,     t_, &
+      & pW%Q*1.D6,       t_, pW%X*1.D6,       t_, &
+      & pW%Y*1.D6,       t_, pW%Z*1.D6,       t_, &
+      & pW%dhA,          t_, pW%dhB,          t_, &
+      & pW%Alfa*1.D6,    t_, pW%dAlfdT*1.D6,  t_, &                    !thermal expansion.
+      & pW%Beta*1.D6,    t_, pW%dBetdT*1.D6,  t_, pW%dBetdP*1.D6,t_, & !compressibility
+      & pW%dGshdP*1.D6,  t_, pW%dGshdT*1.D6,  t_, &
+      & pW%dGshdT*1.D6,  t_, pW%d2GshdT2*1.D6,t_
+      !
+    end do
+    !
+  end do
+  close(f)
+  !
+  return
+end subroutine Dtb_Test_H2OHkf_new
 
 subroutine Dtb_Test_H2OHkf
 !--

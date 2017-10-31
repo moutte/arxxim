@@ -377,7 +377,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   
   case("DTBH2OHKF")
     call Global_Build
-    call Dtb_Test_H2OHkf
+    call Dtb_Test_H2OHkf_new
     !
   case("DTBSPC")
     call Global_Build

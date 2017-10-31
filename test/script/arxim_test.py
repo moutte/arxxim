@@ -12,13 +12,15 @@ if sys.platform.startswith("linux"):  sExe= "a.out"      #linux
 sDir= os.path.join("..","bin")
 sExe= os.path.join(sDir,sExe)
 
-Debug= "2"
+Debug= "3"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("inn/map_dom_fe_ox.inn")
 files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a0c*.inn")
+files= glob.glob("valid/a2a*.inn")
+files= glob.glob("valid/b1a*.inn")
 
 files.sort()
 for f in files: print f

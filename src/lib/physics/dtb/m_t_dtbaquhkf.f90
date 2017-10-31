@@ -29,11 +29,11 @@ module M_T_DtbAquHkf
     integer :: Div=1
     integer :: Chg
     real(dp):: &
-      G0R,H0R,S0_,V0R,&  !ref.state values
-      WRef, &            !omega (Born)
-      A1,A2,A3,A4,&      !EoS volume parameters (non-solvation part)
-      C1,C2, &           !EoS Cp parameters (non-solvation part)
-      S0Ele, WeitKg
+    & G0R,H0R,S0_,V0R,&  !ref.state values
+    & WRef, &            !omega (Born)
+    & A1,A2,A3,A4,&      !EoS volume parameters (non-solvation part)
+    & C1,C2, &           !EoS Cp parameters (non-solvation part)
+    & S0Ele, WeitKg
   end type T_DtbAquHkf
   !---/
 
@@ -68,7 +68,7 @@ contains
 !  S_%wref= S_%wref*1.0D05
 
 subroutine DtbAquHkf_Calc( &
-& M,  & !IN:  database model
+& MM, & !IN:  database model
 & pW, & !IN:  T,P and dielectric properties of Solvent
 & S)    !OUT: species
 !--
@@ -80,17 +80,18 @@ subroutine DtbAquHkf_Calc( &
   use M_Numeric_Const,only: Ln10
   use M_T_Element,    only: T_Element
   use M_T_Species,    only: T_Species
-  use M_Dtb_Const,    only: Tref, Pref, CalToJoule, R_jk, T_CK, DtbConv_Benson
+  use M_Dtb_Const,    only: Tref, Pref, R_jk, T_CK, DtbConv_Benson
   !-- parameters for HKF EoS --
   use M_T_DtbH2OHkf, only: T_DtbH2OHkf
   use M_T_DtbH2OHkf, only: Theta, Psi
   use M_T_DtbH2OHkf, only: gShockRef, Eta, ZPrTr, YPrTr
   !---------------------------------------------------------------------
-  type(T_DtbAquHkf),intent(in) :: M
+  type(T_DtbAquHkf),intent(in) :: MM
   type(T_DtbH2OHkf),intent(in) :: pW
   !
   type(T_Species),  intent(out):: S
   !---------------------------------------------------------------------
+  type(T_DtbAquHkf):: M
   integer :: Zj,Zj2
   real(dp):: P,T
   real(dp):: Q_,X_,Y_,Z_
@@ -106,7 +107,8 @@ subroutine DtbAquHkf_Calc( &
   real(dp):: Rej_Cation, Rej_Anion
   integer :: Nu_Cation,  Nu_Anion
   !
-  logical,parameter:: new= .false.
+  ! logical, parameter:: new= .true.
+  real(dp),parameter:: CalToJoule= 4.183999D0
   !---------------------------------------------------------------------
   RejRef= Zero
   Rej_Cation=  1.91D0 != value for Na+ at Tref,Pref
@@ -119,6 +121,19 @@ subroutine DtbAquHkf_Calc( &
   PpPsi= P+Psi    ;  P0pPsi= Psi+Pref
   TmTht= T-Theta  ;  T0mTht= Tref-Theta
   !
+  !------------------------------all HKF81 computations done in CALORIES
+  M= MM
+  M%G0R=   M%G0R /CalToJoule
+  M%H0R=   M%H0R /CalToJoule
+  M%S0_=   M%S0_ /CalToJoule
+  M%A1=    M%A1  /CalToJoule
+  M%A2=    M%A2  /CalToJoule
+  M%A3=    M%A3  /CalToJoule
+  M%A4=    M%A4  /CalToJoule
+  M%C1=    M%C1  /CalToJoule
+  M%C2=    M%C2  /CalToJoule
+  M%wref=  M%wref/CalToJoule
+  !
   !--- Q_,X_,Y_,Z_: Born coefficents
   Q_= pW%Q !Q_= @(1/Eps)/@P -> = pW%dEpsdP /pW%Eps /pW%Eps
   Y_= pW%Y !Y_= @(1/Eps)/@T -> = pW%dEpsdT /pW%Eps /pW%Eps
@@ -130,10 +145,11 @@ subroutine DtbAquHkf_Calc( &
   Zj=  M%Chg
   Zj2= Zj*Zj
   !
-  !------------------- compute Omega (here W) and related derivatives --
-  !------------------------ (equival't to routine Omeg92 of SUPCRT92) --
+  !--------------------------------------------------------compute Omega
+  !-------------------------------------(here W) and related derivatives
+  !----------------------------(equival't to routine Omeg92 of SUPCRT92)
   !
-  !-------------------------------- for NEUTRAL AQUEOUS SPECIES OR H+ --
+  !--------------------------------for NEUTRAL AQUEOUS SPECIES OR H+----
   if ((Zj==0) .or. (M%name== 'H+')) then
     ReHRef=  3.082D0
     RejRef=  Zero
@@ -141,7 +157,7 @@ subroutine DtbAquHkf_Calc( &
     dWdP=    Zero
     dWdT=    Zero
     d2WdT2=  Zero
-  !------------------------ for CHARGED AQUEOUS SPECIES OTHER THAN H+ --
+  !------------------------for CHARGED AQUEOUS SPECIES OTHER THAN H+----
   else
     RejRef= Zj2 / (M%WRef/eta + Zj/(3.082d0 + gShockRef))
     ! actually, gShockRef is set to Zero ...
@@ -158,14 +174,14 @@ subroutine DtbAquHkf_Calc( &
     d2WdT2= eta *X2 *pW%dGshdT**2 *2.0D0 &
     &     - eta *X1 *pW%d2GshdT2
   end if
-  !---------------------------------------------------/ compute Omega --
+  !------------------------------------------------------/ compute Omega
   !
   !if(M%chg/=0) then; M%RejRef= M%chg*M%chg /(M%WRef/Eta + M%chg/3.082D0)
   !else             ; M%RejRef= Zero
   !end if
   !
   Vs=-w*Q_ + Z_*dwdP ! solvation part
-  if(new) Vs= Vs*CalToJoule 
+  ! if(new) Vs= Vs*CalToJoule 
   VR= Vs         &
   & + M%A1       & !non-solvation part
   & + M%A2/PpPsi &
@@ -173,7 +189,7 @@ subroutine DtbAquHkf_Calc( &
   & + M%A4/PpPsi/TmTht
   !
   Ss= w*Y_ - Z_*dwdT !solvation part
-  if(new) Ss= Ss*CalToJoule 
+  ! if(new) Ss= Ss*CalToJoule 
   Ss= Ss -M%wref*YPrTr
   SR= Ss                 & !non-solvation part
   & + M%S0_              &
@@ -187,7 +203,7 @@ subroutine DtbAquHkf_Calc( &
   CpS= w*T*X_ &
   &  + T*Two*Y_*dwdT &
   &  - T*Z_*d2wdT2
-  if(new) CpS= CpS*CalToJoule 
+  ! if(new) CpS= CpS*CalToJoule 
   CpR= M%C1 &
   &  + M%C2/TmTht/TmTht &
   &  - (M%A3*(P-Pref) + M%A4*log(PpPsi/P0pPsi)) *Two *T /TmTht**3
@@ -196,7 +212,7 @@ subroutine DtbAquHkf_Calc( &
   Hs= w *Z_       &
   & + w *Y_ *T    &
   & - T *Z_ *dwdT
-  if(new) Hs= Hs*CalToJoule 
+  ! if(new) Hs= Hs*CalToJoule 
   Hs= Hs &
   & + M%wref*(ZPrTr + One) &
   & - M%wref*Tref*YPrTr
@@ -209,7 +225,7 @@ subroutine DtbAquHkf_Calc( &
   HR= Hs + HR
   !
   Gs= w*Z_
-  if(new) Gs= Gs*CalToJoule 
+  ! if(new) Gs= Gs*CalToJoule 
   Gs= Gs &
   & - M%wref *(-ZPrTr - One) &
   & + M%wref *YPrTr *(T-Tref)
@@ -218,17 +234,17 @@ subroutine DtbAquHkf_Calc( &
   & - M%C1  *(T*log(T/Tref)-T+Tref) &
   & + M%A1  *(P-Pref) &
   & + M%A2  *log(PpPsi/P0pPsi) &
-  & - M%C2  *( (T-Tref)/T0mTht - T*log(Tref*TmTht/T/T0mTht)/Theta ) /Theta &
+  & - M%C2  *((T-Tref)/T0mTht - T*log(Tref*TmTht/T/T0mTht)/Theta) /Theta &
   & +(M%A3*(P-Pref) + M%A4*log(PpPsi/P0pPsi))/TmTht
   GR= Gs + GR
+  !----------------------------//all HKF81 computations done in CALORIES
   !
-  S%V0=  VR !*CalToJoule
-  S%S0=  SR !*CalToJoule 
-  S%Cp0= CpR !*CalToJoule
-  S%H0=  HR !*CalToJoule
-  GR=    GR !*CalToJoule
+  S%V0=  VR   *CalToJoule
   S%V0=  S%V0 *1.0D-5 !Joule/Bar to m3 
-  !
+  S%S0=  SR   *CalToJoule 
+  S%Cp0= CpR  *CalToJoule
+  S%H0=  HR   *CalToJoule
+  GR=    GR   *CalToJoule
   if(.not. DtbConv_Benson) GR= GR - Tref*M%S0ele
   S%G0rt= GR /R_jk /T  
   !!S%logK= - S%G0rt/Ln10
@@ -240,10 +256,8 @@ subroutine DtbAquHkf_Calc( &
   !!S%VMol=S%V0
   !
   ! 3.72 A is default value corresponding to Na+=1.91 + Cl-=1.81
-  if(Zj/=0) then
-    S%AquSize= 3.72D0
-  else
-    S%AquSize= ZERO
+  if(Zj/=0) then  ;  S%AquSize= 3.72D0
+  else            ;  S%AquSize= ZERO
   end if
   !
   if(M%name=='H+') RejRef= ReHRef
@@ -254,15 +268,12 @@ subroutine DtbAquHkf_Calc( &
   ! they assume that NaCl is the dominant electrolyte,
   ! which explains values 1.91 (= RejRef for Na+) and 1.81 (= RejRef for Cl-)
   !
-  ! cation -> use RejRef of Cl-, i.e. 1.81 Angstrom
-  if(Zj>0) S%AquSize= &
-  & 2.D0*(Nu_Cation*RejRef +Zj*Rej_Anion) &
-  &     /(Nu_Cation        +Zj)
-  !
-  ! anion -> 
-  if(Zj<0) S%AquSize= &
-  & 2.D0*(Nu_Anion*RejRef -Zj*Rej_Cation) &
-  &     /(Nu_Anion        -Zj)
+  ! cation : use RejRef of Cl-, i.e. 1.81 Angstrom
+  ! anion  : use RejRef of Na+, i.e. 1.91 Angstrom 
+  if(Zj>0) &
+  & S%AquSize= 2.D0*(Nu_Cation*RejRef + Zj*Rej_Anion) /(Nu_Cation+Zj)
+  if(Zj<0) &
+  & S%AquSize= 2.D0*(Nu_Anion*RejRef  - Zj*Rej_Cation)/(Nu_Anion-Zj)
   !
   if(M%name=='H+') S%AquSize= 9.0D0
   !

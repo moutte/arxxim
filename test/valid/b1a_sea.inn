@@ -26,8 +26,8 @@ END
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\hsvhkf_min.dtb
-!INCLUDE dtb\hsvhkf_aqu.dtb
-INCLUDE dtb_tmp\hsvhkf_aqu_zimmer.dtb
+INCLUDE dtb\hsvhkf_aqu.dtb
+! INCLUDE dtb_tmp\hsvhkf_aqu_zimmer.dtb
 INCLUDE dtb\hsvhkf_gas.dtb
 
 TP.TABLE
@@ -43,5 +43,6 @@ Pbar	1.013	20	40	60	80	100	120	140	160	180	200	220	240	260	280	300	320	410	500	5
 !ENDEQUIL.EXCLUDE
 
 SOLVENT
-  MODEL DAV_1
+  ! MODEL SAMSON
+  MODEL HKF81
 END

@@ -379,13 +379,13 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       !
     end if
     !
-    M%A1=    M%A1*1.0D-1
-    M%A2=    M%A2*1.0D02
-    M%A4=    M%A4*1.0D04
-    M%C2=    M%C2*1.0D04
-    M%Wref=  M%wref*1.0D05
+    M%A1=    M%A1   *1.0D-1
+    M%A2=    M%A2   *1.0D02
+    M%A4=    M%A4   *1.0D04
+    M%C2=    M%C2   *1.0D04
+    M%Wref=  M%wref *1.0D05
     !
-    ! print *,"CodUnit", trim(CodUnit)  ;  call Pause_
+    ! print *,"CodUnit=", trim(CodUnit)  ;  call Pause_
     if(trim(CodUnit)=="CALORIE") then
       M%G0R=   M%G0R *CalToJoule
       M%H0R=   M%H0R *CalToJoule

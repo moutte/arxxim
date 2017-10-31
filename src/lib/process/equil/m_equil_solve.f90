@@ -12,8 +12,7 @@ contains
 subroutine Equil_Solve(NewtIts,Newt_iErr)
 !--
 !-- basic procedure for speciation, including loop on gammas
-!--
-  !---------------------------------------------------------------------
+!-----------------------------------------------------------------------
   use M_Numeric_Const,only: Ln10,TinyDP
   use M_Safe_Functions
   use M_IoTools,      only: OutStrVec
@@ -92,20 +91,20 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
   !
   if(iDebug>2) &
   & write(72,'(A)') "=====================================Equil_Solve=="
-  !-------------------------------------------------- loop on Gamma's --
+  !----------------------------------------------------- loop on Gamma's
   DoGamma: do
     !
     iCount=iCount+1
     !
     call Update_DGapp_As(vDGapp_As,vLnGam)
     !
-    !--------------------------------------------------------- solver --
+    !------------------------------------------------------------ solver
     call Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
-    !--------------------------------------------------------/ solver --
+    !-----------------------------------------------------------/ solver
     !
     NewtIts= NewtIts +Newt_Nits
     !
-    if(Newt_iErr<0) exit DoGamma !--======Newton failed, exit DoGamma ==
+    if(Newt_iErr<0) exit DoGamma !-----------Newton failed, exit DoGamma
     !
     if(LogForAqu) then
       !--- Back to Mole Quantities
@@ -139,7 +138,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     vLnGamOld= vLnGam
     vLnActOld= vLnAct
     !
-    !------------------------------------------- update activ'coeff's --
+    !---------------------------------------------- update activ'coeff's
     call Solmodel_CalcGamma( & !
     & TdgK,Pbar,     & !
     & SolModel,      & !IN
@@ -151,7 +150,7 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     & vTooLow(1:nAq),OsmoSv) !OUT
     !
     if(fActiZ>0) call OutStrVec(fActiz,vLnAct(1:nAq)/Ln10,Opt_I=iGam)
-    !------------------------------------------/ update activ'coeff's --
+    !---------------------------------------------/ update activ'coeff's
     !
     !if(all(abs(vLnGamOld-vLnGam)<TolGam)) exit !exit when convergence on gammas
     ! r1= maxval(abs((vLnGamOld-vLnGam)/vLnGam))
@@ -171,19 +170,19 @@ subroutine Equil_Solve(NewtIts,Newt_iErr)
     & "iGam /Newt_nIts /nEvalFunc=",iGam,Newt_nIts,nEvalFunc, &
     & "/ deltaGamma=",r1,"/ deltaLnAct=",r2
     !
-    !------------------------------------------------- if Convergence --
+    !---------------------------------------------------- if Convergence
     ! test convergence on activ'coeffs and on activities
     ! -> update mole nrs according to current activ'coeffs
     !OkConverged= (r1< TolGam *MAX(One,maxval(abs(vLnGam))) &
     !&       .and. r2< TolAct *MAX(One,maxval(abs(vLnAct))) )
     OkConverged= (r1<TolGam .and. r2<TolAct)
-    !------------------------------------------------/ if Convergence --
+    !---------------------------------------------------/ if Convergence
     !
     iGam=iGam+1
-    if(iGam>=GamMaxIts) exit DoGamma !=< TOO MANY LOOPS, exit DoGamma ==
+    if(iGam>=GamMaxIts) exit DoGamma !----< TOO MANY LOOPS, exit DoGamma
     !
   end do DoGamma
-  !-------------------------------------------------/ loop on Gamma's --
+  !----------------------------------------------------/ loop on Gamma's
   !
   if(iGam>=GamMaxIts) Newt_iErr=-4
   !
@@ -229,14 +228,14 @@ subroutine Compute_SecondSpecies(SolModel,vX,vXsec)
   use M_T_SolModel,only: T_SolModel
   use M_Basis_Vars,only: nAs,nAx,nMx,tNuAs,nCi,vOrdPr
   use M_Equil_Vars,only: vDGapp_As,vLnGam,vLnAct,LogForAqu
-  !---------------------------------------
+  !---------------------------------------------------------------------
   type(T_SolModel), intent(in):: SolModel
   real(dp),intent(in) :: vX(:)
   real(dp),intent(out):: vXsec(:)
-  !---------------------------------------
+  !---------------------------------------------------------------------
   integer :: iAs,iCi,i,isW
   real(dp):: X,MWSv
-  !---------------------------------------
+  !---------------------------------------------------------------------
   isW= SolModel%iSolvent
   MWSv = SolModel%MolWeitSv
   !
@@ -311,19 +310,19 @@ subroutine Equil_Newton(cMethod,vX,vXisPlus,Newt_nIts,Newt_iErr)
   !
   use M_Equil_Vars,only: NewtTolF,NewtTolX,NewtMaxIts
   use M_Equil_Vars,only: LogForAqu,DirectSub,bFinDif,nEvalFunc
-  !
+  !---------------------------------------------------------------------
   !integer, intent(in)   :: iMethod
   character(len=*),intent(in)   :: cMethod
   real(dp),        intent(inout):: vX(:)
   logical,         intent(in)   :: vXisPlus(:)
   integer,         intent(out)  :: Newt_nIts
   integer,         intent(out)  :: Newt_iErr
-  !
+  !---------------------------------------------------------------------
   real(dp):: Error_F,Gradient,Delta_X
   logical :: Check
   logical :: JacobNumeric
   ! logical :: ForcePositive
-  !
+  !---------------------------------------------------------------------
   Error_F= Zero
   Delta_X= Zero
   Gradient= Zero

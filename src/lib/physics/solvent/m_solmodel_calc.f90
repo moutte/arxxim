@@ -214,7 +214,7 @@ subroutine Solmodel_CalcGamma_Old( &
     
   end select
   
-  !-------- back substitute solute species from vLnGamSolut in vLnGam --
+  !----------- back substitute solute species from vLnGamSolut in vLnGam
   J= 0
   do iAq=1,size(vSpcAq)
     if(vSpcAq(iAq)%Typ=="AQU" .and. vSpcAq(iAq)%NamSp/="H2O") then
@@ -245,9 +245,9 @@ subroutine Solmodel_CalcGamma_Old( &
       end if
     end if
   end do
-  !---------------------------------------------------/solute species--
+  !------------------------------------------------------/solute species
   
-  !--------------------------------------------------------- SolModel --
+  !------------------------------------------------------------ SolModel
   vLnAct(isW)= LnActSv
   !if(sModel /= "IDEAL") then
   if(iModel /= 1) then
@@ -255,8 +255,9 @@ subroutine Solmodel_CalcGamma_Old( &
   else
     vLnGam(isW)= Zero
   end if
-  ! for SolModel, Gamma is the rational activity coeff', generally called Lambda
-  !--------------------------------------------------------/ SolModel --
+  ! for SolModel, Gamma is the rational activity coeff',
+  ! generally called Lambda
+  !-----------------------------------------------------------/ SolModel
   
   deallocate(vSpcSolut)
   deallocate(vMolal)

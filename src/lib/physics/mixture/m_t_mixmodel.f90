@@ -1011,7 +1011,7 @@ real(dp) function MixModel_GibbsIdeal( & !
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
-    G_IdMix= sum(vXPole(:)*vLIdeal(:), MASK=vLPole(:)) *R_jk  *TdgK
+    G_IdMix= sum(vXPole(:)*vLIdeal(:), mask=vLPole(:)) *R_jk  *TdgK
     !
     deallocate(vLIdeal)
     deallocate(vLGam)
@@ -1079,8 +1079,8 @@ real(dp) function MixModel_GibbsMixRT( & !
     & MM%Name,TdgK,Pbar,vXPole,vLpole, &
     & vLIdeal,vLGam)
     !
-    G_IdMixRT= sum(vXPole(:)*vLIdeal(:), MASK=vLPole(:))
-    G_XSMixRT= sum(vXPole(:)*vLGam(:),   MASK=vLPole(:))
+    G_IdMixRT= sum(vXPole(:)*vLIdeal(:), mask=vLPole(:))
+    G_XSMixRT= sum(vXPole(:)*vLGam(:),   mask=vLPole(:))
     !
     deallocate(vLIdeal)
     deallocate(vLGam)
