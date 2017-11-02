@@ -12,10 +12,13 @@ SYSTEM
   TDGC 25.
   FE  MOLE FE+3  1E-6
   H  PK  H+  13  
-  OX  PK  O2(G)  39.02  
+  OX  PK  O2(G)  36.79  
 END
 INCLUDE dtb\elements.dtb
-INCLUDE dtb\logk_eq36_hkf.dtb
-SOLVENT
-  MODEL DAV_1 !DH1 !
+INCLUDE dtb\logk_header_eq36.dtb
+SPECIES LOGK
+INCLUDE dtb\logk_THC_v9b0_aqu.tab
+END
+SPECIES LOGK
+INCLUDE dtb\logk_THC_v9b0_min.tab
 END

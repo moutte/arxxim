@@ -29,19 +29,19 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map_dom_cr_ox.inn"
-#Elements=["CR"]
-Selection="CR"
-
 fInn= "inn/map_dom_fe_ox.inn"
 #Elements=["FE"]
 Selection="FE"
+
+fInn= "inn/map_dom_cr_ox.inn"
+#Elements=["CR"]
+Selection="CR"
 
 Xlis= ["H"]
 Ylis= ["OX"]
 
 Xmin,Xmax,Xdelta,Xtol=  1., 13., 1., 0.02
-Ymin,Ymax,Ydelta,Ytol= 40.,  4., 1., 0.01
+Ymin,Ymax,Ydelta,Ytol= 40., 10., 1., 0.01
 
 Xlabel= "pH"
 Ylabel= "colog(f_O2(g))"
@@ -285,6 +285,14 @@ for iY,y in enumerate(Yser):
   #-------------------------------------------------------------//x-loop
 #---------------------------------------------------------------//y-loop
     
+if 1:
+  plt.figure()
+  plt.imshow(
+    tab_spc,
+    aspect='auto', 
+    interpolation='none')
+  plt.show()
+
 centroids=[ (0.,0.,0) for i in range(len(spc_names))]
 for iY,y in enumerate(Yser):
   for iX,x in enumerate(Xser):
