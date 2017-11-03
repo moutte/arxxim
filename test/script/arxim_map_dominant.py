@@ -44,7 +44,7 @@ Xmin,Xmax,Xdelta,Xtol=  1., 13., 1., 0.02
 Ymin,Ymax,Ydelta,Ytol= 40., 10., 1., 0.01
 
 Xlabel= "pH"
-Ylabel= "colog(f_O2(g))"
+Ylabel= "colog(f_O2(aq))"
 
 #---------------------------------------------------------//user-defined
 
