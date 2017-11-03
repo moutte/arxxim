@@ -328,7 +328,7 @@ contains
         vk     = vk - pjk*vj
       end do
 
-      normvk = SQRT(dot_product(vk,vk))
+      normvk = sqrt(dot_product(vk,vk))
       !write(21,*) "iV =", iV, " Normvk = ", normvK
 
       if (normvk < CheckZero ) then
@@ -361,7 +361,7 @@ contains
         vk     = vk - pjk*vj
       end do
 
-      normvk = SQRT(dot_product(vk,vk))
+      normvk = sqrt(dot_product(vk,vk))
       !write(21,*) "iE =", iE, " Normvk = ", normvK
 
       if (normvk < CheckZero) then

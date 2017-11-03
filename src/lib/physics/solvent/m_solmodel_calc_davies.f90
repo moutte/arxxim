@@ -59,7 +59,7 @@ contains
     !-- "TRUNCATED DAVIES"
     !-- if(IonStr>0.3) IonStr- 0.3D0
 
-    SqrtIoSt= SQRT(IonStr)
+    SqrtIoSt= sqrt(IonStr)
 
     ! "IDEAL  ",              & ! 1
     ! "DH1    ", "DH1EQ3 ",   & ! 2, 3

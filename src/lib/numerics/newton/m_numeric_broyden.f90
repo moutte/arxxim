@@ -247,8 +247,8 @@ subroutine LNSRCH( & !from NR
         else
           DISC=B*B-3.0_dp*A*Slope
           if (DISC<Zero)   then; tmpLam=0.5_dp*Alam
-          elseif (B<=Zero) then; tmpLam=(-B+SQRT(DISC))/(3.0_dp*A)
-          else                 ; tmpLam=-Slope/(B+SQRT(DISC))
+          elseif (B<=Zero) then; tmpLam=(-B+sqrt(DISC))/(3.0_dp*A)
+          else                 ; tmpLam=-Slope/(B+sqrt(DISC))
           end if
         end if
         if (tmpLam>0.5_dp*Alam) tmpLam=0.5_dp*Alam
@@ -387,10 +387,10 @@ function Pythag(a,b) !from "NR"
   absa=abs(a)
   absb=abs(b)
   if (absa > absb) then
-    pythag=absa*SQRT(One+(absb/absa)**2)
+    pythag=absa*sqrt(One+(absb/absa)**2)
   else
     if (absb==Zero) then; pythag=Zero
-    else                ; pythag=absb*SQRT(One+(absa/absb)**2)
+    else                ; pythag=absb*sqrt(One+(absa/absb)**2)
     end if
   end if
 end function Pythag
@@ -408,11 +408,11 @@ subroutine Rotate(r,qt,i,a,b) !from "NR"
     s=   SIGN(One,b)
   elseif (abs(a)>abs(b)) then
     fact=b/a
-    c=   sign(One/SQRT(One+fact**2),a)
+    c=   sign(One/sqrt(One+fact**2),a)
     s=   fact*c
   else
     fact=a/b
-    s=   sign(One/SQRT(One+fact**2),b)
+    s=   sign(One/sqrt(One+fact**2),b)
     c=   fact*s
   end if
   temp(i:n)= r(i,i:n)

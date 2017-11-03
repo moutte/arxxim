@@ -86,21 +86,21 @@ subroutine CUBIC(B,C,D,X1,X2,X2I,X3)
     Q= (B*B*B*Two/27.D0 -B*C/3.0D0 +D) /Two
     P= (C    *3.0_dp    -B*B         ) /9.0D0
     FF=abs(P)
-    R=SQRT(FF)
+    R=sqrt(FF)
     FF=R*Q
     if (FF < Zero) R=-R
     FF=Q/(R*R*R)
     if (P > Zero) then
-      PHI3= log( FF+SQRT(FF*FF+One) ) /3.0D0
+      PHI3= log( FF+sqrt(FF*FF+One) ) /3.0D0
       X1=  -R*( exp(PHI3) -exp(-PHI3) ) -B/3.0D0
       X2I=  One
     else
       if (Q*Q+P*P*P > Zero) then
-        PHI3= log( FF+SQRT(FF*FF-One) ) /3.0D0
+        PHI3= log( FF+sqrt(FF*FF-One) ) /3.0D0
         X1=  -R*( exp(PHI3)+exp(-PHI3) ) -B/3.0D0
         X2I=  One
       else
-        PHI3=ATAN(SQRT(One-FF*FF)/FF)/3.0D0
+        PHI3=ATAN(sqrt(One-FF*FF)/FF)/3.0D0
         X1=-R*COS( PHI3        )*Two -B/3.0D0
         X2= R*COS(PI/3.0D0-PHI3)*Two -B/3.0D0
         X3= R*COS(PI/3.0D0+PHI3)*Two -B/3.0D0
@@ -137,21 +137,21 @@ subroutine KUBIK(b,c,d,x1,x2,x2i,x3)
   q=  (2.0*f_Cube(b)/27.0 - b*c/3.0 + d)/2.0
   p=  (3.0*c - b*b)/9.0
   ff=  abs(p)
-  r=  SQRT(ff)
+  r=  sqrt(ff)
   ff=  r*q
   if (ff<Zero) r=  -r
   ff=  q/f_Cube(r)
   if (p>Zero) then
-    phi3=  log(ff + SQRT(ff*ff+One))/3.0
+    phi3=  log(ff + sqrt(ff*ff+One))/3.0
     x1=   -r*(exp(phi3) - exp(-phi3)) - b/3.0
     x2i=   One
   else
     if (q*q + p*p*p > Zero) then
-      phi3= log(ff + SQRT(ff*ff-One))/3.0
+      phi3= log(ff + sqrt(ff*ff-One))/3.0
       x1=  -r*(exp(phi3) + exp(-phi3)) - b/3.0
       x2i=  One
     else 
-      phi3=  ATAN(SQRT(One-ff*ff)/ff)/3.0
+      phi3=  ATAN(sqrt(One-ff*ff)/ff)/3.0
       x1= -2.0*r*COS(phi3) - b/3.0
       x2=  2.0*r*COS(pi/3.0-phi3) - b/3.0
       x2i= Zero

@@ -216,8 +216,8 @@ subroutine NewtLnsrch( & !from Press et al, Numerical Recipes
             DISC= B*B -3.0_dp*A*rSlope
             !print *,DISC  ; pause_
             if     (DISC<Zero) then  ; tmpLam= 0.5_dp*Alam
-            elseif (B<=Zero)   then  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
-            else                     ; tmpLam= -rSlope/(B+SQRT(DISC))
+            elseif (B<=Zero)   then  ; tmpLam= (-B+sqrt(DISC))/3.0_dp/A
+            else                     ; tmpLam= -rSlope/(B+sqrt(DISC))
             end if
           end if
           !
@@ -474,8 +474,8 @@ subroutine Newton_Press( & !from "NR"
             B= max(B,-1.0D100)
             DISC= B*B -3.0_dp*A*rSlope
             if     (DISC<Zero) then  ; tmpLam= 0.5_dp*Alam
-            elseif (B<=Zero)   then  ; tmpLam= (-B+SQRT(DISC))/3.0_dp/A
-            else                     ; tmpLam= -rSlope/(B+SQRT(DISC))
+            elseif (B<=Zero)   then  ; tmpLam= (-B+sqrt(DISC))/3.0_dp/A
+            else                     ; tmpLam= -rSlope/(B+sqrt(DISC))
             end if
           end if
           !
@@ -628,7 +628,7 @@ subroutine Newton_Walker( & !
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(sum(vFunc0(:)*vFunc0(:)))
+    Norm_vF0= sqrt(sum(vFunc0(:)*vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -667,7 +667,7 @@ subroutine Newton_Walker( & !
     vX(:)= vX0(:) + vDX(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
+    Norm_vF= sqrt(sum(vFunc(:)*vFunc(:)))
     !
     lambda= 1.0d0
     iArm=   0
@@ -697,7 +697,7 @@ subroutine Newton_Walker( & !
       lambda=  Sigma*lambda
       vX(:)=   vX0(:) + vDX(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
+      Norm_vF= sqrt(sum(vFunc(:)*vFunc(:)))
       !
     end do
     !--------------------------/Test the step and backtrack as necessary
@@ -806,7 +806,7 @@ subroutine Newton_Kelley( & !
     vX0(:)= vX(:)
     !
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(dot_product(vFunc0(:),vFunc0(:)))
+    Norm_vF0= sqrt(dot_product(vFunc0(:),vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -858,7 +858,7 @@ subroutine Newton_Kelley( & !
     vX(:)= vX0(:) + vStep(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
+    Norm_vF= sqrt(dot_product(vFunc(:),vFunc(:)))
     !
     ff_0= Norm_vF0**2  ! initial value
     ff_c= Norm_vF**2   ! current value
@@ -886,7 +886,7 @@ subroutine Newton_Kelley( & !
       vStep(:)= lambda *vDX(:)
       vX(:)= vX0(:) + vStep(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
+      Norm_vF= sqrt(dot_product(vFunc(:),vFunc(:)))
       !
       ff_m= ff_c
       ff_c= Norm_vF**2
@@ -1032,7 +1032,7 @@ subroutine Newton_Walker_old( & !
     !
     vX0(:)= vX(:)
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(sum(vFunc0(:)*vFunc0(:)))
+    Norm_vF0= sqrt(sum(vFunc0(:)*vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -1054,7 +1054,7 @@ subroutine Newton_Walker_old( & !
     vX(:)= vX0(:) + vDX(:)
     !
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
+    Norm_vF= sqrt(sum(vFunc(:)*vFunc(:)))
     !
     lambda= 1.0d0
     iArm=   0
@@ -1084,7 +1084,7 @@ subroutine Newton_Walker_old( & !
       lambda=  Sigma*lambda
       vX(:)=   vX0(:) + vDX(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(sum(vFunc(:)*vFunc(:)))
+      Norm_vF= sqrt(sum(vFunc(:)*vFunc(:)))
       !
     end do
     !--------------------------/Test the step and backtrack as necessary
@@ -1189,7 +1189,7 @@ subroutine Newton_Kelley_old( & !
     vX0(:)= vX(:)
     !
     vFunc0(:)= Residual(vX0)
-    Norm_vF0= SQRT(dot_product(vFunc0(:),vFunc0(:)))
+    Norm_vF0= sqrt(dot_product(vFunc0(:),vFunc0(:)))
     !
     call Newton_Sho(vX0,vFunc0,Its)
     !
@@ -1228,7 +1228,7 @@ subroutine Newton_Kelley_old( & !
     vStep(:)= lambda *vDX(:)
     vX(:)= vX0(:) + vStep(:)
     vFunc(:)= Residual(vX)
-    Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
+    Norm_vF= sqrt(dot_product(vFunc(:),vFunc(:)))
     !
     ff_0= Norm_vF0**2
     ff_c= Norm_vF**2
@@ -1258,7 +1258,7 @@ subroutine Newton_Kelley_old( & !
       vStep(:)= lambda *vDX(:)
       vX(:)= vX0(:) + vStep(:)
       vFunc(:)= Residual(vX)
-      Norm_vF= SQRT(dot_product(vFunc(:),vFunc(:)))
+      Norm_vF= sqrt(dot_product(vFunc(:),vFunc(:)))
       !
       ff_m= ff_c
       ff_c= Norm_vF**2

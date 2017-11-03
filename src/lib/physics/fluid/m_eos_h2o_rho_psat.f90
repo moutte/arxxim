@@ -45,7 +45,7 @@ subroutine Eos_H2O_psat(Tk,PSatBar)
   
     V=  Tk/647.25D0
     W=  abs(One-V)
-    WSQ=SQRT(W)
+    WSQ=sqrt(W)
     FF= Zero
     do I=1,8
       FF=FF+A(I)*W
@@ -145,7 +145,7 @@ subroutine Eos_H2O_rho( &
   !SET INITIAL GUESS FOR RHO USING THB.HOLLAND-FIT TO REDLICH-KWONG
   ARK= 1.279186D8 -2.241415D04*T !REDLICH-KWONG constant A
   BRK= 1.428062D1 +6.092237D-4*T !REDLICH-KWONG constant B
-  OFT= ARK/(P*SQRT(T))
+  OFT= ARK/(P*sqrt(T))
   BUK=-10D0*RR*T/P
   CUK= OFT -BRK*BRK +BRK*BUK
   DUK=     -BRK*OFT

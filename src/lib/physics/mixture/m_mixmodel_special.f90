@@ -1666,7 +1666,7 @@ subroutine Opx_HP11( &
   
   vActId(1)= MgM1 *MgM2 *SiT1**0.5D0
   vActId(2)= FeM1 *FeM2 *SiT1**0.5D0
-  vActId(3)= AlM1 *MgM2 *SiT1**0.25D0 *AlT1**0.25D0 *SQRT(2.0D0)
+  vActId(3)= AlM1 *MgM2 *SiT1**0.25D0 *AlT1**0.25D0 *sqrt(2.0D0)
   vActId(4)= MgM1 *FeM2 *SiT1**0.5D0
       
   vLG(:)= Zero

@@ -85,7 +85,7 @@ contains
     !----------------------
     implicit none
     real(dp),dimension(:),intent(in) :: V
-    vAbs=SQRT(dot_product(V,V))
+    vAbs=sqrt(dot_product(V,V))
   end function vAbs
 
   !---

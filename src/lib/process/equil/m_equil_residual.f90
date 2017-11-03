@@ -365,7 +365,7 @@ function Equil_Residual(vX)
             !! else                   ;  vFunc(nF+I)= vX(nF+I)
             !! end if
             ! vFunc(nF+I)= Fischer - Burmeister
-            vFunc(nF+I)= X + vX(nF+I) - SQRT(X**2 + vX(nF+I)**2)
+            vFunc(nF+I)= X + vX(nF+I) - sqrt(X**2 + vX(nF+I)**2)
           else
             vFunc(nF+I)= X
           end if

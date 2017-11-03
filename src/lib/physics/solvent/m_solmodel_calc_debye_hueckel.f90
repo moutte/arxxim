@@ -71,7 +71,7 @@ subroutine Solmodel_Calc_Debye_Hueckel( &
   !
   !Ion Strength=  sum(m(i)*z2(i)) /2
   IonStr= dot_product(vZ2(:),vMolal(:)) /Two
-  SqrtI= SQRT(IonStr)
+  SqrtI= sqrt(IonStr)
   !
   if(iModel==10) then
   ! values at 25dgC, 1 bar from Leal.et.al.2013

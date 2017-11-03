@@ -41,7 +41,7 @@ contains
     !Ion Strength=  sum(m(i)*z2(i)) /2
     IonStr= dot_product(vZ2(:),vMolal(:)) /Two
     !
-    SqrtIoSt= SQRT(IonStr)
+    SqrtIoSt= sqrt(IonStr)
     !
     !------------------------------------------------------------ Solute
     LnGam_Charged = -dhA *(SqrtIoSt/(One + 1.5D0*SqrtIoSt))*Ln10

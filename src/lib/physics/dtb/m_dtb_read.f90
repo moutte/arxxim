@@ -215,13 +215,13 @@ end module M_Dtb_Read
 !   NOTE: G=  H - T*S  where S is third law entropy,
 !   not entropy of formation; i.e. it"s an apparent G of formation
 !CP calculated with eqn:
-!   Cp=  K0 + K1/SQRT(T) + K2/T/T + K3/T/T/T + K4/T + K5*T + K6*T*T
+!   Cp=  K0 + K1/sqrt(T) + K2/T/T + K3/T/T/T + K4/T + K5*T + K6*T*T
 !C1=  CODE FOR THE FIRST LINE OF CP TERMS - K0, K1, K2, K3
 !C2=  CODE FOR THE 2ND LINE OF CP TERMS - K4, K5, K6
 !C3=  CODE FOR MAIER-KELLY CP EQUATION - K0, K5, K2
 !   UNITS: J AND DEGREES
 !CP(disorder) calculated by:
-!   Cp(dis)=  D0 + D1/SQRT(T) + D2/T/T + D3/T + D4*T + D5*T*T
+!   Cp(dis)=  D0 + D1/sqrt(T) + D2/T/T + D3/T + D4*T + D5*T*T
 !   To get H, S (disorder), this eqn integrated by TMIN and TMAX
 !D1=  CODE FOR THE FIRST LINE OF DISORDER TERMS - D0, D1, D2, D3
 !   UNITS: J  AND DEGREES

@@ -126,7 +126,7 @@ subroutine Eos_H2O_Haar(TdgK,Pbar,G_H2Ort,V_H2O_m3)
   !-- SET INITIAL GUESS FOR RHO USING THB-FIT TO REDLICH-KWONG
   ARK=  1.279186D8-2.241415D4 *T   !RedlichKwong Param. A
   BRK=  1.428062D1+6.092237D-4*T   !RedlichKwong Param. B
-  OFT=  ARK/(P*SQRT(T))
+  OFT=  ARK/(P*sqrt(T))
   cubB= -10.0D0*RR*T/P
   cubC= OFT -BRK*BRK +BRK*cubB
   cubD= -BRK*OFT

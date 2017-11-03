@@ -15,7 +15,7 @@ END
 
 SYSTEM
   TDGC 25.
-  SI MOLE  H4(SiO4)  1.0
+  SI MOLE  H4SiO4(aq)  1.0
   CA MOLE  Ca+2      1.0
   AL MOLE  AL+3      0.01
 END SYSTEM
@@ -52,17 +52,32 @@ END
 
 INCLUDE dtb\elements.dtb
 INCLUDE dtb\logk_header_eq36.dtb
-SPECIES LOGK
-INCLUDE dtb\logk_THC_crunch_v9b0_aqu.tab
-END
-SPECIES LOGK
-INCLUDE dtb\logk_THC_crunch_v9b0_min.tab
-END
 !! SPECIES LOGK
-!! INCLUDE dtb\logk_datacom_min.tab
+!! INCLUDE dtb\logk_THC_v9b0_aqu.tab
 !! END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_THC_v9b0_min.tab
+!! END
+
+SPECIES LOGK
+INCLUDE dtb\logk_ThermoddemV110_aqu.tab
+END
+SPECIES LOGK
+INCLUDE dtb\logk_ThermoddemV110_min.tab
+END
+
 !! SPECIES LOGK
 !! INCLUDE dtb\logk_datacom_aqu.tab
 !! END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_datacom_min.tab
+!! END
+SPECIES.EXCLUDE
+GROSSULAR
+JAFFEITE
+JENNITE
+AFWILLITE
+PREHNITE
+END
 
 

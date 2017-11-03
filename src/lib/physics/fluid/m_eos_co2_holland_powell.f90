@@ -63,7 +63,7 @@ subroutine Eos_CO2_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
   dGGas= Zero
   dGGas3=Zero
   RT=    R*T
-  SQT=   SQRT(T)
+  SQT=   sqrt(T)
   
   AVir=  AVir0 + AVirT*T !----------------------------Chp91 AVir=D0+D1*T
   BVir=  BVir0 + BVirT*T !----------------------------Chp91 BVir=C0+C1*T
@@ -86,7 +86,7 @@ subroutine Eos_CO2_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
   end if
   
   if (P>P0) then
-    Vol= VMRK + AVir*(P-P0) + BVir*SQRT(P-P0) + CVir*(P-P0)**0.25D0
+    Vol= VMRK + AVir*(P-P0) + BVir*sqrt(P-P0) + CVir*(P-P0)**0.25D0
   else
     Vol= VMRK
   end if
@@ -134,9 +134,9 @@ subroutine CalcGT_CO2_HP91(T,GT)
   real(dp):: K1= 0.0878D0, K2= -0.2644D-5,   K3= 706.4D0, K4=-0.9989D0
   real(dp):: T0= 298.15D0, TT0= 88893.4225D0
   
-  SQT0=SQRT(T0)
+  SQT0=sqrt(T0)
   TT=T*T
-  SQT=SQRT(T)
+  SQT=sqrt(T)
   !
   CPRDT=  K1 *(T     -T0    )     &
   &     + K2 *(TT    -TT0   )/Two &

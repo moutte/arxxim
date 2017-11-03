@@ -57,15 +57,15 @@ subroutine Pitzer_EThetaCalc_Test
     write(f,'(I3,A1,G15.6,A1)',advance="NO") &
     & I,tt,IonicStr,tt
     
-    call EThetaCalc (2, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    call EThetaCalc (2, 1, sqrt(IonicStr), Aphi, Eth, Eth1)
     write(f,'(2(G15.6,A1))',advance="NO") &
     & -Eth,tt,IonicStr*Eth1,tt
     
-    call EThetaCalc (3, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    call EThetaCalc (3, 1, sqrt(IonicStr), Aphi, Eth, Eth1)
     write(f,'(2(G15.6,A1))',advance="NO") &
     & -Eth,tt,IonicStr*Eth1,tt
     
-    call EThetaCalc (4, 1, SQRT(IonicStr), Aphi, Eth, Eth1)
+    call EThetaCalc (4, 1, sqrt(IonicStr), Aphi, Eth, Eth1)
     write(f,'(2(G15.6,A1))') &
     & -Eth,tt,IonicStr*Eth1,tt
     

@@ -163,7 +163,7 @@ subroutine Pitzer_Calc_Gamma( &
   !-------------------------------------------------------/FORCE IONIQUE
   !
   !-------------------------------------------COEFFICIENTS LONGUE PORTEE
-  RI=  SQRT(Ionic)
+  RI=  sqrt(Ionic)
   Fi0= -4.0d0*Aphi*Ionic/1.2D0*log(One + 1.2D0*RI)
   Fi1= -4.0d0*Aphi      /1.2D0*log(One + 1.2D0*RI) &
   &    -2.0d0*Aphi*RI/(One + 1.2D0*RI)
@@ -711,14 +711,14 @@ subroutine Pitzer_Calc_APhi(RhoW,EpsW,TdgK,APhi)
   real(dp),intent(in) :: RhoW,EpsW,TdgK
   real(dp),intent(out):: APhi
   
-  Aphi= SQRT( 2*pi*Avogadro*1.D-3 ) &
-  &   * (Electron/SQRT(Boltzmann) /SQRT(4.0D0*pi*EpsVacuum) )**3 &
+  Aphi= sqrt( 2*pi*Avogadro*1.D-3 ) &
+  &   * (Electron/sqrt(Boltzmann) /sqrt(4.0D0*pi*EpsVacuum) )**3 &
   &   /3.0D0  &
-  &   *SQRT(RhoW) &
-  &   /SQRT((EpsW*TdgK)**3) &
+  &   *sqrt(RhoW) &
+  &   /sqrt((EpsW*TdgK)**3) &
   &   *1.0D+3
   
-  !! APhi_DH= 1.824829238D6 *SQRT(RhoW) /SQRT((EpsW*TdgK)**3)
+  !! APhi_DH= 1.824829238D6 *sqrt(RhoW) /sqrt((EpsW*TdgK)**3)
   !! call Pitzer_Calc_APhiMonnin(TdgK,1.0D0,Aphi_)
   !! print '(A,3G15.6)',"Aphi, AphiMonnin,APhi_DH:", Aphi,Aphi_,APhi_DH
   !! pause

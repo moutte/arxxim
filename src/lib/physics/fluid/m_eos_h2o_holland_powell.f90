@@ -65,9 +65,9 @@ subroutine Eos_H2O_HolPow(TdgK,Pbar,Grt,LnFug)
   /-7.3681D-6, 1.10295D-7, -9.8774D-7,   -2.4819D-5,    8.2948D-6,  8.33667D-8/
   !
   T=    TdgK
-  SQT0= SQRT(T0)
+  SQT0= sqrt(T0)
   TT=   T*T
-  SQT=  SQRT(T)
+  SQT=  sqrt(T)
   !
   CPRDT= K1 *(T    -T0    )      &
   &    + K2 *(TT   -TT0   ) /Two &
@@ -81,7 +81,7 @@ subroutine Eos_H2O_HolPow(TdgK,Pbar,Grt,LnFug)
   Pkb=  Pbar/1.0D3
   Pk2=  Pkb*Pkb
   Pk3=  Pk2*Pkb
-  SQP=  SQRT(Pkb)
+  SQP=  sqrt(Pkb)
   !
   RTLnF=   A1 +A2*Pkb +A3*Pk2 +A4/Pkb +A5/Pk2 &
   &    + ( B1 +B2*Pkb         +B3/Pkb +B4/Pk2 +B5/SQP +B6/Pk3 ) *T &
@@ -131,7 +131,7 @@ subroutine Eos_H2O_HolPow91(TdgK,Pbar,Grt,V_m3,LnFug)
   T=     TdgK
   RT=    R*T
   Pkb=   Pbar/1000.0D0 !-> Pkb in kbar
-  SQT=   SQRT(T)
+  SQT=   sqrt(T)
   
   G=     Zero
   delP=  Pkb-P0
@@ -286,9 +286,9 @@ subroutine CalcGT_H2O_HP91(Tk,GT)
   data H0,S0       /-241.81D0,188.80D-3/
   data T0,TT0      /298.15D0, 88893.4225D0/
   !
-  SQT0=  SQRT(T0)
+  SQT0=  sqrt(T0)
   TT=    Tk*Tk
-  SQT=   SQRT(Tk)
+  SQT=   sqrt(Tk)
   !
   CPRDT= K1*(Tk     -T0)         &
   &    + K2*(TT     -TT0)   /Two &
