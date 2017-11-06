@@ -58,19 +58,19 @@ subroutine GEM_Path_Write_Phases( &
   !
   call GetUnit(fMol)
   open(fMol,file=trim(DirOut)//"_phase_mole.restab")
-  call  Write_Title(fMol)
+  call  Write_Title(fMol,"_mol")
   !
   call GetUnit(fMov)
   open(fMov,file=trim(DirOut)//"_phase_molarvol.restab")
-  call  Write_Title(fMov)
+  call  Write_Title(fMov,"_MV")
   !
   call GetUnit(fVol)
   open(fVol,file=trim(DirOut)//"_phase_cm3.restab")
-  call  Write_Title(fVol)
+  call  Write_Title(fVol,"_ml")
   !
   call GetUnit(fGrm)
   open(fGrm,file=trim(DirOut)//"_phase_grams.restab")
-  call  Write_Title(fGrm)
+  call  Write_Title(fGrm,"_gr")
   !
   K=0
   do iPath=1,DimPath
@@ -168,8 +168,9 @@ contains
     !
   end subroutine Write_Left
 
-  subroutine Write_Title(FF)
+  subroutine Write_Title(FF,suffix)
     integer,intent(in):: FF
+    character(len=*),intent(in):: suffix
     !--------------------------------------------------------title lines
     write(FF,'(3(A,A1))',advance="no") "count",T_, "TdgC",T_, "Pbar",T_
     !
@@ -181,12 +182,12 @@ contains
     !--pure phase names
     do iFs=1,nFpur
       if(vFasIsPresent(iFs)) &
-      & write(FF,'(A,A1)',advance="no") trim(vFas(iFs)%NamFs), T_
+      & write(FF,'(A,A1)',advance="no") trim(vFas(iFs)%NamFs)//suffix, T_
     end do
     !--mixture phase names
     do iFs=1,nFmix
       if(vFasIsPresent(nFpur +iFs)) &
-      & write(FF,'(A,A1)',advance="no") trim(vMixModel(iFs)%Name), T_
+      & write(FF,'(A,A1)',advance="no") trim(vMixModel(iFs)%Name)//suffix, T_
     end do
     write(FF,*)
     !-------------------------------------------------------/title lines

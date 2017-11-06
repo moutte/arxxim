@@ -18,11 +18,10 @@ Debug= "2"
 #----------------------------------------------------------INPUT FILE(S)
 files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a2a*.inn")
-files= glob.glob("valid/a0c*.inn")
 files= glob.glob("inn/map_dom_fe_ox.inn")
 files= glob.glob("inn/map_dom_cr_ox.inn")
 files= glob.glob("valid/b1a*.inn")
-files= glob.glob("valid/a0a*.inn")
+files= glob.glob("valid/a0b*.inn")
 
 files.sort()
 for f in files: print f
@@ -42,23 +41,37 @@ def check_done():
 #---------------------------------------------------------------------//
 
 i0= 0
-i= 0
+i= 0 
 for sFile in files:
   if os.path.isfile("error.log"): os.remove("error.log")
 
   sCommand= ML.inn_scan_list(sFile,"TEST","COMPUTE")
   sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\','/')
   sPath= os.path.dirname(sDirout)
-  print sDirout, sPath
-  raw_input()
   if not os.path.exists(sPath): os.makedirs(sPath)
-  
   
   print '\n=========processing '+ sFile + '==========================\n'
   os.system("%s %s %s" % (sExe,sFile,Debug))
   
   if not check_done(): continue
   
+  if "GEMPATH" in sCommand:
+    if 1:
+      s=sDirout+"_phase_grams.restab"
+      titr= ML.extractFileName(s)
+      lines= open(s,'r').readlines()
+      labels,tData= ML.lines2table(lines)
+      #
+      iX=   0
+      labX= "_"
+      dataX= (labX,tData[:,iX])
+      dataY= ML.table_select(2,"_gr",labels,tData)
+      #
+      fig= plt.subplot()
+      ML.plot(fig,titr,dataX,dataY,False,False)
+      plt.savefig("png/"+titr+".png")
+      plt.show()
+    
   if "SPCPATH" in sCommand:
     #-------------------------------------------------------molal.restab
     if 0:

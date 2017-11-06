@@ -14,15 +14,27 @@ CONDITIONS
 END
 
 SYSTEM.GEM
+! Lothenbach_2006_CCR_
+! Thermodynamic modelling of the hydration of Portland cement
+  MOLE H2O    H2O   10.0  
+  MOLE SIO2   SiO2  3.279
+  MOLE AL2O3  Al2O3 0.461
+  MOLE FE2O3  Fe2O3 0.167
+  MOLE CAO    CaO   11.34
+  MOLE MGO    MgO   0.459
+  MOLE CO2    CO2   0.439
+  MOLE SO3    SO3   0.418
+END
   GRAM H2O    H2O   100.0
   GRAM SIO2   SiO2  19.7
-  GRAM CAO    CaO   63.2
-  GRAM MGO    MgO   1.85
-  GRAM SO3    SO3   3.35
   GRAM AL2O3  Al2O3 4.7
   GRAM FE2O3  Fe2O3 2.67
+  GRAM CAO    CaO   63.6
+  GRAM MGO    MgO   1.85
   GRAM CO2    CO2   1.93
-END
+  GRAM SO3    SO3   3.35
+  GRAM K2O    K2O   1.12  
+  GRAM NA2O   Na2O  0.08 
 
 PATH CHANGE
   H2O INITIAL 1. FINAL 25.0 DELTA 1.
@@ -37,19 +49,19 @@ END
 
 INCLUDE dtb\logk_header_eq36.dtb
 
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_THC_v9b0_aqu.tab
-!! END
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_THC_v9b0_min.tab
-!! END
+SPECIES LOGK
+INCLUDE dtb\logk_THC_v9b0_aqu.tab
+END
+SPECIES LOGK
+INCLUDE dtb\logk_THC_v9b0_min.tab
+END
 
-SPECIES LOGK
-INCLUDE dtb\logk_ThermoddemV110_aqu.tab
-END
-SPECIES LOGK
-INCLUDE dtb\logk_ThermoddemV110_min.tab
-END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_ThermoddemV110_aqu.tab
+!! END
+!! SPECIES LOGK
+!! INCLUDE dtb\logk_ThermoddemV110_min.tab
+!! END
 
 !! SPECIES LOGK
 !! INCLUDE dtb\logk_datacom_aqu.tab
@@ -57,5 +69,6 @@ END
 !! SPECIES LOGK
 !! INCLUDE dtb\logk_datacom_min.tab
 !! END
+
 
 

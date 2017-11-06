@@ -189,13 +189,13 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       if(iDebug==4) print *,"< values from file"
       call FieldList_Read(L,vStrField,vifield)
       if(iDebug==4) print *,"</ values from file"
-
+      !
       if(vifield(4)/=0 .and. fFormula==0 .and. iDebug>2) then
         call GetUnit(fFormula)
         open(fFormula,file="debug_formula.log")
         write(fFormula,'(A,/)') "results of formula conversion"
       end if
-
+      !
       cycle DoFile
     end if
     !------------------------------------------/ read header, if present
@@ -270,31 +270,27 @@ subroutine DtbAquHKF_Read(F,vEle,N)
       if(I==vifield(2)) then  ! INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
       end if
-
+      !
       if(I==vifield(3)) then  ! NAME
         call Str_Upper(W)  ;  M%Name= trim(W)
       end if
-
+      !
       if(I==vifield(4)) then ! SCFORM
-        !
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
         if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
-        !
-        call Str_Upper(W)  ;  M%Formula=trim(W)
+        call Str_Upper(W)  ;  M%Formula= trim(W)
       end if
-
+      !
       if(I==vifield(5)) then ! ECFORM
-        call Str_Upper(W)  ;  M%Formula=  trim(W)
+        call Str_Upper(W)  ;  M%Formula= trim(W)
       end if
-
+      !
       !if(I==vifield(9)) then
       !  call Str_Upper(W)  ;  CodFitting= trim(W)
       !end if
-
       !! if(I==vifield(6)) call WrdToReal(W,X) ! size
       !! if(I==vifield(7)) call WrdToReal(W,X) ! VOLUME
       !! if(I==vifield(8)) call WrdToReal(W,X) ! DENSITY
-
     end do
     !
     call ReadRValsV(L,K,vX)

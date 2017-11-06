@@ -81,9 +81,9 @@ def table_select(iMode,sKey,labels,TT):
         t= (labels[i],TT[:,i],max(TT[:,i]))
         T.append(t)
   if iMode==2:
-    for i in range(ncol):
-      if sKey in labels[i]:
-        lb= labels[i].replace(sKey,"")
+    for i,ll in enumerate(labels):
+      if sKey in ll:
+        lb= ll.replace(sKey,"")
         t= (lb,TT[:,i],max(TT[:,i]))
         T.append(t)
   return T
@@ -126,10 +126,13 @@ def plot(fig,titr,dataX,dataY,xLog,yLog):
   fig.set_title(titr) #, fontsize=fontsize)
   #-legend= fig.legend(loc='upper left')
   #-legend= fig.legend(bbox_to_anchor=(1.1, 1.05))
-  legend= fig.legend(loc='lower center', bbox_to_anchor=(0.5,0.),
-          ncol=3, fancybox=True) #, shadow=True)
+  #legend= fig.legend(loc='lower center', bbox_to_anchor=(0.5,0.),
+  #        ncol=3, fancybox=True) #, shadow=True)
+  # Place a legend above this subplot, expanding itself to
+  # fully use the given bounding box.
+  legend= fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+             ncol=3, mode="expand", borderaxespad=0.)#-----------------------------------------------------------------//plot
   for lb in legend.get_texts(): lb.set_fontsize('small')
-#-----------------------------------------------------------------//plot
 
 #--scan the inn file -> list of words
 def inn_scan_list(sName,sBlock,sKey):
