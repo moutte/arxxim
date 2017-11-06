@@ -46,13 +46,18 @@ i= 0
 for sFile in files:
   if os.path.isfile("error.log"): os.remove("error.log")
 
+  sCommand= ML.inn_scan_list(sFile,"TEST","COMPUTE")
+  sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\','/')
+  sPath= os.path.dirname(sDirout)
+  print sDirout, sPath
+  raw_input()
+  if not os.path.exists(sPath): os.makedirs(sPath)
+  
+  
   print '\n=========processing '+ sFile + '==========================\n'
   os.system("%s %s %s" % (sExe,sFile,Debug))
   
   if not check_done(): continue
-  
-  sCommand= ML.inn_scan_list(sFile,"TEST","COMPUTE")
-  sDirout=  ML.inn_scan_word(sFile,"CONDITIONS","OUTPUT").replace('\\','/')
   
   if "SPCPATH" in sCommand:
     #-------------------------------------------------------molal.restab

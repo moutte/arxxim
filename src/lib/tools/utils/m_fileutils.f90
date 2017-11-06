@@ -18,7 +18,7 @@ contains
 
   !--
 
-   function File_Exist_System(Str) 
+  function File_Exist_System(Str) 
     !---------------------------------------
     ! reports whether a file exists 
     ! and modify the name ( / <-> \ ) 
@@ -38,7 +38,7 @@ contains
     !-- 
     File_Exist_System= Ok
     Str= StrOut
-  
+    return  
   end function File_Exist_System
 
   !---
@@ -67,18 +67,18 @@ contains
     !
     call DATE_AND_TIME(DATE=Date_,TIME=Time_)
     write(F,'(5(A1,A))') &
-         & "!",Date_(1:4), &
-         & "/",Date_(5:6), &
-         & "/",Date_(7:8), &
-         & "/",Time_(1:2), &
-         & "H",Time_(3:4)
+    & "!",Date_(1:4), &
+    & "/",Date_(5:6), &
+    & "/",Date_(7:8), &
+    & "/",Time_(1:2), &
+    & "H",Time_(3:4)
   end subroutine File_Write_Date_Time
 
   !--
 
   subroutine Windows_Filename(Str)
     use M_Trace, only: SLASH_, BACKSLASH_
-    implicit none
+    !
     character(len=*), intent(inout) :: Str
     !--
     call Char_Replace(Str,SLASH_,BACKSLASH_)
