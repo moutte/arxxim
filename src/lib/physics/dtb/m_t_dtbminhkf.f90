@@ -18,7 +18,7 @@ module M_T_DtbMinHkf
   !--
     character(len=15):: Num
     character(len=23):: Name
-    character(len=23):: Source
+    character(len=15):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
     character(len=3) :: Typ !MIN or GAS <-not used yet !!!??

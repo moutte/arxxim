@@ -282,7 +282,6 @@ subroutine Dtb_Tabulate_ForSystem( &
   !----------------------------------------------------------HEADER file
   call GetUnit(F)
   open(F,file=trim(DirOut)//"_logk_header.dtb")
-  !
   !--------------------------------------------------------index in html
   call Files_Index_Write(fHtm,&
   & trim(DirOut)//"_logk_prim.dtb",&
@@ -306,14 +305,12 @@ subroutine Dtb_Tabulate_ForSystem( &
   call OutStrVec(F,vSolvDat(1:N)%Bdot,Opt_S="BDOT")
   write(F,'(A,/)') "END SOLVENT"
   !-------------------------------------------------------/SOLVENT block
-  !
   close(F)
   !---------------------------------------------------------/HEADER file
   !
   !-----------------------------------logK from current prim'species set
   call GetUnit(F)
   open(F,file=trim(DirOut)//"_logk_prim.dtb")
-  !
   !------------------------------------------------------- SPECIES block
   write(F,'(A)') "SPECIES" !
   !-------------------------------------first, write the primary species
@@ -328,7 +325,7 @@ subroutine Dtb_Tabulate_ForSystem( &
       Cc= "_"
     end if
     !
-    !MODif!2016/02!
+    !MODIF!2016/02!
     !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1,$)') &
     write(F, '(4(A,A1),$)') &
     & trim(S%Typ),    T_, &
@@ -342,7 +339,7 @@ subroutine Dtb_Tabulate_ForSystem( &
       write(F, '(G15.6,A1,$)') S%WeitKg / S%V0, T_
     end if
     
-    !MODif!2016/02!
+    !MODIF!2016/02!
     !write(F,'(*(A,A1))') ("0.000", T_,J=1,N)
     write(F,'(*(A,A1))') ("0.000", T_,J=1,N)
     
@@ -359,7 +356,7 @@ subroutine Dtb_Tabulate_ForSystem( &
     else               ;  Cc= "_"
     end if
     !
-    !MODif!2016/02!
+    !MODIF!2016/02!
     !write(F, '(A3,A1, A15,A1, A23,A1, A63,A1,$)') &
     write(F, '(4(A,A1),$)') &
     & trim(S%Typ),     T_, &

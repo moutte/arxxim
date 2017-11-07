@@ -248,11 +248,11 @@ subroutine DtbMinHKF_Read(F,vEle,N)
       if(I==vifield(7)) then  !CODE / SOURCE
         call Str_Upper(W)  ;  FilCode= trim(W)
       end if
-
+      !
       if(I==vifield(8)) then  !format
         call Str_Upper(W)  ;  sFormat= trim(W)
       end if
-
+      !
       if(I==vifield(1)) then  !type
         !old! call Str_Upper(W)  ;  M%Typ= trim(W)
         call Str_Upper(W)
@@ -264,27 +264,29 @@ subroutine DtbMinHKF_Read(F,vEle,N)
         case default ;  call Stop_(trim(W)//"<< unknown type in database !!...")          
         end select
       end if
-
-      if(I==vifield(2)) then  !INDEX
+      !
+      if(I==vifield(2)) then ! INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
       end if
-
-      if(I==vifield(3)) then  !NAME
+      !
+      if(I==vifield(3)) then ! NAME
         call Str_Upper(W)  ;  M%Name= trim(W)
       end if
-
-      if(I==vifield(4)) then  !SCFORM
-        !
+      !
+      if(I==vifield(4)) then ! SCFORM
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
         if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
-        !
         call Str_Upper(W)  ;  M%Formula=trim(W)
       end if
-
-      if(I==vifield(5)) then  !ECFORM
+      !
+      if(I==vifield(5)) then ! ECFORM
         call Str_Upper(W)  ;  M%Formula=  trim(W)
       end if
-
+      !
+      if(I==vifield(7)) then ! SOURCE
+        call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
     end do
     !------------------------ scan the data line (left to parameterS) --
     !

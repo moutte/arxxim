@@ -95,7 +95,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbLogKtbl
       S%DtbModel= "LOGKTBL"
-      S%DtbTrace= trim(vDtbLogKtbl(I)%Num)
+      ! S%DtbTrace= trim(vDtbLogKtbl(I)%Num)
+      S%DtbTrace= trim(vDtbLogKtbl(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     end do
     ! stop here,
@@ -110,7 +111,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbLogKAnl
       S%DtbModel= "LOGKANL"
-      S%DtbTrace= trim(vDtbLogKAnl(I)%Num)
+      ! S%DtbTrace= trim(vDtbLogKAnl(I)%Num)
+      S%DtbTrace= trim(vDtbLogKAnl(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     end do
     ! stop here,
@@ -135,7 +137,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbAquHkf
       S%DtbModel= "AQU_HKF"
-      S%DtbTrace= trim(vDtbAquHkf(I)%Num)
+      ! S%DtbTrace= trim(vDtbAquHkf(I)%Num)
+      S%DtbTrace= trim(vDtbAquHkf(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     end do
   end if
@@ -146,7 +149,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbMinHkf
       S%DtbModel= trim(vDtbMinHkf(I)%Typ)//"_HKF"
-      S%DtbTrace= trim(vDtbMinHkf(I)%Num)
+      ! S%DtbTrace= trim(vDtbMinHkf(I)%Num)
+      S%DtbTrace= trim(vDtbMinHkf(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     end do
   end if
@@ -157,7 +161,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
       N=N+1
       S%Indx=     I
       S%DtbModel= trim(vDtbMinThr(I)%Typ)//"_THR"
-      S%DtbTrace= trim(vDtbMinThr(I)%Num)
+      ! S%DtbTrace= trim(vDtbMinThr(I)%Num)
+      S%DtbTrace= trim(vDtbMinThr(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
     end do
   end if

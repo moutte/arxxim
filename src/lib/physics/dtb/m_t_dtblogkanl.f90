@@ -15,7 +15,7 @@ module M_T_DtbLogKAnl
     
     character(len=15):: Num !
     character(len=23):: Name
-    character(len=23):: Source
+    character(len=15):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
     !character(len=6) :: Fitting
@@ -42,10 +42,11 @@ contains
   subroutine DtbLogKAnl_New(M)
     type(T_DtbLogKAnl),intent(out) :: M
     !
-    M%Num="NONE"
-    M%Name="NONE"
-    M%Formula="NONE"
-    M%Typ="NON"
+    M%Num=     "NONE"
+    M%Name=    "NONE"
+    M%Source=  "NONE"
+    M%Formula= "NONE"
+    M%Typ=     "NON"
     !
     M%iFitting= 0
     M%Div= 1

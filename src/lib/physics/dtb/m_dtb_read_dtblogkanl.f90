@@ -258,6 +258,8 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
     M%Num=     "0"
     M%Name=    "0"
     M%Formula= "0"
+    M%Abbr=    "0"
+    M%Source=  "0"
     !---------------------------------------------------scan a data line
     do I= 1,vifield(10)-1
     ! read words up to position before the parameters
@@ -282,35 +284,37 @@ subroutine DtbLogKAnl_Read(F,vEle,N)
         case default ;  call Stop_(trim(W)//"<< unknown type in database !!...")          
         end select
       end if
-
-      if(I==vifield(2)) then  !INDEX
+      !
+      if(I==vifield(2)) then  ! INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
       end if
-
-      if(I==vifield(3)) then  !NAME
+      !
+      if(I==vifield(3)) then  ! NAME
         call Str_Upper(W)  ;  M%Name= trim(W)
       end if
-
-      if(I==vifield(4)) then  !SCFORM
-        !
+      !
+      if(I==vifield(4)) then  ! SCFORM
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
         if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
-        !
         call Str_Upper(W)  ;  M%Formula=trim(W)
       end if
-
-      if(I==vifield(5)) then  !ECFORM
+      !
+      if(I==vifield(5)) then  ! ECFORM
         call Str_Upper(W)  ;  M%Formula=  trim(W)
       end if
-
-      if(I==vifield(9)) then  !FITTING
-        call Str_Upper(W)  ;  CodFitting= trim(W)
+      !
+      if(I==vifield(5)) then  ! ECFORM
+        call Str_Upper(W)  ;  M%Formula=  trim(W)
       end if
-
+      !
+      if(I==vifield(7)) then  ! SOURCE
+        call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
       if(I==vifield(11)) call WrdToReal(W,X) ! size
       if(I==vifield(12)) call WrdToReal(W,X) ! VOLUME
       if(I==vifield(13)) call WrdToReal(W,X) ! DENSITY
-
+      !
     end do
     !
     call ReadRValsV(L,mDum,vX)

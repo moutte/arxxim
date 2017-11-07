@@ -556,40 +556,42 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
         case default ;  call Stop_(trim(W)//"<< unknown type in database !!...")
         end select
       end if
-
+      !
       if(I==vifield(2)) then  !INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
       end if
-
+      !
       if(I==vifield(3)) then  !NAME
         call Str_Upper(W)  ;  M%Name= trim(W)
       end if
-
+      !
       if(I==vifield(4)) then  !SCFORM
-        !
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
-        if(.not.EcformIsOk) cycle DoFile !--==================< cycle ==
-        !
+        if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
         call Str_Upper(W)  ;  M%Formula=trim(W)
       end if
-
+      !
       if(I==vifield(5)) then  !ECFORM
         call Str_Upper(W)  ;  M%Formula=  trim(W)
       end if
-
+      !
+      if(I==vifield(7)) then ! SOURCE
+        call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
     end do
-    !------------------------ scan the data line (left to PARAMETERS) --
+    !---------------------------- scan the data line (left to PARAMETERS)
     !
-    !--------------------------------------------------- read formula --
+    !-------------------------------------------------------read formula
     call Formula_Read(M%Formula,vEle,ZSp,Div,fOk,vStoik)
-    if(.not. fOk) cycle DoFile !--============================< cycle ==
-    !--------------------------------------------------/ read formula --
+    if(.not. fOk) cycle DoFile !-----------------------------------cycle
+    !-----------------------------------------------------/ read formula
     !
     M%S0Ele=  dot_product(vStoik(:), vEle(:)%S0) /real(Div) !in Joule
     M%WeitKg= dot_product(vStoik(:), vEle(:)%WeitKg) /real(Div)
     M%Div= Div
     !
-    !----------------------------------------- loop on 6-cells groups --
+    !-------------------------------------------- loop on 6-cells groups
     do
     ! read species data
     ! (= organized as groups of 6 cells:
@@ -670,7 +672,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       end select
 
     end do
-    !--------------------------------------/ loop on 6-cells groups --
+    !-----------------------------------------/ loop on 6-cells groups
     !
     call Save_Record
     !

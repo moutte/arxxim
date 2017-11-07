@@ -285,6 +285,10 @@ subroutine DtbAquHKF_Read(F,vEle,N)
         call Str_Upper(W)  ;  M%Formula= trim(W)
       end if
       !
+      if(I==vifield(7)) then ! SOURCE
+        call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
       !if(I==vifield(9)) then
       !  call Str_Upper(W)  ;  CodFitting= trim(W)
       !end if

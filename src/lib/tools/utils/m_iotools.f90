@@ -266,6 +266,7 @@ subroutine ReadRValsV(Line,NRead,vX)
     if(EoL) exit
   end do
   NRead=N
+  !
 end subroutine ReadRValsV
 
 !! subroutine LinToWrd_(Line,Word,Eol) !Reads Words From A String, return UPPERcase word

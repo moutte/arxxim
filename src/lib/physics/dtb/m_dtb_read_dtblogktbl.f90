@@ -147,6 +147,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
   &   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
   L= "TYPE INDEX NAME ECFORM SIZE PARAMETERS" != default field list
+  L= "TYPE SOURCE NAME ECFORM SIZE PARAMETERS" != default field list
   if(iDebug==4) print *,"< Default values"
   call FieldList_Read(L,vStrField,vifield)
   if(iDebug==4) print *,"</ Default values"
@@ -262,35 +263,37 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
         end select
         !
       end if
-
+      !
       if(I==vifield(2)) then  ! INDEX
         call Str_Upper(W)  ;  M%Num= trim(W)
       end if
-
+      !
       if(I==vifield(3)) then  ! NAME
         call Str_Upper(W)  ;  M%Name= trim(W)
       end if
-
+      !
       if(I==vifield(4)) then  ! SCFORM
-        !
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
         if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
-        !
         call Str_Upper(W)  ;  M%Formula=trim(W)
       end if
-
+      !
       if(I==vifield(5)) then  ! ECFORM
         call Str_Upper(W)  ;  M%Formula=  trim(W)
       end if
-
+      !
+      if(I==vifield(7)) then ! SOURCE
+        call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
       !if(I==vifield(9)) then
       !  call Str_Upper(W)  ;  CodFitting= trim(W)
       !end if
-
+      !
       if(I==vifield(11)) call WrdToReal(W,X) ! size
       if(I==vifield(12)) call WrdToReal(W,X) ! VOLUME
       if(I==vifield(13)) call WrdToReal(W,X) ! DENSITY
-
+      !
     end do
     !
     call ReadRValsV(L,mDum,vX)
