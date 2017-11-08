@@ -313,6 +313,9 @@ subroutine Dtb_Tabulate_ForSystem( &
   open(F,file=trim(DirOut)//"_logk_prim.dtb")
   !------------------------------------------------------- SPECIES block
   write(F,'(A)') "SPECIES" !
+  write(F,'(6(A,A1))') &
+  & "TYPE",   T_, "SOURCE", T_,  "NAME",   T_, "ECFORM", T_, &
+  & "SIZE",   T_, "PARAMETERS", T_
   !-------------------------------------first, write the primary species
   DoPrim: do I=1,size(vSpc)
     !
@@ -379,7 +382,7 @@ subroutine Dtb_Tabulate_ForSystem( &
       ! & - dot_product(tNuAs(I,1:nCp),vSpc(vOrdPr(1:nCp))%G0rt)
       X=  tGrt(I,J) &
       & - dot_product(tNuSp(I,1:nCp),tGrt(vOrdPr(1:nCp),J))
-      write(F,'(G15.8,A1,$)') -X /Ln10, T_
+      write(F,'(G15.6,A1,$)') -X /Ln10, T_
     end do
     !
     write(F,*)

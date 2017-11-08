@@ -668,6 +668,8 @@ subroutine Theriakk(iError)
 
   if(nMix==0) then
     !
+    ! if(iDebug>1) write(92,'(*(A,A1))') (trim(vFas0(I)%NamFs),t_,I=1,nF) 
+    ! if(iDebug>1) write(92,'(*(G15.6,A1))') (vFas0(I)%Grt,t_,I=1,nF)
     if(iDebug>2) call ShowResults
     call StoreResults
     !
@@ -742,6 +744,7 @@ subroutine Theriakk(iError)
           write(92,'(4X,I3,2X,G15.6,2X,A)') &
           & I,vFas0(I)%Grt,trim(vFas0(I)%NamFs)
         enddo
+        write(92,'(/,A,I3)') "vFas0%Grt, iter= ", Iter
       end if
       !
       !--------------------------------to vFas(1:nFpur) (= pure phases),
@@ -755,6 +758,7 @@ subroutine Theriakk(iError)
       !
     enddo
     !
+    ! if(iDebug>1) write(92,'(*(G15.6,A1))') (vFas0(I)%Grt,t_,I=1,nF)
     if(iDebug>2) print '(A,I3)',"Iter= ",Iter
     !
   end if

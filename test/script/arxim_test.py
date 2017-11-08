@@ -16,12 +16,12 @@ Debug= "2"
 #---------------------------------------------------------------------//
 
 #----------------------------------------------------------INPUT FILE(S)
-files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a2a*.inn")
 files= glob.glob("inn/map_dom_fe_ox.inn")
 files= glob.glob("inn/map_dom_cr_ox.inn")
 files= glob.glob("valid/b1a*.inn")
-files= glob.glob("valid/a0b*.inn")
+files= glob.glob("valid/d2*.inn")
+files= glob.glob("valid/a0c*.inn")
 
 files.sort()
 for f in files: print f
@@ -67,10 +67,26 @@ for sFile in files:
       dataX= (labX,tData[:,iX])
       dataY= ML.table_select(2,"_gr",labels,tData)
       #
+      plt.rcParams['figure.figsize']= 10.,6.   #ratio 4/3
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,False)
       plt.savefig("png/"+titr+".png")
       plt.show()
+      
+      if 0:
+        if len(dataY)>6:
+          Y= dataY[0:6]
+          fig= plt.subplot()
+          ML.plot(fig,titr,dataX,Y,False,False)
+          plt.savefig("png/"+titr+"_1.png")
+          plt.show()
+          fig= plt.subplot()
+
+          Y= dataY[6:]
+          fig= plt.subplot()
+          ML.plot(fig,titr,dataX,Y,False,False)
+          plt.savefig("png/"+titr+"_2.png")
+          plt.show()
     
   if "SPCPATH" in sCommand:
     #-------------------------------------------------------molal.restab
@@ -159,6 +175,7 @@ for sFile in files:
       dataX= (labX,tData[:,iX])
       dataY= ML.table_select(2,"PHIM_",labels,tData)
       #
+      plt.rcParams['figure.figsize']= 10.,6.   #ratio 4/3
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,False)
       plt.show()

@@ -99,7 +99,9 @@ def plot(fig,titr,dataX,dataY,xLog,yLog):
   
   symbols=['bo','go','ro','co','mo','yo',\
            'bd','gd','rd','cd','md','yd',\
-           'bD','gD','rD','cD','mD','yD']
+           'b+','g+','r+','c+','m+','y+',\
+           'bx','gx','rx','cx','mx','yx',\
+           'bv','gv','rv','cv','mv','yv']
   colors= ['cyan', 'lightblue', 'lightgreen', 'tan', 'pink','red', 'blue']
 
   labX,vX=dataX 
@@ -130,9 +132,15 @@ def plot(fig,titr,dataX,dataY,xLog,yLog):
   #        ncol=3, fancybox=True) #, shadow=True)
   # Place a legend above this subplot, expanding itself to
   # fully use the given bounding box.
-  legend= fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
-             ncol=3, mode="expand", borderaxespad=0.)#-----------------------------------------------------------------//plot
+  box= fig.get_position()
+  fig.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+  if 0:
+    legend= fig.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+               ncol=3, mode="expand", borderaxespad=0.)
+  legend= fig.legend(bbox_to_anchor=(1.05, 1), loc=2)
   for lb in legend.get_texts(): lb.set_fontsize('small')
+  
+#-----------------------------------------------------------------//plot
 
 #--scan the inn file -> list of words
 def inn_scan_list(sName,sBlock,sKey):

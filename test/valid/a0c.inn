@@ -47,28 +47,16 @@ ELEMENTS.REDOX
   C  4
 END
 
-INCLUDE dtb\logk_header_eq36.dtb
+INCLUDE dtb\logk_eq36_header.dtb
 
-SPECIES LOGK
-INCLUDE dtb\logk_THC_v9b0_aqu.tab
-END
-SPECIES LOGK
-INCLUDE dtb\logk_THC_v9b0_min.tab
-END
+INCLUDE dtb\logk_eq36_cemdat07.dtb
 
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_ThermoddemV110_aqu.tab
-!! END
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_ThermoddemV110_min.tab
-!! END
+! INCLUDE dtb\logk_eq36_THC_v9b0_aqu.tab
+! INCLUDE dtb\logk_eq36_THC_v9b0_min.tab
 
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_datacom_aqu.tab
-!! END
-!! SPECIES LOGK
-!! INCLUDE dtb\logk_datacom_min.tab
-!! END
+! INCLUDE dtb\logk_eq36_TddemV110_aqu.tab
+! INCLUDE dtb\logk_eq36_TddemV110_min.tab
 
-
+! INCLUDE dtb\logk_eq36_datacom_aqu.tab
+! INCLUDE dtb\logk_eq36_datacom_min.tab
 
