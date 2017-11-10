@@ -147,7 +147,7 @@ subroutine DtbLogKTbl_Read(F,vEle,N)
   &   "SIZE        ","VOLUME      ","DENSITY     " /)
   !
   L= "TYPE INDEX NAME ECFORM SIZE PARAMETERS" != default field list
-  L= "TYPE SOURCE NAME ECFORM SIZE PARAMETERS" != default field list
+  ! L= "TYPE SOURCE NAME ECFORM SIZE PARAMETERS" != default field list
   if(iDebug==4) print *,"< Default values"
   call FieldList_Read(L,vStrField,vifield)
   if(iDebug==4) print *,"</ Default values"
