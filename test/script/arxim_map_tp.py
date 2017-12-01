@@ -18,7 +18,7 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user defined
-fInn= "inn/map_tp_1a.inn"
+fInn= "inn/map_tp_1c.inn"
 
 Xlis= ["TDGC"]  # must be uppercase ...
 Ylis= ["PBAR"]  # must be uppercase ...
