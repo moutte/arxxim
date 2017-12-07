@@ -41,7 +41,7 @@ def check_done():
 #---------------------------------------------------------------------//
 
 i0= 0
-i= 0 
+i=  0 
 for sFile in files:
   if os.path.isfile("error.log"): os.remove("error.log")
 
