@@ -22,6 +22,7 @@ files= glob.glob("inn/map_dom_cr_ox.inn")
 files= glob.glob("valid/b1a*.inn")
 files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a0e*.inn")
+files= glob.glob("valid/a0b*.inn")
 
 files.sort()
 for f in files: print f
