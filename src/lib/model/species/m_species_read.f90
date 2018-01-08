@@ -148,7 +148,7 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
     do I=1,size(vDtbMinHkf)
       N=N+1
       S%Indx=     I !-> index of species S in vDtbMinHkf
-      S%DtbModel= trim(vDtbMinHkf(I)%Typ)//"_HKF"
+      S%DtbModel= trim(vDtbMinHkf(I)%Typ)//"_HKF" !Helgeson-Kirkham-Flowers
       ! S%DtbTrace= trim(vDtbMinHkf(I)%Num)
       S%DtbTrace= trim(vDtbMinHkf(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)
@@ -159,8 +159,8 @@ subroutine SpeciesDtb_BuildLnk(LnkSpc,N)
   if(size(vDtbMinThr)>0) then
     do I=1,size(vDtbMinThr)
       N=N+1
-      S%Indx=     I
-      S%DtbModel= trim(vDtbMinThr(I)%Typ)//"_THR"
+      S%Indx= I
+      S%DtbModel= trim(vDtbMinThr(I)%Typ)//"_THR" !Theriak
       ! S%DtbTrace= trim(vDtbMinThr(I)%Num)
       S%DtbTrace= trim(vDtbMinThr(I)%Source)
       call LnkSpc_Build(N==1,S,LnkSpc,pCur)

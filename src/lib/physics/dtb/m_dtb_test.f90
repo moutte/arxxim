@@ -608,13 +608,13 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
 
     !-- write array of Temperatures --
     write(F,'(4(A,A1),$)') &
-    & ".Type",T_,".Trace",T_,".Species",T_,".ECFORM",T_
+    & ".TYPE",T_,".TRACE",T_,".SPECIES",T_,".ECFORM",T_
     ! call OutStrVec(F,vTPCond(:)%TdgC,Opt_S="TdgC")
     call OutStrVec(F,vTPCond(:)%TdgC)
     
     !-- write array of Pressures --
     write(F,'(4(A,A1),$)') &
-    & ".Type",T_,".Trace",T_,".Species",T_,".ECFORM",T_
+    & ".TYPE",T_,".TRACE",T_,".SPECIES",T_,".ECFORM",T_
     ! call OutStrVec(F,vTPCond(:)%Pbar,Opt_S="Pbar")
     call OutStrVec(F,vTPCond(:)%Pbar)
     !
@@ -640,10 +640,10 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
     !
     case("LOGK")
       if(S%Typ=="AQU") then
-        !-- for aqu'species, write size parameter --
+        !--------------------------for aqu'species, write size parameter
         write(F, '(F15.1,A1,$)') S%AquSize, T_
       else
-        !-- for non aqueous species, write density --
+        !-------------------------for non aqueous species, write density
         write(F, '(G15.8,A1,$)') S%WeitKg /S%V0, T_
       end if
       !-- write array of log10(-G/RT), i.e. "logK" --
@@ -652,23 +652,24 @@ subroutine DtbSpc_Table_Write(sCode,vTPCond,vSolModlDat,vSpcDtb,vSpc,tGrt)
       end do
     !
     case("GIBBS")
-      !--- write Gibbs free energy --
+      !------------------------------------------write Gibbs free energy
       do jTP= 1,N
         X= tGrt(iSp,jTP) *(vTPCond(jTP)%TdgC +T_CK) *R_jK
-        ! X= X - Tref *vS0Ele(iSp) !-> to Berman-Brown
+        !-------------------X= X - Tref *vS0Ele(iSp) !-> to Berman-Brown
         write(F,'(G15.8,A1,$)') X, T_
       end do
     !
     case("GIBBS2")
-      !--- write Gibbs free energy, in Berman-Brown convention --
+      !--------------write Gibbs free energy, in Berman-Brown convention
       do jTP= 1,N
         X= tGrt(iSp,jTP) *(vTPCond(jTP)%TdgC +T_CK) *R_jK
         X= X - Tref *vS0Ele(iSp) !-> to Berman-Brown
         write(F,'(G15.8,A1,$)') X, T_
       end do
+      write(F,'(G15.8,A1,$)') vS0Ele(iSp), T_ 
     !
     case("VOLUME")
-      !--- write molar volume --
+      !-----------------------------------------------write molar volume
       do jTP= 1,N
         X= tGrt(iSp,jTP)*1.0D6
         write(F,'(G15.8,A1,$)') X, T_
@@ -760,20 +761,20 @@ subroutine Dtb_Tabulate_PSatH2O
 
   TdgC=Zero
   do
-
+    !
     TdgK= TdgC +T_CK
-
+    !
     if (TdgK<=647.25D0) call Eos_H2O_Psat(TdgK,Psat)
-
+    !
     if(TdgC<=100._dp) then  ;  Pbar= 1.013D0
     else                    ;  Pbar= Psat
     end if
-
+    !
     write(f,'(F7.2,A1,F7.2)') TdgC,t_,Pbar
-
+    !
     TdgC= TdgC +5.D0
     if(TdgK>647.25D0) exit
-
+    !
   end do
 
   close(f)
@@ -788,7 +789,6 @@ subroutine Dtb_Test_Fluid
   use M_Path_Vars,  only: vTPpath
   !
   use M_Fluid_Calc
-  ! use M_FluidMix_KerJac
   !
   logical :: Ok
   real(dp):: TdgC,TdgK,Pbar,Grt,H,S,V_m3
