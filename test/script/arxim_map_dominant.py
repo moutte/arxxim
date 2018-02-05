@@ -14,7 +14,7 @@ if sys.platform.startswith("win"):   #windows
   sExe= "arxim.exe"
 if sys.platform.startswith("linux"): #linux
   sExe= "a.out"
-sDir= os.path.join("..","bin")
+sDir= os.path.join("bin")
 sExe= os.path.join(sDir,sExe)
 
 sDebug= "1"
@@ -29,11 +29,11 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn/map_dom_fe_ox.inn"
+fInn= "inn-map/map_dom_fe_ox.inn"
 #Elements=["FE"]
 Selection="FE"
 
-fInn= "inn/map_dom_cr_ox.inn"
+fInn= "inn-map/map_dom_cr_ox.inn"
 #Elements=["CR"]
 Selection="CR"
 

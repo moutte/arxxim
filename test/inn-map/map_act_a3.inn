@@ -24,8 +24,8 @@ END
 INCLUDE  dtb\elements.dtb
 INCLUDE  dtb\logk_eq36_hkf_2.dtb
 SPECIES
-  MIN  VIRTUAL  SIO2_BUFF  SI(1)O(2)  2700.  2  2  2  2  2  2  2  2  
-  MIN  VIRTUAL  KOH_BUFF  K(1)O(1)H(1)  2700.  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  
+  MIN  VIRTUAL  SIO2_BUFF  SI(1)O(2)     2700.  2  2  2  2  2  2  2  2  
+  MIN  VIRTUAL  KOH_BUFF   K(1)O(1)H(1)  2700.  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  -2.953  
 END
 SPECIES.EXCLUDE
   A-QUARTZ

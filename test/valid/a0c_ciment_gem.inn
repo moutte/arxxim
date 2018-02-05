@@ -49,13 +49,13 @@ END
 
 INCLUDE dtb\logk_eq36_header.dtb
 
-INCLUDE dtb\logk_eq36_cemdat07.dtb
+!INCLUDE dtb\logk_eq36_cemdat07.dtb
 
-! INCLUDE dtb\logk_eq36_THC_v9b0_aqu.tab
-! INCLUDE dtb\logk_eq36_THC_v9b0_min.tab
+!INCLUDE dtb\logk_eq36_THC_v9b0_aqu.tab
+!INCLUDE dtb\logk_eq36_THC_v9b0_min.tab
 
-! INCLUDE dtb\logk_eq36_TddemV110_aqu.tab
-! INCLUDE dtb\logk_eq36_TddemV110_min.tab
+INCLUDE dtb\logk_eq36_TddemV110_aqu.tab
+INCLUDE dtb\logk_eq36_TddemV110_min.tab
 
 ! INCLUDE dtb\logk_eq36_datacom_aqu.tab
 ! INCLUDE dtb\logk_eq36_datacom_min.tab

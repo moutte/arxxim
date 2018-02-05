@@ -21,26 +21,26 @@ if os.path.isfile("error.log"): os.remove("error.log")
 #---------------------------------------------------/cleaning tmp_ files
 
 #-----------------------------------------------------------user-defined
-fInn= "inn-map/map_act_a2.inn"
-Xlis= ["SIO2_BUFF"]
-Ylis= ["KOH_BUFF"]
-Xlabel= "colog[SiO2]"
-Ylabel= "colog[K+]/[H+]"
-
 fInn= "inn-map/map_act_b1.inn"
 Xlis= ["SIO2_BUFF"]
 Ylis= ["CAO_BUFF"]
 Xlabel= "colog[SiO2]"
 Ylabel= "colog[Ca+2]/[H+]^2"
 
-Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
-Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
+fInn= "inn-map/map_act_a2_save.inn"
+Xlis= ["SIO2_BUFF"]
+Ylis= ["KOH_BUFF"]
+Xlabel= "colog[SiO2]"
+Ylabel= "colog[K+]/[H+]"
+
+Xmin,Xmax,Xdelta,Xtol= 0., -40., 2.,  0.02
+Ymin,Ymax,Ydelta,Ytol= 0., -40., 2.,  0.02
 
 Xmin,Xmax,Xdelta,Xtol= 3.,  2., 0.05,  0.01
 Ymin,Ymax,Ydelta,Ytol= -2., -4., 0.1,  0.01
 
-Xmin,Xmax,Xdelta,Xtol= 0., -40., 2.,  0.02
-Ymin,Ymax,Ydelta,Ytol= 0., -40., 2.,  0.02
+Xmin,Xmax,Xdelta,Xtol= 5.,  2., 0.25,  0.02
+Ymin,Ymax,Ydelta,Ytol= 0., -8., 0.25,  0.02
 
 #---------------------------------------------------------//user-defined
 

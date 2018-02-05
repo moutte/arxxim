@@ -1,0 +1,50 @@
+TEST
+  COMPUTE EQUPATH
+  COMPUTE Q
+END
+  COMPUTE EQU
+  COMPUTE SPCPATH
+  COMPUTE DTBAQU
+  COMPUTE EQUTP
+
+CONDITIONS
+  TITLE  test acetates
+  OUTPUT out\acet1b
+  DEBUG  3
+END
+
+SYSTEM
+  TDGC 25.
+  CA PK    CALCITE
+  C  PK    CO2(G) 3.5
+  AC MOLE  Ac-    0.1
+END SYSTEM
+  CA GRAM  CA+2   0.4
+  OX PK    O2(g)   40
+  SI MOLE  SiO2(aq)
+  AL INERT Al+3
+  FE MOLE  Fe+3
+  MG MOLE  MG+2
+  CA MOLE  CA+2  0.1
+  NA MOLE  NA+   0.1
+  K  MOLE  K+
+  CL MOLE  CL-
+  S  MOLE  SO4-2
+  C  MOLE  HCO3-
+  H  PK    H+  7.
+
+PATH CHANGE
+AC INITIAL 0.001 FINAL 1.0 RATIO 1.5
+END
+
+TP.TABLE
+TdgC  0.010  25.000  60.000  100.000  150.000  200.00  250.00  300.00
+Pbar  1.013   1.013   1.013    1.013    4.757   15.53   39.74   85.84
+END
+
+INCLUDE dtb\elements.dtb
+INCLUDE dtb\hsvhkf_slop07_aqu.dtb
+INCLUDE dtb\hsvhkf_slop07_acet.dtb
+INCLUDE dtb\hsvhkf_slop98_gas.dtb
+INCLUDE dtb\hsvthr_thcalc_db55_min.tab
+

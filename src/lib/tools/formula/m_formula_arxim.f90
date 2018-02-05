@@ -1,15 +1,15 @@
 module M_Formula_Arxim
-!===============================================================
+!-----------------------------------------------------------------------
 ! Purpose :  Arxim Formulas Utils 
-!---------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! Arxim Formula Syntax 
-!---------------------------------------------------------------
+!-----------------------------------------------------------------------
 ! CaCO3        = Ca(3)C(1)O(3) 
 ! HCO3-        = H(1)C(1)O(3)-(1)
 ! Ca+2         = Ca(1)+(2)
 ! CO3(MgCa)0.5 = C(2)O(6)MG(1)CA(1)/(2) 
 !             or C(2)O(6)MG(1)CA(1)DIV(2)
-!===============================================================
+!-----------------------------------------------------------------------
   use m_kinds
   implicit none
 
@@ -59,10 +59,10 @@ contains
   !---
   
   subroutine Formula_Arxim_Build_Real ( vName, vCoef, OutFormula )
-  !=====================================================================
+  !---------------------------------------------------------------------
   ! Purpose : Create an Arxim Formula from a table of Real Coefficients$
   ! Remark. Name can contain the pseudo-elements (+) and (-) 
-  !=====================================================================
+  !---------------------------------------------------------------------
     character(len=*), intent(in) :: vName(:) 
     real(dp), intent(in) :: vCoef(:)
     character(len=*), intent(out) :: OutFormula
@@ -91,7 +91,7 @@ contains
   !---
 
   subroutine Formula_Arxim_Read(sFormul,vNameEle,Z,nDiv,fOk,vStoik) 
-  !=====================================================================
+  !---------------------------------------------------------------------
   !.read a chemical formula sFormul to a stoikiometric vector (vStoik)/Div 
   !.and the charge Z according to the element list vEle
   !.
@@ -100,7 +100,7 @@ contains
   !.thus, the "real" stoichio coeff for element vEle(i) is vstoik(i)/Div !!!
   !.
   !.-> used to read the elemental decompositon of a substance from its formula
-  !=====================================================================
+  !---------------------------------------------------------------------
     use M_Formula_Utils
     use M_IOTools,only: WrdToInt
     !

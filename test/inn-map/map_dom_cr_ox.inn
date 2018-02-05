@@ -20,7 +20,7 @@ PATH CHANGE
   H  initial 1. final 13. delta 0.5
 END PATH
 INCLUDE dtb\elements.dtb
-INCLUDE dtb\logk_header_eq36.dtb
+INCLUDE dtb\logk_eq36_header.dtb
 SPECIES LOGK
 TYPE	SOURCE	INDEX	NAME	ECFORM	SIZE	PARAMETERS							
 AQU	TDDEM	_0001	H2O	O(1)H(2)	3.4	0	0	0	0	0	0	0	0

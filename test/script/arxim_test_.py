@@ -9,8 +9,7 @@ os.chdir("../")
 #---------------------------------------------------------------EXE FILE
 if sys.platform.startswith("win"):    sExe= "arxim.exe"  #windows
 if sys.platform.startswith("linux"):  sExe= "a.out"      #linux
-sDir= os.path.join("bin")
-
+sDir= os.path.join("..","bin")
 sExe= os.path.join(sDir,sExe)
 
 Debug= "2"
@@ -23,8 +22,7 @@ files= glob.glob("inn/map_dom_cr_ox.inn")
 files= glob.glob("valid/b1a*.inn")
 files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a0e*.inn")
-files= glob.glob("inn/acet1c*.inn")
-files= glob.glob("inn/soda1b*.inn")
+files= glob.glob("valid/a0b*.inn")
 
 files.sort()
 for f in files: print f
@@ -134,30 +132,6 @@ for sFile in files:
       #
       fig= plt.subplot()
       ML.plot(fig,titr,dataX,dataY,False,False)
-      plt.savefig("png/"+titr+".png")
-      plt.show()
-    #-----------------------------------------------------------------//
-    
-  if "EQUPATH" in sCommand:
-    #-------------------------------------------------moles_clean.restab
-    if 0:
-      s=sDirout+"_moles_clean.restab"
-      titr= ML.extractFileName(s)
-      lines= open(s,'r').readlines()
-      labels,tData= ML.lines2table(lines)
-      #
-      if "pH" in labels:
-        iX= labels.index("pH")
-        labX= "pH"
-      else:
-        iX= 0
-        labX= "x"
-      dataX= (labX,tData[:,iX])
-      #
-      dataY= ML.table_select(1,"H2O",labels,tData)
-      #
-      fig= plt.subplot()
-      ML.plot(fig,titr,dataX,dataY,False,True)
       plt.savefig("png/"+titr+".png")
       plt.show()
     #-----------------------------------------------------------------//
