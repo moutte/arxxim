@@ -18,9 +18,10 @@ module M_T_DtbMinThr
   type:: T_DtbMinThr
     character(len=15):: Num
     character(len=23):: Name
-    character(len=15):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
+    character(len=15):: Source
+    character(len=3) :: HSV_Format !------------------------NEW--2018-01
     character(len=3) :: Typ ! MIN,GAS
     character(len=15):: Special
     !
@@ -62,6 +63,7 @@ subroutine DtbMinThr_Zero(M)
   M%Dis=.false. !; M%VdW=.false.; M%RdK=.false.; M%Min=.false. !M%TL1=.false.
   !
   M%Name=    "ZZZ"
+  M%HSV_Format= "HSV" !-------------------------------------NEW--2018-01
   M%Special= "ZZZ"
   M%Typ=     "ZZZ"
   M%CodGas=  "IDEAL"

@@ -16,9 +16,9 @@ module M_T_DtbSpcLogK
   ! data structure for species following a logK format
     character(len=15):: Num
     character(len=23):: Name
-    character(len=23):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
+    character(len=23):: Source
     character(len=3) :: Typ !MIN:GAS
     !
     integer :: iMode

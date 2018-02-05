@@ -23,8 +23,12 @@ files= glob.glob("inn/map_dom_cr_ox.inn")
 files= glob.glob("valid/b1a*.inn")
 files= glob.glob("valid/d2*.inn")
 files= glob.glob("valid/a0e*.inn")
+<<<<<<< HEAD
 files= glob.glob("inn/acet1c*.inn")
 files= glob.glob("inn/soda1b*.inn")
+=======
+files= glob.glob("valid/a0b*.inn")
+>>>>>>> 14a34abb355fa75f285c8e0e035aab6a797b2ed2
 
 files.sort()
 for f in files: print f

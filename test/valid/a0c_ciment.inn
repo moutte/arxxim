@@ -1,0 +1,62 @@
+TEST
+  COMPUTE GEMPATH
+  COMPUTE Q
+END
+  COMPUTE SPCPATH
+  COMPUTE EQU
+  COMPUTE DTBAQU
+  COMPUTE EQUTP
+
+CONDITIONS
+  TITLE  test ciment dtb, GEM test
+  OUTPUT out\a0c
+  DEBUG  2
+END
+
+SYSTEM.GEM
+! Lothenbach_2006_CCR_
+! Thermodynamic modelling of the hydration of Portland cement
+  MOLE H2O    H2O   10.0  
+  MOLE SIO2   SiO2  3.279
+  MOLE AL2O3  Al2O3 0.461
+  MOLE FE2O3  Fe2O3 0.167
+  MOLE CAO    CaO   11.34
+  MOLE MGO    MgO   0.459
+  MOLE CO2    CO2   0.439
+  MOLE SO3    SO3   0.418
+END
+  GRAM H2O    H2O   100.0
+  GRAM SIO2   SiO2  19.7
+  GRAM AL2O3  Al2O3 4.7
+  GRAM FE2O3  Fe2O3 2.67
+  GRAM CAO    CaO   63.6
+  GRAM MGO    MgO   1.85
+  GRAM CO2    CO2   1.93
+  GRAM SO3    SO3   3.35
+  GRAM K2O    K2O   1.12  
+  GRAM NA2O   Na2O  0.08 
+
+PATH CHANGE
+H2O INITIAL 0.0 FINAL 20.0 DELTA 0.5
+END
+
+INCLUDE dtb\elements.dtb
+ELEMENTS.REDOX
+  FE 3
+  S  6
+  C  4
+END
+
+INCLUDE dtb\logk_eq36_header.dtb
+
+INCLUDE dtb\logk_eq36_cemdat07.dtb
+
+! INCLUDE dtb\logk_eq36_THC_v9b0_aqu.tab
+! INCLUDE dtb\logk_eq36_THC_v9b0_min.tab
+
+! INCLUDE dtb\logk_eq36_TddemV110_aqu.tab
+! INCLUDE dtb\logk_eq36_TddemV110_min.tab
+
+! INCLUDE dtb\logk_eq36_datacom_aqu.tab
+! INCLUDE dtb\logk_eq36_datacom_min.tab
+

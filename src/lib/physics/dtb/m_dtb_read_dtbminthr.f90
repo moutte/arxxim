@@ -368,16 +368,17 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
 
   use M_T_Element,  only: T_Element,Element_Index
   use M_T_Element,  only: Formula_Read
+  use M_Dtb_Const,  only: Tref
   use M_T_DtbMinThr,only: DtbMinThr_Zero
   use M_Files,      only: DirDtbLog,Files_Index_Write
   use M_Dtb_Read_Tools
   use M_Dtb_Vars,   only: DtbFormat
-  !
+  !---------------------------------------------------------------------
   integer,        intent(in):: F !input file
   type(T_Element),intent(in):: vEle(:)
   !
   integer,        intent(inout):: N
-  !
+  !---------------------------------------------------------------------
   character(len=512):: L,W,Wb
   logical :: EoL
   real(dp):: X
@@ -385,22 +386,22 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   type(T_DtbMinThr) :: M
   !type(T_LisMinThr),pointer,save:: LisCur
   !
-  !--- for header processing --
+  !----------------------------------------------- for header processing
   logical :: IsHeader
   integer,parameter:: nField= 10
   character(len=12):: vStrField(1:nField)
   ! vStrField contains names of all possible fields in a database
   integer :: vifield(1:nField)
   ! character(len=12):: vStrUnit(1:nField)
-  !---/ for header processing --
+  !---/ for header processing
   !
-  !--- for Formula_Read
+  !---------------------------------------------------- for Formula_Read
   integer :: vStoik(1:size(vEle))
   logical :: fOk
   integer :: ZSp,Div
   !---/
   !
-  !--- for formula translation --
+  !--------------------------------------------- for formula translation
   character(len=6):: CodFormula
   ! CodFormula is either "SCFORM" or "ECFORM" (names inherited from SUPCRT files):
   !   SCFORM = compact formula,  e.g. SiO2
@@ -409,7 +410,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   integer:: fFormula
   logical:: EcformIsOk
   !---/
-  !
+  !---------------------------------------------------------------------
   if(idebug>1) write(fTrc,"(/,A)") "< DtbMinThr_Read_line"
   !
   !--- for formula translation --
@@ -421,7 +422,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   !
   ! if(N>0) LisCur=> LisMinThr
   !
-  !------------------------------------------------------------ trace --
+  !--------------------------------------------------------------- trace
   if(iDebug<3) then
     FF= 0
   else
@@ -443,7 +444,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
     write(FF,"(A7,A1,A7)") "Div",T_,"FORMULA"
     !
   end if
-  !-----------------------------------------------------------/ trace --
+  !--------------------------------------------------------------/ trace
   !
   FilCode= trim(DtbFormat) !-> default value
   iLine= 0
@@ -457,7 +458,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
   !
   !--- scan default field list
   L= "TYPE NAME ECFORM ABBREV SOURCE FORMAT PARAMETERS"
-  L= "TYPE NAME ECFORM SKIP SOURCE SKIP PARAMETERS"
+  L= "TYPE NAME ECFORM SKIP   SOURCE SKIP   PARAMETERS"
   !
   !if(iDebug==4) print *,"< Default values"
   call FieldList_Read(L,vStrField,vifield)
@@ -471,10 +472,10 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
     open(fFormula,file="debug_formula.log")
     write(fFormula,'(A,/)') "resuts of formula conversion"
   end if
-  !-----------------------------/ initialize vStrField(:), vifield(:) --
+  !--------------------------------/ initialize vStrField(:), vifield(:)
   !
-  !------------------------------- build a linked list of all species --
-  !----------------------------- consistent with current element list --
+  !---------------------------------- build a linked list of all species
+  !-------------------------------- consistent with current element list
   DoFile: do
 
     read(F,'(A)',iostat=ios) L
@@ -483,9 +484,9 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
     if(W(1:1)=="!") cycle DoFile
     call AppendToEnd(L,W,EoL)
     !
-    !---------------------------------------- read header, if present --
-    !------ if the line begins with any member of array vStrField(:), --
-    !------------------------------ then it contains the line headers --
+    !------------------------------------------- read header, if present
+    !--------- if the line begins with any member of array vStrField(:),
+    !--------------------------------- then it contains the line headers
     IsHeader= .false.
     do I=1,nField
       if(trim(W)==trim(vStrField(I))) then
@@ -509,9 +510,9 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
 
       cycle DoFile
     end if
-    !---------------------------------------/ read header, if present --
+    !------------------------------------------/ read header, if present
     !
-    !------------------------------------- process first word of line --
+    !---------------------------------------- process first word of line
     select case(W)
     !
     case("ENDINPUT")
@@ -526,14 +527,14 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       L= trim(W)//" "//trim(L)
     !
     end select
-    !------------------------------------/ process first word of line --
+    !---------------------------------------/ process first word of line --
     !
     call DtbMinThr_Zero(M)
     !
     M%Num=trim(FilCode)
     !
-    !--------------------------------------------- scan the data line --
-    !--------------------------------- up to column before parameters --
+    !------------------------------------------------ scan the data line
+    !------------------------------------ up to column before parameters
     do I= 1,vifield(10)-1
       !
       !vStrField(1:nField)= &
@@ -568,15 +569,19 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       if(I==vifield(4)) then  !SCFORM
         call DtbRead_Build_ExtendedFormula(fFormula,vElement,W,EcformIsOk)
         if(.not.EcformIsOk) cycle DoFile !-------------------------cycle
-        call Str_Upper(W)  ;  M%Formula=trim(W)
+        call Str_Upper(W)  ;  M%Formula= trim(W)
       end if
       !
       if(I==vifield(5)) then  !ECFORM
-        call Str_Upper(W)  ;  M%Formula=  trim(W)
+        call Str_Upper(W)  ;  M%Formula= trim(W)
       end if
       !
       if(I==vifield(7)) then ! SOURCE
         call Str_Upper(W)  ;  M%Source= trim(W)
+      end if
+      !
+      if(I==vifield(8)) then ! FORMAT !---------------------NEW--2018-01
+        call Str_Upper(W)  ;  M%HSV_Format= trim(W)
       end if
       !
     end do
@@ -608,6 +613,9 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
         
       case("ST")
         call ReadRVals5(L,M%G0R,M%H0R,M%S0_,M%V0R,X)
+        if(M%HSV_Format=="GSV") then
+          M%H0R= M%G0R + Tref*M%S0_ - Tref*M%S0Ele
+        end if
 
       case("C1","CP1")
         call ReadRVals5(L,M%K1,M%K4,M%K3,M%K8,X)
@@ -672,7 +680,7 @@ subroutine DtbMinThr_Read_Line(F,vEle,N)
       end select
 
     end do
-    !-----------------------------------------/ loop on 6-cells groups
+    !-------------------------------------------/ loop on 6-cells groups
     !
     call Save_Record
     !

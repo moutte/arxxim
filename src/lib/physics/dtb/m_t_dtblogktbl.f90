@@ -26,9 +26,9 @@ module M_T_DtbLogKTbl
     !
     character(len=15):: Num
     character(len=23):: Name
-    character(len=15):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
+    character(len=15):: Source
     character(len=3) :: Typ     ! AQU:MIN:GAS:XCH
     integer :: Div=1
     integer :: Chg

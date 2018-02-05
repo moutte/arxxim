@@ -24,9 +24,9 @@ module M_T_DtbAquHkf
   type:: T_DtbAquHkf
     character(len=15):: num
     character(len=23):: name
-    character(len=15):: Source
     character(len=5) :: Abbr
     character(len=71):: Formula
+    character(len=15):: Source
     integer :: Div=1
     integer :: Chg
     real(dp):: &
