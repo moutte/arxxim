@@ -30,6 +30,8 @@ subroutine Driver_Arxim
     call Global_Zero
     !
     call IO_Menu(S,OkCmd,iDebug)
+    !print *,"IO_Menu->",s
+    !call Pause_
     LWarning= (idebug>1)
     !
     !------------------------------------------------------
@@ -43,7 +45,7 @@ subroutine Driver_Arxim
       call Files_PathRead(Ok)
       call Files_BuildInput
       OkSMode = .true.
-    case("REF") !to call when input file has been MODIFIED
+    case("REF") !to call when input file has been modified
       call Files_BuildInput !-> renew arxim_inn
       OkSMode = .true.
     case default
@@ -97,11 +99,12 @@ subroutine Driver_Arxim_Options(sFilename, sMode)
   logical:: OkCmd,Ok, OkSMode
   character(len=*):: sMode
   character(len=*):: sFilename
+  character(len=78):: msg
   !
   call Trace_Init
   !
-  call Files_PathRead_From_FileName(sFileName, Ok) 
-  if(.not. Ok) call Stop_("ERRORS")
+  call Files_PathRead_From_FileName(sFileName, Ok, msg) 
+  if(.not. Ok) call Stop_("ERROR "//trim(msg))
   ! 
   call Files_BuildInput
   !
@@ -378,6 +381,7 @@ subroutine Driver_Arxim_ComputeSequence(S, OkCmd, OkSMode)
   case("DTBH2OHKF")
     call Global_Build
     call Dtb_Test_H2OHkf_new
+    ! call Dtb_Test_H2OHkf_Epsilon
     !
   case("DTBSPC")
     call Global_Build
