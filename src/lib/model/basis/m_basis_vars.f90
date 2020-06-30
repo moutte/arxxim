@@ -5,6 +5,8 @@ module M_Basis_Vars
   
   implicit none
   
+
+
   private
   !
   public:: Basis_SpcOrdPrm_Alloc
