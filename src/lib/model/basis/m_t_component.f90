@@ -12,25 +12,25 @@ module M_T_Component
   public:: CpnMolMinim
   !
   type:: T_Component !container for storing a thermodynamic component
-    character(len=23):: NamCp
-    character(len=71):: Formula !-> currently used only for simplex !!!
-    character(len=7) :: Statut  !status of component; INERT,MOBILE,BALANCE,BUFFER,...
-    integer :: vStoikCp(0:nElMax)
-    integer :: iEle
-    integer :: iSpc
-    real(dp):: Factor
+    character(len=23):: NamCp  ="ZZZ"
+    character(len=71):: Formula="ZZZ"     !-> currently used only for simplex !!!
+    character(len=7) :: Statut ="INERT" !status of component; INERT,MOBILE,BALANCE,BUFFER,...
+    integer :: vStoikCp(0:nElMax)=0
+    integer :: iEle= 0
+    integer :: iSpc= 0
+    real(dp):: Factor= 1.0_dp
     !
-    character(len=23):: namMix
+    character(len=23):: namMix="ZZZ"
     ! namSol= name of phase controlling this component (used for mobile cpn') 
-    !   for an aqueous species or a pure species, namSol="Z" 
+    !   for an aqueous species or a pure species, namSol="ZZZ" 
     !   for a non aqueous mixture, %namMix is the name of the solid or gas mixture phase 
     !iMix, iPol = used for multi-solution system (e.g. SS-AS)
     !-> iFas is calculated from %namMix, c%iFas=MixPhase_Index(IN=vMixFas,IN=c%namMix) 
-    integer :: iMix !index of "controlling" mixture phase in vMixPhase (iFas=0 for aqu. or pure species)
-    integer :: iPol !index of the species in the end-member list of that phase 
+    integer :: iMix=0 !index of "controlling" mixture phase in vMixPhase (iFas=0 for aqu. or pure species)
+    integer :: iPol=0 !index of the species in the end-member list of that phase 
     ! 
-    real(dp):: Mole   !stores the current mole number (for inert component) 
-    real(dp):: LnAct  !stores the current activity (for mobile component) 
+    real(dp):: Mole=  Zero !stores the current mole number (for inert component) 
+    real(dp):: LnAct= Zero !stores the current activity (for mobile component) 
     ! 
   end type T_Component
   !
@@ -41,15 +41,15 @@ contains
 subroutine Component_Zero(C)
   type(T_Component),intent(out):: C
   !
-  C%NamCp=   "Z"
-  C%Formula= "Z"
+  C%NamCp=   "ZZZ"
+  C%Formula= "ZZZ"
   C%Statut=  "INERT"
   C%vStoikCp(:)= 0
   C%vStoikCp(0)= 1 ! divider
   C%iEle=     0
   C%iSpc=     0
   C%Factor=   1.0_dp
-  C%namMix=  "Z"
+  C%namMix=  "ZZZ"
   C%iMix=     0
   C%iPol=     0
   C%Mole=     Zero
@@ -65,7 +65,7 @@ integer function Component_Index(Str,V)
   type(T_Component),intent(in):: V(:)
   !
   integer::I 
-  
+  !
   Component_Index=0
   if(size(V)==0) return
   !
@@ -77,7 +77,7 @@ integer function Component_Index(Str,V)
     end if 
     if(I==size(V)) exit 
   end do !if Str not found -> I=0
-  
+  !
   return
 end function Component_Index
  
@@ -100,9 +100,9 @@ subroutine Component_Print(f,vEle,vSpc,C)
 end subroutine Component_Print 
  
 subroutine Component_Stoikio(vEle,ieOx,Cpn,fOk)
-!--
-!-- !!! currently used only in simplex routines !!!
-!-- build stoichiometry vector of component Cpn according to element base vEle
+!-- !!! currently used only in simplex routines !!!!!!
+!-- build stoichiometry vector of component Cpn 
+!-- according to element base vEle
 !-- NEW: stoichiometry saved as S%vStoikCp
 !--
   use M_T_Element,only: T_Element,Formula_Read

@@ -32,9 +32,9 @@ contains
 subroutine Basis_Alloc(nSp,nCp,nFs,nAq,nAs,nMs)
   use M_Basis_Vars,only: tStoikio
   use M_Basis_Vars,only: Basis_SpcTypes_Alloc,Basis_SpcOrdPrm_Alloc,Basis_AlfaNu_Alloc
-  !
+  !---------------------------------------------------------------------
   integer,intent(in):: nSp,nCp,nFs,nAq,nAs,nMs
-  !
+  !---------------------------------------------------------------------
   if(idebug>1) write(fTrc,'(/,A)') "< Basis_Alloc"
   !
   !---allocate logical tables vLxx
@@ -61,13 +61,13 @@ subroutine Basis_Calc_iO_iH_iOx( & !
 !--
   use M_T_Element,  only: T_Element
   use M_T_Component,only: T_Component
-  !
+  !---------------------------------------------------------------------
   type(T_Element),  dimension(:),intent(in) :: vEle
   type(T_Component),dimension(:),intent(in) :: vCpn
   integer,                       intent(out):: icO_,icH_,icOx
   ! ranks of elements O__,H__,OX_ in Cpn of current component list
   integer:: I
-  !
+  !---------------------------------------------------------------------
   icO_=0  ;  icH_=0  ;  icOx=0
   do I=1,size(vCpn)
     select case(vEle(vCpn(I)%iEle)%NamEl)
@@ -83,28 +83,27 @@ subroutine Basis_Calc_iO_iH_iOx( & !
 end subroutine Basis_Calc_iO_iH_iOx
 
 subroutine Basis_Dimensions( & !
-& BufferIsExtern,        & !IN
-& vCpn,vSpc,nAq,nMn,nGs, & !IN
-& nCi,nMx,nAx,nMs,nAs)     !OUT
-!--
+& BufferIsExtern,      & !IN
+& vCpn,vSpc,nAq,nMn,   & !IN
+& nCi,nMx,nAx,nMs,nAs)   !OUT
+!-----------------------------------------------------------------------
 !-- count number of Inert / Mobile components
 !-- assign species' statut
-!--
+!-----------------------------------------------------------------------
   use M_T_Component,only: T_Component
   use M_T_Species,  only: T_Species
   use M_T_Phase,    only: T_Phase
-  !
+  !---------------------------------------------------------------------
   logical,          intent(in) :: BufferIsExtern
   type(T_Component),intent(in) :: vCpn(:)
   type(T_Species),  intent(in) :: vSpc(:)
-  integer,          intent(in) :: nAq,nMn,nGs
+  integer,          intent(in) :: nAq,nMn
   integer,          intent(out):: nCi,nMx,nAx,nMs,nAs
-  !
+  !---------------------------------------------------------------------
   integer:: nCp,nSp,iSp,iCp,N
-  !
+  !---------------------------------------------------------------------
   if(idebug>1) write(fTrc,'(/,A)') "< Basis_Dimensions"
   !
-  N=nGs !currently not used ...
   nCp= size(vCpn)
   nSp= size(vSpc)
   nMx= 0
@@ -156,20 +155,20 @@ subroutine Basis_MixPhase_CpnUpdate( &
 & vSpc,      & !in
 & vSpcDat,   & !inout
 & vCpn)        !inout
-!--
+!-----------------------------------------------------------------------
 !-- update activities of end-members in non-aqueous solutions
 !-- update activities of mobile components
-!--
+!-----------------------------------------------------------------------
   use M_T_Species,  only: T_Species
   use M_T_Species,  only: T_SpcData
   use M_T_Component,only: T_Component
   use M_T_MixPhase, only: T_MixPhase
-  !
+  !---------------------------------------------------------------------
   type(T_MixPhase), intent(in)   :: vMixFas(:)
   type(T_Species),  intent(in)   :: vSpc(:)
   type(T_SpcData),  intent(inout):: vSpcDat(:)
   type(T_Component),intent(inout):: vCpn(:)
-  !
+  !---------------------------------------------------------------------
   integer :: iCp,iSp
   !
   if(idebug>1) write(fTrc,'(/,A)') "<== Basis_MixPhase_CpnUpdate"
@@ -203,13 +202,13 @@ subroutine Basis_SpcTypes_Build( & !
   use M_T_Element,  only: T_Element
   use M_T_Species,  only: T_Species
   use M_T_Component,only: T_Component
-  !
+  !---------------------------------------------------------------------
   type(T_Species),     intent(in) :: vSpc(:)
   type(T_Component),   intent(in) :: vCpn(:)
   logical,dimension(:),intent(out):: vLCi,vLAx,vLMx,vLAs,vLMs
-  !
+  !---------------------------------------------------------------------
   integer:: iCp,iSp
-  !
+  !---------------------------------------------------------------------
   if(idebug>1) write(fTrc,'(/,A)') "< Basis_SpcTypes_Build"
   !
   !-------------------------------------------update logical tables vLxx
@@ -249,8 +248,8 @@ end subroutine Basis_SpcTypes_Build
 
 subroutine Basis_Cpn_Order( & !
 & vSpc,nCi,nAx, & !in
-& vSpcDat,      & !
-& vCpn)           !out
+& vSpcDat,      & !inout
+& vCpn)           !inout
 !--
 !-- sort the components, inert first, mobile next --
 !--
@@ -259,15 +258,15 @@ subroutine Basis_Cpn_Order( & !
   use M_T_Component,  only: T_Component
   !! use M_Basis_Vars, only: iEleCpn,iCpnEle
   !! use M_Basis_Vars, only: Basis_CpnPrm_Alloc
-  !
+  !---------------------------------------------------------------------
   type(T_Species),  intent(in)   :: vSpc(:) !vSpcDat(iSp)%LAct=vCpn(iCp)%LnAct
   integer,          intent(in)   :: nCi,nAx
   type(T_SpcData),  intent(inout):: vSpcDat(:)
   type(T_Component),intent(inout):: vCpn(:)
-  !
+  !---------------------------------------------------------------------
   type(T_Component),dimension(:),allocatable::vC !-> re-ordered vCpn
   integer:: iCp,iCi,iAx,iMx,iSp !,nSp,nCp
-  !
+  !---------------------------------------------------------------------
   !!print *,"size(vSpc)    =  ",size(vSpc)
   !!print *,"size(vSpcDat) =  ",size(vSpcDat)
   !!call pause_
@@ -296,7 +295,7 @@ subroutine Basis_Cpn_Order( & !
     select case(trim(vCpn(iCp)%Statut))
 
     case("INERT","BALANCE") !Intern'Species
-      !--------------------------------------- inert components first --
+      !------------------------------------------ inert components first
       iCi=iCi+1
       vC(iCi)=vCpn(iCp)
       !
@@ -305,11 +304,11 @@ subroutine Basis_Cpn_Order( & !
       !
       select case(vSpc(iSp)%Typ(1:3))
       case("AQU") !eXtern'Aqu.Species
-        !---------------------------------------- then mobile aqueous --
+        !------------------------------------------- then mobile aqueous
         iAx=iAx+1
         vC(nCi+iAx)=vCpn(iCp)
       case("MIN","GAS") !eXtern'Min.Species
-        !----------------------------------------- mobile non'aqueous --
+        !-------------------------------------------- mobile non'aqueous
         iMx=iMx+1
         vC(nCi+nAx+iMx)=vCpn(iCp)
       end select
@@ -323,10 +322,10 @@ subroutine Basis_Cpn_Order( & !
   deallocate(vC)
   !-------------------------/reorder components, Inert / MobAqu / MobMin
   !
-  !-------------------------------------------- build iEleCpn,iCpnEle --
+  !----------------------------------------------- build iEleCpn,iCpnEle
   !! call Basis_CpnPrm_Alloc(size(vCpn))
   !! call Basis_CpnPrm_Calc(vCpn,iEleCpn,iCpnEle)
-  !-------------------------------------------/ build iEleCpn,iCpnEle --
+  !----------------------------------------------/ build iEleCpn,iCpnEle
   !
   !----------------------------------------------------------------trace
   if(idebug>1) then
@@ -410,16 +409,16 @@ subroutine Basis_SpcOrdPrm_Build( &
   nMx= count(vLMx)
   nMs= count(vLMs)
   !
-  !--- Aqueous Inert Prim'Species --
+  !--- Aqueous Inert Prim'Species
   vOrdPr(1:nCi)= vCpn(1:nCi)%iSpc
-  !--- Aqueous Mobile Species --
+  !--- Aqueous Mobile Species
   if(nAx>0) vOrdPr(nCi+1:nCi+nAx)= vCpn(nCi+1:nCi+nAx)%iSpc
   !--- non Aqu'Mobile Species --
   if(nMx>0) vOrdPr(nCi+nAx+1:nCi+nAx+nMx)= vCpn(nCi+nAx+1:nCi+nAx+nMx)%iSpc
   !
-  !--- Aqueous Inert Prim'Species --
+  !--- Aqueous Inert Prim'Species
   vOrdAq(1:nCi)= vCpn(1:nCi)%iSpc
-  !--- Aqueous Mobile Species --
+  !--- Aqueous Mobile Species
   if(nAx>0) &
   & vOrdAq(nCi+nAs+1:nCi+nAs+nAx)= vCpn(nCi+1:nCi+nAx)%iSpc
   !
@@ -435,7 +434,7 @@ subroutine Basis_SpcOrdPrm_Build( &
       end if
     end do
   end if
-  !------------------/
+  !--------------------------------------------------------------------/
   !
   !-------------------scan vSpc for min. second. species -> build vOrdMs
   if(nMs>0) then
@@ -448,7 +447,7 @@ subroutine Basis_SpcOrdPrm_Build( &
       end if
     end do
   end if
-  !-------------------/
+  !--------------------------------------------------------------------/
   !
   !nCi          //nAs           //nAx           //nMx       //nMs
   !Aqu.Inert.Spc//Aqu.Second.Spc//Aqu.Mobile.Spc//Min.Mobile//Min.notMobile
@@ -536,32 +535,33 @@ subroutine AlfaTable_Extract( &
   !
   if(idebug>1) write(fTrc,'(/,A)') "< AlfaTable_Extract"
   !
-  !tAlf_:column iSp = stoikio of species iSp in terms of nCi elements & nCm components
+  !tAlf_: column iSp = stoikio of species iSp in terms of 
+  !                    nCi elements & nCm components
   !
-  !--extract blocks from tStoikio(1:nCp,1:nSp) to tAlfPr,tAlfAs,tAlfMs--
+  !----extract blocks from tStoikio(1:nCp,1:nSp) to tAlfPr,tAlfAs,tAlfMs
   J= 0
-  !-------------------------------------subblock of inert prim'species--
+  !---------------------------------------subblock of inert prim'species
   do I=1,count(vLCi)
     J= J+1
     tAlfPr(:,J)=tAlfSp(:,vCpn(J)%iSpc)
   end do
-  !-------------------------------------subblock of mobile aqu'species--
+  !---------------------------------------subblock of mobile aqu'species
   do I=1,count(vLAx)
     J= J+1
     tAlfPr(:,J)=tAlfSp(:,vCpn(J)%iSpc)
   end do
-  !-------------------------------------subblock of mobile min'species--
+  !---------------------------------------subblock of mobile min'species
   do I=1,count(vLMx)
     J= J+1
     tAlfPr(:,J)=tAlfSp(:,vCpn(J)%iSpc)
   end do
   !
   tAlfAs(:,:)= Zero
-  !---------------------------------extract columns of sec'aqu.species--
+  !-----------------------------------extract columns of sec'aqu.species
   if(count(vLAs)>0) call Extract(2,tAlfSp,vLAs,tAlfAs)
   !
   tAlfMs(:,:)= Zero
-  !-----------------------------extract columns of sec'min.gas.species--
+  !-------------------------------extract columns of sec'min.gas.species
   if(count(vLMs)>0) call Extract(2,tAlfSp,vLMs,tAlfMs)
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ AlfaTable_Extract"
@@ -571,7 +571,7 @@ end subroutine AlfaTable_Extract
 subroutine AlfaTable_CalcBuffered( & !
 & vCpn,vSpc,tStoikio,vLCi,vLAs,vLMs, & !
 & vTot, &
-& tAlfPr,tAlfAs,tAlfMs) !!! NOT useD ???
+& tAlfPr,tAlfAs,tAlfMs) !!! NOT USED ???
   use M_T_Component,only: T_Component
   use M_T_Species,  only: T_Species
   use M_Numeric_Mat,only: LU_BakSub
@@ -595,8 +595,10 @@ subroutine AlfaTable_CalcBuffered( & !
   nSp= size(vSpc)
   nCi= count(vLCi)
   !
-  !for mole balance operations, replace the elements by "standard" primary species
-  != "INERT" component: single ion with default valency, e.g. Na->Na+,... -> no modif'
+  ! for mole balance operations, replace the elements by "standard" 
+  ! primary species
+  != "INERT" component: single ion with default valency, 
+  !                     e.g. Na->Na+,... -> no modif'
   != "mobile" component: use species as component
   !  -> elements replaced by corresponding species, e.g. C by CO2
   !
@@ -962,7 +964,7 @@ subroutine Extract(cod,tIn,vL,tOut)
 !--
 !-- from matrix tIn,
 !-- build the matrix tOut
-!-- by extracting the rows (cod--1) or the columns (cod--2)
+!-- by extracting the rows (cod=1) or the columns (cod=2)
 !-- that have the logical vL true
 !--
   integer,                intent(in) :: cod
@@ -972,14 +974,14 @@ subroutine Extract(cod,tIn,vL,tOut)
   integer::I,J
   J=0
   select case(cod)
-    case(1)
-      do I=1,size(tIn,1)
-        if(vL(I)) then  ; J=J+1; tOut(J,:)=tIn(I,:)  ; end if
-      end do
-    case(2)
-      do I=1,size(tIn,2)
-        if(vL(I)) then  ; J=J+1; tOut(:,J)=tIn(:,I)  ; end if
-      end do
+  case(1)
+    do I=1,size(tIn,1)
+      if(vL(I)) then  ; J=J+1; tOut(J,:)=tIn(I,:)  ; end if
+    end do
+  case(2)
+    do I=1,size(tIn,2)
+      if(vL(I)) then  ; J=J+1; tOut(:,J)=tIn(:,I)  ; end if
+    end do
   end select
 end subroutine Extract
 
@@ -1033,7 +1035,7 @@ subroutine Basis_Cpn_ISpc_Select( &
   K=   0
   iPr= 0
   !
-  !--------------------- species 1 is solvent, component 1 is solvent --
+  !------------------------ species 1 is solvent, component 1 is solvent
   K=   K+1
   iPr= iPr+1
   !vCpn(iPr)%iSpc= isW
@@ -1068,9 +1070,9 @@ subroutine Basis_Cpn_ISpc_Select( &
       vIPivot(K)= iFirstLoc(tStoik(:,K) /= Zero)
       !-> index of first non zero element
       if(iDebug>2) then
-        do JJ=1,nCp
-          write(fTrc,'(F7.2,1X)',advance="NO") tStoik(JJ,K)
-        end do
+        !do JJ=1,nCp
+          write(fTrc,'(*(F7.2,1X))') (tStoik(JJ,K), JJ=1,nCp)
+        !end do
         write(fTrc,'(2(A,I3),1X,A)') &
         & "K=",K, " /  iPr=",i,trim(vSpc(vIndex(i))%NamSp)
         !pause_
@@ -1100,7 +1102,7 @@ subroutine Basis_Cpn_ISpc_Select( &
       I= I-1
       if(I==0) exit DoAqu
       !
-      !--scan species beginning with most abundant----------------------
+      !------------------------scan species beginning with most abundant
       iAq= vSpPrm(i)
       !print *,"Spc=",trim(vSpc(iAq)%NamSp),vSpcDat(iAq)%Mole  ;  pause_
       if(vSpDone(iAq)) cycle DoAqu
@@ -1119,11 +1121,14 @@ subroutine Basis_Cpn_ISpc_Select( &
       !-> index of first non zero element
       !
       if(vIPivot(K)>nCp) then
-      !--all coeff's are 0 -> this species is not independent-----------
+      !-------------all coeff's are 0 -> this species is not independent
       !---> cycle doAqu --
         !
         if(iDebug==4) then
-          do JJ=1,nCp; write(fTrc,'(F7.2,1X)',advance="NO") tStoik(JJ,K); end do
+          !do JJ=1,nCp
+            !write(fTrc,'(F7.2,1X)',advance="NO") tStoik(JJ,K)
+            write(fTrc,'(*(F7.2,1X))') (tStoik(JJ,K), JJ=1,nCp)
+          !end do
           write(fTrc,'(A,I3,1X,2A)') &
           & "iFirst=",vIPivot(K),trim(vSpc(iAq)%NamSp),"-> removed"
         end if
@@ -1133,7 +1138,10 @@ subroutine Basis_Cpn_ISpc_Select( &
       end if
       !
       if(iDebug==4) then
-        do JJ=1,nCp; write(fTrc,'(F7.2,1X)',advance="NO") tStoik(JJ,K); end do
+        !do JJ=1,nCp
+          !write(fTrc,'(F7.2,1X)',advance="NO") tStoik(JJ,K)
+          write(fTrc,'(*(F7.2,1X))') (tStoik(JJ,K),JJ=1,nCp)
+        !end do
         write(fTrc,'(2(A,I3),1X,A)') &
         & "K=",K," /  iPr=",iPr,trim(vSpc(iAq)%NamSp)
       end if
@@ -1155,9 +1163,9 @@ subroutine Basis_Cpn_ISpc_Select( &
   !
   if(iDebug==4) then
     write(71,'(A,1X)',advance="NO") "BASIS="
-    do I=1,nCp
-      write(71,'(A15,1X)',advance="NO") vSpc(vIndex(I))%NamSp
-    end do
+    !do I=1,nCp
+      write(71,'(*(A15,1X))') (vSpc(vIndex(I))%NamSp, I=1,nCp)
+    !end do
     write(71,*)
   end if
   !
@@ -1203,7 +1211,7 @@ subroutine Basis_Species_Select_Test( & !
   type(t_Component),intent(in) :: vCpn(:)
   real(dp),         intent(in) :: tFormul(:,:)
   integer,          intent(out):: vIndex(:)
-  !
+  !e
   integer :: nCp,nAq,nCi
   integer :: isW
   integer :: i
@@ -1240,7 +1248,7 @@ subroutine Basis_Species_Select_Test( & !
       write(6,'(G15.6,1X,A)') &
       & vSpcDat(vOrder(i))%Mole,trim(vSpc(vOrder(i))%NamSp)
     end do
-    print *,"== NEW BASIS =="
+    print *,"== NEW BASIS --"
     do i=1,nCp
       write(6,'(G15.6,1X,A)') &
       & vSpcDat(vIndex(I))%Mole,trim(vSpc(vIndex(I))%NamSp)
@@ -1372,7 +1380,7 @@ subroutine Basis_FreeSet_Select( & !
     vIPivot(K)= iMaxLoc_R(abs(tStoikTmp(:,K)))
     Pivot= tStoikTmp(vIPivot(K),K)
     if(abs(Pivot)<1.D-9) then
-      != all coeff's are 0 -> this species is not independent -> exit ==
+      !-----all coeff's are 0 -> this species is not independent -> exit
       Error= .true.
       return
     end if
@@ -1440,7 +1448,7 @@ subroutine Basis_FreeSet_Select( & !
 end subroutine Basis_FreeSet_Select
 
 subroutine Basis_AlfaNu_Build( & !
-& vEle,vCpn,vSpc,tStoikio,     & !IN
+& vCpn,vSpc,tStoikio,          & !IN
 & vFas,vMixFas,vMixModel,      & !
 & vLCi,vLAx,vLMx,vLAs,vLMs,    & !
 & LSho,LBuffer,                & !
@@ -1458,7 +1466,6 @@ subroutine Basis_AlfaNu_Build( & !
   use M_T_MixPhase, only: T_MixPhase
   use M_T_MixModel, only: T_MixModel
   !
-  type(T_Element),  dimension(:),  intent(in):: vEle
   type(T_Component),dimension(:),  intent(in):: vCpn
   type(T_Species),  dimension(:),  intent(in):: vSpc
   real(dp),         dimension(:,:),intent(in):: tStoikio
@@ -1575,16 +1582,17 @@ subroutine Basis_StoikTable_Sho( &
   & "STOIKIO: stoichiometry matrix tStoikio, transposed")
   !
   !--- header
-  do iPr=1,nCp
-    write(F,'(A3,A1)',advance="no") vEle(vCpn(iPr)%iEle)%NamEl, T_
-  end do
+  !do iPr=1,nCp
+    !write(F,'(A3,A1)',advance="no") vEle(vCpn(iPr)%iEle)%NamEl, T_
+    write(F,'(*(A3,A1))') (vEle(vCpn(iPr)%iEle)%NamEl, T_, iPr=1,nCp)
+  !end do
   write(F,'(3(A,A1))') "Chg",T_,"_____species",T_,"STATUS",T_
   !---/
   !
   do I=1,nSp
-    do iPr=1,nCp
-      write(F,'(F7.2,A1)',advance="no") tStoikio(iPr,I), T_
-    end do
+    !do iPr=1,nCp
+      write(F,'(*(F7.2,A1))') (tStoikio(iPr,I), T_, iPr=1,nCp)
+    !end do
     write(F,'(I3,A1,A12,A1)',advance="no") vSpc(I)%Z, T_, trim(vSpc(I)%NamSp),T_
     if(vLCi(I)) write(F,'(A)') "INT_PRIMARY"
     if(vLAx(I)) write(F,'(A)') "EXT_AQUEOUS"
@@ -1681,9 +1689,9 @@ subroutine NuTable_Sho( &
     write(F,'(A)') "Name(iAs)"
 
     do I=1,nAs
-      do iPr=1,nCp !---------------------------------------write stoikio
-        write(F,'(F7.2,A1)',advance="no") tNuAs(I,iPr), T_
-      end do
+      !do iPr=1,nCp !---------------------------------------write stoikio
+        write(F,'(*(F7.2,A1))') (tNuAs(I,iPr), T_, iPr=1,nCp)
+      !end do
       !
       if(LogK_Sho) then
         X=  vSpc(vOrdAs(I))%G0rt &
@@ -1711,9 +1719,9 @@ subroutine NuTable_Sho( &
 
     do I=1,nMs
       !
-      do iPr=1,nCp !--=================================< write stoikio==
-        write(F,'(F7.2,A1)',advance="no") tNuMs(I,iPr), T_
-      end do
+      !do iPr=1,nCp !----------------------------------------write stoikio
+        write(F,'(*(F7.2,A1))') (tNuMs(I,iPr), T_, iPr=1,nCp)
+      !end do
       !
       if(LogK_Sho) then
         X=  vSpc(vOrdMs(I))%G0rt &
@@ -1744,7 +1752,7 @@ subroutine AlfaTable_Sho( &
   use M_T_Species,  only: T_Species
   use M_T_Phase,    only: T_Phase
   !
-   type(T_Component),dimension(:),  intent(in):: vCpn
+  type(T_Component),dimension(:),  intent(in):: vCpn
   type(T_Species),  dimension(:),  intent(in):: vSpc
   type(T_Phase),    dimension(:),  intent(in):: vFas
   integer,          dimension(:),  intent(in):: vOrdPr,vOrdAs,vOrdMs
@@ -1769,7 +1777,7 @@ subroutine AlfaTable_Sho( &
   write(F,'(/,A,/)') "tAlfPr, Prim'Species"
   call NamCp_Sho
   do I=1,nCp
-    do J=1,nCp; write(F,'(F7.3,A1)',advance="no") tAlfPr(J,I), T_; end do
+    write(F,'(*(F7.3,A1))') (tAlfPr(J,I), T_, J=1,nCp)
     write(F,'(I3,A1,A12)') vSpc(vOrdPr(I))%Z, T_, trim(vSpc(vOrdPr(I))%NamSp)
   end do
   !
@@ -1777,7 +1785,7 @@ subroutine AlfaTable_Sho( &
     write(F,'(/,A,/)') "tAlfAs, Aqu'Sec'Species"
     call NamCp_Sho
     do I=1,nAs
-      do J=1,nCp; write(F,'(F7.3,A1)',advance="no") tAlfAs(J,I), T_; end do
+      write(F,'(*(F7.3,A1))') (tAlfAs(J,I), T_, J=1,nCp)
       write(F,'(I3,A1,A12)') vSpc(vOrdAs(I))%Z, T_, trim(vSpc(vOrdAs(I))%NamSp)
     end do
   end if
@@ -1785,7 +1793,7 @@ subroutine AlfaTable_Sho( &
     write(F,'(/,A,/)') "tAlfMs, Min'Sec'Species"
     call NamCp_Sho
     do I=1,nMs
-      do J=1,nCp; write(F,'(F7.3,A1)',advance="no") tAlfMs(J,I), T_; end do
+      write(F,'(*(F7.3,A1))') (tAlfMs(J,I), T_, J=1,nCp)
       write(F,'(I3,A1,A12)') vSpc(vOrdMs(I))%Z, T_, trim(vSpc(vOrdMs(I))%NamSp)
     end do
   end if
@@ -1805,8 +1813,8 @@ contains
 
 subroutine NamCp_Sho
   integer:: K
-  do K=1,nCi;     write(F,'(A3,A1)',advance="no") vCpn(K)%NamCp, T_; end do
-  do K=nCi+1,nCp; write(F,'(A7,A1)',advance="no") vCpn(K)%NamCp, T_; end do
+  write(F,'(*(A3,A1))') (vCpn(K)%NamCp, T_, K=1,nCi)
+  write(F,'(*(A7,A1))') (vCpn(K)%NamCp, T_, K=nCi+1,nCp)
   write(F,*)
 end subroutine NamCp_Sho
 
@@ -1830,8 +1838,8 @@ subroutine Basis_FindIBal( & !
   !---------------------------------------------------------------------
   integer::I
   !
-  !-------------- finds for which element the mole balance constraint --
-  !------------------------------ is replaced by a charge balance one --
+  !----------------- finds for which element the mole balance constraint
+  !--------------------------------- is replaced by a charge balance one
   iBal= 0
   do I=1,size(vCpn)
     if(trim(vCpn(I)%Statut)=="BALANCE") then
@@ -1849,9 +1857,9 @@ subroutine Basis_FindIBal( & !
   !
   if(iBal==0 .and. vCpn(iH_)%Statut=="INERT") iBal= iH_
   !
-  !---------------------------- option ELECTRONEUTRALITY NOT ENFORCED --
-  !=< used mainly for construction of pH diagram using a PATH CHANGE, ==
-  !----------------------------------- not for speciation of a system --
+  !------------------------------- option ELECTRONEUTRALITY NOT ENFORCED
+  !----- used mainly for construction of pH diagram using a PATH CHANGE,
+  !-------------------------------------- not for speciation of a system
   if(iBal==0 &
   & .and. vCpn(iH_)%Statut/="INERT" &
   & .and. idebug>1) &

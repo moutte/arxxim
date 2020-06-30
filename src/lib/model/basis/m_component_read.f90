@@ -82,7 +82,7 @@ subroutine Components_Read( & !
   call OpenFile(f,file=trim(NamFInn))
   !
   iTP= 0
-  SysType="Z"
+  SysType="ZZZ"
   sListElem="" !used to prevent reading same element more than once
   !
   N=   0
@@ -154,7 +154,7 @@ subroutine Components_Read( & !
           Cpn%Mole=     One /vSpc(iW)%WeitKg
           Cpn%LnAct=    Zero
           Cpn%Statut=   "INERT"
-          Cpn%namMix=   "Z"
+          Cpn%namMix=   "ZZZ"
           !
           sListElem=    "O__"
           N=N+1
@@ -291,6 +291,7 @@ subroutine Components_Read( & !
         !
         select case(trim(WType))
         case("INERT","MOLE","GRAM","PPM")        ;  Statut="INERT"
+        case("MILLIMOLE","MICROMOLE")            ;  Statut="INERT"
         case("MOBILE","ACTIVITY","PK")           ;  Statut="MOBILE"
         case("BUFFER")                           ;  Statut="BUFFER"
         case("BALANCE")                          ;  Statut="BALANCE"
@@ -367,7 +368,7 @@ subroutine Components_Read( & !
         !<new, 200911>
         !-----------------write species'stoichio to component'stoichio--
         select case(trim(WType))
-        case("MOLE","GRAM","PPM")
+        case("MOLE","GRAM","PPM","MICROMOLE","MILLIMOLE")
           tStoikCp(N,0:nEl+1)= vSpc(Cpn%iSpc)%vStoikio(0:nEl+1)
         end select
         !</new>
@@ -376,7 +377,7 @@ subroutine Components_Read( & !
         !
         !------------------------- read numeric data (mole, pk, etc.) --
         X1=Zero
-        Cpn%namMix= "Z" !trim(vSpc(iSp)%Typ) !default value
+        Cpn%namMix= "ZZZ" !trim(vSpc(iSp)%Typ) !default value
         !
         if(Statut/="BALANCE") then
           !
@@ -433,8 +434,10 @@ subroutine Components_Read( & !
           Cpn%Factor= 1.D0
           !---------------------------------------------unit conversions
           select case(trim(WType))
-          case("GRAM")  ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
-          case("PPM")   ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D6
+          case("MILLIMOLE") ;  Cpn%Factor= 1.0D3
+          case("MICROMOLE") ;  Cpn%Factor= 1.0D6
+          case("GRAM")      ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
+          case("PPM")       ;  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D6
           end select
           !if (trim(WType)=="GRAM") then
           !  Cpn%Factor= vSpc(iSp)%WeitKg *1.0D3
@@ -513,7 +516,7 @@ subroutine Components_Read( & !
   call closeFILE(f)
   !
   if (iDebug>2) write(fTrc,'(A)') &
-  & "========================================================================="
+  & "-------------------------------------------------------------------------"
   !
   if(N==0) return
   !
@@ -561,7 +564,7 @@ subroutine Components_Read( & !
       Cpn%Mole=   One /vSpc(iW)%WeitKg
       Cpn%LnAct=  Zero
       Cpn%Statut= "INERT"
-      Cpn%namMix= "Z"
+      Cpn%namMix= "ZZZ"
       !
       vCpn(N)= Cpn
       tStoikCp(N,Cpn%iEle)= 1
@@ -588,7 +591,7 @@ subroutine Components_Read( & !
       !!Cpn%Mole=   2.0D0 /vSpc(iW)%WeitKg
       Cpn%LnAct=  Zero
       Cpn%Statut= "INERT"
-      Cpn%namMix= "Z"
+      Cpn%namMix= "ZZZ"
       !
       vCpn(N)= Cpn
       tStoikCp(N,Cpn%iEle)= 1
@@ -613,7 +616,7 @@ subroutine Components_Read( & !
     !
     !--- trace
     if(iDebug==4) then
-      print *,"== Components_Read =="
+      print *,"-- Components_Read --"
       do iEl=1,N
         print *,vCpn(iEl)%NamCp,vCpn(iEl)%iEle
         do I=1,N
@@ -623,7 +626,7 @@ subroutine Components_Read( & !
           & trim(vSpc(vCpn(I)%iSpc)%NamSp), &
           & tStoikCp(I,vCpn(iEl)%iEle)
         end do
-        print '(A,G15.6)',"=======================================tot=",vX(iEl)
+        print '(A,G15.6)',"---------------------------------------tot=",vX(iEl)
       end do
       call Pause_
     end if !--</ trace

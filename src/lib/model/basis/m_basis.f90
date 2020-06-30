@@ -1,4 +1,4 @@
-module M_Basis
+ module M_Basis
 !--
 !-- basic tools used by higher level modules:
 !-- build vFas, vMixModel, ...
@@ -19,13 +19,13 @@ module M_Basis
   !
 contains
 
-subroutine Basis_Build(LBuffer,vCpn)
+subroutine Basis_Build(LBuffer,  vCpn) !,nCi,nAx,nMx,nAs,nMs)
   use M_T_Component,only: T_Component
   use M_Basis_Tools
   !
-  use M_Global_Vars,only: vEle,vSpc,vSpcDat,vFas,vMixFas,vMixModel
+  use M_Global_Vars,only: vEle,vSpc,vSpcDat,vMixModel
+  use M_Global_Vars,only: vFas,vMixFas
   use M_Global_Vars,only: tFormula
-  use M_Global_Vars,only: nAq,nMn,nGs
   !
   use M_System_Vars,only: iO_,iH_,iOx,BufferIsExtern
   !
@@ -41,8 +41,10 @@ subroutine Basis_Build(LBuffer,vCpn)
   !---------------------------------------------------------------------
   logical,          intent(in)   :: LBuffer
   type(T_Component),intent(inout):: vCpn(:)
+  !integer,          intent(out)  :: nCi, nAx, nMx, nAs, nMs 
   !---------------------------------------------------------------------
   integer:: nSp,nCp,nFs,I
+  integer:: nAq,nMn
   !
   if(idebug>1) write(fTrc,'(/,A)') "< Basis_Build"
   !
@@ -50,9 +52,12 @@ subroutine Basis_Build(LBuffer,vCpn)
   nCp= size(vEle)
   nFs= size(vFas)
   !
+  nAq= count(vSpc%Typ(1:3)=="AQU")
+  nMn= count(vSpc%Typ(1:3)=="MIN")+count(vSpc%Typ(1:3)=="GAS")
+  !
   call Basis_Dimensions(   & !
   & BufferIsExtern,        & !IN
-  & vCpn,vSpc,nAq,nMn,nGs, & !IN
+  & vCpn,vSpc,nAq,nMn,     & !IN
   & nCi,nMx,nAx,nMs,nAs)     !OUT, may change when components'status change
   !
   call Basis_Alloc(nSp,nCp,nFs,nAq,nAs,nMs)
@@ -99,7 +104,7 @@ subroutine Basis_Build(LBuffer,vCpn)
   !
   !-------------------------------------------------- build tAlfXx,tNuXx
   call Basis_AlfaNu_Build( &
-  & vEle,vCpn,vSpc,tStoikio,     & !IN
+  & vCpn,vSpc,tStoikio,          & !IN
   & vFas,vMixFas,vMixModel,      & !
   & vLCi,vLAx,vLMx,vLAs,vLMs,    & !
   & iDebug>1,LBuffer,            & !
@@ -124,21 +129,22 @@ subroutine Basis_Build(LBuffer,vCpn)
   !
 end subroutine Basis_Build
 
-subroutine Basis_Change(Cod,    vCpn)
+subroutine Basis_Change(Cod,    vCpn) !,nCi,nAx,nMx,nAs,nMs)
   !
   use M_T_Component,only: T_Component
   ! use M_T_Species,  only: T_SpcData
   use M_Dtb_Const,  only: T_CK
   use M_Basis_Tools,only: Basis_Cpn_ISpc_Select,Basis_MixPhase_CpnUpdate
   !
-  use M_Global_Vars,only: vSpc,vSpcDat,vMixFas,SolModel,nAq
+  use M_Global_Vars,only: vSpc,vSpcDat,vMixFas,SolModel
   use M_Basis_Vars, only: tStoikio
   !---------------------------------------------------------------------
   character(len=3), intent(in)   :: Cod
   ! type(T_SpcData),  intent(in)   :: vSpcDat(:)
   type(T_Component),intent(inout):: vCpn(:)
+  !integer,          intent(out)  :: nCi,nAx,nMx,nAs,nMs
   !---------------------------------------------------------------------
-  integer:: nCp,I
+  integer:: nCp,I,nAq
   logical:: LBuffer
   integer,allocatable:: vIndex(:)
   !
@@ -147,6 +153,7 @@ subroutine Basis_Change(Cod,    vCpn)
   LBuffer= (Cod(1:3)=="DYN") !! .true. !! !.or. (Cod(1:2)=="EQ")
   !
   nCp= size(vCpn)
+  nAq= count(vSpc%Typ(1:3)=="AQU")
   !
   if(size(vMixFas)>0) &
   & call Basis_MixPhase_CpnUpdate( &
@@ -195,7 +202,7 @@ subroutine Basis_Change(Cod,    vCpn)
     !! if(iOx/=0) call Basis_RedoxAssign(vCpn,vEle,vSpc)
   end select
   !
-  call Basis_Build(LBuffer,vCpn)
+  call Basis_Build(LBuffer,vCpn) !,nCi,nAx,nMx,nAs,nMs)
   !-> include following
   ! Basis_Dimensions      !-> nCi,nMx,nAx,nMs,nAs
   ! Basis_Alloc           !-> allocate basis_vars
@@ -211,17 +218,18 @@ subroutine Basis_Change(Cod,    vCpn)
   !
 end subroutine Basis_Change
 
-subroutine Basis_Change_Wrk(vCpn)
+subroutine Basis_Change_Wrk(vCpn) !,nCi,nAx,nMx,nAs,nMs)
   !---------------------------------------------------------------------
   use M_T_Component,only: T_Component
   use M_Basis_Tools,only: Basis_Cpn_ISpc_Select
   !
   use M_Global_Vars,only: vSpc,vSpcDat,SolModel
-  !---------------------------------------------------------------------
+  ! 
   type(T_Component),intent(inout):: vCpn(:)
-  !
+  !integer,          intent(out)  :: nCi,nAx,nMx,nAs,nMs
+  !---------------------------------------------------------------------
   integer,allocatable:: vIndex(:)
-  !
+  !---------------------------------------------------------------------
   if(iDebug==4) write(fTrc,'(/,A)') "< Basis_Change_wrk"
   !
   allocate(vIndex(size(vCpn)))
@@ -231,13 +239,13 @@ subroutine Basis_Change_Wrk(vCpn)
   & vIndex)
   !
   !------------ change basis only if the primary species set has changed
-  if(ANY (vCpn(:)%iSpc /= vIndex(:)) ) then
+  if(any ( vCpn(:)%iSpc /= vIndex(:)) ) then
     !
     vCpn(:)%iSpc= vIndex(:)
     !
     call Basis_Build(.false.,vCpn)
     !
-    if(iDebug>2) write(*,'(A)') "===============< basis changed >===="
+    if(iDebug>2) write(*,'(A)') "---------------< basis changed >----"
     !
   end if
   !--//
@@ -246,22 +254,21 @@ subroutine Basis_Change_Wrk(vCpn)
   if(iDebug==4) write(fTrc,'(A,/)') "</ Basis_Change_wrk"
 end subroutine Basis_Change_Wrk
 
-subroutine Basis_IndexInit ! (isH_,isOH,isO2)
+subroutine Basis_IndexInit(vSpc,nAq,nMn) ! (isH_,isOH,isO2)
 !--
 !-- calc' dimensions and indexes that are constant for given vSpc
 !--
-  use M_T_Species,  only: Species_Index
-  !
-  use M_Global_Vars,only: vSpc,nAq,nMn,nGs
-  !
+  use M_T_Species,only: T_Species
+  !---------------------------------------------------------------------
+  type(T_Species), intent(in) :: vSpc(:)
+  integer,         intent(out):: nAq,nMn
+  !---------------------------------------------------------------------
   ! integer, intent(out):: isH_,isOH,isO2
   !
   if(idebug>1) write(fTrc,'(/,A)') "< Basis_IndexInit"
   !
   nAq= count(vSpc%Typ(1:3)=="AQU")
-  nMn= count(vSpc%Typ(1:3)=="MIN")
-  nGs= count(vSpc%Typ(1:3)=="GAS")
-  nMn= nMn + nGs
+  nMn= count(vSpc%Typ(1:3)=="MIN") + count(vSpc%Typ(1:3)=="GAS")
   !
   if(idebug>1) write(fTrc,'(A,/)') "</ Basis_IndexInit"
   !
@@ -275,13 +282,13 @@ subroutine Basis_InitBalance( & !
 !-- replace current stoichio value by the species charge
 !-- in line iBal of all stoikio matrices tAlfSp,tAlfPr,tAlfAs,tAlfMs,tAlfFs
 !--
-  !
+  !---------------------------------------------------------------------
   use M_Global_Vars,only: vSpc
-  !
+  !---------------------------------------------------------------------
   integer, intent(in)   :: iBal
   integer, intent(in)   :: vOrdPr(:),vOrdAs(:),vOrdMs(:)
   real(dp),intent(inout):: tAlfSp(:,:),tAlfPr(:,:),tAlfAs(:,:),tAlfMs(:,:),tAlfFs(:,:)
-  !
+  !---------------------------------------------------------------------
   tAlfSp(iBal,:)=                    real(vSpc(:)%Z)
   tAlfPr(iBal,:)=                    real(vSpc(vOrdPr(:))%Z)
   if(size(vOrdAs)>0) tAlfAs(iBal,:)= real(vSpc(vOrdAs(:))%Z)

@@ -14,12 +14,13 @@ module M_T_System
   
   type:: T_System
     !private
-    character(len=7):: SysName ! MASTER, INJECT, BOX, ...
-    character(len=7):: SysType ! AQUEOUS, ...
+    character(len=7):: SysName= "ZZZ" ! MASTER, INJECT, BOX, ...
+    character(len=7):: SysType= "ZZZ" ! AQUEOUS, ...
     !
-    real(dp):: SysTdgK, SysPbar
+    real(dp):: SysTdgK= 25.D0
+    real(dp):: SysPbar= 1.D0
     !
-    integer :: SysNCp
+    integer :: SysNCp= 0
     type(T_Component),allocatable:: vCpn(:)
     !
   end type T_System
@@ -30,9 +31,9 @@ subroutine System_New(N,This)
   integer,intent(in):: N
   type(T_System),intent(out):: This
   !
-  This%SysName= "VOID"
-  This%SysType= "VOID"
-  
+  This%SysName= "ZZZ"
+  This%SysType= "ZZZ"
+  !
   This%SysTdgK= 25.D0
   This%SysPbar= 1.D0
   
@@ -44,8 +45,8 @@ end subroutine System_New
 subroutine System_Free(This)
   type(T_System),intent(inout):: This
   !
-  This%SysName="VOID"
-  This%SysType="VOID"
+  This%SysName="ZZZ"
+  This%SysType="ZZZ"
   This%SysNCp= 0
   deallocate(This%vCpn)
   !

@@ -17,16 +17,16 @@ subroutine System_Build
 !-- build "master" system --
 !-- system with all components (elements) involved in any system in the run
 !--
-  !!--tools--!!
-  use M_T_Species,    only: T_Species,Species_Stoikio_Calc,Species_Append
-  use M_Global_Alloc, only: MixModels_Alloc,MixPhases_Alloc,Phases_Alloc !_New
-  use M_SolModel_Alloc
-  use M_T_SolModel,   only: SolModel_Spc_Init
-  use M_T_SolPhase,   only: SolPhase_Init
+  !--types and tools--!!
+  use M_T_Species,     only: T_Species,Species_Stoikio_Calc,Species_Append
+  use M_Global_Alloc,  only: MixModels_Alloc,MixPhases_Alloc,Phases_Alloc !_New
+  use M_SolModel_Alloc,only: SolModel_Alloc, SolPhase_Alloc
+  use M_T_SolModel,    only: SolModel_Spc_Init
+  use M_T_SolPhase,    only: SolPhase_Init
   use M_Solmodel_Read, only: Solmodel_Solvent_Read
   use M_SolModel_Tools,only: SolModel_TP_Update
   use M_Solmodel_Pitzer_Dtb,only: Solmodel_Pitzer_Dtb_Init,Solmodel_Pitzer_Dtb_TPtest
-  use M_Global_Alloc, only: DiscretParam_Alloc
+  use M_Global_Alloc,  only: DiscretParam_Alloc
   use M_DiscretModel_Read
   use M_DiscretModel_Tools
   !
@@ -34,7 +34,7 @@ subroutine System_Build
   use M_Global_Vars,  only: vEle,vSpc,vMixFas,tFormula,vSpcDat
   use M_Global_Vars,  only: vMixModel,vDiscretModel,vDiscretParam
   use M_Global_Vars,  only: vSolModel,SolModel
-  use M_Global_Vars,  only: nAq,nMn,nGs
+  !use M_Global_Vars,  only: nAq,nMn
   use M_Global_Vars,  only: vSolFas,vFas
   !
   !--database variables--
@@ -48,6 +48,7 @@ subroutine System_Build
   use M_System_Vars,  only: System_Zero,System_Type
   !
   integer:: I,N
+  integer:: nAq,nMn
   logical:: Ok,fOk
   character(len=80):: Msg
   real(dp),allocatable:: vTdgC(:)
@@ -125,10 +126,8 @@ subroutine System_Build
   vSpcDat(1:N)%LAct= Zero
   vSpcDat(1:N)%LGam= Zero
   !
-  nAq= count(vSpc%Typ=="AQU")
-  nMn= count(vSpc%Typ=="MIN")
-  nGs= count(vSpc%Typ=="GAS")
-  nMn= nMn + nGs
+  nAq= SolModel%nSolute +1
+  nMn= count(vSpc%Typ=="MIN") + count(vSpc%Typ=="GAS")
   !
   !------------------------------------------------ update formula table
   deallocate(tFormula)
@@ -143,7 +142,12 @@ subroutine System_Build
   call MixPhase_CheckFound(vEle,vSpc,vMixModel,vMixFas,vCpn)
   !
   !----------------------------------------initialize SolModel, SolPhase
-  if(System_Type=="AQUEOUS") then
+  ! if(System_Type=="AQUEOUS") then
+  if(count(vSpc(:)%Typ=="AQU") >0) then
+    !
+    !-- check presence of species H2O, H+, OH- in vSpc --
+    call System_Species_Check(vSpc,Ok,Msg)
+    if(.not. Ok) call Stop_(Msg)
     !
     N= 0
     if(DtbFormat=="LOGKTBL") N= DtbLogK_Dim
@@ -151,38 +155,38 @@ subroutine System_Build
     allocate(vTdgC(N))
     if(N>0) vTdgC(1:N)= DtbLogK_vTPCond(1:N)%TdgC
     !
-    ! even for HSV base, Solmodel_Read must be called,
-    ! for reading activity model
-    call Solmodel_Solvent_Read( &
-    & N,vTdgC,SolModel, &
-    & Ok_Rho, Ok_Eps, Ok_DHA, Ok_DHB, Ok_BDot, &
-    & Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl)
-    !
-    deallocate(vTdgC)
-    !
-    if(SolModel%iActModel== 8  .or. &    !! "PITZER"
-    &  SolModel%iActModel== 11 ) then    !! "SIT"
-      call Solmodel_Pitzer_Dtb_Init(vSpc)
-    end if
-    !
-    call SolModel_TP_Update(TdgK,Pbar,SolModel)
-
-    if(iDebug>2) then
-      if(SolModel%iActModel== 8  .or. &    !! "PITZER"
-      &  SolModel%iActModel== 11 ) &    !! "SIT"
-      & call Solmodel_Pitzer_Dtb_TPtest !!!"WRK"!!!
-    end if
-    !
     !----------------------------------------------------------------NEW
     !--- initialize indexes of the sol'model
     if(allocated(vSolModel)) deallocate(vSolModel)
     call SolModel_Alloc(1,vSolModel)
     !
-    call SolModel_Spc_Init("H2O",vSpc,SolModel,Ok,Msg)
+    ! even for HSV base, Solmodel_Read must be called,
+    ! for reading activity model
+    call Solmodel_Solvent_Read( &
+    & N,vTdgC,vSolModel(1), &
+    & Ok_Rho, Ok_Eps, Ok_DHA, Ok_DHB, Ok_BDot, &
+    & Rho_Spl,Eps_Spl,DHA_Spl,DHB_Spl,BDot_Spl)
+    !print *,"System_Build, iActModel=",vSolModel(1)%iActModel
+    !
+    deallocate(vTdgC)
+    !
+    if(vSolModel(1)%iActModel== 8  .or. &    !! "PITZER"
+    &  vSolModel(1)%iActModel== 12) then     !! "SIT"
+      call Solmodel_Pitzer_Dtb_Init(vSpc)
+    end if
+    !
+    call SolModel_TP_Update(TdgK,Pbar,vSolModel(1))
+
+    if(iDebug>2) then
+      if(vSolModel(1)%iActModel== 8  .or. &    !! "PITZER"
+      &  vSolModel(1)%iActModel== 12 )    &    !! "SIT"
+      & call Solmodel_Pitzer_Dtb_TPtest !!!"WRK"!!!
+    end if
+    !
+    call SolModel_Spc_Init("H2O",vSpc,vSolModel(1),Ok,Msg)
     !-- initialize S%iSolvent, S%nSolute, S%vISolute, S%MolWeitSv, etc
     !-- according to the current species database vSpc,
     !-- and given the name, SolvName, of the solvent species
-    vSolModel(1)= SolModel
     !
     if(allocated(vSolFas)) deallocate(vSolFas)
     call SolPhase_Alloc(1,vSolFas) ! allocate vSolFas
@@ -199,6 +203,8 @@ subroutine System_Build
     !
     if(.not. Ok) &
     & call Stop_("SolModel_Spc_Init "//trim(Msg))
+    !
+    SolModel= vSolModel(1)
     !---------------------------------------------------------------/NEW
 
   end if
@@ -209,15 +215,9 @@ subroutine System_Build
   call Phases_Alloc(vSpc,vMixFas,  vFas)
   !
   !------------------------------------- update global thermo'parameters
-  !--------------------- (vSpc,vMixModel,vMixFas,vFas) at (TdgK,Pbar) --
+  !------------------------ (vSpc,vMixModel,vMixFas,vFas) at (TdgK,Pbar)
   call System_TP_Update(TdgK,Pbar)
   !------------------------------------/ update global thermo'parameters
-  !
-  if(System_Type=="AQUEOUS") then
-    !-- check presence of species H2O, H+, OH- in vSpc --
-    call System_Species_Check(vSpc,Ok,Msg)
-    if(.not. Ok) call Stop_(Msg)
-  end if
   !
   !! call Basis_Init(vCpn,TdgK,Pbar)
   !if(iDebug==1) &
@@ -229,6 +229,7 @@ end subroutine System_Build
 
 subroutine System_To_File(vEle,vSpc)
   use M_IoTools,     only: GetUnit
+  use M_Files,       only: DirTmp
   use M_T_Element,   only: T_Element
   use M_T_Species,   only: T_Species!
   !
@@ -236,10 +237,10 @@ subroutine System_To_File(vEle,vSpc)
   type(T_Species),   intent(in):: vSpc(:)
   ! 
   integer:: F,i
-  character(len=30):: myform
+  !character(len=30):: myform
   !
   call GetUnit(F)
-  open(F,file="tmp_element.txt")
+  open(F,file=trim(DirTmp)//"element.txt")
   !write(myform,'(1A1,1I3,1A)') '(',size(vSpc),'A)'
   !write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
   do i=1,size(vEle)
@@ -248,7 +249,7 @@ subroutine System_To_File(vEle,vSpc)
   close(F)
   !
   call GetUnit(F)
-  open(F,file="tmp_species.txt")
+  open(F,file=trim(DirTmp)//"species.txt")
   !write(myform,'(1A1,1I3,1A)') '(',size(vSpc),'A)'
   !write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
   do i=1,size(vSpc)
@@ -257,10 +258,12 @@ subroutine System_To_File(vEle,vSpc)
   close(F)
   !
   call GetUnit(F)
-  open(F,file="tmp_species.tab")
-  write(myform,'(1A1,1I3,1A2)') '(',size(vSpc),'A)'
-  write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
-  write(F,myform) ( trim(vSpc(i)%Typ)//T_ ,   i=1,size(vSpc) )
+  open(F,file=trim(DirTmp)//"species.tab")
+  !write(myform,'(1A1,1I3,1A2)') '(',size(vSpc),'A)'
+  !write(F,myform) ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
+  !write(F,myform) ( trim(vSpc(i)%Typ)//T_ ,   i=1,size(vSpc) )
+  write(F,'(*(A))') ( trim(vSpc(i)%NamSp)//T_ , i=1,size(vSpc) )
+  write(F,'(*(A))') ( trim(vSpc(i)%Typ)//T_ ,   i=1,size(vSpc) )
   close(F)
   !
   return
@@ -292,7 +295,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn, vSpc)
   !
   type(T_Species):: S_
   logical        :: fOk
-  integer        :: nCp,iCp,nSp,iSp,iOx_,ZSp,Z_,i,nAq,nMn,nGs
+  integer        :: nCp,iCp,nSp,iSp,iOx_,ZSp,Z_,i,nAq,nMn
   !
   if(idebug>1) write(fTrc,'(/,A,/)') "< Species_Alloc"
   !
@@ -364,7 +367,8 @@ subroutine Species_Alloc_forSystem(vEle,vCpn, vSpc)
   deallocate(vSpc)
   allocate(vSpc(1:nSp))
   !
-  nAq= 0; nMn= 0; nGs= 0
+  nAq= 0
+  nMn= 0
   iSp= 0
   !--retrieve first aqu'species
   do i=1,nSp
@@ -391,9 +395,7 @@ subroutine Species_Alloc_forSystem(vEle,vCpn, vSpc)
   !----------------------------------------------/ build new sorted vSpc
   !
   nAq= count(vSpc%Typ=="AQU")
-  nMn= count(vSpc%Typ=="MIN")
-  nGs= count(vSpc%Typ=="GAS")
-  nMn= nMn + nGs
+  nMn= count(vSpc%Typ=="MIN") + count(vSpc%Typ=="GAS")
   !
   if(count(vSpc%Typ=="AQU")==0 .and. System_Type=="AQUEOUS") &
   & call Stop_("Found NO Aqueous Species ...") !--------------------stop
@@ -524,7 +526,7 @@ subroutine MixPhase_CheckFound( &
   use M_T_Component,only: T_Component
   use M_T_Element,  only: T_Element
   use M_T_Species,  only: T_Species
-  use M_T_MixModel, only: T_MixModel,Mix_Site
+  use M_T_MixModel, only: T_MixModel,I_Site
   use M_T_MixModel, only: MixModel_Site_ActivIdeal,MixModel_XPoleToXSite
   use M_T_MixPhase, only: T_MixPhase, MixPhase_Index
   !
@@ -560,7 +562,7 @@ subroutine MixPhase_CheckFound( &
     if(iSp==0) call Stop_ &
     & ("NO SPECIES FOR COMPONENT "//trim(vEle(vCpn(iCp)%iEle)%NamEl))
     !
-    if(trim(vCpn(iCp)%namMix)=="Z") then
+    if(trim(vCpn(iCp)%namMix)=="ZZZ") then
       !
       Phase_Found(iCp)=.true.
       !
@@ -594,7 +596,7 @@ subroutine MixPhase_CheckFound( &
       !
       vCpn(iCp)%iPol=J
       !--- iPol- index of species in end-member list of phase
-      if(SM%Model==Mix_Site) then
+      if(SM%Model==I_Site) then
         allocate(vXAtom(SM%NAtom))
         call MixModel_XPoleToXSite( &
         & SM, vMixFas(iMix)%vXPole, &
