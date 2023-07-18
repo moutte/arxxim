@@ -55,6 +55,7 @@ subroutine Basis_Build(LBuffer,  vCpn) !,nCi,nAx,nMx,nAs,nMs)
   nAq= count(vSpc%Typ(1:3)=="AQU")
   nMn= count(vSpc%Typ(1:3)=="MIN")+count(vSpc%Typ(1:3)=="GAS")
   !
+  
   call Basis_Dimensions(   & !
   & BufferIsExtern,        & !IN
   & vCpn,vSpc,nAq,nMn,     & !IN
